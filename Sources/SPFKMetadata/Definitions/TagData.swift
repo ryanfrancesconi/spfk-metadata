@@ -1,7 +1,8 @@
 import Foundation
 import SPFKBase
+import SPFKUtils
 
-public struct TagData: TagPropertiesContainerModel, Hashable, Codable, Sendable {
+public struct TagData: TagPropertiesContainerModel, Hashable, Codable, Serializable, Sendable {
     public var isEmpty: Bool {
         tags.isEmpty && customTags.isEmpty
     }
@@ -25,7 +26,7 @@ public struct TagData: TagPropertiesContainerModel, Hashable, Codable, Sendable 
 }
 
 extension [TagData] {
-    public func merge() async -> TagData {
+    public func merge(scheme: DictionaryMergeScheme = .preserve) async -> TagData {
         let allTags = compactMap(\.tags)
         let allCustomTags = compactMap(\.customTags)
 
@@ -33,12 +34,29 @@ extension [TagData] {
         var mergedCustomTags: [String: String] = .init()
 
         for item in allTags {
-            // keep old value if duplicate key
-            mergedTags = mergedTags.merging(item, uniquingKeysWith: { old, _ in old })
+            mergedTags = mergedTags.merging(item, uniquingKeysWith: { old, new in
+                switch scheme {
+                case .preserve:
+                    old
+                case .replace:
+                    new
+                case .combine:
+                    old + ", \(new)"
+                }
+            })
         }
 
         for item in allCustomTags {
-            mergedCustomTags = mergedCustomTags.merging(item, uniquingKeysWith: { old, _ in old })
+            mergedCustomTags = mergedCustomTags.merging(item, uniquingKeysWith: { old, new in
+                switch scheme {
+                case .preserve:
+                    old
+                case .replace:
+                    new
+                case .combine:
+                    old + ", \(new)"
+                }
+            })
         }
 
         return TagData(tags: mergedTags, customTags: mergedCustomTags)
