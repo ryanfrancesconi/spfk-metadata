@@ -15,6 +15,27 @@ class BEXTTests: BinTestCase {
         Log.debug(bextc?.maxTruePeakLevel)
     }
 
+    /**
+     How the BWF Timestamp handles overflow
+     Because 4.32 billion is larger than what 32 bits can hold, the timeReferenceLow field would
+     "roll over" (reset to zero and keep counting), and the timeReferenceHigh would increment to 1.
+     */
+    @Test func bwfTimestampOverflow() {
+        var desc = BEXTDescription()
+
+        // 25 hours at 48kHz
+        // Why 25 Hours Matters
+        // This number is significant because it exceeds the capacity of a standard 32-bit unsigned integer.
+        let value: UInt64 = 25 * 60 * 60 * 48000
+        desc.timeReference = value
+
+        #expect(desc.timeReferenceHigh! == 1) // represents the overflow
+        #expect(desc.timeReferenceLow! == 25_032_704) // the remaining samples
+
+        // recheck the calculation resolves the original value
+        #expect(desc.timeReference == value)
+    }
+
     @Test func parseBEXT_v1() async throws {
         let desc = try #require(BEXTDescription(url: TestBundleResources.shared.wav_bext_v1))
         Log.debug(desc)
@@ -36,6 +57,8 @@ class BEXTTests: BinTestCase {
 
         // <bext:timeReference>172800000</bext:timeReference>
         #expect(desc.timeReference == 172_800_000)
+        #expect(desc.timeReferenceLow == 172_800_000)
+        #expect(desc.timeReferenceHigh == 0)
     }
 
     @Test func parseBEXT_v2b() async throws {

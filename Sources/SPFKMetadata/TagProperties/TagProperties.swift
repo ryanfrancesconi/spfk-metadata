@@ -3,6 +3,7 @@
 import Foundation
 import SPFKBase
 import SPFKMetadataC
+import SPFKUtils
 
 /// A Swift file format agnostic wrapper to TagLib metadata properties I/O
 public struct TagProperties: Hashable, Codable, Sendable {
@@ -65,6 +66,14 @@ public struct TagProperties: Hashable, Codable, Sendable {
     public mutating func removeAllAndSave(to url: URL) throws {
         removeAll()
         try Self.removeAllTags(in: url)
+    }
+
+    public mutating func merge(data otherData: TagData, scheme: DictionaryMergeScheme = .replace) {
+        data = [data, otherData].merge(scheme: scheme)
+    }
+    
+    public mutating func remove(data otherData: TagData) {
+        data.remove(data: otherData)
     }
 }
 

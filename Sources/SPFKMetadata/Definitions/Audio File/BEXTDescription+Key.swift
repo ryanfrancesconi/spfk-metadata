@@ -4,6 +4,10 @@
 import Foundation
 import OrderedCollections
 import SPFKAudioBase
+import SPFKBase
+import SPFKUtils
+
+public typealias BEXTKeyDictionary = OrderedDictionary<BEXTDescription.Key, String?>
 
 extension BEXTDescription {
     public enum Key: Sendable, CaseIterable {
@@ -12,7 +16,7 @@ extension BEXTDescription {
         case originationDate
         case originationTime
         case timeReferenceSamples
-        case timeReference
+        case timeReferenceString
         case umid
         case description
         case loudnessIntegrated
@@ -35,7 +39,7 @@ extension BEXTDescription {
             case .originationDate:          "Origination Date"
             case .originationTime:          "Origination Time"
             case .timeReferenceSamples:     "Time Reference Samples"
-            case .timeReference:            "Time Reference"
+            case .timeReferenceString:      "Time Reference"
             case .umid:                     "UMID"
             case .description:              "Description"
             case .loudnessIntegrated:       TagKey.loudnessIntegrated.displayName
@@ -60,7 +64,7 @@ extension BEXTDescription {
                 "8 ASCII characters containing the time of creation of the audio sequence. The format shall be « ‘hour’-‘minute’-‘second’» with 2 characters per item. Hour is defined from 0 to 23. Minute and second are defined from 0 to 59. The separator between the items can be anything but it is recommended that one of the following characters be used: ‘-’  hyphen  ‘_’  underscore  ‘:’  colon  ‘ ’  space  ‘.’  stop."
             case .timeReferenceSamples:
                 ""
-            case .timeReference:
+            case .timeReferenceString:
                 "These fields shall contain the time-code of the sequence. It is a 64-bit value which contains the first sample count since midnight. The number of samples per second depends on the sample frequency which is defined in the field <nSamplesPerSec> from the <format chunk>."
             case .umid:
                 "Unique Material Identifier"
@@ -95,63 +99,104 @@ extension BEXTDescription {
 }
 
 extension BEXTDescription {
-    public var timeReferenceString: String? {
-        guard let timeReferenceInSeconds, !timeReferenceInSeconds.isNaN else { return nil }
+    public subscript(key: BEXTDescription.Key) -> String? {
+        get {
+            guard let value = dictionary[key] else { return nil }
+            return value
+        }
 
-        return RealTimeDomain.string(seconds: timeReferenceInSeconds, showHours: .enable)
+        set {
+            dictionary[key] = newValue
+        }
     }
 
-    public var dictionary: OrderedDictionary<Key, String?> { [
-        .originator:            originator,
-        .originatorReference:   originatorReference,
-        .originationDate:       originationDate,
-        .originationTime:       originationTime,
-        .timeReferenceSamples:  timeReference?.string,
-        .timeReference:         timeReferenceString,
-        .umid:                  umid,
-        .description:           sequenceDescription,
-        .loudnessIntegrated:    loudnessDescription.loudnessIntegrated?.string,
-        .loudnessRange:         loudnessDescription.loudnessRange?.string,
-        .maxTruePeakLevel:      loudnessDescription.maxTruePeakLevel?.string,
-        .maxMomentaryLoudness:  loudnessDescription.maxMomentaryLoudness?.string,
-        .maxShortTermLoudness:  loudnessDescription.maxShortTermLoudness?.string,
-        .version:               version > 0 ? version.string : "",
-        .codingHistory:         codingHistory,
-    ] }
+    public var dictionary: BEXTKeyDictionary {
+        get { [
+            .originator:            originator,
+            .originatorReference:   originatorReference,
+            .originationDate:       originationDate,
+            .originationTime:       originationTime,
+            .timeReferenceSamples:  timeReference?.string,
+            .timeReferenceString:   timeReferenceString,
+            .umid:                  umid,
+            .description:           sequenceDescription,
+            .loudnessIntegrated:    loudnessDescription.loudnessIntegrated?.string,
+            .loudnessRange:         loudnessDescription.loudnessRange?.string,
+            .maxTruePeakLevel:      loudnessDescription.maxTruePeakLevel?.string,
+            .maxMomentaryLoudness:  loudnessDescription.maxMomentaryLoudness?.string,
+            .maxShortTermLoudness:  loudnessDescription.maxShortTermLoudness?.string,
+            .version:               version > 0 ? version.string : "",
+            .codingHistory:         codingHistory,
+        ] }
 
-    public mutating func update(key: Key, value: Any) {
-        switch key {
-        case .originator:
-            originator = value as? String
-        case .originatorReference:
-            originatorReference = value as? String
-        case .originationDate:
-            originationDate = value as? String
-        case .originationTime:
-            originationTime = value as? String
-        case .timeReferenceSamples:
-            timeReferenceLow = value as? UInt64
-        case .timeReference:
-            // GET ONLY
-            break
-        case .umid:
-            umid = value as? String ?? ""
-        case .description:
-            sequenceDescription = value as? String
-        case .loudnessIntegrated:
-            loudnessDescription.loudnessIntegrated = value as? Float64
-        case .loudnessRange:
-            loudnessDescription.loudnessRange = value as? Float64
-        case .maxTruePeakLevel:
-            loudnessDescription.maxTruePeakLevel = value as? Float32
-        case .maxMomentaryLoudness:
-            loudnessDescription.maxMomentaryLoudness = value as? Float64
-        case .maxShortTermLoudness:
-            loudnessDescription.maxShortTermLoudness = value as? Float64
-        case .version:
-            version = value as? Int16 ?? 2
-        case .codingHistory:
-            codingHistory = value as? String
+        set {
+            if let value = newValue[.version], let unwrapped = value?.int16 {
+                version = unwrapped
+            }
+
+            if let value = newValue[.originator] {
+                originator = value
+            }
+
+            if let value = newValue[.originatorReference], let value {
+                originatorReference = value
+            }
+
+            if let value = newValue[.originationDate], let value {
+                originationDate = value
+            }
+
+            if let value = newValue[.originationDate], let value {
+                originationDate = value
+            }
+
+            if let value = newValue[.originationTime], let value {
+                originationTime = value
+            }
+
+            if let value = newValue[.umid], let value {
+                umid = value
+            }
+
+            if let value = newValue[.description], let value {
+                sequenceDescription = value
+            }
+
+            if let value = newValue[.description], let value {
+                sequenceDescription = value
+            }
+
+            if let value = newValue[.loudnessIntegrated], let unwrapped = value?.double {
+                loudnessDescription.loudnessIntegrated = unwrapped
+            }
+
+            if let value = newValue[.loudnessRange], let unwrapped = value?.double {
+                loudnessDescription.loudnessRange = unwrapped
+            }
+
+            if let value = newValue[.maxTruePeakLevel], let unwrapped = value?.float {
+                loudnessDescription.maxTruePeakLevel = unwrapped
+            }
+
+            if let value = newValue[.maxMomentaryLoudness], let unwrapped = value?.double {
+                loudnessDescription.maxMomentaryLoudness = unwrapped
+            }
+
+            if let value = newValue[.maxShortTermLoudness], let unwrapped = value?.double {
+                loudnessDescription.maxShortTermLoudness = unwrapped
+            }
+
+            if let value = newValue[.version], let unwrapped = value?.int16 {
+                version = unwrapped
+            }
+
+            if let value = newValue[.timeReferenceSamples], let unwrapped = value?.uInt64 {
+                timeReference = unwrapped
+            }
+
+            if let value = newValue[.timeReferenceString], let value {
+                Log.fault("TODO: timeReference (\(value)) isn't settable via the dictionary")
+            }
         }
     }
 }

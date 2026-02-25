@@ -2,6 +2,8 @@ import Foundation
 import SPFKBase
 import SPFKUtils
 
+/// Thin wrapper to provide a keyed dictionary of known tags: TagKeyDictionary and
+/// an overflow customTags value that unmatched keys found will be placed into.
 public struct TagData: TagPropertiesContainerModel, Hashable, Codable, Serializable, Sendable {
     public var isEmpty: Bool {
         tags.isEmpty && customTags.isEmpty
@@ -23,10 +25,21 @@ public struct TagData: TagPropertiesContainerModel, Hashable, Codable, Serializa
         tags.removeAll()
         customTags.removeAll()
     }
+
+    public mutating func remove(data: TagData) {
+        for key in data.tags.keys {
+            tags.removeValue(forKey: key)
+        }
+
+        for key in data.customTags.keys {
+            customTags.removeValue(forKey: key)
+        }
+    }
 }
 
 extension [TagData] {
-    public func merge(scheme: DictionaryMergeScheme = .preserve) async -> TagData {
+    /// Combines multiple TagData instances into one using the passed in merge scheme
+    public func merge(scheme: DictionaryMergeScheme = .preserve) -> TagData {
         let allTags = compactMap(\.tags)
         let allCustomTags = compactMap(\.customTags)
 
@@ -41,7 +54,7 @@ extension [TagData] {
                 case .replace:
                     new
                 case .combine:
-                    old + ", \(new)"
+                    old + ", \(new)" // string delimiter ", "
                 }
             })
         }

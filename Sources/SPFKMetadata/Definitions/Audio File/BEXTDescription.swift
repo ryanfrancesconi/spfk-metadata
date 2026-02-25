@@ -58,24 +58,47 @@ public struct BEXTDescription: Hashable, Sendable {
     /// ‘-’  hyphen  ‘_’  underscore  ‘:’  colon  ‘ ’  space  ‘.’  stop
     public var originationTime: String?
 
-    /// Time reference in samples
+    /// Time reference in samples.
+    ///
     /// These fields shall contain the time-code of the sequence. It is a 64-bit value which contains the first sample count since midnight.
-    /// First sample count since midnight, low word.
-    /// Keep 64 for larger headroom for invalid time values.
+    /// First sample count since midnight, low word (32 bits).
+    ///
+    /// Keep `UInt64` for larger headroom for invalid time values.
     public var timeReferenceLow: UInt64?
 
-    /// Time reference in samples
-    /// First sample count since midnight, high word
+    /// Time reference in samples.
+    /// First sample count since midnight, high word. The 32bit overflow is in the high value.
+    ///
     /// Keep `UInt64` for larger headroom for invalid time values.
     public var timeReferenceHigh: UInt64?
 
-    /// Combined 64bit time value of low and high words
+    /// Combined 64bit time value of low and high words.
+    ///
+    /// Why split them?
+    ///
+    /// The BWF spec was created when many systems were still 32-bit.
+    /// By splitting the value into two 32-bit fields, the file format
+    /// ensures compatibility across older hardware and software that
+    /// couldn't natively handle a single 64-bit "LongLong" integer.
     public var timeReference: UInt64? {
-        guard let timeReferenceLow, let timeReferenceHigh else {
-            return nil
+        get {
+            guard let timeReferenceLow, let timeReferenceHigh else {
+                return nil
+            }
+
+            return (UInt64(timeReferenceHigh) << 32) | UInt64(timeReferenceLow)
         }
 
-        return (UInt64(timeReferenceHigh) << 32) | UInt64(timeReferenceLow)
+        set {
+            guard let newValue else {
+                timeReferenceLow = nil
+                timeReferenceHigh = nil
+                return
+            }
+
+            timeReferenceLow = UInt64(newValue & 0xFFFF_FFFF)
+            timeReferenceHigh = UInt64(newValue >> 32)
+        }
     }
 
     /// Convenience time reference in seconds, requires sampleRate to be set.
@@ -87,9 +110,17 @@ public struct BEXTDescription: Hashable, Sendable {
         return TimeInterval(timeReference) / sampleRate
     }
 
+    /// Convenience time (00:00:00) reference in formatted time, requires sampleRate to be set.
+    /// Sample rate isn't part of the BEXT values.
+    public var timeReferenceString: String? {
+        guard let timeReferenceInSeconds, !timeReferenceInSeconds.isNaN else { return nil }
+        return RealTimeDomain.string(seconds: timeReferenceInSeconds, showHours: .enable)
+    }
+
     /// (Note: Added in version 2.)
     public var loudnessDescription: LoudnessDescription = .init()
 
+    /// Enables time convenience values via setting sampleRate
     public var sampleRate: Double?
 
     public init() {}
@@ -127,6 +158,10 @@ public struct BEXTDescription: Hashable, Sendable {
                 maxShortTermLoudness: info.maxShortTermLoudness
             ).validated()
         }
+    }
+
+    public init(dictionary: BEXTKeyDictionary) {
+        self.dictionary = dictionary
     }
 
     public func validated() -> BEXTDescription {

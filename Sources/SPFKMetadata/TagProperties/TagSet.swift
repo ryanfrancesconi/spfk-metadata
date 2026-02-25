@@ -62,7 +62,7 @@ extension TagSet {
             !utilityTags.contains($0)
     }
 
-    private static let commonTags: [TagKey] = [
+    static let commonTags: [TagKey] = [
         .album,
         .artist,
         .comment,
@@ -74,7 +74,7 @@ extension TagSet {
         .trackNumber,
     ]
 
-    private static let musicTags: [TagKey] = [
+    static let musicTags: [TagKey] = [
         .arranger,
         .bpm,
         .composer,
@@ -89,7 +89,7 @@ extension TagSet {
         .work
     ]
 
-    private static let loudnessTags: [TagKey] = [
+    static let loudnessTags: [TagKey] = [
         .loudnessRange,
         .loudnessIntegrated,
         .loudnessMaxMomentary,
@@ -97,7 +97,7 @@ extension TagSet {
         .loudnessTruePeak,
     ]
 
-    private static let replayGainTags: [TagKey] = [
+    static let replayGainTags: [TagKey] = [
         .replayGainAlbumGain,
         .replayGainAlbumPeak,
         .replayGainAlbumRange,
@@ -107,7 +107,7 @@ extension TagSet {
         .replayGainTrackRange,
     ]
 
-    private static let utilityTags: [TagKey] = [
+    static let utilityTags: [TagKey] = [
         .artistWebpage,
         .audioSourceWebpage,
         .fileWebpage,
@@ -119,7 +119,7 @@ extension TagSet {
         .taggingDate,
     ]
 
-    private static let sortTags: [TagKey] = [
+    static let sortTags: [TagKey] = [
         .albumArtistSort,
         .albumSort,
         .artistSort,
