@@ -4,7 +4,7 @@ import SPFKUtils
 
 /// Thin wrapper to provide a keyed dictionary of known tags: TagKeyDictionary and
 /// an overflow customTags value that unmatched keys found will be placed into.
-public struct TagData: TagPropertiesContainerModel, Hashable, Codable, Serializable, Sendable {
+public struct TagData: TagPropertiesContainerModel, Hashable, Codable, Sendable {
     public var isEmpty: Bool {
         tags.isEmpty && customTags.isEmpty
     }
@@ -36,6 +36,8 @@ public struct TagData: TagPropertiesContainerModel, Hashable, Codable, Serializa
         }
     }
 }
+
+extension TagData: Serializable {}
 
 extension [TagData] {
     /// Combines multiple TagData instances into one using the passed in merge scheme

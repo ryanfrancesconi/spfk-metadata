@@ -41,6 +41,7 @@ public struct BEXTDescription: Hashable, Sendable {
     public var originatorReference: String?
 
     /// yyyy-mm-dd
+    ///
     /// 10 ASCII characters containing the date of creation of the audio sequence.
     /// The format shall be « ‘,year’,-,’month,’-‘,day,’» with 4 characters for the year
     /// and 2 characters per other item. 10 Tech 3285 v2 Broadcast Wave Format Specification
@@ -51,6 +52,7 @@ public struct BEXTDescription: Hashable, Sendable {
     public var originationDate: String?
 
     /// hh:mm:ss
+    ///
     /// 8 ASCII characters containing the time of creation of the audio sequence. The format
     /// shall be « ‘hour’-‘minute’-‘second’» with 2 characters per item. Hour is defined
     /// from 0 to 23. Minute and second are defined from 0 to 59. The separator between
@@ -60,21 +62,19 @@ public struct BEXTDescription: Hashable, Sendable {
 
     /// Time reference in samples.
     ///
-    /// These fields shall contain the time-code of the sequence. It is a 64-bit value which contains the first sample count since midnight.
     /// First sample count since midnight, low word (32 bits).
     ///
-    /// Keep `UInt64` for larger headroom for invalid time values.
+    /// Note: uses `UInt64` for larger headroom for invalid time values.
     public var timeReferenceLow: UInt64?
 
     /// Time reference in samples.
-    /// First sample count since midnight, high word. The 32bit overflow is in the high value.
+    /// First sample count since midnight, high word.
+    /// The 32bit overflow is in the high value.
     ///
-    /// Keep `UInt64` for larger headroom for invalid time values.
+    /// Note: uses `UInt64` for larger headroom for invalid time values.
     public var timeReferenceHigh: UInt64?
 
     /// Combined 64bit time value of low and high words.
-    ///
-    /// Why split them?
     ///
     /// The BWF spec was created when many systems were still 32-bit.
     /// By splitting the value into two 32-bit fields, the file format
@@ -82,11 +82,9 @@ public struct BEXTDescription: Hashable, Sendable {
     /// couldn't natively handle a single 64-bit "LongLong" integer.
     public var timeReference: UInt64? {
         get {
-            guard let timeReferenceLow, let timeReferenceHigh else {
-                return nil
-            }
+            guard let timeReferenceLow, let timeReferenceHigh else { return nil }
 
-            return (UInt64(timeReferenceHigh) << 32) | UInt64(timeReferenceLow)
+            return (timeReferenceHigh << 32) | timeReferenceLow
         }
 
         set {
@@ -96,8 +94,11 @@ public struct BEXTDescription: Hashable, Sendable {
                 return
             }
 
-            timeReferenceLow = UInt64(newValue & 0xFFFF_FFFF)
-            timeReferenceHigh = UInt64(newValue >> 32)
+            // Mask the top 32 bits (0xFFFFFFFF) to isolate the lower half
+            timeReferenceLow = newValue & 0xFFFF_FFFF
+
+            // Shift right by 32 bits to move upper bits to lower position
+            timeReferenceHigh = newValue >> 32
         }
     }
 
@@ -105,8 +106,9 @@ public struct BEXTDescription: Hashable, Sendable {
     /// Sample rate isn't part of the BEXT values.
     public var timeReferenceInSeconds: TimeInterval? {
         guard let timeReference,
-              let sampleRate,
-              sampleRate > 0 else { return nil }
+              let sampleRate, sampleRate > 0
+        else { return nil }
+
         return TimeInterval(timeReference) / sampleRate
     }
 

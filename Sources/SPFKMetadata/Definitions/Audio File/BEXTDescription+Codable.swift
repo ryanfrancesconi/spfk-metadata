@@ -2,7 +2,7 @@ import Foundation
 import SPFKAudioBase
 import SPFKUtils
 
-extension BEXTDescription: Codable, Serializable {
+extension BEXTDescription: Codable {
     enum CodingKeys: String, CodingKey {
         case codingHistory
         case loudnessDescription
@@ -69,3 +69,5 @@ extension BEXTDescription: Codable, Serializable {
         }
     }
 }
+
+extension BEXTDescription: Serializable {}
