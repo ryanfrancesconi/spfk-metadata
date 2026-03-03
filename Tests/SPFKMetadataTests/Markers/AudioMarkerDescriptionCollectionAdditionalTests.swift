@@ -1,6 +1,7 @@
 import Foundation
-@testable import SPFKMetadata
 import Testing
+
+@testable import SPFKMetadata
 
 struct AudioMarkerDescriptionCollectionAdditionalTests {
     // MARK: - remove
@@ -20,7 +21,7 @@ struct AudioMarkerDescriptionCollectionAdditionalTests {
 
     @Test func removeMarkerByIDNotFound() {
         var collection = AudioMarkerDescriptionCollection(markerDescriptions: [
-            AudioMarkerDescription(name: "M1", startTime: 0),
+            AudioMarkerDescription(name: "M1", startTime: 0)
         ])
 
         #expect(throws: Error.self) {
@@ -48,7 +49,7 @@ struct AudioMarkerDescriptionCollectionAdditionalTests {
 
     @Test func updateMarkerWithNilDescriptionID() throws {
         var collection = AudioMarkerDescriptionCollection(markerDescriptions: [
-            AudioMarkerDescription(name: "M1", startTime: 0),
+            AudioMarkerDescription(name: "M1", startTime: 0)
         ])
 
         // markerID parameter is used to locate the marker, so nil on the description is fine
@@ -61,7 +62,7 @@ struct AudioMarkerDescriptionCollectionAdditionalTests {
 
     @Test func updateMarkerNotFound() {
         var collection = AudioMarkerDescriptionCollection(markerDescriptions: [
-            AudioMarkerDescription(name: "M1", startTime: 0),
+            AudioMarkerDescription(name: "M1", startTime: 0)
         ])
 
         var marker = AudioMarkerDescription(name: "X", startTime: 0)
@@ -76,7 +77,7 @@ struct AudioMarkerDescriptionCollectionAdditionalTests {
 
     @Test func insertAndIncrementID() throws {
         var collection = AudioMarkerDescriptionCollection(markerDescriptions: [
-            AudioMarkerDescription(name: "M1", startTime: 0),
+            AudioMarkerDescription(name: "M1", startTime: 0)
         ])
 
         let marker = AudioMarkerDescription(name: nil, startTime: 5)
@@ -163,7 +164,7 @@ struct AudioMarkerDescriptionCollectionAdditionalTests {
 
     @Test func insertIgnoresDuplicateStartTimes() throws {
         var collection = AudioMarkerDescriptionCollection(markerDescriptions: [
-            AudioMarkerDescription(name: "Existing", startTime: 1.0),
+            AudioMarkerDescription(name: "Existing", startTime: 1.0)
         ])
 
         try collection.insert(markerDescriptions: [

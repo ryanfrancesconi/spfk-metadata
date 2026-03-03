@@ -1,7 +1,8 @@
 import Foundation
+import Testing
+
 @testable import SPFKMetadata
 @testable import SPFKMetadataC
-import Testing
 
 // MARK: - TagFrameKey protocol / ID3FrameKey
 

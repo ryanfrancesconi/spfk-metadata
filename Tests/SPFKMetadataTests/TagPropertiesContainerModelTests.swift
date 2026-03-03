@@ -1,6 +1,7 @@
 import Foundation
-@testable import SPFKMetadata
 import Testing
+
+@testable import SPFKMetadata
 
 // Test TagPropertiesContainerModel protocol via TagData which conforms to it
 

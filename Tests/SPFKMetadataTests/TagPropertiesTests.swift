@@ -2,10 +2,11 @@
 
 import Foundation
 import SPFKBase
-@testable import SPFKMetadata
-@testable import SPFKMetadataC
 import SPFKTesting
 import Testing
+
+@testable import SPFKMetadata
+@testable import SPFKMetadataC
 
 @Suite(.serialized)
 class TagPropertiesTests: BinTestCase {

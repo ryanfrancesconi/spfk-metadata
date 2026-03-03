@@ -1,7 +1,8 @@
 import Foundation
 import SPFKBase
-@testable import SPFKMetadata
 import Testing
+
+@testable import SPFKMetadata
 
 struct TagDataTests: TestCaseModel {
     @Test func displayNames() throws {
@@ -17,7 +18,8 @@ struct TagDataTests: TestCaseModel {
     }
 
     @Test func merge() throws {
-        let benchmark = Benchmark(label: "\((#file as NSString).lastPathComponent):\(#function)"); defer { benchmark.stop() }
+        let benchmark = Benchmark(label: "\((#file as NSString).lastPathComponent):\(#function)")
+        defer { benchmark.stop() }
 
         let data1 = TagData(tags: [.title: "value1"], customTags: ["CUSTOMTAG1": "CUSTOMVALUE1"])
         let data2 = TagData(tags: [.title: "value2"], customTags: ["CUSTOMTAG1": "CUSTOMVALUE2"])
@@ -53,9 +55,11 @@ struct TagDataTests: TestCaseModel {
 
         data.remove(data: dataToRemove)
 
-        #expect(data == TagData(
-            tags: [.album: "album1"],
-            customTags: ["CUSTOMTAG2": "CUSTOMVALUE2"]
-        ))
+        #expect(
+            data
+                == TagData(
+                    tags: [.album: "album1"],
+                    customTags: ["CUSTOMTAG2": "CUSTOMVALUE2"]
+                ))
     }
 }

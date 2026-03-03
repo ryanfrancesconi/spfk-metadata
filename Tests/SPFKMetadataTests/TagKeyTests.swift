@@ -1,6 +1,7 @@
 import Foundation
-@testable import SPFKMetadata
 import Testing
+
+@testable import SPFKMetadata
 
 // MARK: - TagKey Tests
 

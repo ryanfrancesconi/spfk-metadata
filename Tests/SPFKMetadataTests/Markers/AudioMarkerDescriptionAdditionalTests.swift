@@ -1,7 +1,8 @@
 import Foundation
-@testable import SPFKMetadata
 import SPFKUtils
 import Testing
+
+@testable import SPFKMetadata
 
 // MARK: - AudioMarkerDescription Codable
 
