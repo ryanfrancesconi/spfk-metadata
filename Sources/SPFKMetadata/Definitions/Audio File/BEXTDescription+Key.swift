@@ -146,20 +146,12 @@ extension BEXTDescription {
                 originationDate = value
             }
 
-            if let value = newValue[.originationDate], let value {
-                originationDate = value
-            }
-
             if let value = newValue[.originationTime], let value {
                 originationTime = value
             }
 
             if let value = newValue[.umid], let value {
                 umid = value
-            }
-
-            if let value = newValue[.description], let value {
-                sequenceDescription = value
             }
 
             if let value = newValue[.description], let value {
@@ -184,10 +176,6 @@ extension BEXTDescription {
 
             if let value = newValue[.maxShortTermLoudness], let unwrapped = value?.double {
                 loudnessDescription.maxShortTermLoudness = unwrapped
-            }
-
-            if let value = newValue[.version], let unwrapped = value?.int16 {
-                version = unwrapped
             }
 
             if let value = newValue[.timeReferenceSamples], let unwrapped = value?.uInt64 {

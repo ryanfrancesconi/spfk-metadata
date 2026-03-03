@@ -43,7 +43,7 @@ extension TagPropertiesContainerModel {
             let key: String = $0.key
 
             if let frame = ID3FrameKey(rawValue: key) {
-                return "\(frame.displayName) (Custom ID3: \(frame.value) = \($0.value)"
+                return "\(frame.displayName) (Custom ID3: \(frame.value)) = \($0.value)"
 
             } else if let frame = InfoFrameKey(rawValue: key) {
                 return "\(frame.displayName) (Custom INFO: \(frame.value)) = \($0.value)"
@@ -89,7 +89,7 @@ extension TagPropertiesContainerModel {
         customTags.removeAll()
     }
 
-    public mutating func merging(tags array: [TagKeyDictionary]) async {
+    public mutating func merging(tags array: [TagKeyDictionary]) {
         var mergedTags: TagKeyDictionary = .init()
 
         for item in array {
@@ -100,7 +100,7 @@ extension TagPropertiesContainerModel {
         tags = mergedTags
     }
 
-    public mutating func merging(customTags array: [[String: String]]) async {
+    public mutating func merging(customTags array: [[String: String]]) {
         var mergedCustomTags: [String: String] = .init()
 
         for item in array {

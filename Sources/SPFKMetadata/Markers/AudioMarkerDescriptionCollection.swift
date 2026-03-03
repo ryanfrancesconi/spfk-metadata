@@ -102,10 +102,6 @@ extension AudioMarkerDescriptionCollection {
     }
 
     public mutating func update(markerID: Int, markerDescription: AudioMarkerDescription) throws {
-        guard let markerID = markerDescription.markerID else {
-            throw NSError(description: "markerID is nil")
-        }
-
         for i in 0 ..< markerDescriptions.count where markerDescriptions[i].markerID == markerID {
             markerDescriptions[i] = markerDescription
             sort()
