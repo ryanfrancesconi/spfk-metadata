@@ -1,11 +1,12 @@
 // Copyright Ryan Francesconi. All Rights Reserved. Revision History at https://github.com/ryanfrancesconi/spfk-metadata
 
 import Foundation
+import SPFKBase
+import SPFKTesting
+import Testing
+
 @testable import SPFKMetadata
 @testable import SPFKMetadataC
-import SPFKTesting
-import SPFKBase
-import Testing
 
 @Suite(.serialized)
 class TagFileTests: BinTestCase {

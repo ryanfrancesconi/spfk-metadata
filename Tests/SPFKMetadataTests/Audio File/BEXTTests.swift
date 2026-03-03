@@ -44,7 +44,10 @@ class BEXTTests: BinTestCase {
         #expect(desc.version == 1)
 
         // XMP: <bext:umid>00000000F05E776B01000000000000000000000000000000000000006058776B010000003058776B01000000C8D3B6080100000000000000000000006058776B</bext:umid>
-        #expect(desc.umid == "00000000F05E776B01000000000000000000000000000000000000006058776B010000003058776B01000000C8D3B6080100000000000000000000006058776B")
+        #expect(
+            desc.umid
+                == "00000000F05E776B01000000000000000000000000000000000000006058776B010000003058776B01000000C8D3B6080100000000000000000000006058776B"
+        )
 
         // <bext:originator>Logic Pro</bext:originator>
         #expect(desc.originator == "Logic Pro")
@@ -70,8 +73,14 @@ class BEXTTests: BinTestCase {
         Log.debug(desc)
 
         #expect(desc.version == 2)
-        #expect(desc.umid == "53504F4E4745464F524B303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303000")
-        #expect(desc.sequenceDescription == "And oh how they danced The little children of Stonehenge Beneath the haunted moon For fear that daybreak might come too soonr fear that daybreak might come too soon")
+        #expect(
+            desc.umid
+                == "53504F4E4745464F524B303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303000"
+        )
+        #expect(
+            desc.sequenceDescription
+                == "And oh how they danced The little children of Stonehenge Beneath the haunted moon For fear that daybreak might come too soonr fear that daybreak might come too soon"
+        )
         #expect(desc.codingHistory?.trimmed == "A=PCM,F=44100,W=16,M=stereo,T=original")
         #expect(desc.originator == "ITRAIDA88396FG347125324098748726")
         #expect(desc.originatorReference == "RF666SPONGEFORK66000100510720836")
@@ -97,7 +106,8 @@ class BEXTTests: BinTestCase {
 
         desc.version = 2
         desc.umid = "SPONGEFORK"
-        desc.sequenceDescription = "And oh how they danced The little children of Stonehenge Beneath the haunted moon For fear that daybreak might come too soonr fear that daybreak might come too soon"
+        desc.sequenceDescription =
+            "And oh how they danced The little children of Stonehenge Beneath the haunted moon For fear that daybreak might come too soonr fear that daybreak might come too soon"
 
         desc.codingHistory = "A=PCM,F=44100,W=16,M=stereo,T=original"
         desc.originator = "ITRAIDA88396FG347125324098748726"
@@ -146,7 +156,10 @@ class BEXTTests: BinTestCase {
         let updated = try #require(BEXTDescription(url: tmpfile))
         #expect(updated.version == 2)
         #expect(updated.sequenceDescription == desc.sequenceDescription)
-        #expect(updated.umid == "58585858585830303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303000")
+        #expect(
+            updated.umid
+                == "58585858585830303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303000"
+        )
         #expect(updated.originator == desc.originator)
         #expect(updated.originatorReference == desc.originatorReference)
         #expect(updated.originationDate == "2011:01:10")

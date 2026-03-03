@@ -2,10 +2,11 @@
 
 import Foundation
 import SPFKBase
-@testable import SPFKMetadata
-@testable import SPFKMetadataC
 import SPFKTesting
 import Testing
+
+@testable import SPFKMetadata
+@testable import SPFKMetadataC
 
 @Suite(.serialized)
 class WaveFileTests: BinTestCase {
@@ -21,7 +22,10 @@ class WaveFileTests: BinTestCase {
 
         #expect(file[info: .product] == "This Is Spinal Tap")
         #expect(file[info: .artist] == "Spinal Tap")
-        #expect(file[info: .comment] == "And oh how they danced. The little children of Stonehenge.Beneath the haunted moon.For fear that daybreak might come too soon.")
+        #expect(
+            file[info: .comment]
+                == "And oh how they danced. The little children of Stonehenge.Beneath the haunted moon.For fear that daybreak might come too soon."
+        )
         #expect(file[info: .editedBy] == "SPFKMetadata")
         #expect(file[info: .title] == "Stonehenge")
         #expect(file[info: .bpm] == "666")
@@ -72,7 +76,8 @@ class WaveFileTests: BinTestCase {
         file[id3: .title] = "an id3 title"
         file[id3: .remixer] = "an id3 remixer"
 
-        file.iXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><BWFXML><IXML_VERSION>1.4</IXML_VERSION><PROJECT>a new project</PROJECT></BWFXML>"
+        file.iXML =
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?><BWFXML><IXML_VERSION>1.4</IXML_VERSION><PROJECT>a new project</PROJECT></BWFXML>"
         file.bextDescriptionC?.sequenceDescription = "a new bext description"
         file.markers.append(
             AudioMarker(name: "new marker", time: 0, sampleRate: 44100, markerID: 0)

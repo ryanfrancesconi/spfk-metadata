@@ -1,11 +1,12 @@
 // Copyright Ryan Francesconi. All Rights Reserved. Revision History at https://github.com/ryanfrancesconi/spfk-metadata
 
 import Foundation
+import SPFKBase
+import SPFKTesting
+import Testing
+
 @testable import SPFKMetadata
 @testable import SPFKMetadataC
-import SPFKTesting
-import SPFKBase
-import Testing
 
 @Suite(.serialized)
 class ID3FileTests: BinTestCase {
@@ -28,11 +29,12 @@ class ID3FileTests: BinTestCase {
 
         #expect(file[id3: .album] == "This Is Spinal Tap")
         #expect(file[id3: .artist] == "Spinal Tap")
-        #expect(file[id3: .comment] == """
-            And oh how they danced. The little children of Stonehenge.
-            Beneath the haunted moon.
-            For fear that daybreak might come too soon.
-            """
+        #expect(
+            file[id3: .comment] == """
+                And oh how they danced. The little children of Stonehenge.
+                Beneath the haunted moon.
+                For fear that daybreak might come too soon.
+                """
         )
         #expect(file[id3: .remixer] == "SPFKMetadata")
         #expect(file[id3: .title] == "Stonehenge")
