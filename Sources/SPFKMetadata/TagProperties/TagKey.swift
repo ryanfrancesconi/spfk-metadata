@@ -4,11 +4,13 @@
 import Foundation
 import SPFKBase
 
-/// TagKey is a predomiantly ID3 based label system which mostly follows TagLib's conventions.
-/// RIFF INFO tags are also merged into this collection where they differ from ID3. This does
-/// have duplicated values with `ID3FrameKey`.
+/// Canonical tag key enum with 100+ cases covering ID3v2, RIFF INFO, and custom TXXX frames.
 ///
-/// `TagProperties` has a customKeys dictionary for any keys found that aren't documented here.
+/// Serves as the unified key type for reading and writing audio metadata across all supported formats.
+/// Each case maps to both an ``ID3FrameKey`` (e.g., `TIT2`) and, where applicable, an ``InfoFrameKey``
+/// (e.g., `INAM`). Tags that don't match any case are stored as custom tags keyed by their raw string.
+///
+/// Supports lookup by ``taglibKey`` (uppercase), ``displayName`` (title-cased), ``id3Frame``, and ``infoFrame``.
 public enum TagKey: String, CaseIterable, Codable, Comparable, Sendable {
     public static func < (lhs: TagKey, rhs: TagKey) -> Bool {
         lhs.rawValue.standardCompare(with: rhs.rawValue)
@@ -112,6 +114,7 @@ public enum TagKey: String, CaseIterable, Codable, Comparable, Sendable {
 // MARK: - overrides
 
 extension TagKey {
+    /// All `TagKey` cases that map to the TXXX user-defined ID3 frame.
     public static let userDefinedKeys: [TagKey] =
         allCases.filter {
             $0.id3Frame == .userDefined
@@ -138,8 +141,8 @@ extension TagKey {
         }
     }
 
-    /// TagLib uses an all caps string for its properties. In most cases just uppercasing the rawValue is correct.
-    /// This switch allows for custom overrides where necessary.
+    /// The uppercase property key used by TagLib (e.g., `"TITLE"`, `"REPLAYGAIN_TRACK_GAIN"`).
+    /// Most cases are the uppercased `rawValue`; overrides handle non-standard key formats.
     public var taglibKey: String {
         switch self {
         case .replayGainTrackGain:          "REPLAYGAIN_TRACK_GAIN"

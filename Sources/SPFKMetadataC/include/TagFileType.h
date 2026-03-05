@@ -3,7 +3,10 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-// For swift interop
+/// String constants identifying audio file formats supported by TagLib.
+///
+/// Declared as `NS_TYPED_ENUM` so Swift imports them as a `TagFileTypeDef` struct
+/// with type-safe constants (e.g., `TagFileTypeDef.wave`).
 typedef NSString *const TagFileTypeDef NS_TYPED_ENUM;
 
 extern TagFileTypeDef kTagFileTypeAac;
@@ -16,10 +19,15 @@ extern TagFileTypeDef kTagFileTypeOpus;
 extern TagFileTypeDef kTagFileTypeVorbis;
 extern TagFileTypeDef kTagFileTypeWave;
 
+/// Utility for detecting audio file formats via TagLib header inspection.
 @interface TagFileType : NSObject
 
-/// Detect the file type based on the path. Will parse the header
-/// if there is no file extension
+/// Detects the audio file format from the file at the given path.
+///
+/// First checks the file extension; if no extension is present, opens the file and
+/// inspects the header bytes to determine the format.
+/// @param path Absolute path to the audio file.
+/// @return A `TagFileTypeDef` constant, or `nil` if the format is not recognized.
 + (nullable TagFileTypeDef)detectType:(NSString *)path;
 
 @end

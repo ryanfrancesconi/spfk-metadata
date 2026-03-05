@@ -6,9 +6,9 @@ import SPFKBase
 import SPFKMetadataC
 
 extension AudioMarkerDescriptionCollection {
-    /// ChapterParser: m4a, mp4, flac, ogg
-    /// MPEGChapterUtil: mp3
-    /// AudioMarkerUtil: aif, wav
+    /// Parses markers from the audio file at the given URL, dispatching to the appropriate parser
+    /// based on file type: `ChapterParser` (m4a, mp4, flac, ogg), `MPEGChapterUtil` (mp3),
+    /// or `AudioMarkerUtil` (aif, wav).
     public init(url: URL, fileType: AudioFileType? = nil) async throws {
         guard let fileType = fileType ?? AudioFileType(url: url) else {
             throw NSError(
@@ -37,12 +37,14 @@ extension AudioMarkerDescriptionCollection {
         }
     }
 
+    /// Creates a collection from Core Audio RIFF markers.
     public init(audioMarkers value: [AudioMarker]) {
         update(markerDescriptions: value.map {
             AudioMarkerDescription(riffMarker: $0)
         })
     }
 
+    /// Creates a collection from ID3 or AVFoundation chapter markers.
     public init(chapterMarkers value: [ChapterMarker]) {
         update(markerDescriptions: value.map {
             AudioMarkerDescription(chapterMarker: $0)

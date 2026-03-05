@@ -3,15 +3,17 @@
 import AVFoundation
 import Foundation
 
-/// AVFoundation is fine for parsing tags but they didn't implement usable ways to write them. (As of yet)
-/// If all you need is reading tags, then this is an example without any further dependencies.
-/// That said, the tradeoff of using AVFoundation is that it's less performant than TagLib.
-/// Since AV is async, that would likely account for some of the performance hit.
+/// Read-only tag reader using AVFoundation instead of TagLib.
 ///
-/// You can measure yourself in the tests: parseID3MP3 vs parseID3MP3_AV
+/// Parses ID3 metadata via `AVURLAsset` without any native library dependencies. Write support
+/// is not available through AVFoundation. Slower than ``TagProperties`` due to AVFoundation's
+/// asynchronous loading model. Useful as a fallback or when TagLib is not needed.
 public struct TagPropertiesAV: Hashable, Codable, Sendable {
+    /// The parsed tag data.
     public var data = TagData()
 
+    /// Reads ID3 tags from the audio file at the given URL using AVFoundation.
+    /// - Parameter url: URL to the audio file.
     public init(url: URL) async throws {
         let asset = AVURLAsset(url: url)
 

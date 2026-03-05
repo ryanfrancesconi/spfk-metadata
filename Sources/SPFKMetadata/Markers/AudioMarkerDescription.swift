@@ -5,8 +5,10 @@ import SPFKAudioBase
 import SPFKMetadataC
 import SPFKUtils
 
-/// A format agnostic audio marker to be used to store either
-/// RIFF marker data or Chapter markers
+/// Format-agnostic audio marker representing a point or region within an audio file.
+///
+/// Stores RIFF cue points, ID3 CHAP frames, or AVFoundation chapter markers in a unified
+/// `Codable`, `Sendable` type. Ordered by start time (then name) for sorted collections.
 public struct AudioMarkerDescription: Hashable, Sendable, Equatable, Comparable {
     public static func == (lhs: Self, rhs: Self) -> Bool {
         guard let id1 = lhs.markerID, let id2 = rhs.markerID else {
@@ -34,11 +36,22 @@ public struct AudioMarkerDescription: Hashable, Sendable, Equatable, Comparable 
         return lhs.startTime < rhs.startTime
     }
 
+    /// Display name of the marker.
     public var name: String?
+
+    /// Start position in seconds.
     public var startTime: TimeInterval
+
+    /// End position in seconds for region markers. `nil` for point markers.
     public var endTime: TimeInterval?
+
+    /// Sample rate of the source file (used for sample-accurate positioning).
     public var sampleRate: Double?
+
+    /// Unique ID within its collection, assigned automatically on insertion.
     public var markerID: Int?
+
+    /// Optional display color as a hex string (e.g., "#FF0000").
     public var hexColor: HexColor?
 
     public init(
@@ -57,6 +70,7 @@ public struct AudioMarkerDescription: Hashable, Sendable, Equatable, Comparable 
         self.hexColor = hexColor
     }
 
+    /// Creates a marker from a Core Audio RIFF cue point.
     public init(riffMarker marker: AudioMarker) {
         name = marker.name
         startTime = marker.time
@@ -64,6 +78,7 @@ public struct AudioMarkerDescription: Hashable, Sendable, Equatable, Comparable 
         markerID = Int(marker.markerID)
     }
 
+    /// Creates a marker from an ID3 or AVFoundation chapter marker.
     public init(chapterMarker marker: ChapterMarker) {
         name = marker.name
         startTime = marker.startTime

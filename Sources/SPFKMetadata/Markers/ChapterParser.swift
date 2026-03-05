@@ -5,14 +5,15 @@ import Foundation
 import SPFKBase
 import SPFKMetadataC
 
-/// ChapterParser, works with a variety of file types (m4a, mp4, flac, ogg).
-/// Doesn't work with RIFF or MP3. Parse only, write isn't supported.
+/// AVFoundation-based chapter parser for M4A, MP4, FLAC, and OGG files.
 ///
-/// In particular this is the MP4 chapter parser in SPFKMetadata.
-///
-/// See MPEGChapterUtil.mm for writing mp3 chapters.
-///
+/// Extracts timed metadata groups from `AVAsset` and converts them to `ChapterMarker` objects.
+/// Read-only — write support is not available through AVFoundation.
+/// Not applicable to RIFF (WAV/AIFF) or MP3 formats; use `AudioMarkerUtil` and `MPEGChapterUtil` instead.
 public enum ChapterParser {
+    /// Parses all chapters from the audio file at the given URL.
+    /// - Parameter url: URL to the audio file.
+    /// - Returns: An array of `ChapterMarker` objects with name, start time, and end time.
     public static func parse(url: URL) async throws -> [ChapterMarker] {
         guard url.exists else {
             throw NSError(description: "Failed to open \(url.path)")

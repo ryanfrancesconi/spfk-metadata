@@ -8,6 +8,14 @@ import SPFKMetadataC
 import SPFKUtils
 
 extension MetaAudioFileDescription {
+    /// Reads all metadata from the audio file at the given URL.
+    ///
+    /// Opens the file with `AVAudioFile` for format properties, then dispatches to either
+    /// `WaveFileC` (for WAV) or TagLib + AVFoundation (for all other formats) to populate
+    /// tags, markers, BEXT, iXML, and embedded artwork.
+    ///
+    /// - Parameter url: URL to the audio file to parse.
+    /// - Throws: If the file cannot be opened or its format is unsupported.
     public init(parsing url: URL) async throws {
         let audioFile = try AVAudioFile(forReading: url)
         audioFormat = AudioFormatProperties(audioFile: audioFile)
@@ -112,6 +120,13 @@ extension MetaAudioFileDescription {
 }
 
 extension MetaAudioFileDescription {
+    /// Writes all current metadata back to the file.
+    ///
+    /// For WAV files, all chunks (BEXT, iXML, INFO, ID3, markers, artwork) are rewritten together.
+    /// For other formats, tags are saved via TagLib and artwork is written separately if requested.
+    /// Finder tags and modification date are updated after saving.
+    ///
+    /// - Parameter imageNeedsSave: If `true`, embedded artwork will also be written (non-WAV only).
     public mutating func save(imageNeedsSave: Bool = false) throws {
         // Log.debug("Saving", url)
 
@@ -137,6 +152,8 @@ extension MetaAudioFileDescription {
         }
     }
 
+    /// Writes embedded artwork to the file via TagLib.
+    /// - Parameter pictureRef: The image data to embed.
     public func save(pictureRef: TagPictureRef) throws {
         guard TagPicture.write(pictureRef, path: url.path) else {
             throw NSError(description: "Failed to update image")

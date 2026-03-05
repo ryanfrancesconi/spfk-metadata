@@ -7,9 +7,11 @@ import SPFKAudioBase
 import SPFKBase
 import SPFKUtils
 
+/// Dictionary type mapping ``BEXTDescription/Key`` values to optional string representations.
 public typealias BEXTKeyDictionary = OrderedDictionary<BEXTDescription.Key, String?>
 
 extension BEXTDescription {
+    /// Enumeration of BEXT chunk field identifiers for dictionary-style access via ``BEXTDescription/subscript(key:)``.
     public enum Key: Sendable, CaseIterable {
         case originator
         case originatorReference
@@ -27,11 +29,13 @@ extension BEXTDescription {
         case version
         case codingHistory
 
+        /// Whether this field can be edited by the user. Version and coding history are read-only.
         public var isEditable: Bool {
             self != .version &&
                 self != .codingHistory
         }
 
+        /// Human-readable label for UI display.
         public var displayName: String {
             switch self {
             case .originator:               "Originator"
@@ -52,6 +56,7 @@ extension BEXTDescription {
             }
         }
 
+        /// Detailed description of the field per the EBU Tech 3285 specification.
         public var description: String {
             switch self {
             case .originator:
@@ -99,6 +104,7 @@ extension BEXTDescription {
 }
 
 extension BEXTDescription {
+    /// Gets or sets a BEXT field value by its ``Key``.
     public subscript(key: BEXTDescription.Key) -> String? {
         get {
             guard let value = dictionary[key] else { return nil }
@@ -110,6 +116,7 @@ extension BEXTDescription {
         }
     }
 
+    /// All BEXT fields as an ordered key-value dictionary. Setting this updates the underlying properties.
     public var dictionary: BEXTKeyDictionary {
         get { [
             .originator:            originator,
