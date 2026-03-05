@@ -1,4 +1,3 @@
-
 // Copyright Ryan Francesconi. All Rights Reserved. Revision History at https://github.com/ryanfrancesconi/spfk-metadata
 
 #import <Foundation/Foundation.h>
@@ -30,10 +29,8 @@ using namespace TagLib;
 }
 
 - (bool)load {
-    ID3v2::FrameList frameList = TagUtil::parseID3FrameList(_path, _fileType);
-
-    _dictionary = TagUtil::convertToDictionary(frameList);
-    return true;
+    _dictionary = TagUtil::parseID3ToDictionary(_path, _fileType);
+    return _dictionary.count > 0;
 }
 
 - (bool)save {

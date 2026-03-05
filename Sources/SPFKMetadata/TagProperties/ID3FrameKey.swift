@@ -5,7 +5,10 @@ import SPFKMetadataC
 
 // swiftformat:disable consecutiveSpaces
 
-/// Relatively complete collection of v2.4 ID3
+/// ID3v2.4 frame identifiers (80+ cases) mapping camelCase names to four-character frame IDs
+/// (e.g., `.title` → `"TIT2"`, `.artist` → `"TPE1"`).
+///
+/// Conforms to ``TagFrameKey`` for shared lookup and display name logic.
 public enum ID3FrameKey: String, TagFrameKey, Codable, Comparable {
     public static func < (lhs: ID3FrameKey, rhs: ID3FrameKey) -> Bool {
         lhs.rawValue < rhs.rawValue

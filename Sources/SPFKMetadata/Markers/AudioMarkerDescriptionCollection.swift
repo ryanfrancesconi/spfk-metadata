@@ -4,15 +4,23 @@ import Foundation
 import SPFKAudioBase
 import SPFKBase
 
+/// Ordered, ID-managed collection of ``AudioMarkerDescription`` values.
+///
+/// Maintains markers sorted by time, assigns sequential IDs on insert, and deduplicates
+/// by start time. Supports insert, remove, update, and sort operations.
 public struct AudioMarkerDescriptionCollection: Hashable, Sendable {
+    /// The sorted array of markers.
     public private(set) var markerDescriptions: [AudioMarkerDescription] = []
 
+    /// The number of markers in the collection.
     public var count: Int { markerDescriptions.count }
 
+    /// All assigned marker IDs in the collection.
     public var allIDs: [Int] {
         markerDescriptions.compactMap(\.markerID)
     }
 
+    /// The highest marker ID currently assigned, or `-1` if the collection is empty.
     public var highestID: Int {
         markerDescriptions.compactMap(\.markerID).sorted().last ?? -1
     }
@@ -41,6 +49,7 @@ extension AudioMarkerDescriptionCollection: Codable {
 }
 
 extension AudioMarkerDescriptionCollection {
+    /// Replaces all markers, sorting and assigning sequential IDs starting from 0.
     public mutating func update(markerDescriptions: [AudioMarkerDescription]) {
         var markerDescriptions = markerDescriptions.sorted()
 
@@ -55,6 +64,7 @@ extension AudioMarkerDescriptionCollection {
         self.markerDescriptions = markerDescriptions
     }
 
+    /// Inserts markers that don't duplicate an existing start time, assigning new IDs.
     public mutating func insert(markerDescriptions incoming: [AudioMarkerDescription]) throws {
         let incoming = incoming.filter { incomingMarker in
             !markerDescriptions.contains(where: { marker in
@@ -71,6 +81,7 @@ extension AudioMarkerDescriptionCollection {
         markerDescriptions.sort()
     }
 
+    /// Inserts a single marker with the next available ID and returns the updated marker.
     public mutating func insertAndIncrementID(markerDescription: AudioMarkerDescription) throws -> AudioMarkerDescription {
         let nextID = highestID + 1
         var markerDescription = markerDescription
@@ -91,6 +102,7 @@ extension AudioMarkerDescriptionCollection {
         return markerDescription
     }
 
+    /// Removes the marker with the given ID from the collection.
     public mutating func remove(markerID: Int) throws {
         for i in 0 ..< markerDescriptions.count where markerDescriptions[i].markerID == markerID {
             markerDescriptions.remove(at: i)
@@ -101,6 +113,7 @@ extension AudioMarkerDescriptionCollection {
         throw NSError(description: "Failed to find markerID \(markerID)")
     }
 
+    /// Replaces the marker with the given ID and re-sorts the collection.
     public mutating func update(markerID: Int, markerDescription: AudioMarkerDescription) throws {
         for i in 0 ..< markerDescriptions.count where markerDescriptions[i].markerID == markerID {
             markerDescriptions[i] = markerDescription

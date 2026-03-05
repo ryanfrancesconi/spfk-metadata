@@ -5,7 +5,11 @@ import SPFKMetadataC
 
 // swiftformat:disable consecutiveSpaces
 
-/// A fairly complete list of Wave INFO tags. Not all are currently written. Unmapped tags will be added to TagData.customTags
+/// RIFF INFO chunk tag identifiers (90+ cases) mapping camelCase names to four-character INFO keys
+/// (e.g., `.title` → `"INAM"`, `.artist` → `"IART"`).
+///
+/// Conforms to ``TagFrameKey`` for shared lookup and display name logic.
+/// Tags not mapped here are stored in ``TagData/customTags``.
 public enum InfoFrameKey: String, TagFrameKey, Codable, Comparable {
     public static func < (lhs: InfoFrameKey, rhs: InfoFrameKey) -> Bool {
         lhs.rawValue < rhs.rawValue

@@ -3,13 +3,19 @@
 import Foundation
 import SwiftExtensions
 
+/// Dictionary mapping ``TagKey`` enum cases to their string values.
 public typealias TagKeyDictionary = [TagKey: String]
 
+/// Shared interface for types that store audio metadata as ``TagKeyDictionary`` and custom tag dictionaries.
+///
+/// Provides default implementations for tag lookup, mutation, merging, and format-specific
+/// setters (`set(taglibKey:value:)`, `set(id3Frame:value:)`, `set(infoFrame:value:)`).
+/// Adopted by ``TagData``, ``TagProperties``, and ``TagPropertiesAV``.
 public protocol TagPropertiesContainerModel: CustomStringConvertible {
-    /// Official ID3 or conventional tags found in this file
+    /// Standard tags keyed by ``TagKey`` (ID3v2, RIFF INFO, and other recognized formats).
     var tags: TagKeyDictionary { get set }
 
-    /// Unoffical, other custom tags found in this file
+    /// Custom or unrecognized tags keyed by their raw string identifier.
     var customTags: [String: String] { get set }
 }
 
@@ -21,10 +27,12 @@ extension TagPropertiesContainerModel {
         }
     }
 
+    /// Returns `true` if a tag matching the given key's ID3 frame exists.
     public func contains(key: TagKey) -> Bool {
         tags.contains { $0.key.id3Frame == key.id3Frame }
     }
 
+    /// Returns `true` if all of the given tag keys are present.
     public func contains(keys: [TagKey]) -> Bool {
         for key in keys {
             guard contains(key: key) else { return false }
@@ -60,35 +68,43 @@ extension TagPropertiesContainerModel {
 }
 
 extension TagPropertiesContainerModel {
+    /// Returns the value of a standard tag, or `nil` if not present.
     public func tag(for tagKey: TagKey) -> String? {
         tags[tagKey]
     }
 
+    /// Returns the value of a custom tag by its raw string key, or `nil` if not present.
     public func customTag(for key: String) -> String? {
         customTags[key]
     }
 
+    /// Sets a standard tag value. Pass `nil` to remove the tag.
     public mutating func set(tag key: TagKey, value: String?) {
         tags[key] = value
     }
 
+    /// Sets a custom tag value by its raw string key. Pass `nil` to remove it.
     public mutating func set(customTag key: String, value: String?) {
         customTags[key] = value
     }
 
+    /// Removes a single standard tag.
     public mutating func remove(tag key: TagKey) {
         tags.removeValue(forKey: key)
     }
 
+    /// Removes a single custom tag by its raw string key.
     public mutating func remove(customTag key: String) {
         customTags.removeValue(forKey: key)
     }
 
+    /// Removes all standard and custom tags.
     public mutating func removeAll() {
         tags.removeAll()
         customTags.removeAll()
     }
 
+    /// Merges an array of tag dictionaries, keeping the first value encountered for duplicate keys.
     public mutating func merging(tags array: [TagKeyDictionary]) {
         var mergedTags: TagKeyDictionary = .init()
 
@@ -100,6 +116,7 @@ extension TagPropertiesContainerModel {
         tags = mergedTags
     }
 
+    /// Merges an array of custom tag dictionaries, keeping the first value encountered for duplicate keys.
     public mutating func merging(customTags array: [[String: String]]) {
         var mergedCustomTags: [String: String] = .init()
 
@@ -112,7 +129,9 @@ extension TagPropertiesContainerModel {
 }
 
 extension TagPropertiesContainerModel {
-    /// "TITLE": "Hello"
+    /// Sets a tag by its TagLib property key (e.g., "TITLE").
+    /// Routes to ``tags`` if a matching ``TagKey`` exists, otherwise to ``customTags``.
+    /// Control characters are stripped and the value is trimmed.
     public mutating func set(taglibKey key: String, value: String) {
         let value = value.removing(.controlCharacters).trimmed
 
@@ -124,7 +143,8 @@ extension TagPropertiesContainerModel {
         tags[frame] = value
     }
 
-    /// .title = Hello
+    /// Sets a tag by its ``ID3FrameKey``. User-defined frames (TXXX) are routed to ``customTags``.
+    /// Control characters are stripped and the value is trimmed.
     public mutating func set(id3Frame key: ID3FrameKey, value: String) {
         let value = value.removing(.controlCharacters).trimmed
 
@@ -141,6 +161,8 @@ extension TagPropertiesContainerModel {
         tags[frame] = value
     }
 
+    /// Sets a tag by its ``InfoFrameKey``. Routes to ``tags`` if a matching ``TagKey`` exists.
+    /// Control characters are stripped and the value is trimmed.
     public mutating func set(infoFrame key: InfoFrameKey, value: String) {
         let value = value.removing(.controlCharacters).trimmed
 

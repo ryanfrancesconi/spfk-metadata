@@ -27,6 +27,7 @@ using namespace std;
     if (SF_FALSE == sf_command(infile, SFC_GET_BROADCAST_INFO, &bext, sizeof(bext))) {
         cerr << "Failed to read BEXT from file: " <<
             [path cStringUsingEncoding:NSUTF8StringEncoding] << endl;
+        sf_close(infile);
         return nil;
     }
 
@@ -71,10 +72,8 @@ using namespace std;
     _timeReferenceInSeconds = double(self.timeReference) / self.sampleRate;
 
     if (_version >= 1) {
-        char hexid[2] = {};
-
         // Calculate the actual size of the array [64]
-        int length = MAX(64, sizeof(bext.umid) / sizeof(bext.umid[0]));
+        int length = MIN(64, sizeof(bext.umid) / sizeof(bext.umid[0]));
 
         std::string buffer;
 
@@ -168,6 +167,8 @@ using namespace std;
 
     if (SF_FALSE == sf_command(outfile, SFC_SET_BROADCAST_INFO, &bext, sizeof(bext))) {
         cerr << "Failed to write BEXT to file " << outpath << endl;
+        sf_close(infile);
+        sf_close(outfile);
         return false;
     }
 
@@ -195,9 +196,14 @@ using namespace std;
         return false;
     }
 
+    error = nil;
     BOOL success = [fileManager moveItemAtURL:outputURL
                                         toURL:inputURL
-                                        error:nil];
+                                        error:&error];
+
+    if (!success) {
+        NSLog(@"Error moving temp file: %@", error.localizedDescription);
+    }
 
     return success;
 }

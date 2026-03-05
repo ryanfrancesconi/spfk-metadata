@@ -2,6 +2,7 @@
 
 import Foundation
 
+/// Logical grouping of ``TagKey`` values for organizing tag display in UI (e.g., common, music, loudness).
 public enum TagSet: CaseIterable, Hashable, Sendable {
     case common
     case music
@@ -10,6 +11,7 @@ public enum TagSet: CaseIterable, Hashable, Sendable {
     case utility
     case other
 
+    /// Human-readable section title for UI display.
     public var title: String {
         switch self {
         case .common: "Common Tags"
@@ -21,6 +23,7 @@ public enum TagSet: CaseIterable, Hashable, Sendable {
         }
     }
 
+    /// The ``TagKey`` values belonging to this set.
     public var keys: [TagKey] {
         switch self {
         case .other:

@@ -6,7 +6,12 @@ import OrderedCollections
 import SPFKAudioBase
 import SPFKMetadataC
 
-/// BEXT Wave Chunk - BroadcastExtension. This is a wrapper to BEXTDescriptionC for swift
+/// Broadcast Wave Extension (BWF/BEXT) chunk metadata for WAV files.
+///
+/// Wraps the EBU Tech 3285 BEXT data in a Swift-native type with support for v0, v1 (UMID),
+/// and v2 (loudness) fields. Converts to and from `BEXTDescriptionC` for C bridge I/O.
+/// Use ``validated()`` to sanitize placeholder values before display, and ``write(bextDescription:to:)``
+/// to persist changes via libsndfile.
 public struct BEXTDescription: Hashable, Sendable {
     /// BWF Version 0, 1, or 2. This will be set based on the content provided.
     public var version: Int16 = 0
@@ -119,14 +124,17 @@ public struct BEXTDescription: Hashable, Sendable {
         return RealTimeDomain.string(seconds: timeReferenceInSeconds, showHours: .enable)
     }
 
-    /// (Note: Added in version 2.)
+    /// EBU R128 loudness values (integrated, range, true peak, momentary, short-term).
+    /// Only populated when ``version`` >= 2.
     public var loudnessDescription: LoudnessDescription = .init()
 
-    /// Enables time convenience values via setting sampleRate
+    /// Sample rate used to convert ``timeReference`` (samples) to seconds.
+    /// Not part of the BEXT chunk itself — set externally from the audio format.
     public var sampleRate: Double?
 
     public init() {}
 
+    /// Reads the BEXT chunk from a WAV file. Returns `nil` if the file has no BEXT data.
     public init?(url: URL) {
         guard let info = BEXTDescriptionC(path: url.path) else {
             return nil
@@ -135,6 +143,7 @@ public struct BEXTDescription: Hashable, Sendable {
         self = BEXTDescription(info: info)
     }
 
+    /// Creates a `BEXTDescription` from the C bridge object, populating version-appropriate fields.
     public init(info: BEXTDescriptionC) {
         version = info.version
         codingHistory = info.codingHistory
@@ -162,10 +171,12 @@ public struct BEXTDescription: Hashable, Sendable {
         }
     }
 
+    /// Creates a `BEXTDescription` from a key-value dictionary of BEXT fields.
     public init(dictionary: BEXTKeyDictionary) {
         self.dictionary = dictionary
     }
 
+    /// Returns a copy with placeholder values sanitized (all-zero UMID, dates, and time references cleared).
     public func validated() -> BEXTDescription {
         var bext = self
 
@@ -181,11 +192,10 @@ public struct BEXTDescription: Hashable, Sendable {
             bext.originationTime = ""
         }
 
-        if let value = timeReferenceLow, value == 0 {
+        // Only clear time reference if both low and high are zero.
+        // A low of 0 with non-zero high is a valid 64-bit time value.
+        if bext.timeReferenceLow == 0, bext.timeReferenceHigh == 0 {
             bext.timeReferenceLow = nil
-        }
-
-        if let value = timeReferenceHigh, value == 0 {
             bext.timeReferenceHigh = nil
         }
 
@@ -196,7 +206,8 @@ public struct BEXTDescription: Hashable, Sendable {
 }
 
 extension BEXTDescription {
-    /// Returns the objc representation for C portability
+    /// Converts to the C bridge representation for writing via libsndfile.
+    /// The BWF version is automatically upgraded when v1 or v2 fields are present.
     public var bextDescriptionC: BEXTDescriptionC {
         let info = BEXTDescriptionC()
 
@@ -206,7 +217,8 @@ extension BEXTDescription {
             }
         }
 
-        info.version = 0
+        // Preserve the original version, only upgrade based on content
+        info.version = version
 
         if let codingHistory {
             info.codingHistory = codingHistory
@@ -263,11 +275,11 @@ extension BEXTDescription {
         }
 
         if let timeReferenceLow {
-            info.timeReferenceLow = UInt32(timeReferenceLow)
+            info.timeReferenceLow = UInt32(clamping: timeReferenceLow)
         }
 
         if let timeReferenceHigh {
-            info.timeReferenceHigh = UInt32(timeReferenceHigh)
+            info.timeReferenceHigh = UInt32(clamping: timeReferenceHigh)
         }
 
         return info

@@ -15,7 +15,46 @@ No single framework handles all audio metadata scenarios in Swift. AVFoundation 
 - iOS 15+
 - Swift 6.2, C++20
 
-## Modules
+## Usage
+
+```swift
+import SPFKMetadata
+
+// Parse all metadata from an audio file
+var description = try await MetaAudioFileDescription(parsing: url)
+
+// Read tags
+let title = description.tag(for: .title)
+let artist = description.tag(for: .artist)
+let bpm = description.tempo
+
+// Write tags
+description.set(tag: .title, value: "New Title")
+description.set(tag: .genre, value: "Electronic")
+description.set(customTag: "MY_CUSTOM_TAG", value: "custom value")
+try description.save()
+
+// Read BEXT chunk (WAV only)
+if let bext = description.bextDescription {
+    print(bext[.originator])
+    print(bext.timeReferenceString)
+    print(bext.loudnessDescription)
+}
+
+// Read markers
+for marker in description.markerCollection.markerDescriptions {
+    print("\(marker.name ?? "Untitled") @ \(marker.startTime)s")
+}
+
+// Copy tags between files
+try TagProperties.copyTags(from: sourceURL, to: destinationURL)
+```
+
+## API Reference
+
+### MetaAudioFileDescription
+
+Top-level struct that orchestrates parsing and saving all metadata for an audio file. Aggregates tag properties, audio format info, BEXT data, iXML, markers, and embedded artwork into a single Codable, Sendable type. Handles format-specific I/O dispatch (WAV files use the WaveFileC bridge; other formats use TagLib and AVFoundation).
 
 ### Tag Properties
 
@@ -36,10 +75,11 @@ Types for audio format metadata, file type detection, and broadcast wave support
 
 - **AudioFormatProperties** — Struct holding channel count, sample rate, bit depth, bit rate, and duration with cached human-readable description strings.
 - **AudioFileType+TagType** — Bidirectional mapping between `AudioFileType` and `TagFileTypeDef`, with file extension and URL-based detection.
-- **BEXTDescription** — Broadcast Wave Extension (BWF) chunk wrapper supporting v0/v1/v2 fields including originator, coding history, UMID, loudness values, and 64-bit time reference (hi/lo word assembly). Includes `validated()` for clearing zero-value fields and conversion to/from the C bridge type.
+- **BEXTDescription** — Broadcast Wave Extension (BWF) chunk wrapper supporting v0/v1/v2 fields including originator, coding history, UMID, loudness values (via `LoudnessDescription` from spfk-audio-base), and 64-bit time reference (hi/lo word assembly). Includes `validated()` for sanitizing empty fields and conversion to/from the C bridge type.
 - **BEXTDescription.Key** — Enum of BEXT field keys with `OrderedDictionary` subscript for dictionary-style get/set access to all BEXT fields.
-- **ImageDescription** — Embedded artwork container with CGImage, thumbnail support, and Codable conformance (deliberately excludes CGImage from serialization).
+- **ImageDescription** — Embedded artwork container with CGImage, thumbnail generation, and Codable conformance (deliberately excludes full CGImage from serialization, storing only thumbnail data).
 - **TagPicture+** — Extension for reading embedded artwork from files via TagLib.
+- **WaveFileC+** — Swift convenience accessors on `WaveFileC` for `bextDescription`, INFO frame subscripts, and ID3 frame subscripts.
 
 ### Markers
 
@@ -60,6 +100,7 @@ Low-level bridge layer exposing TagLib and libsndfile functionality to Swift thr
 | **TagFile** | File handle wrapper for TagLib with format-specific tag access |
 | **ID3File** | ID3v2-specific file access with frame-level read/write and XMP support |
 | **TagPicture** | Embedded artwork extraction and embedding via TagLib |
+| **TagPictureRef** | CGImageRef container for artwork with UTType, managing Core Graphics reference counting across the Swift/ObjC boundary |
 | **WaveFileC** | RIFF WAV file operations via libsndfile (INFO chunks, markers, BEXT) |
 | **BEXTDescriptionC** | C-compatible BEXT chunk struct for bridge interop |
 | **AudioMarkerUtil** | RIFF audio marker (cue point) parsing for WAV and AIFF |

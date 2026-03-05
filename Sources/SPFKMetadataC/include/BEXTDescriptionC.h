@@ -4,6 +4,10 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+/// C-compatible Broadcast Wave Extension (BEXT) chunk representation for interop with libsndfile.
+///
+/// Wraps EBU Tech 3285 BEXT fields as Objective-C properties. Used as the bridge type
+/// between the Swift `BEXTDescription` struct and the C libsndfile API.
 @interface BEXTDescriptionC : NSObject
 
 /// BWF Version 0, 1, or 2
@@ -77,9 +81,16 @@ NS_ASSUME_NONNULL_BEGIN
 @property (readonly) double sampleRate;
 
 - (instancetype)init;
+
+/// Reads the BEXT chunk from the WAV file at the given path.
+/// @param path Absolute path to the WAV file.
+/// @return `nil` if the file has no BEXT data or cannot be opened.
 - (nullable instancetype)initWithPath:(nonnull NSString *)path;
 
-/// Set the Broadcast Extension Chunk for WAV (and related) files.
+/// Writes a BEXT chunk to the WAV file at the given path via libsndfile.
+/// @param info The BEXT data to write.
+/// @param path Absolute path to the WAV file.
+/// @return `true` if the write succeeded.
 + (bool)write:(BEXTDescriptionC *)info
          path:(nonnull NSString *)path;
 

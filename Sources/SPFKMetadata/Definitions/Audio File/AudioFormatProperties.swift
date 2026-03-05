@@ -5,18 +5,36 @@ import Foundation
 import SPFKAudioBase
 import SPFKMetadataC
 
+/// Audio stream format properties (channel count, sample rate, bit depth, bit rate, duration)
+/// with pre-formatted human-readable description strings for UI display.
 public struct AudioFormatProperties: Hashable, Sendable {
+    /// Number of audio channels (1 = Mono, 2 = Stereo, etc.).
     public private(set) var channelCount: AVAudioChannelCount
+
+    /// Sample rate in Hz (e.g., 44100, 48000).
     public private(set) var sampleRate: Double
+
+    /// Bit depth per channel, if available (e.g., 16, 24, 32). `nil` for compressed formats.
     public private(set) var bitsPerChannel: Int?
+
+    /// Bit rate in kbit/s for compressed formats (e.g., 320 for MP3). `nil` for uncompressed.
     public private(set) var bitRate: Int32?
+
+    /// Duration of the audio file in seconds.
     public private(set) var duration: TimeInterval = 0
 
     // MARK: cached descriptions
 
+    /// Pre-formatted duration string (e.g., "3:42.150").
     public private(set) var durationDescription: String = ""
+
+    /// Combined format summary (e.g., "48 kHz, 24 bit, Stereo").
     public private(set) var formatDescription: String = ""
+
+    /// Channel layout label (e.g., "Mono", "Stereo", "6 Channel").
     public private(set) var channelsDescription: String = ""
+
+    /// Bit rate label (e.g., "320 kbit/s"). Empty for uncompressed formats.
     public private(set) var bitRateDescription: String = ""
 
     public init(
@@ -35,6 +53,7 @@ public struct AudioFormatProperties: Hashable, Sendable {
         initialize()
     }
 
+    /// Creates format properties by reading from an `AVAudioFile`.
     public init(audioFile: AVAudioFile) {
         channelCount = audioFile.fileFormat.channelCount
         sampleRate = audioFile.fileFormat.sampleRate
@@ -45,14 +64,14 @@ public struct AudioFormatProperties: Hashable, Sendable {
         initialize()
     }
 
+    /// Updates the bit rate and regenerates the cached description strings.
     public mutating func update(bitRate: Int32) {
         self.bitRate = bitRate
         updateBitRateDescription()
         updateFormatDescription()
     }
 
-
-
+    /// Creates format properties from the C bridge struct returned by TagLib.
     public init(cObject: TagAudioPropertiesC) {
         channelCount = AVAudioChannelCount(cObject.channelCount)
         sampleRate = cObject.sampleRate
@@ -110,9 +129,7 @@ public struct AudioFormatProperties: Hashable, Sendable {
             out += bitsPerChannel > 0 ? ", \(bitsPerChannel) bit" : ""
         }
 
-        if let bitRate, bitRate > 0 {
-            bitRateDescription = "\(bitRate) kbit/s"
-
+        if bitRate != nil, !bitRateDescription.isEmpty {
             out += ", \(bitRateDescription)"
         }
 

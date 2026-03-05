@@ -2,18 +2,22 @@ import Foundation
 import SPFKBase
 import SPFKUtils
 
-/// Thin wrapper to provide a keyed dictionary of known tags: TagKeyDictionary and
-/// an overflow customTags value that unmatched keys found will be placed into.
+/// Storage container for audio metadata tags split into two dictionaries:
+/// known tags (keyed by ``TagKey``) and custom/unrecognized tags (keyed by raw string).
+///
+/// Tags that match a known ``TagKey`` are stored in ``tags``; everything else
+/// (TXXX user-defined frames, unrecognized INFO tags) goes into ``customTags``.
+/// Supports merging multiple `TagData` instances via ``DictionaryMergeScheme``.
 public struct TagData: TagPropertiesContainerModel, Hashable, Codable, Sendable {
+    /// Whether both tag dictionaries are empty.
     public var isEmpty: Bool {
         tags.isEmpty && customTags.isEmpty
     }
 
-    /// Known ID3 tags
+    /// Standard tags keyed by ``TagKey`` (covers ID3v2, RIFF INFO, and other recognized formats).
     public var tags: TagKeyDictionary
 
-    /// TXXX, Unoffical, uncommon tags found in this file
-    /// Any tags that didn't match to a `TagKey` value
+    /// User-defined (TXXX) and unrecognized tags that didn't match any ``TagKey`` case.
     public var customTags: [String: String]
 
     public init(tags: TagKeyDictionary = .init(), customTags: [String: String] = .init()) {
@@ -21,11 +25,13 @@ public struct TagData: TagPropertiesContainerModel, Hashable, Codable, Sendable 
         self.customTags = customTags
     }
 
+    /// Removes all standard and custom tags.
     public mutating func removeAll() {
         tags.removeAll()
         customTags.removeAll()
     }
 
+    /// Removes all keys present in `data` from this instance's tag dictionaries.
     public mutating func remove(data: TagData) {
         for key in data.tags.keys {
             tags.removeValue(forKey: key)
@@ -40,7 +46,10 @@ public struct TagData: TagPropertiesContainerModel, Hashable, Codable, Sendable 
 extension TagData: Serializable {}
 
 extension [TagData] {
-    /// Combines multiple TagData instances into one using the passed in merge scheme
+    /// Combines multiple `TagData` instances into one using the specified merge scheme.
+    ///
+    /// - Parameter scheme: `.preserve` keeps existing values, `.replace` overwrites with newer,
+    ///   `.combine` concatenates values with a comma separator.
     public func merge(scheme: DictionaryMergeScheme = .preserve) -> TagData {
         let allTags = compactMap(\.tags)
         let allCustomTags = compactMap(\.customTags)

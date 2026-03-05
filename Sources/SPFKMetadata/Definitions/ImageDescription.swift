@@ -3,12 +3,25 @@ import Foundation
 import SPFKMetadataC
 import SPFKUtils
 
+/// Container for embedded audio file artwork with thumbnail generation.
+///
+/// Holds the full-resolution `CGImage` (excluded from `Codable` to avoid database bloat)
+/// and a small PNG thumbnail for serialization. Converts to/from `TagPictureRef` for TagLib I/O.
 public struct ImageDescription: Sendable, Hashable {
+    /// The full-resolution embedded artwork. Not encoded — use ``thumbnailImage`` for persistence.
     public var cgImage: CGImage?
+
+    /// A downscaled thumbnail of the artwork, created from ``thumbnailData``.
     public private(set) var thumbnailImage: CGImage?
+
+    /// PNG data of the thumbnail image, suitable for database storage.
     public private(set) var thumbnailData: Data?
+
+    /// Optional text description of the image (e.g., "Front Cover").
     public var description: String?
 
+    /// Converts to/from `TagPictureRef` for reading and writing embedded artwork via TagLib.
+    /// On get, selects JPEG or PNG UTType based on the image's alpha channel.
     public var pictureRef: TagPictureRef? {
         get {
             guard let cgImage else {
@@ -19,6 +32,8 @@ public struct ImageDescription: Sendable, Hashable {
 
             if let value = cgImage.utType as? String, let utValue = UTType(value) {
                 utType = utValue
+            } else if cgImage.alphaInfo != .none && cgImage.alphaInfo != .noneSkipLast && cgImage.alphaInfo != .noneSkipFirst {
+                utType = .png
             }
 
             let pictureRef = TagPictureRef(
@@ -42,10 +57,12 @@ public struct ImageDescription: Sendable, Hashable {
         }
     }
 
+    /// Indicates whether the artwork has been modified and needs to be written back to the file.
     public private(set) var needsSave: Bool = false
 
     public init() {}
 
+    /// Generates a small PNG thumbnail from the current ``cgImage`` and stores it in ``thumbnailData``.
     public mutating func createThumbnail() async {
         guard let cgImage else {
             return
@@ -55,6 +72,7 @@ public struct ImageDescription: Sendable, Hashable {
         updateThumbnail()
     }
 
+    /// Recreates ``thumbnailImage`` from the current ``thumbnailData``.
     public mutating func updateThumbnail() {
         if let thumbnailData {
             thumbnailImage = try? CGImage.create(from: thumbnailData)
@@ -95,6 +113,8 @@ extension ImageDescription: Codable {
 }
 
 extension ImageDescription {
+    /// Creates a PNG thumbnail of the given image, scaled to the specified size.
+    /// Returns `nil` if the source image is too small (< 64px in either dimension).
     public static func createThumbnail(cgImage: CGImage, size: CGSize = .init(equal: 32)) async -> Data? {
         let task = Task<Data?, Error>(priority: .userInitiated) {
             guard cgImage.width > 64, cgImage.height > 64,
@@ -107,6 +127,7 @@ extension ImageDescription {
         return try? await task.value
     }
 
+    /// Replaces the current artwork and regenerates the thumbnail.
     public mutating func update(cgImage: CGImage) async {
         self.cgImage = cgImage
         await createThumbnail()
