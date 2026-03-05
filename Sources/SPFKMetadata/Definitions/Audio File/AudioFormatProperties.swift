@@ -110,9 +110,7 @@ public struct AudioFormatProperties: Hashable, Sendable {
             out += bitsPerChannel > 0 ? ", \(bitsPerChannel) bit" : ""
         }
 
-        if let bitRate, bitRate > 0 {
-            bitRateDescription = "\(bitRate) kbit/s"
-
+        if bitRate != nil, !bitRateDescription.isEmpty {
             out += ", \(bitRateDescription)"
         }
 

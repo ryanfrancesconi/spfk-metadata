@@ -148,23 +148,23 @@ using namespace TagLib;
 
     // implementation for strip() is specific to each type of file
 
+    bool stripped = false;
+
     if ([fileType isEqualToString:kTagFileTypeWave]) {
-        RIFF::WAV::File *f = dynamic_cast<RIFF::WAV::File *>(fileRef.file());
-        f->strip();
-        //
+        auto *f = dynamic_cast<RIFF::WAV::File *>(fileRef.file());
+        if (f) { f->strip(); stripped = true; }
     } else if ([fileType isEqualToString:kTagFileTypeM4a] || [fileType isEqualToString:kTagFileTypeMp4]) {
-        MP4::File *f = dynamic_cast<MP4::File *>(fileRef.file());
-        f->strip();
-        //
+        auto *f = dynamic_cast<MP4::File *>(fileRef.file());
+        if (f) { f->strip(); stripped = true; }
     } else if ([fileType isEqualToString:kTagFileTypeMp3]) {
-        MPEG::File *f = dynamic_cast<MPEG::File *>(fileRef.file());
-        f->strip();
-        //
+        auto *f = dynamic_cast<MPEG::File *>(fileRef.file());
+        if (f) { f->strip(); stripped = true; }
     } else if ([fileType isEqualToString:kTagFileTypeFlac]) {
-        FLAC::File *f = dynamic_cast<FLAC::File *>(fileRef.file());
-        f->strip();
-        //
-    } else {
+        auto *f = dynamic_cast<FLAC::File *>(fileRef.file());
+        if (f) { f->strip(); stripped = true; }
+    }
+
+    if (!stripped) {
         cout << "Resetting property map for " << path.UTF8String << endl;
         fileRef.setProperties(PropertyMap());
     }

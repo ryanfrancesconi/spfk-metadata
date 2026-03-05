@@ -27,7 +27,8 @@ public struct AudioMarkerDescription: Hashable, Sendable, Equatable, Comparable 
                 return name1.standardCompare(with: name2)
             }
 
-            return true
+            // If either name is nil, they can't be ordered by name
+            return false
         }
 
         return lhs.startTime < rhs.startTime

@@ -6,6 +6,13 @@
 #import "TagPictureRef.h"
 
 @implementation TagPictureRef
+- (void)dealloc {
+    if (_cgImage) {
+        CGImageRelease(_cgImage);
+        _cgImage = NULL;
+    }
+}
+
 - (nonnull id)initWithImage:(CGImageRef)cgImage
                      utType:(UTType *)utType
          pictureDescription:(NSString *)pictureDescription
@@ -13,7 +20,10 @@
 {
     self = [super init];
 
-    _cgImage = cgImage;
+    // Retain because caller retains its own reference.
+    // CGImageCreate returns +1 but when called from Swift,
+    // the caller's CGImage is still alive and owns its reference.
+    _cgImage = CGImageRetain(cgImage);
     _pictureDescription = pictureDescription;
     _utType = utType;
     _pictureType = pictureType;

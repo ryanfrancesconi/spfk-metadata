@@ -69,7 +69,7 @@ using namespace TagLib;
         _audioPropertiesC.channelCount = audioProperties->channels();
     }
 
-    NSURL *url = [NSURL URLWithString:_path];
+    NSURL *url = [NSURL fileURLWithPath:_path];
     _markers = [AudioMarkerUtil getMarkers:url];
 
     if (waveFile->hasBEXTTag()) {
@@ -154,7 +154,7 @@ using namespace TagLib;
 
     // write markers
     if (_markers.count > 0) {
-        NSURL *url = [NSURL URLWithString:_path];
+        NSURL *url = [NSURL fileURLWithPath:_path];
         [AudioMarkerUtil update:url markers:_markers];
     }
 }

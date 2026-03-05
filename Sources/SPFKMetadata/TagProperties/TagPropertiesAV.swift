@@ -9,7 +9,7 @@ import Foundation
 /// Since AV is async, that would likely account for some of the performance hit.
 ///
 /// You can measure yourself in the tests: parseID3MP3 vs parseID3MP3_AV
-public struct TagPropertiesAV: Hashable, Codable {
+public struct TagPropertiesAV: Hashable, Codable, Sendable {
     public var data = TagData()
 
     public init(url: URL) async throws {

@@ -38,7 +38,9 @@ namespace TagUtil {
             // custom frame handling
 
             if (frameID == "TXXX") {
-                ID3v2::UserTextIdentificationFrame *txxxFrame = dynamic_cast<ID3v2::UserTextIdentificationFrame *>(*it);
+                auto *txxxFrame = dynamic_cast<ID3v2::UserTextIdentificationFrame *>(*it);
+
+                if (!txxxFrame) { continue; }
 
                 // in taglib fashion, we'll call the the description the ID
                 frameID = txxxFrame->description().data(String::UTF8);
@@ -46,10 +48,10 @@ namespace TagUtil {
                 // the fieldList() has all text items, so the description() is first and the actual value is last
                 value = txxxFrame->fieldList().back();
 
-                // cout << txxxFrame->description() << " = " << txxxFrame->fieldList().back() << endl;
             } else if (frameID == "PRIV") {
-                ID3v2::PrivateFrame *privFrame = dynamic_cast<ID3v2::PrivateFrame *>(*it);
-                cout << "owner() = " << privFrame->owner() << endl;
+                auto *privFrame = dynamic_cast<ID3v2::PrivateFrame *>(*it);
+
+                if (!privFrame) { continue; }
 
                 value = privFrame->data();
             }
@@ -122,12 +124,14 @@ namespace TagUtil {
         return dict;
     }
 
-    static ID3v2::FrameList
-    parseID3FrameList(NSString *path, NSString *fileType) {
+    /// Parse ID3v2 frames and return them as an NSDictionary.
+    /// The FileRef is kept alive during conversion to avoid dangling pointers.
+    static NSMutableDictionary *
+    parseID3ToDictionary(NSString *path, NSString *fileType) {
         FileRef fileRef(path.UTF8String);
 
         if (fileRef.isNull()) {
-            return ID3v2::FrameList();
+            return [[NSMutableDictionary alloc] init];
         }
 
         ID3v2::Tag *tag = nullptr;
@@ -135,35 +139,36 @@ namespace TagUtil {
         if ([fileType isEqualToString:kTagFileTypeWave]) {
             auto *f = dynamic_cast<RIFF::WAV::File *>(fileRef.file());
 
-            if (f->hasID3v2Tag()) {
+            if (f && f->hasID3v2Tag()) {
                 tag = f->ID3v2Tag();
             }
         } else if ([fileType isEqualToString:kTagFileTypeAiff]) {
             auto *f = dynamic_cast<RIFF::AIFF::File *>(fileRef.file());
 
-            if (f->hasID3v2Tag()) {
+            if (f && f->hasID3v2Tag()) {
                 tag = f->tag();
             }
         } else if ([fileType isEqualToString:kTagFileTypeMp3]) {
             auto *f = dynamic_cast<MPEG::File *>(fileRef.file());
 
-            if (f->hasID3v2Tag()) {
+            if (f && f->hasID3v2Tag()) {
                 tag = f->ID3v2Tag();
             }
         } else if ([fileType isEqualToString:kTagFileTypeFlac]) {
             auto *f = dynamic_cast<FLAC::File *>(fileRef.file());
 
-            if (f->hasID3v2Tag()) {
+            if (f && f->hasID3v2Tag()) {
                 tag = f->ID3v2Tag();
             }
         }
 
         if (tag == nullptr) {
-            cout << "Error: No ID3v2 tag found in" << path.UTF8String << endl;
-            return ID3v2::FrameList();
+            cout << "Error: No ID3v2 tag found in " << path.UTF8String << endl;
+            return [[NSMutableDictionary alloc] init];
         }
 
-        return tag->frameList();
+        // Convert while FileRef is still alive to avoid dangling pointers
+        return convertToDictionary(tag->frameList());
     }
 }
 

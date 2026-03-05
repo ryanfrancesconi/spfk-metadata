@@ -181,11 +181,10 @@ public struct BEXTDescription: Hashable, Sendable {
             bext.originationTime = ""
         }
 
-        if let value = timeReferenceLow, value == 0 {
+        // Only clear time reference if both low and high are zero.
+        // A low of 0 with non-zero high is a valid 64-bit time value.
+        if bext.timeReferenceLow == 0, bext.timeReferenceHigh == 0 {
             bext.timeReferenceLow = nil
-        }
-
-        if let value = timeReferenceHigh, value == 0 {
             bext.timeReferenceHigh = nil
         }
 
@@ -206,7 +205,8 @@ extension BEXTDescription {
             }
         }
 
-        info.version = 0
+        // Preserve the original version, only upgrade based on content
+        info.version = version
 
         if let codingHistory {
             info.codingHistory = codingHistory
@@ -263,11 +263,11 @@ extension BEXTDescription {
         }
 
         if let timeReferenceLow {
-            info.timeReferenceLow = UInt32(timeReferenceLow)
+            info.timeReferenceLow = UInt32(clamping: timeReferenceLow)
         }
 
         if let timeReferenceHigh {
-            info.timeReferenceHigh = UInt32(timeReferenceHigh)
+            info.timeReferenceHigh = UInt32(clamping: timeReferenceHigh)
         }
 
         return info

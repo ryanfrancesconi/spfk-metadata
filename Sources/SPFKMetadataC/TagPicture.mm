@@ -100,18 +100,19 @@ const auto pictureTypeKey = String("pictureType");
 
     CFRelease(dataProvider);
 
-    size_t width = CGImageGetWidth(imageRef);
-    size_t height = CGImageGetHeight(imageRef);
-
-    bool validSize = width > 0 && height > 0;
-
     if (!imageRef) {
         cout << "Failed to create CGImageRef" << endl;
         return NULL;
     }
 
+    size_t width = CGImageGetWidth(imageRef);
+    size_t height = CGImageGetHeight(imageRef);
+
+    bool validSize = width > 0 && height > 0;
+
     if (!validSize) {
         cout << "Invalid size returned for image" << endl;
+        CGImageRelease(imageRef);
         return NULL;
     }
 
@@ -125,6 +126,9 @@ const auto pictureTypeKey = String("pictureType");
                                                 utType:utType
                                     pictureDescription:desc
                                            pictureType:pict];
+
+    // TagPictureRef retains, so release the local +1 from CGImageCreate
+    CGImageRelease(imageRef);
 
     return self;
 }
@@ -160,6 +164,8 @@ const auto pictureTypeKey = String("pictureType");
 
     if (!CGImageDestinationFinalize(destination)) {
         cout << "CGImageDestinationFinalize failed" << endl;
+        CFRelease(destination);
+        CFRelease(mutableData);
         return false;
     }
 
@@ -167,6 +173,8 @@ const auto pictureTypeKey = String("pictureType");
 
     if (!nsData) {
         cout << "data is NULL" << endl;
+        CFRelease(destination);
+        CFRelease(mutableData);
         return false;
     }
 
@@ -174,7 +182,8 @@ const auto pictureTypeKey = String("pictureType");
 
     if (fileRef.isNull()) {
         cout << "FileRef isNull" << endl;
-
+        CFRelease(destination);
+        CFRelease(mutableData);
         return false;
     }
 
@@ -182,6 +191,8 @@ const auto pictureTypeKey = String("pictureType");
 
     if (!tag) {
         cout << "Unable to read tag" << endl;
+        CFRelease(destination);
+        CFRelease(mutableData);
         return false;
     }
 
@@ -192,6 +203,9 @@ const auto pictureTypeKey = String("pictureType");
 
     tag->setComplexProperties(pictureKey, { map });
     fileRef.save();
+
+    CFRelease(destination);
+    CFRelease(mutableData);
 
     return true;
 }

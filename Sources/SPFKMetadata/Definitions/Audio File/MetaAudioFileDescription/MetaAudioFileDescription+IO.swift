@@ -88,7 +88,11 @@ extension MetaAudioFileDescription {
     }
 
     private mutating func load() async throws {
-        tagProperties = try TagProperties(url: url)
+        // Not all formats are supported by TagLib (e.g., .caf),
+        // so tag loading is best-effort.
+        if let value = try? TagProperties(url: url) {
+            tagProperties = value
+        }
 
         if let value = try? await AudioMarkerDescriptionCollection(url: url) {
             markerCollection = value

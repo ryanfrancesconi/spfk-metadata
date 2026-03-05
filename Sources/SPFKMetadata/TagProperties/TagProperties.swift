@@ -38,7 +38,10 @@ public struct TagProperties: Hashable, Codable, Sendable {
 
     public mutating func load(url: URL) throws {
         let tagFile = TagFile(path: url.path)
-        tagFile.load()
+
+        guard tagFile.load() else {
+            throw NSError(description: "Failed to load tag file: \(url.path)")
+        }
 
         if let value = tagFile.audioProperties {
             audioProperties = AudioFormatProperties(cObject: value)
@@ -95,7 +98,9 @@ extension TagProperties {
     ///   - source: The file to read from
     ///   - destination: The file to write to
     public static func copyTags(from source: URL, to destination: URL) throws {
-        TagLibBridge.copyTags(fromPath: source.path, toPath: destination.path)
+        guard TagLibBridge.copyTags(fromPath: source.path, toPath: destination.path) else {
+            throw NSError(description: "Failed to copy tags from \(source.path) to \(destination.path)")
+        }
     }
 
     public static func removeAllTags(in url: URL) throws {

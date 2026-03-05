@@ -44,6 +44,7 @@
 
     if (noErr != AudioFileGetProperty(fileID, kAudioFilePropertyMarkerList,
                                       &propertySize, markerList)) {
+        free(markerList);
         AudioFileClose(fileID);
         NSLog(@"AudioMarkerUtil: Failed to get kAudioFilePropertyMarkerList "
               @"for %@",
@@ -64,6 +65,8 @@
 
     if (noErr != AudioFileGetProperty(fileID, kAudioFilePropertyDataFormat,
                                       &dataFormatSize, &format)) {
+        free(markerList);
+        AudioFileClose(fileID);
         NSLog(@"AudioMarkerUtil: Failed to get kAudioFilePropertyDataFormat "
               @"for %@",
               url);
@@ -182,6 +185,7 @@
                                       propertySize, markerList)) {
         NSLog(
             @"AudioFileStreamSetProperty kAudioFilePropertyMarkerList failed");
+        free(markerList);
         AudioFileClose(fileID);
         return false;
     }
