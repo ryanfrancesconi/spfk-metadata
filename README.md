@@ -9,11 +9,11 @@ No single framework handles all audio metadata scenarios in Swift. AVFoundation 
 
 ![SPFKMetadata-logo-03-256](https://github.com/user-attachments/assets/1ad2a41c-5f4f-458f-9488-b916d355506e)
 
-## Platforms
+## Requirements
 
-- macOS 12+
-- iOS 15+
-- Swift 6.2, C++20
+- **Platforms:** macOS 13+, iOS 16+
+- **Swift:** 6.2+
+- C++20
 
 ## Usage
 
