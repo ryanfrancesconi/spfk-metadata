@@ -9,24 +9,24 @@ import Testing
 struct MetaAudioFileDescriptionPropertyTests {
     @Test func tempoGetSet() {
         var maf = MetaAudioFileDescription(url: URL(filePath: "/tmp/test.wav"))
-        #expect(maf.tempo == nil)
+        #expect(maf.bpm == nil)
 
-        maf.tempo = Bpm(120)
-        #expect(maf.tempo == Bpm(120))
+        maf.bpm = Bpm(120)
+        #expect(maf.bpm == Bpm(120))
         #expect(maf.tagProperties.tags[.bpm] != nil)
     }
 
     @Test func tempoNilWhenNoBpmTag() {
         let maf = MetaAudioFileDescription(url: URL(filePath: "/tmp/test.wav"))
-        #expect(maf.tempo == nil)
+        #expect(maf.bpm == nil)
     }
 
     @Test func tempoSetNil() {
         var maf = MetaAudioFileDescription(url: URL(filePath: "/tmp/test.wav"))
-        maf.tempo = Bpm(140)
-        #expect(maf.tempo != nil)
+        maf.bpm = Bpm(140)
+        #expect(maf.bpm != nil)
 
-        maf.tempo = nil
+        maf.bpm = nil
         #expect(maf.tagProperties.tags[.bpm] == nil)
     }
 

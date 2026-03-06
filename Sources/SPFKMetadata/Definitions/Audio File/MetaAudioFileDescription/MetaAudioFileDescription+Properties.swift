@@ -13,7 +13,7 @@ extension MetaAudioFileDescription {
     }
 
     /// The BPM (beats per minute) value from the `.bpm` tag. Setting this updates the underlying tag string.
-    public var tempo: Bpm? {
+    public var bpm: Bpm? {
         get {
             guard let rawValue = tagProperties.tags[.bpm]?.double else {
                 return nil
