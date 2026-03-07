@@ -1,0 +1,43 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+      - '[0-9]*'
+  workflow_dispatch: # Enables the manual "Run workflow" button
+    inputs:
+      tag_name:
+        description: 'Tag to release (e.g., 1.0.0)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set Release Tag
+        # Use the manual input if provided, otherwise use the pushed tag
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "RELEASE_TAG=${{ github.event.inputs.tag_name }}" >> $GITHUB_ENV
+          else
+            echo "RELEASE_TAG=${{ github.ref_name }}" >> $GITHUB_ENV
+          fi
+
+      - name: Create Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if ! gh release view ${{ env.RELEASE_TAG }} >/dev/null 2>&1; then
+            gh release create ${{ env.RELEASE_TAG }} \
+              --title "Release ${{ env.RELEASE_TAG }}" \
+              --generate-notes
+          else
+            echo "Release ${{ env.RELEASE_TAG }} already exists. Skipping."
+          fi
