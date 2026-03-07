@@ -36,7 +36,7 @@ jobs:
         run: |
           if ! gh release view ${{ env.RELEASE_TAG }} >/dev/null 2>&1; then
             gh release create ${{ env.RELEASE_TAG }} \
-              --title "Release ${{ env.RELEASE_TAG }}" \
+              --title "${{ env.RELEASE_TAG }}" \
               --generate-notes
           else
             echo "Release ${{ env.RELEASE_TAG }} already exists. Skipping."
