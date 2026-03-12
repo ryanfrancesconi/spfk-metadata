@@ -65,7 +65,7 @@ extension MetaAudioFileDescription {
         if let dict = waveFile.infoDictionary as? [String: String] {
             for item in dict {
                 guard let key = InfoFrameKey(value: item.key) else {
-                    Log.error("Unhandled INFO frame", item)
+                    // Log.error("Unhandled INFO frame", item)
                     continue
                 }
 
@@ -85,7 +85,8 @@ extension MetaAudioFileDescription {
                 case .picture:
                     continue
                 case .userDefined:
-                    Log.error("User Defined", item.value)
+                    // Log.error("User Defined", item.value)
+                    break
                 default:
                     tagProperties.data.set(id3Frame: key, value: item.value)
                 }

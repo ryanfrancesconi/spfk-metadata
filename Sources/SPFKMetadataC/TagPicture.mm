@@ -40,7 +40,7 @@ const auto pictureTypeKey = String("pictureType");
     FileRef fileRef(path.UTF8String);
 
     if (fileRef.isNull()) {
-        cout << "fileRef.isNull. Unable to read path: " << path.UTF8String << endl;
+        // cout << "fileRef.isNull. Unable to read path: " << path.UTF8String << endl;
         return NULL;
     }
 
