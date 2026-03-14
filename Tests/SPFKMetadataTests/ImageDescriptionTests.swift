@@ -1,4 +1,5 @@
 import CoreImage
+import SPFKBase
 import SPFKMetadata
 import SPFKTesting
 import SPFKUtils

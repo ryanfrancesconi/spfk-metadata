@@ -1,4 +1,5 @@
 import AVFoundation
+import SPFKBase
 import SPFKMetadata
 import SPFKTesting
 import SPFKUtils
