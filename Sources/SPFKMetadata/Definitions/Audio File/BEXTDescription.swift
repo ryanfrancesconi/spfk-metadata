@@ -4,14 +4,11 @@ import AudioToolbox
 import Foundation
 import OrderedCollections
 import SPFKAudioBase
-import SPFKMetadataC
 
 /// Broadcast Wave Extension (BWF/BEXT) chunk metadata for WAV files.
 ///
 /// Wraps the EBU Tech 3285 BEXT data in a Swift-native type with support for v0, v1 (UMID),
-/// and v2 (loudness) fields. Converts to and from `BEXTDescriptionC` for C bridge I/O.
-/// Use ``validated()`` to sanitize placeholder values before display, and ``write(bextDescription:to:)``
-/// to persist changes via libsndfile.
+/// and v2 (loudness) fields. Use ``validated()`` to sanitize placeholder values before display.
 public struct BEXTDescription: Hashable, Sendable {
     /// BWF Version 0, 1, or 2. This will be set based on the content provided.
     public var version: Int16 = 0
@@ -134,43 +131,6 @@ public struct BEXTDescription: Hashable, Sendable {
 
     public init() {}
 
-    /// Reads the BEXT chunk from a WAV file. Returns `nil` if the file has no BEXT data.
-    public init?(url: URL) {
-        guard let info = BEXTDescriptionC(path: url.path) else {
-            return nil
-        }
-
-        self = BEXTDescription(info: info)
-    }
-
-    /// Creates a `BEXTDescription` from the C bridge object, populating version-appropriate fields.
-    public init(info: BEXTDescriptionC) {
-        version = info.version
-        codingHistory = info.codingHistory
-        sampleRate = info.sampleRate
-        sequenceDescription = info.sequenceDescription
-        originator = info.originator
-        originationDate = info.originationDate
-        originationTime = info.originationTime
-        originatorReference = info.originatorReference
-        timeReferenceLow = UInt64(info.timeReferenceLow)
-        timeReferenceHigh = UInt64(info.timeReferenceHigh)
-
-        if version >= 1 {
-            umid = info.umid
-        }
-
-        if version >= 2 {
-            loudnessDescription = .init(
-                loudnessIntegrated: info.loudnessIntegrated,
-                loudnessRange: info.loudnessRange,
-                maxTruePeakLevel: info.maxTruePeakLevel,
-                maxMomentaryLoudness: info.maxMomentaryLoudness,
-                maxShortTermLoudness: info.maxShortTermLoudness
-            ).validated()
-        }
-    }
-
     /// Creates a `BEXTDescription` from a key-value dictionary of BEXT fields.
     public init(dictionary: BEXTKeyDictionary) {
         self.dictionary = dictionary
@@ -202,97 +162,5 @@ public struct BEXTDescription: Hashable, Sendable {
         bext.loudnessDescription = bext.loudnessDescription.validated()
 
         return bext
-    }
-}
-
-extension BEXTDescription {
-    /// Converts to the C bridge representation for writing via libsndfile.
-    /// The BWF version is automatically upgraded when v1 or v2 fields are present.
-    public var bextDescriptionC: BEXTDescriptionC {
-        let info = BEXTDescriptionC()
-
-        func updateVersion(_ requiredVersion: Int16) {
-            if info.version < requiredVersion {
-                info.version = requiredVersion
-            }
-        }
-
-        // Preserve the original version, only upgrade based on content
-        info.version = version
-
-        if let codingHistory {
-            info.codingHistory = codingHistory
-        }
-
-        if let umid {
-            updateVersion(1)
-            info.umid = umid
-        }
-
-        if let loudnessIntegrated = loudnessDescription.loudnessIntegrated {
-            updateVersion(2)
-            info.loudnessIntegrated = loudnessIntegrated
-        }
-
-        if let loudnessRange = loudnessDescription.loudnessRange {
-            updateVersion(2)
-            info.loudnessRange = loudnessRange
-        }
-
-        if let maxTruePeakLevel = loudnessDescription.maxTruePeakLevel {
-            updateVersion(2)
-            info.maxTruePeakLevel = maxTruePeakLevel
-        }
-
-        if let maxMomentaryLoudness = loudnessDescription.maxMomentaryLoudness {
-            updateVersion(2)
-            info.maxMomentaryLoudness = maxMomentaryLoudness
-        }
-
-        if let maxShortTermLoudness = loudnessDescription.maxShortTermLoudness {
-            updateVersion(2)
-            info.maxShortTermLoudness = maxShortTermLoudness
-        }
-
-        if let sequenceDescription {
-            info.sequenceDescription = sequenceDescription
-        }
-
-        if let originator {
-            info.originator = originator
-        }
-
-        if let originationDate {
-            info.originationDate = originationDate
-        }
-
-        if let originationTime {
-            info.originationTime = originationTime
-        }
-
-        if let originatorReference {
-            info.originatorReference = originatorReference
-        }
-
-        if let timeReferenceLow {
-            info.timeReferenceLow = UInt32(clamping: timeReferenceLow)
-        }
-
-        if let timeReferenceHigh {
-            info.timeReferenceHigh = UInt32(clamping: timeReferenceHigh)
-        }
-
-        return info
-    }
-}
-
-extension BEXTDescription {
-    /// Writes this BEXTDescription to file. The data will be validated before writing.
-    public static func write(bextDescription: BEXTDescription, to url: URL) throws {
-        let cObject = bextDescription.bextDescriptionC
-
-        guard BEXTDescriptionC.write(cObject, path: url.path) else {
-            throw NSError(description: "Failed to write BEXT chunk to \(url.path)")
-        }
     }
 }

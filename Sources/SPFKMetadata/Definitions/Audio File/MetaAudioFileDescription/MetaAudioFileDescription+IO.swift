@@ -209,3 +209,25 @@ extension MetaAudioFileDescription {
         }
     }
 }
+
+extension MetaAudioFileDescription {
+    /// Converts the ``markerCollection`` to an array of `AudioMarker` bridge objects for WAV file writing.
+    public var audioMarkers: [AudioMarker] {
+        var waveMarkers = [AudioMarker]()
+
+        for i in 0 ..< markerCollection.markerDescriptions.count {
+            let desc = markerCollection.markerDescriptions[i]
+
+            waveMarkers.append(
+                AudioMarker(
+                    name: desc.name ?? "Marker",
+                    time: desc.startTime,
+                    sampleRate: audioFormat?.sampleRate ?? 0,
+                    markerID: Int32(i)
+                )
+            )
+        }
+
+        return waveMarkers
+    }
+}

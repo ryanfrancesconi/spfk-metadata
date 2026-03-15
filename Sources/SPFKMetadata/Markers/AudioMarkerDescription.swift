@@ -2,7 +2,6 @@
 
 import Foundation
 import SPFKAudioBase
-import SPFKMetadataC
 import SPFKUtils
 
 /// Format-agnostic audio marker representing a point or region within an audio file.
@@ -70,22 +69,6 @@ public struct AudioMarkerDescription: Hashable, Sendable, Equatable, Comparable 
         self.hexColor = hexColor
     }
 
-    /// Creates a marker from a Core Audio RIFF cue point.
-    public init(riffMarker marker: AudioMarker) {
-        name = marker.name
-        startTime = marker.time
-        sampleRate = marker.sampleRate
-        markerID = Int(marker.markerID)
-    }
-
-    /// Creates a marker from an ID3 or AVFoundation chapter marker.
-    public init(chapterMarker marker: ChapterMarker) {
-        name = marker.name
-        startTime = marker.startTime
-        endTime = marker.endTime
-        sampleRate = nil
-        markerID = nil
-    }
 }
 
 extension AudioMarkerDescription: Codable {

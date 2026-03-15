@@ -3,7 +3,6 @@
 import AVFoundation
 import Foundation
 import SPFKAudioBase
-import SPFKMetadataC
 
 /// Audio stream format properties (channel count, sample rate, bit depth, bit rate, duration)
 /// with pre-formatted human-readable description strings for UI display.
@@ -53,32 +52,11 @@ public struct AudioFormatProperties: Hashable, Sendable {
         initialize()
     }
 
-    /// Creates format properties by reading from an `AVAudioFile`.
-    public init(audioFile: AVAudioFile) {
-        channelCount = audioFile.fileFormat.channelCount
-        sampleRate = audioFile.fileFormat.sampleRate
-        duration = audioFile.duration
-        bitsPerChannel = audioFile.fileFormat.bitsPerChannel.int
-        bitRate = audioFile.dataRate?.int32
-
-        initialize()
-    }
-
     /// Updates the bit rate and regenerates the cached description strings.
     public mutating func update(bitRate: Int32) {
         self.bitRate = bitRate
         updateBitRateDescription()
         updateFormatDescription()
-    }
-
-    /// Creates format properties from the C bridge struct returned by TagLib.
-    public init(cObject: TagAudioPropertiesC) {
-        channelCount = AVAudioChannelCount(cObject.channelCount)
-        sampleRate = cObject.sampleRate
-        duration = cObject.duration
-        bitRate = cObject.bitRate
-
-        initialize()
     }
 
     private mutating func initialize() {

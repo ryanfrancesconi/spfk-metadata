@@ -1,12 +1,11 @@
 import CoreImage
 import Foundation
-import SPFKMetadataC
 import SPFKUtils
 
 /// Container for embedded audio file artwork with thumbnail generation.
 ///
 /// Holds the full-resolution `CGImage` (excluded from `Codable` to avoid database bloat)
-/// and a small PNG thumbnail for serialization. Converts to/from `TagPictureRef` for TagLib I/O.
+/// and a small PNG thumbnail for serialization.
 public struct ImageDescription: Sendable, Hashable {
     /// The full-resolution embedded artwork. Not encoded — use ``thumbnailImage`` for persistence.
     public var cgImage: CGImage?
@@ -19,43 +18,6 @@ public struct ImageDescription: Sendable, Hashable {
 
     /// Optional text description of the image (e.g., "Front Cover").
     public var description: String?
-
-    /// Converts to/from `TagPictureRef` for reading and writing embedded artwork via TagLib.
-    /// On get, selects JPEG or PNG UTType based on the image's alpha channel.
-    public var pictureRef: TagPictureRef? {
-        get {
-            guard let cgImage else {
-                return nil
-            }
-
-            var utType: UTType = .jpeg
-
-            if let value = cgImage.utType as? String, let utValue = UTType(value) {
-                utType = utValue
-            } else if cgImage.alphaInfo != .none && cgImage.alphaInfo != .noneSkipLast && cgImage.alphaInfo != .noneSkipFirst {
-                utType = .png
-            }
-
-            let pictureRef = TagPictureRef(
-                image: cgImage,
-                utType: utType,
-                pictureDescription: description ?? "",
-                pictureType: ""
-            )
-
-            return pictureRef
-        }
-
-        set {
-            guard let newValue else { return }
-
-            cgImage = newValue.cgImage
-
-            if let desc = newValue.pictureDescription, desc != "" {
-                description = desc
-            }
-        }
-    }
 
     /// Indicates whether the artwork has been modified and needs to be written back to the file.
     public private(set) var needsSave: Bool = false
