@@ -3,9 +3,11 @@
 [![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fryanfrancesconi%2Fspfk-metadata%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/ryanfrancesconi/spfk-metadata)
 [![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fryanfrancesconi%2Fspfk-metadata%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/ryanfrancesconi/spfk-metadata)
 
-A Swift audio metadata library wrapping [TagLib](https://github.com/taglib/taglib) (v2.1.1), [libsndfile](https://github.com/libsndfile/libsndfile) (v1.2.2), and Core Audio to provide unified tag reading/writing, marker parsing, and broadcast wave (BEXT) support across common audio formats.
+Audio metadata I/O library wrapping [TagLib](https://github.com/taglib/taglib) (v2.1.1), [libsndfile](https://github.com/libsndfile/libsndfile) (v1.2.2), and Core Audio to provide unified tag reading/writing, marker parsing, and broadcast wave (BEXT) support across common audio formats.
 
-No single framework handles all audio metadata scenarios in Swift. AVFoundation lacks write support and misses RIFF markers, BEXT chunks, and MP3 chapter frames. SPFKMetadata fills those gaps with a two-target architecture: a pure Swift layer for types and logic, and an ObjC++/C bridge for TagLib and libsndfile interop.
+No single framework handles all audio metadata scenarios in Swift. AVFoundation lacks write support and misses RIFF markers, BEXT chunks, and MP3 chapter frames. SPFKMetadata fills those gaps with an ObjC++/C bridge for TagLib and libsndfile interop.
+
+> **Note:** Pure data types (TagKey, TagProperties, TagData, MetaAudioFileDescription, AudioMarkerDescription, BEXTDescription, etc.) have been extracted to [spfk-metadata-base](https://github.com/ryanfrancesconi/spfk-metadata-base). That package has no C++/TagLib dependency and can be used standalone. SPFKMetadata re-exports these types and adds file I/O capabilities on top of them.
 
 ![SPFKMetadata-logo-03-256](https://github.com/user-attachments/assets/1ad2a41c-5f4f-458f-9488-b916d355506e)
 
@@ -52,43 +54,45 @@ try TagProperties.copyTags(from: sourceURL, to: destinationURL)
 
 ## API Reference
 
+Types marked with *(base)* are defined in [SPFKMetadataBase](https://github.com/ryanfrancesconi/spfk-metadata-base) and available without TagLib. Types marked with *(I/O)* are defined in this package and require the C++/ObjC bridge.
+
 ### MetaAudioFileDescription
 
-Top-level struct that orchestrates parsing and saving all metadata for an audio file. Aggregates tag properties, audio format info, BEXT data, iXML, markers, and embedded artwork into a single Codable, Sendable type. Handles format-specific I/O dispatch (WAV files use the WaveFileC bridge; other formats use TagLib and AVFoundation).
+- **MetaAudioFileDescription** *(base)* — Top-level Codable struct aggregating tag properties, audio format info, BEXT data, iXML, markers, and embedded artwork.
+- **MetaAudioFileDescription+IO** *(I/O)* — Parsing initializer and `save()` method with format-specific dispatch (WAV via WaveFileC, other formats via TagLib/AVFoundation).
 
 ### Tag Properties
 
-The unified tag system for reading and writing audio metadata across ID3v2 and RIFF INFO formats.
-
-- **TagKey** — 100+ case enum serving as the canonical key type, mapping to both ID3 frames and RIFF INFO tags. Supports lookup by `taglibKey`, `displayName`, `id3Frame`, and `infoFrame`.
-- **TagProperties** — Main I/O struct wrapping `TagData` with load/save via TagLib. Handles reading and writing tags to MP3, WAV, AIFF, FLAC, OGG, M4A, and other formats.
-- **TagPropertiesAV** — AVFoundation-based tag reader (read-only) for formats where TagLib support is limited.
-- **TagData** — Container wrapping a `TagKeyDictionary` and custom tags dictionary, with merge support via `DictionaryMergeScheme` (.preserve, .replace, .combine).
-- **TagSet** — Enum grouping TagKeys into logical sets (common, music, loudness, replayGain, utility, other) for UI organization.
-- **ID3FrameKey** — 80+ case enum for ID3v2.4 frame identifiers (TALB, TIT2, TPE1, etc.).
-- **InfoFrameKey** — 90+ case enum for RIFF INFO chunk tags (IART, INAM, ICRD, etc.).
-- **TagFrameKey** — Protocol providing default implementations for `taglibKey`, `displayName`, and `init?(value:)` shared by both frame key types.
+- **TagKey** *(base)* — 100+ case enum serving as the canonical key type, mapping to both ID3 frames and RIFF INFO tags. Supports lookup by `taglibKey`, `displayName`, `id3Frame`, and `infoFrame`.
+- **TagProperties** *(base)* — Struct wrapping `TagData` with `tagLibPropertyMap` for bridge interop.
+- **TagProperties+IO** *(I/O)* — Load/save via TagLib. Reading and writing tags to MP3, WAV, AIFF, FLAC, OGG, M4A, and other formats.
+- **TagPropertiesAV** *(base)* — AVFoundation-based tag reader (read-only) for formats where TagLib support is limited.
+- **TagData** *(base)* — Container wrapping a `TagKeyDictionary` and custom tags dictionary, with merge support via `DictionaryMergeScheme` (.preserve, .replace, .combine).
+- **TagSet** *(base)* — Enum grouping TagKeys into logical sets (common, music, loudness, replayGain, utility, other) for UI organization.
+- **ID3FrameKey** *(base)* — 80+ case enum for ID3v2.4 frame identifiers (TALB, TIT2, TPE1, etc.).
+- **InfoFrameKey** *(base)* — 90+ case enum for RIFF INFO chunk tags (IART, INAM, ICRD, etc.).
+- **TagFrameKey** *(base)* — Protocol providing default implementations for `taglibKey`, `displayName`, and `init?(value:)` shared by both frame key types.
 
 ### Audio File Definitions
 
-Types for audio format metadata, file type detection, and broadcast wave support.
-
-- **AudioFormatProperties** — Struct holding channel count, sample rate, bit depth, bit rate, and duration with cached human-readable description strings.
-- **AudioFileType+TagType** — Bidirectional mapping between `AudioFileType` and `TagFileTypeDef`, with file extension and URL-based detection.
-- **BEXTDescription** — Broadcast Wave Extension (BWF) chunk wrapper supporting v0/v1/v2 fields including originator, coding history, UMID, loudness values (via `LoudnessDescription` from spfk-audio-base), and 64-bit time reference (hi/lo word assembly). Includes `validated()` for sanitizing empty fields and conversion to/from the C bridge type.
-- **BEXTDescription.Key** — Enum of BEXT field keys with `OrderedDictionary` subscript for dictionary-style get/set access to all BEXT fields.
-- **ImageDescription** — Embedded artwork container with CGImage, thumbnail generation, and Codable conformance (deliberately excludes full CGImage from serialization, storing only thumbnail data).
-- **TagPicture+** — Extension for reading embedded artwork from files via TagLib.
-- **WaveFileC+** — Swift convenience accessors on `WaveFileC` for `bextDescription`, INFO frame subscripts, and ID3 frame subscripts.
+- **AudioFormatProperties** *(base)* — Struct holding channel count, sample rate, bit depth, bit rate, and duration with cached human-readable description strings.
+- **AudioFormatProperties+IO** *(I/O)* — Initializer from `AVAudioFile`.
+- **AudioFileType+TagType** *(I/O)* — Bidirectional mapping between `AudioFileType` and `TagFileTypeDef`, with file extension and URL-based detection.
+- **BEXTDescription** *(base)* — Broadcast Wave Extension (BWF) chunk wrapper supporting v0/v1/v2 fields including originator, coding history, UMID, loudness values, and 64-bit time reference.
+- **BEXTDescription+IO** *(I/O)* — Conversion to/from the C bridge type `BEXTDescriptionC`.
+- **BEXTDescription.Key** *(base)* — Enum of BEXT field keys with `OrderedDictionary` subscript for dictionary-style get/set access.
+- **ImageDescription** *(base)* — Embedded artwork container with CGImage, thumbnail generation, and Codable conformance.
+- **ImageDescription+IO** *(I/O)* — Conversion to/from `TagPictureRef` for TagLib interop.
+- **TagPicture+** *(I/O)* — Extension for reading embedded artwork from files via TagLib.
+- **WaveFileC+** *(I/O)* — Swift convenience accessors on `WaveFileC` for `bextDescription`, INFO frame subscripts, and ID3 frame subscripts.
 
 ### Markers
 
-Format-agnostic audio marker and chapter system with parsers for WAV, AIFF, MP3, M4A, FLAC, and OGG.
-
-- **AudioMarkerDescription** — Format-agnostic marker struct with name, start/end time, color, and markerID. Codable, Comparable (by time, then name), with description/debugDescription.
-- **AudioMarkerDescriptionCollection** — Ordered collection with insert, remove, update, sort, and automatic ID assignment. Deduplicates by start time on insert.
-- **AudioMarkerDescriptionCollection+Parser** — Factory initializer from URL with automatic file-type dispatch to the appropriate parser.
-- **ChapterParser** — AVFoundation-based chapter parsing for M4A, MP4, FLAC, and OGG via `AVAsset` timed metadata.
+- **AudioMarkerDescription** *(base)* — Format-agnostic marker struct with name, start/end time, color, and markerID. Codable, Comparable (by time, then name).
+- **AudioMarkerDescriptionCollection** *(base)* — Ordered collection with insert, remove, update, sort, and automatic ID assignment.
+- **AudioMarkerDescription+IO** *(I/O)* — Creates markers from Core Audio RIFF cue points.
+- **AudioMarkerDescriptionCollection+Parser** *(I/O)* — Factory initializer from URL with automatic file-type dispatch to the appropriate parser.
+- **ChapterParser** *(I/O)* — AVFoundation-based chapter parsing for M4A, MP4, FLAC, and OGG via `AVAsset` timed metadata.
 
 ### SPFKMetadataC (ObjC++/C Bridge)
 
@@ -128,6 +132,7 @@ The package contains two targets: **SPFKMetadata** (pure Swift) and **SPFKMetada
 
 | Package | Description |
 |---|---|
+| [spfk-metadata-base](https://github.com/ryanfrancesconi/spfk-metadata-base) | Pure metadata data types (no C++ dependency) |
 | [CXXTagLib](https://github.com/ryanfrancesconi/CXXTagLib) | TagLib C++ library for audio tag reading/writing |
 | [spfk-audio-base](https://github.com/ryanfrancesconi/spfk-audio-base) | Shared audio type definitions |
 | [spfk-utils](https://github.com/ryanfrancesconi/spfk-utils) | Foundation utilities and extensions |
