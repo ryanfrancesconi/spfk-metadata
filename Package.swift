@@ -16,6 +16,7 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/ryanfrancesconi/CXXTagLib", from: "2.1.3"),
         .package(url: "https://github.com/ryanfrancesconi/spfk-audio-base", from: "0.0.4"),
+        .package(url: "https://github.com/ryanfrancesconi/spfk-metadata-base", from: "0.0.1"),
         .package(url: "https://github.com/ryanfrancesconi/spfk-testing", from: "0.0.4"),
         .package(url: "https://github.com/ryanfrancesconi/spfk-utils", from: "0.0.8"),
         .package(url: "https://github.com/sbooth/sndfile-binary-xcframework", from: "0.1.2"),
@@ -30,6 +31,7 @@ let package = Package(
             dependencies: [
                 .targetItem(name: "SPFKMetadataC", condition: nil),
                 .product(name: "SPFKAudioBase", package: "spfk-audio-base"),
+                .product(name: "SPFKMetadataBase", package: "spfk-metadata-base"),
                 .product(name: "SPFKUtils", package: "spfk-utils"),
             ]
         ),

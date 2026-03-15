@@ -6,6 +6,7 @@ import Foundation
 import SPFKAudioBase
 import SPFKMetadataC
 import SPFKUtils
+import SPFKMetadataBase
 
 extension MetaAudioFileDescription {
     /// Reads all metadata from the audio file at the given URL.
@@ -18,11 +19,12 @@ extension MetaAudioFileDescription {
     /// - Throws: If the file cannot be opened or its format is unsupported.
     public init(parsing url: URL) async throws {
         let audioFile = try AVAudioFile(forReading: url)
-        audioFormat = AudioFormatProperties(audioFile: audioFile)
 
-        self.url = url
-        urlProperties = URLProperties(url: url)
-        fileType = AudioFileType(url: url)
+        self.init(
+            url: url,
+            fileType: AudioFileType(url: url),
+            audioFormat: AudioFormatProperties(audioFile: audioFile)
+        )
 
         if fileType == .wav {
             try loadWave()

@@ -2,6 +2,7 @@
 
 import Foundation
 import SPFKMetadataC
+import SPFKMetadataBase
 
 extension BEXTDescription {
     /// Reads the BEXT chunk from a WAV file. Returns `nil` if the file has no BEXT data.
@@ -15,6 +16,8 @@ extension BEXTDescription {
 
     /// Creates a `BEXTDescription` from the C bridge object, populating version-appropriate fields.
     public init(info: BEXTDescriptionC) {
+        self.init()
+
         version = info.version
         codingHistory = info.codingHistory
         sampleRate = info.sampleRate

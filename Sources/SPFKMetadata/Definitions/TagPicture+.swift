@@ -1,6 +1,7 @@
 
 import Foundation
 import SPFKMetadataC
+import SPFKMetadataBase
 
 extension TagPictureRef {
     /// Extracts the embedded artwork from the audio file at the given URL via TagLib.

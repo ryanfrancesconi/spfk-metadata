@@ -3,6 +3,7 @@
 import CoreImage
 import Foundation
 import SPFKMetadataC
+import SPFKMetadataBase
 
 extension ImageDescription {
     /// Converts to/from `TagPictureRef` for reading and writing embedded artwork via TagLib.

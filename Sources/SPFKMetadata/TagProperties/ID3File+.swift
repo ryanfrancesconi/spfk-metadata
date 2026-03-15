@@ -2,6 +2,7 @@
 
 import Foundation
 import SPFKMetadataC
+import SPFKMetadataBase
 
 /// Swift typed subscript on the `ID3File` Objective-C class for reading and writing ID3 frames.
 extension ID3File {

@@ -2,6 +2,7 @@
 
 import Foundation
 import SPFKMetadataC
+import SPFKMetadataBase
 
 /// Swift convenience accessors on the `WaveFileC` Objective-C class, providing typed
 /// BEXT, INFO frame, and ID3 frame subscript access without manual dictionary key management.

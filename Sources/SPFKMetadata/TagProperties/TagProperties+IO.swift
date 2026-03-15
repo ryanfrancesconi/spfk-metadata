@@ -3,12 +3,14 @@
 import Foundation
 import SPFKMetadataC
 import SPFKUtils
+import SPFKMetadataBase
 
 extension TagProperties {
     /// Reads all tags from the audio file at the given URL via TagLib.
     /// - Parameter url: URL to the audio file.
     /// - Throws: If the file cannot be opened or TagLib doesn't support the format.
     public init(url: URL) throws {
+        self.init()
         try load(url: url)
     }
 

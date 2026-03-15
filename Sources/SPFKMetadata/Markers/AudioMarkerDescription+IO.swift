@@ -2,6 +2,7 @@
 
 import Foundation
 import SPFKMetadataC
+import SPFKMetadataBase
 
 extension AudioMarkerDescription {
     /// Creates a marker from a Core Audio RIFF cue point.

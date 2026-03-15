@@ -4,6 +4,7 @@ import AVFoundation
 import Foundation
 import SPFKAudioBase
 import SPFKMetadataC
+import SPFKMetadataBase
 
 extension AudioFormatProperties {
     /// Creates format properties by reading from an `AVAudioFile`.

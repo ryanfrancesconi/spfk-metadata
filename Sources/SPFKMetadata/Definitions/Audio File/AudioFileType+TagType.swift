@@ -1,5 +1,6 @@
 import SPFKAudioBase
 import SPFKMetadataC
+import SPFKMetadataBase
 
 // swiftformat:disable consecutiveSpaces
 

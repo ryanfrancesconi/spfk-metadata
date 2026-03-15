@@ -4,6 +4,7 @@ import Foundation
 import SPFKAudioBase
 import SPFKBase
 import SPFKMetadataC
+import SPFKMetadataBase
 
 extension AudioMarkerDescriptionCollection {
     /// Parses markers from the audio file at the given URL, dispatching to the appropriate parser
@@ -39,14 +40,14 @@ extension AudioMarkerDescriptionCollection {
 
     /// Creates a collection from Core Audio RIFF markers.
     public init(audioMarkers value: [AudioMarker]) {
-        update(markerDescriptions: value.map {
+        self.init(markerDescriptions: value.map {
             AudioMarkerDescription(riffMarker: $0)
         })
     }
 
     /// Creates a collection from ID3 or AVFoundation chapter markers.
     public init(chapterMarkers value: [ChapterMarker]) {
-        update(markerDescriptions: value.map {
+        self.init(markerDescriptions: value.map {
             AudioMarkerDescription(chapterMarker: $0)
         })
     }
