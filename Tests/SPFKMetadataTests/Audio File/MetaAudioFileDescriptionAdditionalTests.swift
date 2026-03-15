@@ -1,5 +1,6 @@
 import Foundation
 import SPFKAudioBase
+import SPFKMetadataBase
 import Testing
 
 @testable import SPFKMetadata

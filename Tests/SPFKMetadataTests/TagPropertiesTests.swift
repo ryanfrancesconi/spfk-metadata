@@ -2,6 +2,7 @@
 
 import Foundation
 import SPFKBase
+import SPFKMetadataBase
 import SPFKTesting
 import Testing
 

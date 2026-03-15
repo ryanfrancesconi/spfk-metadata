@@ -1,5 +1,6 @@
 import AVFoundation
 import SPFKBase
+import SPFKMetadataBase
 import SPFKTesting
 import Testing
 

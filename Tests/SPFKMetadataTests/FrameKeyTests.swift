@@ -1,4 +1,5 @@
 import Foundation
+import SPFKMetadataBase
 import Testing
 
 @testable import SPFKMetadata
