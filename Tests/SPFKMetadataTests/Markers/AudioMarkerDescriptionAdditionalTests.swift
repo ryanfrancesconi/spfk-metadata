@@ -25,7 +25,7 @@ struct AudioMarkerDescriptionCodableTests {
         #expect(decoded.endTime == 3.0)
         #expect(decoded.sampleRate == 44100)
         #expect(decoded.markerID == 42)
-        #expect(decoded.hexColor?.stringValue == "FF0000")
+        #expect(decoded.hexColor?.stringValue == "FF0000FF")
     }
 
     @Test func codableMinimalFields() throws {

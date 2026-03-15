@@ -7,7 +7,7 @@ import Testing
 
 @Suite(.tags(.file))
 class ImageDescriptionTests: BinTestCase {
-    #if canImport(AppKit) && !targetEnvironment(macCatalyst)
+    #if os(macOS)
 
         @Test func image() async throws {
             let cgImage = try #require(try? await CGImage.contentsOf(url: TestBundleResources.shared.sharksandwich))
