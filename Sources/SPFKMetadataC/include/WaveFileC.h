@@ -11,11 +11,10 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-/// RIFF WAV file handler using libsndfile and TagLib for comprehensive WAV metadata I/O.
+/// RIFF WAV file handler using TagLib for comprehensive WAV metadata I/O.
 ///
 /// Reads and writes INFO chunks, ID3 tags, BEXT broadcast extension data, iXML,
-/// cue point markers, and embedded artwork. Because libsndfile rewrites the file on save,
-/// all chunks must be populated before calling `save`.
+/// embedded artwork (all via TagLib), and cue point markers (via AudioToolbox).
 @interface WaveFileC : NSObject
 
 /// Audio stream properties (sample rate, duration, etc.) populated after `load`.
@@ -41,6 +40,12 @@ NS_ASSUME_NONNULL_BEGIN
 
 /// Absolute path to the WAV file.
 @property (nonatomic, strong, nonnull) NSString *path;
+
+/// Set to `YES` to write markers on save. Default is `YES`.
+@property (nonatomic) BOOL markersNeedsSave;
+
+/// Set to `YES` to write artwork on save. Default is `YES`.
+@property (nonatomic) BOOL imageNeedsSave;
 
 - (instancetype)init;
 

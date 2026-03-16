@@ -27,6 +27,8 @@ using namespace TagLib;
     _id3Dictionary = [[NSMutableDictionary alloc] init];
     _infoDictionary = [[NSMutableDictionary alloc] init];
     _bextDescriptionC = NULL;
+    _markersNeedsSave = YES;
+    _imageNeedsSave = YES;
 
     return self;
 }
@@ -38,6 +40,8 @@ using namespace TagLib;
     _id3Dictionary = [[NSMutableDictionary alloc] init];
     _infoDictionary = [[NSMutableDictionary alloc] init];
     _bextDescriptionC = NULL;
+    _markersNeedsSave = YES;
+    _imageNeedsSave = YES;
 
     return self;
 }
@@ -67,13 +71,24 @@ using namespace TagLib;
         _audioPropertiesC.duration = (double)audioProperties->lengthInMilliseconds() / 1000;
         _audioPropertiesC.bitRate = audioProperties->bitrate();
         _audioPropertiesC.channelCount = audioProperties->channels();
+
+        auto *wavProps = waveFile->audioProperties();
+        if (wavProps) {
+            _audioPropertiesC.bitsPerSample = wavProps->bitsPerSample();
+        }
     }
 
     NSURL *url = [NSURL fileURLWithPath:_path];
     _markers = [AudioMarkerUtil getMarkers:url];
 
-    if (waveFile->hasBEXTTag()) {
-        _bextDescriptionC = [[BEXTDescriptionC alloc] initWithPath:_path];
+    if (waveFile->hasBEXTTag() && !waveFile->bextTag.isEmpty()) {
+        NSData *bextData = [NSData dataWithBytes:waveFile->bextTag.data()
+                                          length:waveFile->bextTag.size()];
+        _bextDescriptionC = [[BEXTDescriptionC alloc] initWithData:bextData];
+
+        if (_bextDescriptionC && _audioPropertiesC) {
+            _bextDescriptionC.sampleRate = _audioPropertiesC.sampleRate;
+        }
     }
 
     if (waveFile->hasiXMLTag()) {
@@ -92,7 +107,10 @@ using namespace TagLib;
         _id3Dictionary = TagUtil::convertToDictionary(frameList);
     }
 
-    _tagPicture = [[TagPicture alloc] initWithPath:_path];
+    TagPictureRef *pictureRef = [TagPicture readFromTag:waveFile->tag()];
+    if (pictureRef) {
+        _tagPicture = [[TagPicture alloc] initWithPicture:pictureRef];
+    }
 
     return true;
 }
@@ -114,8 +132,22 @@ using namespace TagLib;
         return false;
     }
 
+    // write bext via TagLib chunk (no more temp file + audio copy)
+    if (_bextDescriptionC) {
+        NSData *bextData = [_bextDescriptionC serializedData];
+        waveFile->bextTag = ByteVector((const char *)bextData.bytes,
+                                       (unsigned int)bextData.length);
+    } else {
+        waveFile->bextTag = ByteVector();
+    }
+
     // write ixml (empty String triggers chunk removal in wavfile.cpp)
     waveFile->iXMLTag = _iXML ? String(_iXML.UTF8String) : String();
+
+    // write artwork via the same TagLib session (skip if not dirty)
+    if (_imageNeedsSave) {
+        [TagPicture write:_tagPicture.pictureRef toTag:waveFile->tag()];
+    }
 
     // write id3
     PropertyMap properties = TagUtil::convertToPropertyMap(_id3Dictionary);
@@ -138,20 +170,8 @@ using namespace TagLib;
 }
 
 - (void)saveExtras {
-    // write bext first as it will only write the bext chunk and audio data
-    if (_bextDescriptionC) {
-        if (![BEXTDescriptionC write:_bextDescriptionC path:_path]) {
-            cout << "BEXTDescriptionC write failed" << endl;
-        }
-    }
-
-    // write image data
-    if (_tagPicture) {
-        [TagPicture write:_tagPicture.pictureRef path:_path];
-    }
-
-    // write markers
-    if (_markers.count > 0) {
+    // write markers (via AudioToolbox, separate from TagLib)
+    if (_markersNeedsSave && _markers.count > 0) {
         NSURL *url = [NSURL fileURLWithPath:_path];
         [AudioMarkerUtil update:url markers:_markers];
     }

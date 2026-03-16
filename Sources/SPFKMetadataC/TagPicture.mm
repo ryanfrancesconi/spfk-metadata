@@ -1,8 +1,6 @@
 // Copyright Ryan Francesconi. All Rights Reserved. Revision History at https://github.com/ryanfrancesconi/spfk-metadata
 
-#import <iomanip>
 #import <iostream>
-#import <stdio.h>
 #import <vector>
 
 #import <CoreGraphics/CGImage.h>
@@ -20,15 +18,15 @@
 using namespace std;
 using namespace TagLib;
 
+// MARK: - TagLib string constants
+
+static const auto pictureKey = String("PICTURE");
+static const auto dataKey = String("data");
+static const auto mimeTypeKey = String("mimeType");
+static const auto descriptionKey = String("description");
+static const auto pictureTypeKey = String("pictureType");
+
 @implementation TagPicture
-
-// MARK: TagLib string constants
-
-const auto pictureKey = String("PICTURE");
-const auto dataKey = String("data");
-const auto mimeTypeKey = String("mimeType");
-const auto descriptionKey = String("description");
-const auto pictureTypeKey = String("pictureType");
 
 - (nullable instancetype)initWithPicture:(nonnull TagPictureRef *)pictureRef {
     self = [super init];
@@ -36,29 +34,14 @@ const auto pictureTypeKey = String("pictureType");
     return self;
 }
 
-- (nullable instancetype)initWithPath:(nonnull NSString *)path {
-    FileRef fileRef(path.UTF8String);
+// MARK: - Tag-based (core logic)
 
-    if (fileRef.isNull()) {
-        // cout << "fileRef.isNull. Unable to read path: " << path.UTF8String << endl;
-        return NULL;
-    }
-
-    Tag *tag = fileRef.tag();
-
-    if (!tag) {
-        cout << "Unable to read tag" << endl;
-        return NULL;
-    }
++ (nullable TagPictureRef *)readFromTag:(nonnull void *)opaqueTag {
+    Tag *tag = static_cast<Tag *>(opaqueTag);
 
     auto pictures = tag->complexProperties(pictureKey);
+    if (pictures.isEmpty()) return nil;
 
-    if (pictures.isEmpty()) {
-        return NULL;
-    }
-
-    self = [super init];
-    
     // take the first picture only
     auto picture = pictures.front();
 
@@ -66,54 +49,30 @@ const auto pictureTypeKey = String("pictureType");
     NSString *mimeType = StringUtil::utf8NSString(pictureMimeType);
     UTType *utType = [UTType typeWithMIMEType:mimeType];
 
-    if (!utType) {
-        cout << "Failed to determine UTType" << endl;
-        return NULL;
-    }
+    if (!utType) return nil;
 
     ByteVector pictureData = picture.value(dataKey).toByteVector();
-
     NSData *nsData = [[NSData alloc] initWithBytes:pictureData.data() length:pictureData.size()];
     CGDataProviderRef dataProvider = CGDataProviderCreateWithCFData((__bridge CFDataRef)nsData);
 
     CGImageRef imageRef = NULL;
 
     if (utType == UTTypeJPEG) {
-        imageRef = CGImageCreateWithJPEGDataProvider(
-            dataProvider,
-            NULL,
-            true,
-            kCGRenderingIntentDefault
-            );
+        imageRef = CGImageCreateWithJPEGDataProvider(dataProvider, NULL, true, kCGRenderingIntentDefault);
     } else if (utType == UTTypePNG) {
-        imageRef = CGImageCreateWithPNGDataProvider(
-            dataProvider,
-            NULL,
-            true,
-            kCGRenderingIntentDefault
-            );
-    } else {
-        NSLog(@"Image must be either JPEG or PNG");
-        CFRelease(dataProvider);
-        return NULL;
+        imageRef = CGImageCreateWithPNGDataProvider(dataProvider, NULL, true, kCGRenderingIntentDefault);
     }
 
     CFRelease(dataProvider);
 
-    if (!imageRef) {
-        cout << "Failed to create CGImageRef" << endl;
-        return NULL;
-    }
+    if (!imageRef) return nil;
 
     size_t width = CGImageGetWidth(imageRef);
     size_t height = CGImageGetHeight(imageRef);
 
-    bool validSize = width > 0 && height > 0;
-
-    if (!validSize) {
-        cout << "Invalid size returned for image" << endl;
+    if (width == 0 || height == 0) {
         CGImageRelease(imageRef);
-        return NULL;
+        return nil;
     }
 
     String pictureDescription = picture.value(descriptionKey).value<String>();
@@ -122,19 +81,24 @@ const auto pictureTypeKey = String("pictureType");
     NSString *desc = StringUtil::utf8NSString(pictureDescription);
     NSString *pict = StringUtil::utf8NSString(pictureType);
 
-    _pictureRef = [[TagPictureRef alloc] initWithImage:imageRef
-                                                utType:utType
-                                    pictureDescription:desc
-                                           pictureType:pict];
-
+    TagPictureRef *pictureRef = [[TagPictureRef alloc] initWithImage:imageRef
+                                                              utType:utType
+                                                  pictureDescription:desc
+                                                         pictureType:pict];
     // TagPictureRef retains, so release the local +1 from CGImageCreate
     CGImageRelease(imageRef);
 
-    return self;
+    return pictureRef;
 }
 
-+ (bool)write:(TagPictureRef *)picture
-         path:(nonnull NSString *)path {
++ (bool)write:(nullable TagPictureRef *)picture
+        toTag:(nonnull void *)opaqueTag {
+    Tag *tag = static_cast<Tag *>(opaqueTag);
+
+    if (!picture) {
+        tag->setComplexProperties(pictureKey, {});
+        return true;
+    }
 
     VariantMap map;
 
@@ -158,12 +122,11 @@ const auto pictureTypeKey = String("pictureType");
         (__bridge CFStringRef)picture.utType.identifier,
         1,
         NULL
-        );
+    );
 
     CGImageDestinationAddImage(destination, picture.cgImage, NULL);
 
     if (!CGImageDestinationFinalize(destination)) {
-        cout << "CGImageDestinationFinalize failed" << endl;
         CFRelease(destination);
         CFRelease(mutableData);
         return false;
@@ -172,37 +135,20 @@ const auto pictureTypeKey = String("pictureType");
     NSData *nsData = (__bridge NSData *)mutableData;
 
     if (!nsData) {
-        cout << "data is NULL" << endl;
         CFRelease(destination);
         CFRelease(mutableData);
         return false;
     }
 
-    FileRef fileRef(path.UTF8String);
+    const char *bytes = (const char *)[nsData bytes];
+    NSUInteger length = [nsData length];
+    vector<char> vec(length);
+    copy(bytes, bytes + length, vec.begin());
 
-    if (fileRef.isNull()) {
-        cout << "FileRef isNull" << endl;
-        CFRelease(destination);
-        CFRelease(mutableData);
-        return false;
-    }
-
-    Tag *tag = fileRef.tag();
-
-    if (!tag) {
-        cout << "Unable to read tag" << endl;
-        CFRelease(destination);
-        CFRelease(mutableData);
-        return false;
-    }
-
-    vector<char> vector = copyToVector(nsData);
-
-    ByteVector data = ByteVector(vector.data(), int(vector.size()));
+    ByteVector data = ByteVector(vec.data(), int(vec.size()));
     map.insert(dataKey, data);
 
     tag->setComplexProperties(pictureKey, { map });
-    fileRef.save();
 
     CFRelease(destination);
     CFRelease(mutableData);
@@ -210,13 +156,43 @@ const auto pictureTypeKey = String("pictureType");
     return true;
 }
 
-static vector<char> copyToVector(NSData *data) {
-    const char *bytes = (const char *)[data bytes];
-    NSUInteger length = [data length];
+// MARK: - Path-based (thin wrappers)
 
-    vector<char> vec(length);
-    copy(bytes, bytes + length, vec.begin());
-    return vec;
+- (nullable instancetype)initWithPath:(nonnull NSString *)path {
+    FileRef fileRef(path.UTF8String);
+
+    if (fileRef.isNull()) {
+        return NULL;
+    }
+
+    Tag *tag = fileRef.tag();
+    if (!tag) return NULL;
+
+    TagPictureRef *ref = [TagPicture readFromTag:tag];
+    if (!ref) return NULL;
+
+    self = [super init];
+    _pictureRef = ref;
+    return self;
+}
+
++ (bool)write:(TagPictureRef *)picture
+         path:(nonnull NSString *)path {
+    FileRef fileRef(path.UTF8String);
+
+    if (fileRef.isNull()) {
+        return false;
+    }
+
+    Tag *tag = fileRef.tag();
+    if (!tag) return false;
+
+    if (![TagPicture write:picture toTag:tag]) {
+        return false;
+    }
+
+    fileRef.save();
+    return true;
 }
 
 @end

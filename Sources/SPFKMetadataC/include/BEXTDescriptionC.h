@@ -4,10 +4,10 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-/// C-compatible Broadcast Wave Extension (BEXT) chunk representation for interop with libsndfile.
+/// Broadcast Wave Extension (BEXT) chunk representation (EBU Tech 3285).
 ///
-/// Wraps EBU Tech 3285 BEXT fields as Objective-C properties. Used as the bridge type
-/// between the Swift `BEXTDescription` struct and the C libsndfile API.
+/// Wraps BEXT fields as Objective-C properties. Used as the bridge type
+/// between the Swift `BEXTDescription` struct and the C/C++ layer.
 @interface BEXTDescriptionC : NSObject
 
 /// BWF Version 0, 1, or 2
@@ -78,11 +78,20 @@ NS_ASSUME_NONNULL_BEGIN
 /// Convenience property in seconds
 @property (readonly) double timeReferenceInSeconds;
 
-@property (readonly) double sampleRate;
+@property (nonatomic) double sampleRate;
 
 - (instancetype)init;
 
-/// Reads the BEXT chunk from the WAV file at the given path.
+/// Parses BEXT data from raw chunk bytes (from TagLib's ByteVector).
+/// @param data NSData containing the raw BEXT chunk bytes.
+/// @return `nil` if data is too short (< 602 bytes).
+- (nullable instancetype)initWithData:(nonnull NSData *)data;
+
+/// Serializes the BEXT properties to raw chunk bytes for writing via TagLib.
+/// @return NSData containing the serialized BEXT chunk (602 + coding_history bytes).
+- (nonnull NSData *)serializedData;
+
+/// Reads the BEXT chunk from the WAV file at the given path via libsndfile.
 /// @param path Absolute path to the WAV file.
 /// @return `nil` if the file has no BEXT data or cannot be opened.
 - (nullable instancetype)initWithPath:(nonnull NSString *)path;

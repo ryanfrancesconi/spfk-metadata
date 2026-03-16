@@ -21,6 +21,9 @@ NS_ASSUME_NONNULL_BEGIN
 /// Number of audio channels (1 = mono, 2 = stereo, etc.).
 @property (nonatomic) int channelCount;
 
+/// Bits per sample (e.g., 16, 24, 32). Only meaningful for PCM formats like WAV/AIFF.
+@property (nonatomic) int bitsPerSample;
+
 - (nonnull id)init;
 
 @end

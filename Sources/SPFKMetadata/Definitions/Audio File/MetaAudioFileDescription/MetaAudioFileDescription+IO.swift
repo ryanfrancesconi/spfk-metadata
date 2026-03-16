@@ -11,25 +11,25 @@ import SPFKMetadataBase
 extension MetaAudioFileDescription {
     /// Reads all metadata from the audio file at the given URL.
     ///
-    /// Opens the file with `AVAudioFile` for format properties, then dispatches to either
-    /// `WaveFileC` (for WAV) or TagLib + AVFoundation (for all other formats) to populate
-    /// tags, markers, BEXT, iXML, and embedded artwork.
+    /// For WAV files, all properties (format, tags, BEXT, iXML, artwork, markers)
+    /// are read via TagLib + AudioToolbox — `AVAudioFile` is not opened.
+    /// For other formats, `AVAudioFile` provides format properties while TagLib handles tags.
     ///
     /// - Parameter url: URL to the audio file to parse.
     /// - Throws: If the file cannot be opened or its format is unsupported.
     public init(parsing url: URL) async throws {
-        let audioFile = try AVAudioFile(forReading: url)
-
-        self.init(
-            url: url,
-            fileType: AudioFileType(url: url),
-            audioFormat: AudioFormatProperties(audioFile: audioFile)
-        )
+        let fileType = AudioFileType(url: url)
 
         if fileType == .wav {
+            self.init(url: url, fileType: fileType)
             try loadWave()
-
         } else {
+            let audioFile = try AVAudioFile(forReading: url)
+            self.init(
+                url: url,
+                fileType: fileType,
+                audioFormat: AudioFormatProperties(audioFile: audioFile)
+            )
             try await load()
         }
 
@@ -48,7 +48,9 @@ extension MetaAudioFileDescription {
         }
 
         if let audioProperties = waveFile.audioPropertiesC {
-            tagProperties.audioProperties = AudioFormatProperties(cObject: audioProperties)
+            let format = AudioFormatProperties(cObject: audioProperties)
+            audioFormat = format
+            tagProperties.audioProperties = format
         }
 
         if let xml = waveFile.iXML {
@@ -125,16 +127,17 @@ extension MetaAudioFileDescription {
 extension MetaAudioFileDescription {
     /// Writes all current metadata back to the file.
     ///
-    /// For WAV files, all chunks (BEXT, iXML, INFO, ID3, markers, artwork) are rewritten together.
+    /// For WAV files, tags (BEXT, iXML, INFO, ID3) are always written via TagLib.
+    /// Markers and artwork are conditionally written based on dirty flags.
     /// For other formats, tags are saved via TagLib and artwork is written separately if requested.
     /// Finder tags and modification date are updated after saving.
     ///
-    /// - Parameter imageNeedsSave: If `true`, embedded artwork will also be written (non-WAV only).
+    /// - Parameter imageNeedsSave: If `true`, embedded artwork will also be written.
     public mutating func save(imageNeedsSave: Bool = false) throws {
         // Log.debug("Saving", url)
 
         if fileType == .wav {
-            try saveWave()
+            try saveWave(imageNeedsSave: imageNeedsSave)
 
         } else {
             try saveOther(imageNeedsSave: imageNeedsSave)
@@ -163,11 +166,9 @@ extension MetaAudioFileDescription {
         }
     }
 
-    /// In the case of Wave, all chunks are written out if present (so all properties must be updated)
-    /// This is due to the BEXT chunk handler in libsndfile only supporting writing a new file
-    /// rather than updating a header. This is a point to improve in the future if the bext write
-    /// is integrated into the taglib save().
-    private mutating func saveWave() throws {
+    /// Writes WAV metadata via TagLib (BEXT, iXML, ID3, INFO, artwork) and markers via AudioToolbox.
+    /// Dirty flags control which chunks are actually written.
+    private mutating func saveWave(imageNeedsSave: Bool = false) throws {
         let waveFile = WaveFileC(path: url.path)
 
         // extra chunks
@@ -175,8 +176,12 @@ extension MetaAudioFileDescription {
         waveFile.iXML = iXMLMetadata
         waveFile.markers = audioMarkers
 
+        // dirty flags
+        waveFile.markersNeedsSave = !audioMarkers.isEmpty
+        waveFile.imageNeedsSave = imageNeedsSave
+
         // image
-        if let pictureRef = imageDescription.pictureRef {
+        if imageNeedsSave, let pictureRef = imageDescription.pictureRef {
             waveFile.tagPicture = TagPicture(picture: pictureRef)
         }
 

@@ -23,6 +23,7 @@ extension AudioFormatProperties {
         self.init(
             channelCount: AVAudioChannelCount(cObject.channelCount),
             sampleRate: cObject.sampleRate,
+            bitsPerChannel: cObject.bitsPerSample > 0 ? Int(cObject.bitsPerSample) : nil,
             bitRate: cObject.bitRate,
             duration: cObject.duration
         )

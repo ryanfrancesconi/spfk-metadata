@@ -53,12 +53,43 @@ namespace StringUtil {
             if (terminate) {
                 dest [n - 1] = '\0';
                 assert(strlen(dest) == n - 1);
-            } else {
-                assert(strlen(dest) == n);
             }
         } else {
             strncpy(dest, src, n);
         }
+    }
+
+    /// Converts a hex character ('0'-'9', 'A'-'F', 'a'-'f') to its numeric value.
+    /// Returns -1 for invalid characters.
+    static int hexCharToNibble(char c) {
+        if (c >= '0' && c <= '9') return c - '0';
+        if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+        if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+        return -1;
+    }
+
+    /// Decodes a hex string into raw bytes. Each pair of hex characters becomes one byte.
+    /// @param hex The hex string (e.g. "53504F4E"). Length should be even.
+    /// @param dest Destination buffer for decoded bytes.
+    /// @param maxBytes Maximum number of bytes to write.
+    /// @return Number of bytes written.
+    static size_t
+    hexToBytes(const char *hex, uint8_t *dest, size_t maxBytes) {
+        size_t hexLen = strlen(hex);
+        size_t byteCount = MIN(hexLen / 2, maxBytes);
+
+        for (size_t i = 0; i < byteCount; i++) {
+            int hi = hexCharToNibble(hex[i * 2]);
+            int lo = hexCharToNibble(hex[i * 2 + 1]);
+
+            if (hi < 0 || lo < 0) {
+                dest[i] = 0;
+            } else {
+                dest[i] = (uint8_t)((hi << 4) | lo);
+            }
+        }
+
+        return byteCount;
     }
 
     static std::string charToHexString(unsigned char c) {
@@ -80,7 +111,7 @@ namespace StringUtil {
      */
     static NSString *
     asciiString(const char *s, size_t maxLength) {
-        size_t len = MIN(maxLength, strlen(s));
+        size_t len = strnlen(s, maxLength);
 
         return [[NSString alloc] initWithBytes:s
                                         length:len
@@ -89,7 +120,7 @@ namespace StringUtil {
 
     static NSString *
     utf8NSString(TagLib::String string) {
-        return [[NSString alloc] initWithCString:string.toCString() encoding:NSUTF8StringEncoding];
+        return [[NSString alloc] initWithCString:string.toCString(true) encoding:NSUTF8StringEncoding];
     }
 
     static NSString *
