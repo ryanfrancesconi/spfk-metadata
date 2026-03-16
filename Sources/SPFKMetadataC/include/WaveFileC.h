@@ -18,34 +18,34 @@ NS_ASSUME_NONNULL_BEGIN
 @interface WaveFileC : NSObject
 
 /// Audio stream properties (sample rate, duration, etc.) populated after `load`.
-@property (nullable, nonatomic) TagAudioPropertiesC *audioPropertiesC;
+@property(nullable, nonatomic) TagAudioPropertiesC *audioPropertiesC;
 
 /// RIFF INFO chunk tags as key-value pairs (e.g., "INAM" = "Song Title").
-@property (nonatomic) NSMutableDictionary *infoDictionary;
+@property(nonatomic) NSMutableDictionary *infoDictionary;
 
 /// ID3v2 tags embedded in the WAV file as key-value pairs (e.g., "TIT2" = "Song Title").
-@property (nonatomic) NSMutableDictionary *id3Dictionary;
+@property(nonatomic) NSMutableDictionary *id3Dictionary;
 
 /// Broadcast Wave Extension (BEXT) chunk data, or `nil` if not present.
-@property (nullable, nonatomic) BEXTDescriptionC *bextDescriptionC;
+@property(nullable, nonatomic) BEXTDescriptionC *bextDescriptionC;
 
 /// Raw iXML chunk string, or `nil` if not present.
-@property (nullable, nonatomic) NSString *iXML;
+@property(nullable, nonatomic) NSString *iXML;
 
 /// Embedded artwork extracted via TagLib, or `nil` if not present.
-@property (nullable, nonatomic) TagPicture *tagPicture;
+@property(nullable, nonatomic) TagPicture *tagPicture;
 
 /// Array of `AudioMarker` objects representing RIFF cue points.
-@property (nonatomic, strong, nonnull) NSArray *markers;
+@property(nonatomic, strong, nonnull) NSArray *markers;
 
 /// Absolute path to the WAV file.
-@property (nonatomic, strong, nonnull) NSString *path;
+@property(nonatomic, strong, nonnull) NSString *path;
 
 /// Set to `YES` to write markers on save. Default is `YES`.
-@property (nonatomic) BOOL markersNeedsSave;
+@property(nonatomic) BOOL markersNeedsSave;
 
 /// Set to `YES` to write artwork on save. Default is `YES`.
-@property (nonatomic) BOOL imageNeedsSave;
+@property(nonatomic) BOOL imageNeedsSave;
 
 - (instancetype)init;
 

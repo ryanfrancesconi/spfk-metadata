@@ -12,22 +12,22 @@ NS_ASSUME_NONNULL_BEGIN
 @interface AudioMarker : NSObject
 
 /// Display name of the marker, or `nil` if unnamed.
-@property (nonatomic, nullable) NSString *name;
+@property(nonatomic, nullable) NSString *name;
 
 /// Marker position in seconds from the start of the file.
-@property (nonatomic) NSTimeInterval time;
+@property(nonatomic) NSTimeInterval time;
 
 /// Sample rate of the audio file (used to convert between time and sample position).
-@property (nonatomic) Float64 sampleRate;
+@property(nonatomic) Float64 sampleRate;
 
 /// Unique marker identifier within the file (corresponds to the RIFF cue-point ID).
-@property (nonatomic) SInt32 markerID;
+@property(nonatomic) SInt32 markerID;
 
 /// Core Audio marker type flag (e.g., `kAudioFileMarkerType_Generic`).
-@property (nonatomic) UInt32 type;
+@property(nonatomic) UInt32 type;
 
 /// SMPTE timecode associated with the marker, if available.
-@property (nonatomic) AudioFile_SMPTE_Time timecode;
+@property(nonatomic) AudioFile_SMPTE_Time timecode;
 
 /// Creates an `AudioMarker` with a name, time position, sample rate, and ID.
 /// @param name Display name of the marker.

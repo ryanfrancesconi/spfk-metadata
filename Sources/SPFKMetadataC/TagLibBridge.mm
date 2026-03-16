@@ -50,8 +50,7 @@ using namespace TagLib;
     return tagFile.dictionary;
 }
 
-+ (bool)setProperties:(NSString *)path
-           dictionary:(NSDictionary *)dictionary {
++ (bool)setProperties:(NSString *)path dictionary:(NSDictionary *)dictionary {
     TagFile *tagFile = [[TagFile alloc] initWithPath:path];
 
     [tagFile setDictionary:dictionary];
@@ -76,8 +75,7 @@ using namespace TagLib;
     return @(tag->title().toCString());
 }
 
-+ (bool)setTitle:(NSString *)path
-           title:(NSString *)title {
++ (bool)setTitle:(NSString *)path title:(NSString *)title {
     FileRef fileRef(path.UTF8String);
 
     if (fileRef.isNull()) {
@@ -115,8 +113,7 @@ using namespace TagLib;
     return @(tag->comment().toCString());
 }
 
-+ (bool)setComment:(NSString *)path
-           comment:(NSString *)comment {
++ (bool)setComment:(NSString *)path comment:(NSString *)comment {
     FileRef fileRef(path.UTF8String);
 
     if (fileRef.isNull()) {
@@ -152,16 +149,28 @@ using namespace TagLib;
 
     if ([fileType isEqualToString:kTagFileTypeWave]) {
         auto *f = dynamic_cast<RIFF::WAV::File *>(fileRef.file());
-        if (f) { f->strip(); stripped = true; }
+        if (f) {
+            f->strip();
+            stripped = true;
+        }
     } else if ([fileType isEqualToString:kTagFileTypeM4a] || [fileType isEqualToString:kTagFileTypeMp4]) {
         auto *f = dynamic_cast<MP4::File *>(fileRef.file());
-        if (f) { f->strip(); stripped = true; }
+        if (f) {
+            f->strip();
+            stripped = true;
+        }
     } else if ([fileType isEqualToString:kTagFileTypeMp3]) {
         auto *f = dynamic_cast<MPEG::File *>(fileRef.file());
-        if (f) { f->strip(); stripped = true; }
+        if (f) {
+            f->strip();
+            stripped = true;
+        }
     } else if ([fileType isEqualToString:kTagFileTypeFlac]) {
         auto *f = dynamic_cast<FLAC::File *>(fileRef.file());
-        if (f) { f->strip(); stripped = true; }
+        if (f) {
+            f->strip();
+            stripped = true;
+        }
     }
 
     if (!stripped) {
@@ -172,8 +181,7 @@ using namespace TagLib;
     return fileRef.save();
 }
 
-+ (bool)copyTagsFromPath:(NSString *)path
-                  toPath:(NSString *)toPath {
++ (bool)copyTagsFromPath:(NSString *)path toPath:(NSString *)toPath {
     FileRef input(path.UTF8String);
 
     if (input.isNull()) {

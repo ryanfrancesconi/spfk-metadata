@@ -10,19 +10,19 @@ NS_ASSUME_NONNULL_BEGIN
 @interface TagAudioPropertiesC : NSObject
 
 /// Sample rate in Hz (e.g., 44100, 48000).
-@property (nonatomic) double sampleRate;
+@property(nonatomic) double sampleRate;
 
 /// Total duration of the audio file in seconds.
-@property (nonatomic) double duration;
+@property(nonatomic) double duration;
 
 /// Bit rate in kilobits per second (e.g., 320 for 320 kbps MP3).
-@property (nonatomic) int bitRate;
+@property(nonatomic) int bitRate;
 
 /// Number of audio channels (1 = mono, 2 = stereo, etc.).
-@property (nonatomic) int channelCount;
+@property(nonatomic) int channelCount;
 
 /// Bits per sample (e.g., 16, 24, 32). Only meaningful for PCM formats like WAV/AIFF.
-@property (nonatomic) int bitsPerSample;
+@property(nonatomic) int bitsPerSample;
 
 - (nonnull id)init;
 

@@ -3,8 +3,8 @@
 #ifndef TAGFILE_H
 #define TAGFILE_H
 
-#import <Foundation/Foundation.h>
 #import "TagAudioPropertiesC.h"
+#import <Foundation/Foundation.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -16,13 +16,13 @@ NS_ASSUME_NONNULL_BEGIN
 @interface TagFile : NSObject
 
 /// Audio stream properties (sample rate, duration, etc.) populated after `load`.
-@property (nullable, nonatomic) TagAudioPropertiesC *audioProperties;
+@property(nullable, nonatomic) TagAudioPropertiesC *audioProperties;
 
 /// Tag properties as key-value pairs. Set this before calling `save` to write changes.
-@property (nullable, nonatomic) NSDictionary *dictionary;
+@property(nullable, nonatomic) NSDictionary *dictionary;
 
 /// Absolute path to the audio file.
-@property (nonatomic, strong, nonnull) NSString *path;
+@property(nonatomic, strong, nonnull) NSString *path;
 
 /// Creates a `TagFile` for the audio file at the given path.
 /// @param path Absolute path to the audio file.

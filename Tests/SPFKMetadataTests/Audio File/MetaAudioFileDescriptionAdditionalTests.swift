@@ -83,7 +83,7 @@ struct MetaAudioFileDescriptionPropertyTests {
     @Test func audioMarkersWithoutAudioFormat() {
         var maf = MetaAudioFileDescription(url: URL(filePath: "/tmp/test.wav"))
         maf.markerCollection = AudioMarkerDescriptionCollection(markerDescriptions: [
-            AudioMarkerDescription(name: "M1", startTime: 1.0),
+            AudioMarkerDescription(name: "M1", startTime: 1.0)
         ])
 
         let markers = maf.audioMarkers
@@ -96,7 +96,7 @@ struct MetaAudioFileDescriptionPropertyTests {
         var maf = MetaAudioFileDescription(url: URL(filePath: "/tmp/test.wav"))
         // update(markerDescriptions:) auto-names nil markers, so name should be "Marker 0"
         maf.markerCollection = AudioMarkerDescriptionCollection(markerDescriptions: [
-            AudioMarkerDescription(name: nil, startTime: 0),
+            AudioMarkerDescription(name: nil, startTime: 0)
         ])
 
         let markers = maf.audioMarkers
@@ -159,7 +159,7 @@ struct MetaAudioFileDescriptionConvenienceTests {
         maf.bextDescription?.originator = "Original"
 
         let dict: BEXTKeyDictionary = [
-            .originator: "Updated",
+            .originator: "Updated"
         ]
 
         maf.merge(bext: dict)
@@ -196,7 +196,7 @@ struct MetaAudioFileDescriptionCodableTests {
 
         original.tagProperties.tags[.title] = "Test"
         original.markerCollection = AudioMarkerDescriptionCollection(markerDescriptions: [
-            AudioMarkerDescription(name: "Cue", startTime: 1.0),
+            AudioMarkerDescription(name: "Cue", startTime: 1.0)
         ])
 
         let data = try JSONEncoder().encode(original)

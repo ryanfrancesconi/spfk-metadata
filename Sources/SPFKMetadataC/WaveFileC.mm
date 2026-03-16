@@ -82,8 +82,7 @@ using namespace TagLib;
     _markers = [AudioMarkerUtil getMarkers:url];
 
     if (waveFile->hasBEXTTag() && !waveFile->bextTag.isEmpty()) {
-        NSData *bextData = [NSData dataWithBytes:waveFile->bextTag.data()
-                                          length:waveFile->bextTag.size()];
+        NSData *bextData = [NSData dataWithBytes:waveFile->bextTag.data() length:waveFile->bextTag.size()];
         _bextDescriptionC = [[BEXTDescriptionC alloc] initWithData:bextData];
 
         if (_bextDescriptionC && _audioPropertiesC) {
@@ -135,8 +134,7 @@ using namespace TagLib;
     // write bext via TagLib chunk (no more temp file + audio copy)
     if (_bextDescriptionC) {
         NSData *bextData = [_bextDescriptionC serializedData];
-        waveFile->bextTag = ByteVector((const char *)bextData.bytes,
-                                       (unsigned int)bextData.length);
+        waveFile->bextTag = ByteVector((const char *)bextData.bytes, (unsigned int)bextData.length);
     } else {
         waveFile->bextTag = ByteVector();
     }

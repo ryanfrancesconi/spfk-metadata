@@ -13,13 +13,13 @@ NS_ASSUME_NONNULL_BEGIN
 @interface ID3File : NSObject
 
 /// All ID3 frames as key-value pairs, keyed by frame ID (e.g., "TIT2", "TXXX").
-@property (nullable, nonatomic) NSMutableDictionary *dictionary;
+@property(nullable, nonatomic) NSMutableDictionary *dictionary;
 
 /// Absolute path to the audio file.
-@property (nonatomic, strong, nonnull) NSString *path;
+@property(nonatomic, strong, nonnull) NSString *path;
 
 /// The detected TagLib file type string (e.g., "mp3", "wav"), or `nil` if unknown.
-@property (nonatomic, strong, nullable) NSString *fileType;
+@property(nonatomic, strong, nullable) NSString *fileType;
 
 /// Creates an `ID3File` for the audio file at the given path.
 /// @param path Absolute path to the audio file.

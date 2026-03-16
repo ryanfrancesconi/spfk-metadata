@@ -19,8 +19,7 @@ NS_ASSUME_NONNULL_BEGIN
 /// @param path Absolute path to the audio file.
 /// @param dictionary Tag properties keyed by TagLib property names.
 /// @return `true` if the write succeeded.
-+ (bool)setProperties:(NSString *)path
-           dictionary:(NSDictionary *)dictionary;
++ (bool)setProperties:(NSString *)path dictionary:(NSDictionary *)dictionary;
 
 /// Reads the title tag from the file.
 /// @param path Absolute path to the audio file.
@@ -31,8 +30,7 @@ NS_ASSUME_NONNULL_BEGIN
 /// @param path Absolute path to the audio file.
 /// @param comment The new title string.
 /// @return `true` if the write succeeded.
-+ (bool)setTitle:(NSString *)path
-           title:(NSString *)comment;
++ (bool)setTitle:(NSString *)path title:(NSString *)comment;
 
 /// Reads the comment tag from the file.
 /// @param path Absolute path to the audio file.
@@ -43,8 +41,7 @@ NS_ASSUME_NONNULL_BEGIN
 /// @param path Absolute path to the audio file.
 /// @param comment The new comment string.
 /// @return `true` if the write succeeded.
-+ (bool)setComment:(NSString *)path
-           comment:(NSString *)comment;
++ (bool)setComment:(NSString *)path comment:(NSString *)comment;
 
 /// Strips all tags (ID3, APE, Xiph, etc.) from the file.
 /// @param path Absolute path to the audio file.
@@ -55,8 +52,7 @@ NS_ASSUME_NONNULL_BEGIN
 /// @param path Source file path to read tags from.
 /// @param toPath Destination file path to write tags to.
 /// @return `true` if the copy succeeded.
-+ (bool)copyTagsFromPath:(NSString *)path
-                  toPath:(NSString *)toPath;
++ (bool)copyTagsFromPath:(NSString *)path toPath:(NSString *)toPath;
 
 @end
 

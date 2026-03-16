@@ -12,9 +12,9 @@
 #import <taglib/textidentificationframe.h>
 #import <taglib/tpropertymap.h>
 
-#import <StringUtil.h>
 #import "ChapterMarker.h"
 #import "MPEGChapterUtil.h"
+#import <StringUtil.h>
 
 using namespace std;
 using namespace TagLib;
@@ -53,7 +53,7 @@ using namespace TagLib;
         String elementName = String(frame->elementID());
 
         const char *name = elementName.toCString();
-        
+
         NSString *chapterName = @(name);
 
         const ID3v2::FrameList &embeddedFrames = frame->embeddedFrameList();
@@ -71,7 +71,9 @@ using namespace TagLib;
             }
         }
 
-        ChapterMarker *chapterFrame = [[ChapterMarker alloc] initWithName:chapterName startTime:startTime endTime:endTime];
+        ChapterMarker *chapterFrame = [[ChapterMarker alloc] initWithName:chapterName
+                                                                startTime:startTime
+                                                                  endTime:endTime];
 
         [array addObject:chapterFrame];
     }
@@ -79,8 +81,7 @@ using namespace TagLib;
     return array;
 }
 
-+ (bool)update:(NSString *)path
-      chapters:(NSArray *)chapters {
++ (bool)update:(NSString *)path chapters:(NSArray *)chapters {
     FileRef fileRef(path.UTF8String);
 
     if (fileRef.isNull()) {

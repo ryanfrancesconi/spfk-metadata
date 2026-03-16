@@ -7,35 +7,36 @@
 #import "StringUtil.h"
 
 // EBU Tech 3285 BEXT chunk binary layout offsets
-static const NSUInteger kBEXTMinSize            = 602;
-static const NSUInteger kBEXTDescriptionOffset  = 0;
-static const NSUInteger kBEXTDescriptionSize    = 256;
-static const NSUInteger kBEXTOriginatorOffset   = 256;
-static const NSUInteger kBEXTOriginatorSize     = 32;
+static const NSUInteger kBEXTMinSize = 602;
+static const NSUInteger kBEXTDescriptionOffset = 0;
+static const NSUInteger kBEXTDescriptionSize = 256;
+static const NSUInteger kBEXTOriginatorOffset = 256;
+static const NSUInteger kBEXTOriginatorSize = 32;
 static const NSUInteger kBEXTOriginatorRefOffset = 288;
-static const NSUInteger kBEXTOriginatorRefSize  = 32;
-static const NSUInteger kBEXTOriginDateOffset   = 320;
-static const NSUInteger kBEXTOriginDateSize     = 10;
-static const NSUInteger kBEXTOriginTimeOffset   = 330;
-static const NSUInteger kBEXTOriginTimeSize     = 8;
-static const NSUInteger kBEXTTimeRefLowOffset   = 338;
-static const NSUInteger kBEXTTimeRefHighOffset  = 342;
-static const NSUInteger kBEXTVersionOffset      = 346;
-static const NSUInteger kBEXTUMIDOffset         = 348;
-static const NSUInteger kBEXTUMIDSize           = 64;
-static const NSUInteger kBEXTLoudnessValueOffset     = 412;
-static const NSUInteger kBEXTLoudnessRangeOffset     = 414;
-static const NSUInteger kBEXTMaxTruePeakOffset       = 416;
-static const NSUInteger kBEXTMaxMomentaryOffset      = 418;
-static const NSUInteger kBEXTMaxShortTermOffset      = 420;
-static const NSUInteger kBEXTReservedOffset     = 422;
-static const NSUInteger kBEXTReservedSize       = 180;
+static const NSUInteger kBEXTOriginatorRefSize = 32;
+static const NSUInteger kBEXTOriginDateOffset = 320;
+static const NSUInteger kBEXTOriginDateSize = 10;
+static const NSUInteger kBEXTOriginTimeOffset = 330;
+static const NSUInteger kBEXTOriginTimeSize = 8;
+static const NSUInteger kBEXTTimeRefLowOffset = 338;
+static const NSUInteger kBEXTTimeRefHighOffset = 342;
+static const NSUInteger kBEXTVersionOffset = 346;
+static const NSUInteger kBEXTUMIDOffset = 348;
+static const NSUInteger kBEXTUMIDSize = 64;
+static const NSUInteger kBEXTLoudnessValueOffset = 412;
+static const NSUInteger kBEXTLoudnessRangeOffset = 414;
+static const NSUInteger kBEXTMaxTruePeakOffset = 416;
+static const NSUInteger kBEXTMaxMomentaryOffset = 418;
+static const NSUInteger kBEXTMaxShortTermOffset = 420;
+static const NSUInteger kBEXTReservedOffset = 422;
+static const NSUInteger kBEXTReservedSize = 180;
 static const NSUInteger kBEXTCodingHistoryOffset = 602;
 
 @implementation BEXTDescriptionC
 
 - (double)timeReferenceInSeconds {
-    if (_sampleRate <= 0) return 0;
+    if (_sampleRate <= 0)
+        return 0;
     return (double)_timeReference / _sampleRate;
 }
 
@@ -50,20 +51,17 @@ static const NSUInteger kBEXTCodingHistoryOffset = 602;
     }
 
     self = [super init];
-    if (!self) return nil;
+    if (!self)
+        return nil;
 
     const uint8_t *bytes = (const uint8_t *)data.bytes;
 
-    _sequenceDescription = StringUtil::asciiString((const char *)bytes + kBEXTDescriptionOffset,
-                                                    kBEXTDescriptionSize);
-    _originator = StringUtil::asciiString((const char *)bytes + kBEXTOriginatorOffset,
-                                          kBEXTOriginatorSize);
-    _originatorReference = StringUtil::asciiString((const char *)bytes + kBEXTOriginatorRefOffset,
-                                                    kBEXTOriginatorRefSize);
-    _originationDate = StringUtil::asciiString((const char *)bytes + kBEXTOriginDateOffset,
-                                               kBEXTOriginDateSize);
-    _originationTime = StringUtil::asciiString((const char *)bytes + kBEXTOriginTimeOffset,
-                                               kBEXTOriginTimeSize);
+    _sequenceDescription = StringUtil::asciiString((const char *)bytes + kBEXTDescriptionOffset, kBEXTDescriptionSize);
+    _originator = StringUtil::asciiString((const char *)bytes + kBEXTOriginatorOffset, kBEXTOriginatorSize);
+    _originatorReference =
+        StringUtil::asciiString((const char *)bytes + kBEXTOriginatorRefOffset, kBEXTOriginatorRefSize);
+    _originationDate = StringUtil::asciiString((const char *)bytes + kBEXTOriginDateOffset, kBEXTOriginDateSize);
+    _originationTime = StringUtil::asciiString((const char *)bytes + kBEXTOriginTimeOffset, kBEXTOriginTimeSize);
 
     _timeReferenceLow = OSReadLittleInt32(bytes, kBEXTTimeRefLowOffset);
     _timeReferenceHigh = OSReadLittleInt32(bytes, kBEXTTimeRefHighOffset);
@@ -88,9 +86,8 @@ static const NSUInteger kBEXTCodingHistoryOffset = 602;
     }
 
     if (data.length > kBEXTCodingHistoryOffset) {
-        _codingHistory = StringUtil::asciiString(
-            (const char *)bytes + kBEXTCodingHistoryOffset,
-            data.length - kBEXTCodingHistoryOffset);
+        _codingHistory = StringUtil::asciiString((const char *)bytes + kBEXTCodingHistoryOffset,
+                                                 data.length - kBEXTCodingHistoryOffset);
 
         if (!_codingHistory) {
             _codingHistory = @"";
@@ -120,36 +117,31 @@ static const NSUInteger kBEXTCodingHistoryOffset = 602;
     // description
     const char *desc = StringUtil::asciiCString(_sequenceDescription);
     if (desc) {
-        StringUtil::strncpy_validate((char *)bytes + kBEXTDescriptionOffset,
-                                     desc, kBEXTDescriptionSize);
+        StringUtil::strncpy_validate((char *)bytes + kBEXTDescriptionOffset, desc, kBEXTDescriptionSize);
     }
 
     // originator
     const char *orig = StringUtil::asciiCString(_originator);
     if (orig) {
-        StringUtil::strncpy_validate((char *)bytes + kBEXTOriginatorOffset,
-                                     orig, kBEXTOriginatorSize);
+        StringUtil::strncpy_validate((char *)bytes + kBEXTOriginatorOffset, orig, kBEXTOriginatorSize);
     }
 
     // originator reference
     const char *origRef = StringUtil::asciiCString(_originatorReference);
     if (origRef) {
-        StringUtil::strncpy_validate((char *)bytes + kBEXTOriginatorRefOffset,
-                                     origRef, kBEXTOriginatorRefSize);
+        StringUtil::strncpy_validate((char *)bytes + kBEXTOriginatorRefOffset, origRef, kBEXTOriginatorRefSize);
     }
 
     // origination date
     const char *date = StringUtil::asciiCString(_originationDate);
     if (date) {
-        StringUtil::strncpy_pad0((char *)bytes + kBEXTOriginDateOffset,
-                                 date, kBEXTOriginDateSize, false);
+        StringUtil::strncpy_pad0((char *)bytes + kBEXTOriginDateOffset, date, kBEXTOriginDateSize, false);
     }
 
     // origination time
     const char *time = StringUtil::asciiCString(_originationTime);
     if (time) {
-        StringUtil::strncpy_pad0((char *)bytes + kBEXTOriginTimeOffset,
-                                 time, kBEXTOriginTimeSize, false);
+        StringUtil::strncpy_pad0((char *)bytes + kBEXTOriginTimeOffset, time, kBEXTOriginTimeSize, false);
     }
 
     // time reference
@@ -163,9 +155,7 @@ static const NSUInteger kBEXTCodingHistoryOffset = 602;
     if (_version >= 1 && _umid.length > 0) {
         const char *umidHex = StringUtil::asciiCString(_umid);
         if (umidHex) {
-            StringUtil::hexToBytes(umidHex,
-                                   bytes + kBEXTUMIDOffset,
-                                   kBEXTUMIDSize);
+            StringUtil::hexToBytes(umidHex, bytes + kBEXTUMIDOffset, kBEXTUMIDSize);
         }
     }
 

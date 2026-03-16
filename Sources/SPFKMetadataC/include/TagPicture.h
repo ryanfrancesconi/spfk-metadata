@@ -16,7 +16,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface TagPicture : NSObject
 
 /// The extracted or to-be-written artwork, wrapping a `CGImageRef` with UTType info.
-@property (nullable, nonatomic) TagPictureRef *pictureRef;
+@property(nullable, nonatomic) TagPictureRef *pictureRef;
 
 /// Creates a `TagPicture` from an existing `TagPictureRef` for writing.
 /// @param pictureRef The artwork reference to embed.
@@ -33,8 +33,7 @@ NS_ASSUME_NONNULL_BEGIN
 /// @param picture The artwork to write.
 /// @param path Absolute path to the audio file.
 /// @return `true` if the write succeeded.
-+ (bool)write:(TagPictureRef *)picture
-         path:(nonnull NSString *)path;
++ (bool)write:(TagPictureRef *)picture path:(nonnull NSString *)path;
 
 // MARK: - Tag-based (uses an existing TagLib session)
 
@@ -48,8 +47,7 @@ NS_ASSUME_NONNULL_BEGIN
 /// @param picture The artwork to embed, or `nil` to clear.
 /// @param tag Opaque pointer to a `TagLib::Tag *`. Must not be NULL.
 /// @return `true` if the write succeeded.
-+ (bool)write:(nullable TagPictureRef *)picture
-        toTag:(nonnull void *)tag;
++ (bool)write:(nullable TagPictureRef *)picture toTag:(nonnull void *)tag;
 
 @end
 

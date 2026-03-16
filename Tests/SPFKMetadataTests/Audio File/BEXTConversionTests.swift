@@ -116,7 +116,7 @@ struct BEXTDictionaryLoudnessTests {
     @Test func setTimeReferenceViaDict() {
         var desc = BEXTDescription()
         desc.dictionary = [
-            .timeReferenceSamples: "88200",
+            .timeReferenceSamples: "88200"
         ]
 
         #expect(desc.timeReference == 88200)

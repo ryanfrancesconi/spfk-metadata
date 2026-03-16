@@ -28,7 +28,7 @@ NS_ASSUME_NONNULL_BEGIN
 using namespace std;
 using namespace TagLib;
 
-# pragma mark - Helpers
+#pragma mark - Helpers
 
 TagFileTypeDef kTagFileTypeAac = @"aac";
 TagFileTypeDef kTagFileTypeAiff = @"aif";

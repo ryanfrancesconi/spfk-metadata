@@ -16,8 +16,7 @@
 - (nonnull id)initWithImage:(CGImageRef)cgImage
                      utType:(UTType *)utType
          pictureDescription:(NSString *)pictureDescription
-                pictureType:(NSString *)pictureType
-{
+                pictureType:(NSString *)pictureType {
     self = [super init];
 
     // Retain because caller retains its own reference.
@@ -36,9 +35,8 @@
 }
 
 - (nullable instancetype)initWithURL:(NSURL *)url
-        pictureDescription:(NSString *)pictureDescription
-               pictureType:(NSString *)pictureType
-{
+                  pictureDescription:(NSString *)pictureDescription
+                         pictureType:(NSString *)pictureType {
     self = [super init];
 
     _pictureDescription = pictureDescription;

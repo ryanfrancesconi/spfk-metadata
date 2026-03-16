@@ -40,7 +40,8 @@ static const auto pictureTypeKey = String("pictureType");
     Tag *tag = static_cast<Tag *>(opaqueTag);
 
     auto pictures = tag->complexProperties(pictureKey);
-    if (pictures.isEmpty()) return nil;
+    if (pictures.isEmpty())
+        return nil;
 
     // take the first picture only
     auto picture = pictures.front();
@@ -49,7 +50,8 @@ static const auto pictureTypeKey = String("pictureType");
     NSString *mimeType = StringUtil::utf8NSString(pictureMimeType);
     UTType *utType = [UTType typeWithMIMEType:mimeType];
 
-    if (!utType) return nil;
+    if (!utType)
+        return nil;
 
     ByteVector pictureData = picture.value(dataKey).toByteVector();
     NSData *nsData = [[NSData alloc] initWithBytes:pictureData.data() length:pictureData.size()];
@@ -65,7 +67,8 @@ static const auto pictureTypeKey = String("pictureType");
 
     CFRelease(dataProvider);
 
-    if (!imageRef) return nil;
+    if (!imageRef)
+        return nil;
 
     size_t width = CGImageGetWidth(imageRef);
     size_t height = CGImageGetHeight(imageRef);
@@ -91,8 +94,7 @@ static const auto pictureTypeKey = String("pictureType");
     return pictureRef;
 }
 
-+ (bool)write:(nullable TagPictureRef *)picture
-        toTag:(nonnull void *)opaqueTag {
++ (bool)write:(nullable TagPictureRef *)picture toTag:(nonnull void *)opaqueTag {
     Tag *tag = static_cast<Tag *>(opaqueTag);
 
     if (!picture) {
@@ -117,12 +119,8 @@ static const auto pictureTypeKey = String("pictureType");
     map.insert(mimeTypeKey, String(value, String::Type::UTF8));
 
     CFMutableDataRef mutableData = CFDataCreateMutable(NULL, 0);
-    CGImageDestinationRef destination = CGImageDestinationCreateWithData(
-        mutableData,
-        (__bridge CFStringRef)picture.utType.identifier,
-        1,
-        NULL
-    );
+    CGImageDestinationRef destination =
+        CGImageDestinationCreateWithData(mutableData, (__bridge CFStringRef)picture.utType.identifier, 1, NULL);
 
     CGImageDestinationAddImage(destination, picture.cgImage, NULL);
 
@@ -148,7 +146,7 @@ static const auto pictureTypeKey = String("pictureType");
     ByteVector data = ByteVector(vec.data(), int(vec.size()));
     map.insert(dataKey, data);
 
-    tag->setComplexProperties(pictureKey, { map });
+    tag->setComplexProperties(pictureKey, {map});
 
     CFRelease(destination);
     CFRelease(mutableData);
@@ -166,18 +164,19 @@ static const auto pictureTypeKey = String("pictureType");
     }
 
     Tag *tag = fileRef.tag();
-    if (!tag) return NULL;
+    if (!tag)
+        return NULL;
 
     TagPictureRef *ref = [TagPicture readFromTag:tag];
-    if (!ref) return NULL;
+    if (!ref)
+        return NULL;
 
     self = [super init];
     _pictureRef = ref;
     return self;
 }
 
-+ (bool)write:(TagPictureRef *)picture
-         path:(nonnull NSString *)path {
++ (bool)write:(TagPictureRef *)picture path:(nonnull NSString *)path {
     FileRef fileRef(path.UTF8String);
 
     if (fileRef.isNull()) {
@@ -185,7 +184,8 @@ static const auto pictureTypeKey = String("pictureType");
     }
 
     Tag *tag = fileRef.tag();
-    if (!tag) return false;
+    if (!tag)
+        return false;
 
     if (![TagPicture write:picture toTag:tag]) {
         return false;

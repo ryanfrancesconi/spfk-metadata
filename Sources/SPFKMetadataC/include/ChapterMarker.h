@@ -11,21 +11,19 @@ NS_ASSUME_NONNULL_BEGIN
 @interface ChapterMarker : NSObject
 
 /// Display name of the chapter, or `nil` if unnamed.
-@property (nonatomic, strong, nullable) NSString *name;
+@property(nonatomic, strong, nullable) NSString *name;
 
 /// Start time of the chapter in seconds from the beginning of the file.
-@property (nonatomic) NSTimeInterval startTime;
+@property(nonatomic) NSTimeInterval startTime;
 
 /// End time of the chapter in seconds from the beginning of the file.
-@property (nonatomic) NSTimeInterval endTime;
+@property(nonatomic) NSTimeInterval endTime;
 
 /// Creates a `ChapterMarker` with a name, start time, and end time.
 /// @param name Display name of the chapter.
 /// @param startTime Start time in seconds.
 /// @param endTime End time in seconds.
-- (nonnull id)initWithName:(nonnull NSString *)name
-                 startTime:(NSTimeInterval)startTime
-                   endTime:(NSTimeInterval)endTime;
+- (nonnull id)initWithName:(nonnull NSString *)name startTime:(NSTimeInterval)startTime endTime:(NSTimeInterval)endTime;
 
 @end
 

@@ -64,7 +64,7 @@ using namespace TagLib;
         // cout << ckey << " = " << cval << endl;
 
         NSString *key = @(ckey);
-        NSString *object = @(cval.toCString()) ? : @"";
+        NSString *object = @(cval.toCString()) ?: @"";
 
         if (key != nil && object != nil) {
             [_dictionary setValue:object forKey:key];

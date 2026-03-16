@@ -14,16 +14,16 @@ NS_ASSUME_NONNULL_BEGIN
 @interface TagPictureRef : NSObject
 
 /// The artwork image. Retained by this object; released on dealloc.
-@property (nonatomic) CGImageRef cgImage;
+@property(nonatomic) CGImageRef cgImage;
 
 /// Optional text description of the picture (e.g., "Front Cover").
-@property (nonatomic, strong, nullable) NSString *pictureDescription;
+@property(nonatomic, strong, nullable) NSString *pictureDescription;
 
 /// Picture type string (e.g., "Cover (front)") per the ID3 APIC specification.
-@property (nonatomic, strong, nullable) NSString *pictureType;
+@property(nonatomic, strong, nullable) NSString *pictureType;
 
 /// The image's Uniform Type Identifier (e.g., `UTTypeJPEG`, `UTTypePNG`).
-@property (nonatomic, strong, nonnull) UTType *utType;
+@property(nonatomic, strong, nonnull) UTType *utType;
 
 /// Creates a `TagPictureRef` from a `CGImageRef`. The image is retained.
 /// @param cgImage The image to wrap.
@@ -41,8 +41,8 @@ NS_ASSUME_NONNULL_BEGIN
 /// @param pictureType Optional type string per the APIC spec.
 /// @return `nil` if the image cannot be loaded or is not JPEG/PNG.
 - (nullable instancetype)initWithURL:(NSURL *)url
-        pictureDescription:(NSString *)pictureDescription
-               pictureType:(NSString *)pictureType;
+                  pictureDescription:(NSString *)pictureDescription
+                         pictureType:(NSString *)pictureType;
 
 @end
 
