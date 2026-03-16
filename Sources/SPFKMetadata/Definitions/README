@@ -1,0 +1,3 @@
+# SPFKMetadataBase
+
+> **Note:** Pure data types (TagKey, TagProperties, TagData, MetaAudioFileDescription, AudioMarkerDescription, BEXTDescription, etc.) have been extracted to [spfk-metadata-base](https://github.com/ryanfrancesconi/spfk-metadata-base). That package has no C++/TagLib dependency and can be used standalone. SPFKMetadata re-exports these types and adds file I/O capabilities on top of them.
