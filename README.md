@@ -5,7 +5,7 @@
 
 Audio metadata I/O library wrapping [TagLib](https://github.com/taglib/taglib) (v2.1.1) and Core Audio to provide unified tag reading/writing, marker parsing, and broadcast wave (BEXT) support across common audio formats.
 
-No single framework handles all audio metadata scenarios in Swift. AVFoundation lacks write support and misses RIFF markers, BEXT chunks, iXML, and MP3 chapter frames. SPFKMetadata fills those gaps with an ObjC++/C bridge for TagLib and it's own C interop.
+No single framework handles all audio metadata scenarios in Swift. AVFoundation lacks write support and misses RIFF markers, BEXT chunks, iXML, and MP3 chapter frames. SPFKMetadata fills those gaps with an ObjC++/C bridge for TagLib. All WAV I/O (tags, markers, BEXT, artwork) goes through a single TagLib-backed `WaveFileC` load/save cycle.
 
 > **Note:** Pure data types (TagKey, TagProperties, TagData, MetaAudioFileDescription, AudioMarkerDescription, BEXTDescription, etc.) have been extracted to [spfk-metadata-base](https://github.com/ryanfrancesconi/spfk-metadata-base). That package has no C++/TagLib dependency and can be used standalone. SPFKMetadata re-exports these types and adds file I/O capabilities on top of them.
 
@@ -79,7 +79,7 @@ Types marked with *(base)* are defined in [SPFKMetadataBase](https://github.com/
 - **AudioFormatProperties+IO** *(I/O)* — Initializer from `AVAudioFile`.
 - **AudioFileType+TagType** *(I/O)* — Bidirectional mapping between `AudioFileType` and `TagFileTypeDef`, with file extension and URL-based detection.
 - **BEXTDescription** *(base)* — Broadcast Wave Extension (BWF) chunk wrapper supporting v0/v1/v2 fields including originator, coding history, UMID, loudness values, and 64-bit time reference.
-- **BEXTDescription+IO** *(I/O)* — Conversion to/from the C bridge type `BEXTDescriptionC`.
+- **BEXTDescription+IO** *(I/O)* — Read/write BEXT chunks via `WaveFileC` (TagLib). Conversion to/from the C bridge type `BEXTDescriptionC`.
 - **BEXTDescription.Key** *(base)* — Enum of BEXT field keys with `OrderedDictionary` subscript for dictionary-style get/set access.
 - **ImageDescription** *(base)* — Embedded artwork container with CGImage, thumbnail generation, and Codable conformance.
 - **ImageDescription+IO** *(I/O)* — Conversion to/from `TagPictureRef` for TagLib interop.
@@ -96,7 +96,7 @@ Types marked with *(base)* are defined in [SPFKMetadataBase](https://github.com/
 
 ### SPFKMetadataC (ObjC++/C Bridge)
 
-Low-level bridge layer exposing TagLib and libsndfile functionality to Swift through Objective-C++ classes.
+Low-level bridge layer exposing TagLib functionality to Swift through Objective-C++ classes.
 
 | Class | Description |
 |---|---|
@@ -105,15 +105,15 @@ Low-level bridge layer exposing TagLib and libsndfile functionality to Swift thr
 | **ID3File** | ID3v2-specific file access with frame-level read/write and XMP support |
 | **TagPicture** | Embedded artwork extraction and embedding via TagLib |
 | **TagPictureRef** | CGImageRef container for artwork with UTType, managing Core Graphics reference counting across the Swift/ObjC boundary |
-| **WaveFileC** | RIFF WAV file operations via libsndfile (INFO chunks, markers, BEXT) |
-| **BEXTDescriptionC** | C-compatible BEXT chunk struct for bridge interop |
+| **WaveFileC** | RIFF WAV file operations via TagLib (INFO chunks, markers, BEXT) with single-load/single-save I/O |
+| **BEXTDescriptionC** | EBU Tech 3285 BEXT chunk binary serializer/deserializer with initWithData:/serializedData |
 | **AudioMarkerUtil** | RIFF audio marker (cue point) parsing for WAV and AIFF |
 | **MPEGChapterUtil** | ID3v2 CHAP frame parsing for MP3 chapter markers |
 | **ChapterMarker** | Chapter marker data object for AVFoundation chapter parsing |
 
 ## Installation
 
-The package contains two targets: **SPFKMetadata** (pure Swift) and **SPFKMetadataC** (ObjC++/C with TagLib and libsndfile).
+The package contains two targets: **SPFKMetadata** (pure Swift) and **SPFKMetadataC** (ObjC++/C with TagLib).
 
 1. Add SPFKMetadata as a dependency:
    - In Xcode: **File → Swift Packages → Add Package Dependency...**
@@ -136,11 +136,10 @@ The package contains two targets: **SPFKMetadata** (pure Swift) and **SPFKMetada
 | [CXXTagLib](https://github.com/ryanfrancesconi/CXXTagLib) | TagLib C++ library for audio tag reading/writing |
 | [spfk-audio-base](https://github.com/ryanfrancesconi/spfk-audio-base) | Shared audio type definitions |
 | [spfk-utils](https://github.com/ryanfrancesconi/spfk-utils) | Foundation utilities and extensions |
-| [sndfile](https://github.com/sbooth/sndfile-binary-xcframework) | libsndfile binary xcframework |
-| [ogg](https://github.com/sbooth/ogg-binary-xcframework) | Ogg container format support |
-| [FLAC](https://github.com/sbooth/flac-binary-xcframework) | FLAC codec support |
-| [opus](https://github.com/sbooth/opus-binary-xcframework) | Opus codec support |
-| [vorbis](https://github.com/sbooth/vorbis-binary-xcframework) | Vorbis codec support |
+| [ogg](https://github.com/sbooth/ogg-binary-xcframework) | Ogg container format (TagLib link-time dependency) |
+| [FLAC](https://github.com/sbooth/flac-binary-xcframework) | FLAC codec (TagLib link-time dependency) |
+| [opus](https://github.com/sbooth/opus-binary-xcframework) | Opus codec (TagLib link-time dependency) |
+| [vorbis](https://github.com/sbooth/vorbis-binary-xcframework) | Vorbis codec (TagLib link-time dependency) |
 
 ## About
 
