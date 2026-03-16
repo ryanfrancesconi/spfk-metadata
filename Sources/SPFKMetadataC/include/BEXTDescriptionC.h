@@ -91,17 +91,6 @@ NS_ASSUME_NONNULL_BEGIN
 /// @return NSData containing the serialized BEXT chunk (602 + coding_history bytes).
 - (nonnull NSData *)serializedData;
 
-/// Reads the BEXT chunk from the WAV file at the given path via libsndfile.
-/// @param path Absolute path to the WAV file.
-/// @return `nil` if the file has no BEXT data or cannot be opened.
-- (nullable instancetype)initWithPath:(nonnull NSString *)path;
-
-/// Writes a BEXT chunk to the WAV file at the given path via libsndfile.
-/// @param info The BEXT data to write.
-/// @param path Absolute path to the WAV file.
-/// @return `true` if the write succeeded.
-+ (bool)write:(BEXTDescriptionC *)info
-         path:(nonnull NSString *)path;
 
 @end
 

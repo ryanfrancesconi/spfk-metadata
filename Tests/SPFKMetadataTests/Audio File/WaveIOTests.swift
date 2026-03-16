@@ -2,6 +2,7 @@
 
 import AVFoundation
 import Foundation
+import Numerics
 import SPFKBase
 import SPFKMetadata
 import SPFKMetadataBase
@@ -12,69 +13,65 @@ import Testing
 
 // MARK: - BEXT initWithData / serializedData round-trip
 
-/// Tests for the new binary BEXT parser (`initWithData:`) and serializer (`serializedData`),
-/// verifying they produce equivalent results to the old libsndfile-based path.
+/// Tests for the binary BEXT parser (`initWithData:`) and serializer (`serializedData`),
+/// verifying fields against known expected values from test files.
 @Suite(.serialized, .tags(.file))
 final class BEXTBinaryRoundTripTests: BinTestCase {
-    /// Parse a BEXT v1 file via both initWithPath (libsndfile) and initWithData (binary),
-    /// then verify all fields match.
-    @Test func initWithDataMatchesLibsndfile_v1() async throws {
+    /// Parse a BEXT v1 file via WaveFileC (TagLib bextTag -> initWithData)
+    /// and verify all fields against known values.
+    @Test func parseBEXTv1ViaTagLib() async throws {
         let url = TestBundleResources.shared.wav_bext_v1
 
-        // Old path: libsndfile
-        let fromPath = try #require(BEXTDescriptionC(path: url.path))
-
-        // New path: load via WaveFileC (which uses TagLib bextTag -> initWithData)
         let waveFile = WaveFileC(path: url.path)
         #expect(waveFile.load())
-        let fromData = try #require(waveFile.bextDescriptionC)
+        let bext = try #require(waveFile.bextDescriptionC)
 
-        #expect(fromData.version == fromPath.version)
-        #expect(fromData.sequenceDescription == fromPath.sequenceDescription)
-        #expect(fromData.originator == fromPath.originator)
-        #expect(fromData.originatorReference == fromPath.originatorReference)
-        #expect(fromData.originationDate == fromPath.originationDate)
-        #expect(fromData.originationTime == fromPath.originationTime)
-        #expect(fromData.timeReferenceLow == fromPath.timeReferenceLow)
-        #expect(fromData.timeReferenceHigh == fromPath.timeReferenceHigh)
-        #expect(fromData.timeReference == fromPath.timeReference)
-        #expect(fromData.codingHistory == fromPath.codingHistory)
-
-        if fromPath.version >= 1 {
-            #expect(fromData.umid == fromPath.umid)
-        }
+        #expect(bext.version == 1)
+        #expect(bext.originator == "Logic Pro")
+        #expect(bext.originationDate == "2025-10-18")
+        #expect(bext.originationTime == "17:51:21")
+        #expect(bext.timeReferenceLow == 172_800_000)
+        #expect(bext.timeReferenceHigh == 0)
+        #expect(bext.timeReference == 172_800_000)
+        #expect(
+            bext.umid
+                == "00000000F05E776B01000000000000000000000000000000000000006058776B010000003058776B01000000C8D3B6080100000000000000000000006058776B"
+        )
     }
 
-    /// Parse a BEXT v2 file via both paths and verify all fields including loudness.
-    @Test func initWithDataMatchesLibsndfile_v2() async throws {
+    /// Parse a BEXT v2 file via WaveFileC and verify all fields including loudness.
+    @Test func parseBEXTv2ViaTagLib() async throws {
         let url = TestBundleResources.shared.wav_bext_v2b
 
-        let fromPath = try #require(BEXTDescriptionC(path: url.path))
         let waveFile = WaveFileC(path: url.path)
         #expect(waveFile.load())
-        let fromData = try #require(waveFile.bextDescriptionC)
+        let bext = try #require(waveFile.bextDescriptionC)
 
-        #expect(fromData.version == fromPath.version)
-        #expect(fromData.version == 2)
-        #expect(fromData.sequenceDescription == fromPath.sequenceDescription)
-        #expect(fromData.originator == fromPath.originator)
-        #expect(fromData.originatorReference == fromPath.originatorReference)
-        #expect(fromData.originationDate == fromPath.originationDate)
-        #expect(fromData.originationTime == fromPath.originationTime)
-        #expect(fromData.timeReferenceLow == fromPath.timeReferenceLow)
-        #expect(fromData.timeReferenceHigh == fromPath.timeReferenceHigh)
-        #expect(fromData.umid == fromPath.umid)
-        #expect(fromData.codingHistory == fromPath.codingHistory)
+        #expect(bext.version == 2)
+        #expect(bext.originator == "ITRAIDA88396FG347125324098748726")
+        #expect(bext.originatorReference == "RF666SPONGEFORK66000100510720836")
+        #expect(bext.originationDate == "1984:01:01")
+        #expect(bext.originationTime == "00:01:00")
+        #expect(bext.timeReferenceLow == 158_760_000)
+        #expect(bext.timeReferenceHigh == 0)
+        #expect(bext.timeReference == 158_760_000)
+        #expect(
+            bext.umid
+                == "53504F4E4745464F524B303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303000"
+        )
 
-        // Loudness values (v2) — the new path uses double precision while libsndfile
-        // uses float intermediates, so values may differ slightly in the least significant bits.
-        // Both paths decode the same int16 raw value, so the meaningful precision is 0.01.
+        // Loudness values are stored as int16 / 100.0
         let tolerance = 0.01
-        #expect(abs(fromData.loudnessIntegrated - fromPath.loudnessIntegrated) < tolerance)
-        #expect(abs(fromData.loudnessRange - fromPath.loudnessRange) < tolerance)
-        #expect(abs(Double(fromData.maxTruePeakLevel) - Double(fromPath.maxTruePeakLevel)) < tolerance)
-        #expect(abs(fromData.maxMomentaryLoudness - fromPath.maxMomentaryLoudness) < tolerance)
-        #expect(abs(fromData.maxShortTermLoudness - fromPath.maxShortTermLoudness) < tolerance)
+        #expect(bext.loudnessIntegrated.isApproximatelyEqual(to: -22.28, absoluteTolerance: tolerance))
+        #expect(bext.loudnessRange.isApproximatelyEqual(to: -14.0, absoluteTolerance: tolerance))
+        #expect(Double(bext.maxTruePeakLevel).isApproximatelyEqual(to: -8.75, absoluteTolerance: tolerance))
+        #expect(bext.maxMomentaryLoudness.isApproximatelyEqual(to: -18.42, absoluteTolerance: tolerance))
+        #expect(bext.maxShortTermLoudness.isApproximatelyEqual(to: -16.0, absoluteTolerance: tolerance))
+
+        #expect(
+            bext.sequenceDescription
+                == "And oh how they danced The little children of Stonehenge Beneath the haunted moon For fear that daybreak might come too soonr fear that daybreak might come too soon"
+        )
     }
 
     /// Verify serializedData round-trips: parse from data, serialize, parse again,

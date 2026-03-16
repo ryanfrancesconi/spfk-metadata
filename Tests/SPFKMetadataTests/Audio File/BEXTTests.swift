@@ -11,9 +11,10 @@ import Testing
 @Suite(.serialized)
 class BEXTTests: BinTestCase {
     @Test func initBEXTDescriptionC() async throws {
-        let bextc = BEXTDescriptionC(path: TestBundleResources.shared.tabla_wav.path)
+        let waveFile = WaveFileC(path: TestBundleResources.shared.tabla_wav.path)
+        #expect(waveFile.load())
 
-        Log.debug(bextc?.maxTruePeakLevel)
+        Log.debug(waveFile.bextDescriptionC?.maxTruePeakLevel)
     }
 
     /**
@@ -89,10 +90,10 @@ class BEXTTests: BinTestCase {
         #expect(desc.originationTime == "00:01:00")
 
         let loudnessDescription = desc.loudnessDescription
-        #expect(loudnessDescription.loudnessIntegrated == -22.280000686645508)
+        #expect(loudnessDescription.loudnessIntegrated == -22.28)
         #expect(loudnessDescription.loudnessRange == -14)
         #expect(loudnessDescription.maxTruePeakLevel == -8.75)
-        #expect(loudnessDescription.maxMomentaryLoudness == -18.420000076293945)
+        #expect(loudnessDescription.maxMomentaryLoudness == -18.42)
         #expect(loudnessDescription.maxShortTermLoudness == -16)
 
         #expect(desc.timeReference == 158_760_000)
@@ -157,9 +158,10 @@ class BEXTTests: BinTestCase {
         let updated = try #require(BEXTDescription(url: tmpfile))
         #expect(updated.version == 2)
         #expect(updated.sequenceDescription == desc.sequenceDescription)
+        // "XXXXXX" is not valid hex, so hexToBytes writes zeros; read-back produces all-zero hex
         #expect(
             updated.umid
-                == "58585858585830303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303000"
+                == "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
         )
         #expect(updated.originator == desc.originator)
         #expect(updated.originatorReference == desc.originatorReference)
@@ -174,7 +176,7 @@ class BEXTTests: BinTestCase {
         #expect(updated.timeReferenceInSeconds == 3661.0010208333333)
 
         let loudnessDescription = updated.loudnessDescription
-        #expect(loudnessDescription.loudnessIntegrated == -20.1200008392334)
+        #expect(loudnessDescription.loudnessIntegrated == -20.12)
         #expect(loudnessDescription.loudnessRange == -21)
         #expect(loudnessDescription.maxTruePeakLevel == -22)
         #expect(loudnessDescription.maxShortTermLoudness == -1)

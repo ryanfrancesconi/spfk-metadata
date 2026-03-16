@@ -19,7 +19,6 @@ let package = Package(
         .package(url: "https://github.com/ryanfrancesconi/spfk-metadata-base", from: "0.0.1"),
         .package(url: "https://github.com/ryanfrancesconi/spfk-testing", from: "0.0.4"),
         .package(url: "https://github.com/ryanfrancesconi/spfk-utils", from: "0.0.8"),
-        .package(url: "https://github.com/sbooth/sndfile-binary-xcframework", from: "0.1.2"),
         .package(url: "https://github.com/sbooth/ogg-binary-xcframework", from: "0.1.3"),
         .package(url: "https://github.com/sbooth/flac-binary-xcframework", from: "0.2.0"),
         .package(url: "https://github.com/sbooth/opus-binary-xcframework", from: "0.2.2"),
@@ -39,7 +38,6 @@ let package = Package(
             name: "SPFKMetadataC",
             dependencies: [
                 .product(name: "taglib", package: "CXXTagLib"),
-                .product(name: "sndfile", package: "sndfile-binary-xcframework"),
                 .product(name: "ogg", package: "ogg-binary-xcframework"),
                 .product(name: "FLAC", package: "flac-binary-xcframework"),
                 .product(name: "opus", package: "opus-binary-xcframework"),

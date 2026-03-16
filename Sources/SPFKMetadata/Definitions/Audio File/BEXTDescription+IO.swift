@@ -5,9 +5,10 @@ import SPFKMetadataC
 import SPFKMetadataBase
 
 extension BEXTDescription {
-    /// Reads the BEXT chunk from a WAV file. Returns `nil` if the file has no BEXT data.
+    /// Reads the BEXT chunk from a WAV file via TagLib. Returns `nil` if the file has no BEXT data.
     public init?(url: URL) {
-        guard let info = BEXTDescriptionC(path: url.path) else {
+        let waveFile = WaveFileC(path: url.path)
+        guard waveFile.load(), let info = waveFile.bextDescriptionC else {
             return nil
         }
 
@@ -44,7 +45,7 @@ extension BEXTDescription {
         }
     }
 
-    /// Converts to the C bridge representation for writing via libsndfile.
+    /// Converts to the C bridge representation for writing via TagLib.
     /// The BWF version is automatically upgraded when v1 or v2 fields are present.
     public var bextDescriptionC: BEXTDescriptionC {
         let info = BEXTDescriptionC()
@@ -123,11 +124,18 @@ extension BEXTDescription {
         return info
     }
 
-    /// Writes this BEXTDescription to file. The data will be validated before writing.
+    /// Writes this BEXTDescription to file via TagLib.
     public static func write(bextDescription: BEXTDescription, to url: URL) throws {
-        let cObject = bextDescription.bextDescriptionC
+        let waveFile = WaveFileC(path: url.path)
+        guard waveFile.load() else {
+            throw NSError(description: "Failed to open \(url.path) for BEXT writing")
+        }
 
-        guard BEXTDescriptionC.write(cObject, path: url.path) else {
+        waveFile.bextDescriptionC = bextDescription.bextDescriptionC
+        waveFile.markersNeedsSave = false
+        waveFile.imageNeedsSave = false
+
+        guard waveFile.save() else {
             throw NSError(description: "Failed to write BEXT chunk to \(url.path)")
         }
     }
