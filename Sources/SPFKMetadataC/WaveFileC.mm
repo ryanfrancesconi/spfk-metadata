@@ -114,10 +114,8 @@ using namespace TagLib;
         return false;
     }
 
-    // write ixml
-    if (_iXML) {
-        waveFile->iXMLTag = String(_iXML.UTF8String);
-    }
+    // write ixml (empty String triggers chunk removal in wavfile.cpp)
+    waveFile->iXMLTag = _iXML ? String(_iXML.UTF8String) : String();
 
     // write id3
     PropertyMap properties = TagUtil::convertToPropertyMap(_id3Dictionary);
