@@ -1,8 +1,8 @@
 // Copyright Ryan Francesconi. All Rights Reserved. Revision History at https://github.com/ryanfrancesconi/spfk-metadata
 
 import Foundation
-import SPFKMetadataC
 import SPFKMetadataBase
+import SPFKMetadataC
 
 extension BEXTDescription {
     /// Reads the BEXT chunk from a WAV file via TagLib. Returns `nil` if the file has no BEXT data.

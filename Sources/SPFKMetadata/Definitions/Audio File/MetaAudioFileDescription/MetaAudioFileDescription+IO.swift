@@ -4,9 +4,9 @@ import AEXML
 import AVFoundation
 import Foundation
 import SPFKAudioBase
+import SPFKMetadataBase
 import SPFKMetadataC
 import SPFKUtils
-import SPFKMetadataBase
 
 extension MetaAudioFileDescription {
     /// Reads all metadata from the audio file at the given URL.
@@ -55,7 +55,8 @@ extension MetaAudioFileDescription {
 
         if let xml = waveFile.iXML {
             // validate and respace xml if it's valid
-            iXMLMetadata = (try? AEXMLDocument(xml: xml).xml)
+            iXMLMetadata =
+                (try? AEXMLDocument(xml: xml).xml)
                 ?? xml //  otherwise just load the string as is
         }
 

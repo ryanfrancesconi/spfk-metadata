@@ -1,8 +1,8 @@
 // Copyright Ryan Francesconi. All Rights Reserved. Revision History at https://github.com/ryanfrancesconi/spfk-metadata
 
 import Foundation
-import SPFKMetadataC
 import SPFKMetadataBase
+import SPFKMetadataC
 
 /// Swift typed subscript on the `ID3File` Objective-C class for reading and writing ID3 frames.
 extension ID3File {

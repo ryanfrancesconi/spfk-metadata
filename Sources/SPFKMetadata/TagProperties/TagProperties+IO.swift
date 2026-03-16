@@ -1,9 +1,9 @@
 // Copyright Ryan Francesconi. All Rights Reserved. Revision History at https://github.com/ryanfrancesconi/spfk-metadata
 
 import Foundation
+import SPFKMetadataBase
 import SPFKMetadataC
 import SPFKUtils
-import SPFKMetadataBase
 
 extension TagProperties {
     /// Reads all tags from the audio file at the given URL via TagLib.

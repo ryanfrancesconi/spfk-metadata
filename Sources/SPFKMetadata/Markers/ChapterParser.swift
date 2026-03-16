@@ -3,8 +3,8 @@
 import AVFoundation
 import Foundation
 import SPFKBase
-import SPFKMetadataC
 import SPFKMetadataBase
+import SPFKMetadataC
 
 /// AVFoundation-based chapter parser for M4A, MP4, FLAC, and OGG files.
 ///

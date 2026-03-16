@@ -1,8 +1,8 @@
 // Copyright Ryan Francesconi. All Rights Reserved. Revision History at https://github.com/ryanfrancesconi/spfk-metadata
 
 import Foundation
-import SPFKMetadataC
 import SPFKMetadataBase
+import SPFKMetadataC
 
 extension AudioMarkerDescription {
     /// Creates a marker from a Core Audio RIFF cue point.

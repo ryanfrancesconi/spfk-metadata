@@ -1,8 +1,8 @@
 // Copyright Ryan Francesconi. All Rights Reserved. Revision History at https://github.com/ryanfrancesconi/spfk-metadata
 
 import Foundation
-import SPFKMetadataC
 import SPFKMetadataBase
+import SPFKMetadataC
 
 /// Swift convenience accessors on the `WaveFileC` Objective-C class, providing typed
 /// BEXT, INFO frame, and ID3 frame subscript access without manual dictionary key management.

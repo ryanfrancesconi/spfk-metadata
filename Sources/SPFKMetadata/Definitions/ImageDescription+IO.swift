@@ -2,8 +2,8 @@
 
 import CoreImage
 import Foundation
-import SPFKMetadataC
 import SPFKMetadataBase
+import SPFKMetadataC
 
 extension ImageDescription {
     /// Converts to/from `TagPictureRef` for reading and writing embedded artwork via TagLib.
@@ -18,7 +18,9 @@ extension ImageDescription {
 
             if let value = cgImage.utType as? String, let utValue = UTType(value) {
                 utType = utValue
-            } else if cgImage.alphaInfo != .none && cgImage.alphaInfo != .noneSkipLast && cgImage.alphaInfo != .noneSkipFirst {
+            } else if cgImage.alphaInfo != .none && cgImage.alphaInfo != .noneSkipLast
+                && cgImage.alphaInfo != .noneSkipFirst
+            {
                 utType = .png
             }
 
