@@ -8,7 +8,7 @@ import SPFKMetadataC
 
 extension AudioMarkerDescriptionCollection {
     /// Parses markers from the audio file at the given URL, dispatching to the appropriate parser
-    /// based on file type: `ChapterParser` (m4a, mp4, flac, ogg), `MPEGChapterUtil` (mp3),
+    /// based on file type: `ChapterParser` (m4a, mp4, aac, m4b, flac, ogg), `MPEGChapterUtil` (mp3),
     /// or `AudioMarkerUtil` (aif, wav).
     public init(url: URL, fileType: AudioFileType? = nil) async throws {
         guard let fileType = fileType ?? AudioFileType(url: url) else {
@@ -19,12 +19,12 @@ extension AudioMarkerDescriptionCollection {
         }
 
         switch fileType {
-        case .m4a, .mp4, .ogg, .opus, .flac:
+        case .m4a, .mp4, .aac, .m4b, .ogg, .opus, .flac:
             let value: [ChapterMarker] = try await ChapterParser.parse(url: url)
             self = AudioMarkerDescriptionCollection(chapterMarkers: value)
 
         case .mp3:
-            let value: [ChapterMarker] = MPEGChapterUtil.getChapters(url.path) as? [ChapterMarker] ?? []
+            let value: [ChapterMarker] = MPEGChapterUtil.chapters(in: url.path) as? [ChapterMarker] ?? []
             self = AudioMarkerDescriptionCollection(chapterMarkers: value)
 
         case .aiff, .aifc, .wav, .w64:

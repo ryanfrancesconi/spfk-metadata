@@ -133,7 +133,7 @@ The package contains two targets: **SPFKMetadata** (pure Swift) and **SPFKMetada
 | Package | Description |
 |---|---|
 | [spfk-metadata-base](https://github.com/ryanfrancesconi/spfk-metadata-base) | Pure metadata data types (no C++ dependency) |
-| [CXXTagLib](https://github.com/ryanfrancesconi/CXXTagLib) | TagLib C++ library for audio tag reading/writing |
+| [SPFKTagLib](https://github.com/ryanfrancesconi/spfk-taglib) | TagLib C++ library for audio tag reading/writing |
 | [spfk-audio-base](https://github.com/ryanfrancesconi/spfk-audio-base) | Shared audio type definitions |
 | [spfk-utils](https://github.com/ryanfrancesconi/spfk-utils) | Foundation utilities and extensions |
 | [ogg](https://github.com/sbooth/ogg-binary-xcframework) | Ogg container format (TagLib link-time dependency) |

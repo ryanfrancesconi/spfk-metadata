@@ -24,7 +24,7 @@ using namespace TagLib;
 /// Returns an array of `ChapterMarker` via TagLib.
 /// ID3v2 only currently
 /// - Parameter path: file to open
-+ (NSArray *)getChapters:(NSString *)path {
++ (NSArray *)chaptersIn:(NSString *)path {
     FileRef fileRef(path.UTF8String);
 
     if (fileRef.isNull()) {
@@ -81,7 +81,7 @@ using namespace TagLib;
     return array;
 }
 
-+ (bool)update:(NSString *)path chapters:(NSArray *)chapters {
++ (bool)writeChapters:(NSArray *)chapters to:(NSString *)path {
     FileRef fileRef(path.UTF8String);
 
     if (fileRef.isNull()) {
@@ -119,7 +119,7 @@ using namespace TagLib;
     return mpegFile->save();
 }
 
-+ (bool)removeAllChapters:(NSString *)path {
++ (bool)removeChaptersIn:(NSString *)path {
     FileRef fileRef(path.UTF8String);
 
     if (fileRef.isNull()) {

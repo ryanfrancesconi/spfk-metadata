@@ -13,18 +13,18 @@ NS_ASSUME_NONNULL_BEGIN
 /// Reads all ID3v2 CHAP frames from the MP3 file at the given path.
 /// @param path Absolute path to the MP3 file.
 /// @return An array of `ChapterMarker` objects sorted by start time, or `nil` if the file cannot be opened.
-+ (nullable NSArray *)getChapters:(NSString *)path;
++ (nullable NSArray *)chaptersIn:(NSString *)path;
 
 /// Replaces all CHAP frames in the MP3 file with the provided chapter markers.
-/// @param path Absolute path to the MP3 file.
 /// @param chapters Array of `ChapterMarker` objects to write.
+/// @param path Absolute path to the MP3 file.
 /// @return `true` if the chapters were written successfully.
-+ (bool)update:(NSString *)path chapters:(NSArray *)chapters;
++ (bool)writeChapters:(NSArray *)chapters to:(NSString *)path;
 
 /// Removes all ID3v2 CHAP frames from the MP3 file.
 /// @param path Absolute path to the MP3 file.
 /// @return `true` if the removal succeeded.
-+ (bool)removeAllChapters:(NSString *)path;
++ (bool)removeChaptersIn:(NSString *)path;
 
 @end
 

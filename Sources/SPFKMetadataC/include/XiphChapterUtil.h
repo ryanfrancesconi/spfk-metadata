@@ -18,18 +18,18 @@ NS_ASSUME_NONNULL_BEGIN
 /// @param path Absolute path to a FLAC, OGG Vorbis, or OGG Opus file.
 /// @return An array of `ChapterMarker` objects sorted by start time, or `nil` if the file
 ///         cannot be opened or is not a supported format.
-+ (nullable NSArray *)getChapters:(NSString *)path;
++ (nullable NSArray *)chaptersIn:(NSString *)path;
 
 /// Replaces all chapter markers in the file with the provided chapters.
-/// @param path Absolute path to a FLAC, OGG Vorbis, or OGG Opus file.
 /// @param chapters Array of `ChapterMarker` objects to write.
+/// @param path Absolute path to a FLAC, OGG Vorbis, or OGG Opus file.
 /// @return `true` if the chapters were written successfully.
-+ (bool)update:(NSString *)path chapters:(NSArray *)chapters;
++ (bool)writeChapters:(NSArray *)chapters to:(NSString *)path;
 
 /// Removes all Vorbis comment chapter markers from the file.
 /// @param path Absolute path to a FLAC, OGG Vorbis, or OGG Opus file.
 /// @return `true` if the removal succeeded.
-+ (bool)removeAllChapters:(NSString *)path;
++ (bool)removeChaptersIn:(NSString *)path;
 
 @end
 

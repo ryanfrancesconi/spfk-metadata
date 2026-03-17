@@ -100,7 +100,7 @@ static void removeAllChapterFields(Ogg::XiphComment *comment) {
 
 @implementation XiphChapterUtil
 
-+ (NSArray *)getChapters:(NSString *)path {
++ (NSArray *)chaptersIn:(NSString *)path {
     FileRef fileRef(path.UTF8String);
 
     if (fileRef.isNull()) {
@@ -183,16 +183,14 @@ static void removeAllChapterFields(Ogg::XiphComment *comment) {
             }
         }
 
-        ChapterMarker *marker = [[ChapterMarker alloc] initWithName:name
-                                                           startTime:startTime
-                                                             endTime:endTime];
+        ChapterMarker *marker = [[ChapterMarker alloc] initWithName:name startTime:startTime endTime:endTime];
         [array addObject:marker];
     }
 
     return array.count > 0 ? array : nil;
 }
 
-+ (bool)update:(NSString *)path chapters:(NSArray *)chapters {
++ (bool)writeChapters:(NSArray *)chapters to:(NSString *)path {
     FileRef fileRef(path.UTF8String);
 
     if (fileRef.isNull()) {
@@ -228,7 +226,7 @@ static void removeAllChapterFields(Ogg::XiphComment *comment) {
     return fileRef.save();
 }
 
-+ (bool)removeAllChapters:(NSString *)path {
++ (bool)removeChaptersIn:(NSString *)path {
     FileRef fileRef(path.UTF8String);
 
     if (fileRef.isNull()) {

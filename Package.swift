@@ -14,7 +14,7 @@ let package = Package(
         )
     ],
     dependencies: [
-        .package(url: "https://github.com/ryanfrancesconi/CXXTagLib", from: "2.1.3"),
+        .package(url: "https://github.com/ryanfrancesconi/spfk-taglib", from: "1.0.0"),
         .package(url: "https://github.com/ryanfrancesconi/spfk-audio-base", from: "0.0.4"),
         .package(url: "https://github.com/ryanfrancesconi/spfk-metadata-base", from: "0.0.1"),
         .package(url: "https://github.com/ryanfrancesconi/spfk-testing", from: "0.0.4"),
@@ -37,7 +37,7 @@ let package = Package(
         .target(
             name: "SPFKMetadataC",
             dependencies: [
-                .product(name: "taglib", package: "CXXTagLib"),
+                .product(name: "taglib", package: "spfk-taglib"),
                 .product(name: "ogg", package: "ogg-binary-xcframework"),
                 .product(name: "FLAC", package: "flac-binary-xcframework"),
                 .product(name: "opus", package: "opus-binary-xcframework"),
