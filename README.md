@@ -3,7 +3,9 @@
 [![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fryanfrancesconi%2Fspfk-metadata%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/ryanfrancesconi/spfk-metadata)
 [![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fryanfrancesconi%2Fspfk-metadata%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/ryanfrancesconi/spfk-metadata)
 
-Audio metadata I/O library wrapping [TagLib](https://github.com/taglib/taglib) (v2.1.1) and Core Audio to provide unified tag reading/writing, marker parsing, and broadcast wave (BEXT) support across common audio formats.
+Audio metadata I/O library wrapping [TagLib](https://github.com/taglib/taglib) via [spfk-taglib](https://github.com/ryanfrancesconi/spfk-taglib) and Core Audio to provide unified tag reading/writing, marker parsing, and broadcast wave (BEXT) support across common audio formats.
+
+The TagLib integration is provided by spfk-taglib, an independent SPM repackaging of TagLib that mirrors the upstream directory layout. The current upstream base is **TagLib 2.2.1**. spfk-taglib also includes fork additions for BEXT/iXML chunk support in WAV files and Nero-style chapter markers in MP4 files. See the [spfk-taglib README](https://github.com/ryanfrancesconi/spfk-taglib) for details.
 
 No single framework handles all audio metadata scenarios in Swift. AVFoundation lacks write support and misses RIFF markers, BEXT chunks, iXML, and MP3 chapter frames. SPFKMetadata fills those gaps with an ObjC++/C bridge for TagLib. All WAV I/O (tags, markers, BEXT, artwork) goes through a single TagLib-backed `WaveFileC` load/save cycle.
 
@@ -133,7 +135,7 @@ The package contains two targets: **SPFKMetadata** (pure Swift) and **SPFKMetada
 | Package | Description |
 |---|---|
 | [spfk-metadata-base](https://github.com/ryanfrancesconi/spfk-metadata-base) | Pure metadata data types (no C++ dependency) |
-| [SPFKTagLib](https://github.com/ryanfrancesconi/spfk-taglib) | TagLib C++ library for audio tag reading/writing |
+| [spfk-taglib](https://github.com/ryanfrancesconi/spfk-taglib) | TagLib 2.2.1 C++ library repackaged for SPM, with BEXT/iXML and MP4 chapter extensions |
 | [spfk-audio-base](https://github.com/ryanfrancesconi/spfk-audio-base) | Shared audio type definitions |
 | [spfk-utils](https://github.com/ryanfrancesconi/spfk-utils) | Foundation utilities and extensions |
 | [ogg](https://github.com/sbooth/ogg-binary-xcframework) | Ogg container format (TagLib link-time dependency) |
