@@ -81,8 +81,9 @@ using namespace TagLib;
     NSURL *url = [NSURL fileURLWithPath:_path];
     _markers = [AudioMarkerUtil getMarkers:url];
 
-    if (waveFile->hasBEXTTag() && !waveFile->bextTag.isEmpty()) {
-        NSData *bextData = [NSData dataWithBytes:waveFile->bextTag.data() length:waveFile->bextTag.size()];
+    if (waveFile->hasBEXTTag() && !waveFile->BEXTData().isEmpty()) {
+        ByteVector bext = waveFile->BEXTData();
+        NSData *bextData = [NSData dataWithBytes:bext.data() length:bext.size()];
         _bextDescriptionC = [[BEXTDescriptionC alloc] initWithData:bextData];
 
         if (_bextDescriptionC && _audioPropertiesC) {
@@ -91,7 +92,7 @@ using namespace TagLib;
     }
 
     if (waveFile->hasiXMLTag()) {
-        _iXML = [[NSString alloc] initWithCString:waveFile->iXMLTag.data(String::UTF8).data()
+        _iXML = [[NSString alloc] initWithCString:waveFile->iXMLData().data(String::UTF8).data()
                                          encoding:NSUTF8StringEncoding];
     }
 
@@ -134,13 +135,13 @@ using namespace TagLib;
     // write bext via TagLib chunk (no more temp file + audio copy)
     if (_bextDescriptionC) {
         NSData *bextData = [_bextDescriptionC serializedData];
-        waveFile->bextTag = ByteVector((const char *)bextData.bytes, (unsigned int)bextData.length);
+        waveFile->setBEXTData(ByteVector((const char *)bextData.bytes, (unsigned int)bextData.length));
     } else {
-        waveFile->bextTag = ByteVector();
+        waveFile->setBEXTData(ByteVector());
     }
 
     // write ixml (empty String triggers chunk removal in wavfile.cpp)
-    waveFile->iXMLTag = _iXML ? String(_iXML.UTF8String) : String();
+    waveFile->setiXMLData(_iXML ? String(_iXML.UTF8String) : String());
 
     // write artwork via the same TagLib session (skip if not dirty)
     if (_imageNeedsSave) {
