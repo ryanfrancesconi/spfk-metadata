@@ -57,7 +57,7 @@ extension MetaAudioFileDescription {
             // validate and respace xml if it's valid
             iXMLMetadata =
                 (try? AEXMLDocument(xml: xml).xml)
-                ?? xml //  otherwise just load the string as is
+                    ?? xml //  otherwise just load the string as is
         }
 
         bextDescription = waveFile.bextDescription?.validated()
