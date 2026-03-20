@@ -62,7 +62,7 @@ extension MetaAudioFileDescription {
 
         bextDescription = waveFile.bextDescription?.validated()
 
-        if let audioMarkers = waveFile.markers as? [AudioMarker] {
+        if let audioMarkers = waveFile.markers as? [AudioMarker], audioMarkers.isNotEmpty {
             markerCollection = AudioMarkerDescriptionCollection(audioMarkers: audioMarkers)
         }
 
