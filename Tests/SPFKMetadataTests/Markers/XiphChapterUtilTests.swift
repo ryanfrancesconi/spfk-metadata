@@ -106,5 +106,31 @@ class XiphChapterUtilTests: BinTestCase {
         #expect(readBack[0].name == "Precise")
         // Verify HH:MM:SS.mmm round-trip (01:01:01.123)
         #expect(abs(readBack[0].startTime - 3661.123) < 0.002)
+        // Xiph stores only start times; last chapter endTime is inferred as 0
+        #expect(readBack[0].endTime == 0)
+    }
+
+    @Test func endTimeInferredFromNextChapter() async throws {
+        let tmpfile = try copyToBin(url: TestBundleResources.shared.tabla_flac)
+
+        let markers: [ChapterMarker] = [
+            ChapterMarker(name: "Ch1", startTime: 0.5, endTime: 1.5),
+            ChapterMarker(name: "Ch2", startTime: 1.5, endTime: 3.0),
+            ChapterMarker(name: "Ch3", startTime: 3.0, endTime: 4.0),
+        ]
+
+        #expect(XiphChapterUtil.writeChapters(markers, to: tmpfile.path))
+
+        let readBack = getChapters(in: tmpfile)
+
+        #expect(readBack.count == 3)
+        #expect(abs(readBack[0].startTime - 0.5) < 0.002)
+        // Xiph infers endTime from next chapter's startTime
+        #expect(abs(readBack[0].endTime - 1.5) < 0.002)
+        #expect(abs(readBack[1].startTime - 1.5) < 0.002)
+        #expect(abs(readBack[1].endTime - 3.0) < 0.002)
+        #expect(abs(readBack[2].startTime - 3.0) < 0.002)
+        // Last chapter has no successor — endTime is 0
+        #expect(readBack[2].endTime == 0)
     }
 }

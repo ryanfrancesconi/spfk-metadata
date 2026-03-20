@@ -8,7 +8,7 @@ import Testing
 
 @testable import SPFKMetadata
 
-@Suite(.serialized)
+@Suite(.tags(.file), .serialized)
 class AudioMarkerDescriptionCollectionTests: BinTestCase {
     @Test(arguments: TestBundleResources.shared.markerFormats)
     func parseFormat(url: URL) async throws {
@@ -43,5 +43,50 @@ class AudioMarkerDescriptionCollectionTests: BinTestCase {
         #expect(collection.count == 4)
         #expect(collection.allIDs == [0, 1, 2, 3])
         #expect(collection.highestID == 3)
+    }
+
+    // MARK: - chapterMarker reverse conversion
+
+    @Test func chapterMarkerConversion() {
+        let desc = AudioMarkerDescription(name: "Test", startTime: 1.5, endTime: 3.0)
+        let chapter = desc.chapterMarker
+
+        #expect(chapter.name == "Test")
+        #expect(chapter.startTime == 1.5)
+        #expect(chapter.endTime == 3.0)
+    }
+
+    @Test func chapterMarkerConversionNilName() {
+        let desc = AudioMarkerDescription(name: nil, startTime: 2.0, endTime: 4.0)
+        let chapter = desc.chapterMarker
+
+        #expect(chapter.name == "Marker")
+        #expect(chapter.startTime == 2.0)
+        #expect(chapter.endTime == 4.0)
+    }
+
+    @Test func chapterMarkerConversionNilEndTime() {
+        let desc = AudioMarkerDescription(name: "Cue", startTime: 5.0)
+        let chapter = desc.chapterMarker
+
+        #expect(chapter.name == "Cue")
+        #expect(chapter.startTime == 5.0)
+        // endTime defaults to startTime when nil
+        #expect(chapter.endTime == 5.0)
+    }
+
+    @Test func chapterMarkersCollectionConversion() {
+        let collection = AudioMarkerDescriptionCollection(markerDescriptions: [
+            AudioMarkerDescription(name: "A", startTime: 0, endTime: 1),
+            AudioMarkerDescription(name: "B", startTime: 1, endTime: 2),
+            AudioMarkerDescription(name: "C", startTime: 2, endTime: 3),
+        ])
+
+        let chapters = collection.chapterMarkers
+
+        #expect(chapters.count == 3)
+        #expect(chapters.map(\.name) == ["A", "B", "C"])
+        #expect(chapters.map(\.startTime) == [0, 1, 2])
+        #expect(chapters.map(\.endTime) == [1, 2, 3])
     }
 }

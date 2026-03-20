@@ -8,7 +8,7 @@ import Testing
 @testable import SPFKMetadata
 @testable import SPFKMetadataC
 
-@Suite(.serialized)
+@Suite(.tags(.file), .serialized)
 class MP3ChapterMarkerTests: BinTestCase {
     func getChapters(in url: URL) -> [ChapterMarker] {
         let chapters = MPEGChapterUtil.chapters(in: url.path) as? [ChapterMarker] ?? []
@@ -59,5 +59,44 @@ class MP3ChapterMarkerTests: BinTestCase {
 
         let chapters = getChapters(in: tmpfile)
         #expect(chapters.count == 0)
+    }
+
+    @Test func timestampPrecision() async throws {
+        let tmpfile = try copyToBin(url: TestBundleResources.shared.mp3_id3)
+        #expect(MPEGChapterUtil.removeChapters(in: tmpfile.path))
+
+        let markers: [ChapterMarker] = [
+            ChapterMarker(name: "Precise", startTime: 3661.123, endTime: 7322.456),
+        ]
+
+        #expect(MPEGChapterUtil.writeChapters(markers, to: tmpfile.path))
+
+        let readBack = getChapters(in: tmpfile)
+
+        #expect(readBack.count == 1)
+        #expect(readBack[0].name == "Precise")
+        // ID3v2 CHAP frames store time in milliseconds
+        #expect(abs(readBack[0].startTime - 3661.123) < 0.002)
+        #expect(abs(readBack[0].endTime - 7322.456) < 0.002)
+    }
+
+    @Test func endTimeRoundTrip() async throws {
+        let tmpfile = try copyToBin(url: TestBundleResources.shared.mp3_id3)
+        #expect(MPEGChapterUtil.removeChapters(in: tmpfile.path))
+
+        let markers: [ChapterMarker] = [
+            ChapterMarker(name: "Ch1", startTime: 0.5, endTime: 1.5),
+            ChapterMarker(name: "Ch2", startTime: 1.5, endTime: 3.0),
+        ]
+
+        #expect(MPEGChapterUtil.writeChapters(markers, to: tmpfile.path))
+
+        let readBack = getChapters(in: tmpfile)
+
+        #expect(readBack.count == 2)
+        #expect(abs(readBack[0].startTime - 0.5) < 0.002)
+        #expect(abs(readBack[0].endTime - 1.5) < 0.002)
+        #expect(abs(readBack[1].startTime - 1.5) < 0.002)
+        #expect(abs(readBack[1].endTime - 3.0) < 0.002)
     }
 }

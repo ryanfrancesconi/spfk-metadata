@@ -4,6 +4,7 @@ import AEXML
 import AVFoundation
 import Foundation
 import SPFKAudioBase
+import SPFKBase
 import SPFKMetadataBase
 import SPFKMetadataC
 import SPFKUtils
@@ -130,18 +131,23 @@ extension MetaAudioFileDescription {
     ///
     /// For WAV files, tags (BEXT, iXML, INFO, ID3) are always written via TagLib.
     /// Markers and artwork are conditionally written based on dirty flags.
-    /// For other formats, tags are saved via TagLib and artwork is written separately if requested.
+    /// For other formats, tags are saved via TagLib, artwork and markers are written separately if requested.
     /// Finder tags and modification date are updated after saving.
     ///
-    /// - Parameter imageNeedsSave: If `true`, embedded artwork will also be written.
-    public mutating func save(imageNeedsSave: Bool = false) throws {
+    /// - Parameter dirtyFlags: The set of metadata aspects that need saving.
+    ///   Defaults to `[.metadata]` (tags only). Include `.image` for artwork,
+    ///   `.markers` for markers. The `.xmp` flag is handled externally.
+    public mutating func save(dirtyFlags: Set<MetadataDirtyFlag> = [.metadata]) throws {
         // Log.debug("Saving", url)
 
+        let imageNeedsSave = dirtyFlags.contains(.image)
+        let markersNeedsSave = dirtyFlags.contains(.markers)
+
         if fileType == .wav {
-            try saveWave(imageNeedsSave: imageNeedsSave)
+            try saveWave(imageNeedsSave: imageNeedsSave, markersNeedsSave: markersNeedsSave)
 
         } else {
-            try saveOther(imageNeedsSave: imageNeedsSave)
+            try saveOther(imageNeedsSave: imageNeedsSave, markersNeedsSave: markersNeedsSave)
         }
 
         let finderTags = urlProperties.finderTags
@@ -151,11 +157,15 @@ extension MetaAudioFileDescription {
         urlProperties = URLProperties(url: url)
     }
 
-    private mutating func saveOther(imageNeedsSave: Bool = false) throws {
+    private mutating func saveOther(imageNeedsSave: Bool = false, markersNeedsSave: Bool = false) throws {
         try tagProperties.save(to: url)
 
         if imageNeedsSave, let pictureRef = imageDescription.pictureRef {
             try save(pictureRef: pictureRef)
+        }
+
+        if markersNeedsSave {
+            try saveMarkers()
         }
     }
 
@@ -169,7 +179,7 @@ extension MetaAudioFileDescription {
 
     /// Writes WAV metadata via TagLib (BEXT, iXML, ID3, INFO, artwork) and markers via AudioToolbox.
     /// Dirty flags control which chunks are actually written.
-    private mutating func saveWave(imageNeedsSave: Bool = false) throws {
+    private mutating func saveWave(imageNeedsSave: Bool = false, markersNeedsSave: Bool = false) throws {
         let waveFile = WaveFileC(path: url.path)
 
         // extra chunks
@@ -178,7 +188,7 @@ extension MetaAudioFileDescription {
         waveFile.markers = audioMarkers
 
         // dirty flags
-        waveFile.markersNeedsSave = !audioMarkers.isEmpty
+        waveFile.markersNeedsSave = markersNeedsSave
         waveFile.imageNeedsSave = imageNeedsSave
 
         // image
@@ -214,6 +224,37 @@ extension MetaAudioFileDescription {
 
         guard waveFile.save() else {
             throw NSError(description: "Failed to save \(url.path)")
+        }
+    }
+
+    /// Writes markers to non-WAV files via format-specific utilities.
+    ///
+    /// Dispatches to `MP4ChapterUtil`, `MPEGChapterUtil`, `XiphChapterUtil`, or
+    /// `AudioMarkerUtil` depending on `fileType`.
+    private func saveMarkers() throws {
+        let path = url.path
+        let success: Bool
+
+        switch fileType {
+        case .mp3:
+            success = MPEGChapterUtil.writeChapters(markerCollection.chapterMarkers, to: path)
+
+        case .m4a, .mp4, .aac, .m4b:
+            success = MP4ChapterUtil.writeChapters(markerCollection.chapterMarkers, to: path)
+
+        case .flac, .ogg, .opus:
+            success = XiphChapterUtil.writeChapters(markerCollection.chapterMarkers, to: path)
+
+        case .aiff, .aifc:
+            success = AudioMarkerUtil.update(url, markers: audioMarkers)
+
+        default:
+            Log.error("Marker save not supported for \(fileType?.rawValue ?? "unknown")")
+            return
+        }
+
+        guard success else {
+            throw NSError(description: "Failed to save markers to \(url.path)")
         }
     }
 }

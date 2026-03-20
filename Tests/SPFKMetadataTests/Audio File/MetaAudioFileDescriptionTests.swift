@@ -29,7 +29,7 @@ class MetaAudioFileDescriptionTests: BinTestCase {
         await mafDescription.imageDescription.update(cgImage: cgImage)
         mafDescription.imageDescription.description = "A NEW DESCRIPTION"
         mafDescription.tagProperties[.title] = "NEW TITLE"
-        try mafDescription.save(imageNeedsSave: true)
+        try mafDescription.save(dirtyFlags: [.metadata, .image])
 
         let updated = try await MetaAudioFileDescription(parsing: url)
         #expect(updated.tagProperties[.title] == "NEW TITLE")

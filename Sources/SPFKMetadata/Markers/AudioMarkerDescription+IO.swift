@@ -23,4 +23,9 @@ extension AudioMarkerDescription {
             endTime: marker.endTime
         )
     }
+
+    /// Converts to a `ChapterMarker` for writing via format-specific utilities.
+    public var chapterMarker: ChapterMarker {
+        ChapterMarker(name: name ?? "Marker", startTime: startTime, endTime: endTime ?? startTime)
+    }
 }
