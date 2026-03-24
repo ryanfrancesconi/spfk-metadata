@@ -5,12 +5,51 @@ import SPFKBase
 import SPFKTesting
 import SPFKUtils
 import Testing
+import UniformTypeIdentifiers
 
 @testable import SPFKMetadata
 @testable import SPFKMetadataC
 
 @Suite(.serialized)
 class TagLibPictureTests: BinTestCase {
+    // MARK: - TagPictureRef.parsing
+
+    @Test func parsingExtractsImageFromMP3() async throws {
+        let url = TestBundleResources.shared.mp3_id3
+        let pictureRef = try TagPictureRef.parsing(url: url)
+
+        #expect(pictureRef.cgImage.width == 600)
+        #expect(pictureRef.cgImage.height == 592)
+        #expect(pictureRef.utType == .jpeg)
+    }
+
+    @Test func parsingThrowsForFileWithoutArtwork() async throws {
+        let url = TestBundleResources.shared.mp3_no_metadata
+
+        #expect(throws: (any Error).self) {
+            try TagPictureRef.parsing(url: url)
+        }
+    }
+
+    @Test func parsingExportRoundtrip() async throws {
+        deleteBinOnExit = true
+        let url = TestBundleResources.shared.mp3_id3
+        let pictureRef = try TagPictureRef.parsing(url: url)
+
+        let ext = pictureRef.utType.preferredFilenameExtension ?? "jpg"
+        let outputURL = bin.appendingPathComponent("artwork.\(ext)")
+        try pictureRef.cgImage.export(utType: pictureRef.utType, to: outputURL)
+
+        // Verify the exported file can be read back
+        let data = try Data(contentsOf: outputURL)
+        let reloaded = try CGImage.create(from: data)
+
+        #expect(reloaded.width == pictureRef.cgImage.width)
+        #expect(reloaded.height == pictureRef.cgImage.height)
+    }
+
+    // MARK: - TagPicture (low-level)
+
     @Test func getPicture() async throws {
         deleteBinOnExit = false
 
