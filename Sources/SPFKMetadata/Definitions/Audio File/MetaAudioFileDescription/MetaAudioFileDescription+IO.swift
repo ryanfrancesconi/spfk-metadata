@@ -24,6 +24,7 @@ extension MetaAudioFileDescription {
         if fileType == .wav {
             self.init(url: url, fileType: fileType)
             try loadWave()
+
         } else {
             let audioFile = try AVAudioFile(forReading: url)
             self.init(
