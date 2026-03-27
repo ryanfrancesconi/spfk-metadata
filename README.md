@@ -70,7 +70,7 @@ Types marked with *(base)* are defined in [SPFKMetadataBase](https://github.com/
 - **TagProperties+IO** *(I/O)* — Load/save via TagLib. Reading and writing tags to MP3, WAV, AIFF, FLAC, OGG, M4A, and other formats.
 - **TagPropertiesAV** *(base)* — AVFoundation-based tag reader (read-only) for formats where TagLib support is limited.
 - **TagData** *(base)* — Container wrapping a `TagKeyDictionary` and custom tags dictionary, with merge support via `DictionaryMergeScheme` (.preserve, .replace, .combine).
-- **TagSet** *(base)* — Enum grouping TagKeys into logical sets (common, music, loudness, replayGain, utility, other) for UI organization.
+- **TagGroup** *(base)* — Enum grouping TagKeys into logical sets (common, music, loudness, replayGain, utility, other) for UI organization.
 - **ID3FrameKey** *(base)* — 80+ case enum for ID3v2.4 frame identifiers (TALB, TIT2, TPE1, etc.).
 - **InfoFrameKey** *(base)* — 90+ case enum for RIFF INFO chunk tags (IART, INAM, ICRD, etc.).
 - **TagFrameKey** *(base)* — Protocol providing default implementations for `taglibKey`, `displayName`, and `init?(value:)` shared by both frame key types.
