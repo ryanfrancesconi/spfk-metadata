@@ -87,6 +87,8 @@ Types marked with *(base)* are defined in [SPFKMetadataBase](https://github.com/
 - **ImageDescription+IO** *(I/O)* — Conversion to/from `TagPictureRef` for TagLib interop.
 - **TagPicture+** *(I/O)* — Extension for reading embedded artwork from files via TagLib.
 - **WaveFileC+** *(I/O)* — Swift convenience accessors on `WaveFileC` for `bextDescription`, INFO frame subscripts, and ID3 frame subscripts.
+- **IXMLMetadata** *(I/O)* — Structured parser and generator for the iXML (BWFXML) chunk embedded in WAV files. Covers SPEED, TRACK_LIST, LOUDNESS, BEXT mirror, HISTORY, and USER containers. Use `init(xml:)` to parse from an XML string and `.xml` to generate output. Can also be constructed from a `MetaAudioFileDescription` via `init(from:)`.
+- **IXMLElement** *(I/O)* — Enum of iXML XML element names (BWFXML, SCENE, TAKE, TRACK_LIST, LOUDNESS, etc.) with a type-safe `AEXMLElement` subscript extension for safe element access.
 
 ### Markers
 
@@ -111,6 +113,8 @@ Low-level bridge layer exposing TagLib functionality to Swift through Objective-
 | **BEXTDescriptionC** | EBU Tech 3285 BEXT chunk binary serializer/deserializer with initWithData:/serializedData |
 | **AudioMarkerUtil** | RIFF audio marker (cue point) parsing for WAV and AIFF |
 | **MPEGChapterUtil** | ID3v2 CHAP frame parsing for MP3 chapter markers |
+| **XiphChapterUtil** | TagLib-based Vorbis comment chapter read/write for FLAC, OGG Vorbis, and OGG Opus |
+| **MP4ChapterUtil** | Nero-style MP4/M4A chapter marker read/write via `chpl` atom (`moov/udta/chpl`) |
 | **ChapterMarker** | Chapter marker data object for AVFoundation chapter parsing |
 
 ## Installation
