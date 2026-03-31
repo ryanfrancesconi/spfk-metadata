@@ -136,7 +136,7 @@
         afm.mType = safm.type;
         afm.mSMPTETime = safm.timecode;
 
-        NSLog(@"Adding marker: %@ %f %d %d\n", afm.mName, afm.mFramePosition, afm.mMarkerID, afm.mType);
+        // NSLog(@"Adding marker: %@ %f %d %d\n", afm.mName, afm.mFramePosition, afm.mMarkerID, afm.mType);
 
         markerList->mMarkers[i] = afm;
     }
