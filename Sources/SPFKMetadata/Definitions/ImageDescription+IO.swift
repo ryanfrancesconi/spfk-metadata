@@ -18,8 +18,9 @@ extension ImageDescription {
 
             if let value = cgImage.utType as? String, let utValue = UTType(value) {
                 utType = utValue
-            } else if cgImage.alphaInfo != .none && cgImage.alphaInfo != .noneSkipLast
-                && cgImage.alphaInfo != .noneSkipFirst
+
+            } else if cgImage.alphaInfo != .none, cgImage.alphaInfo != .noneSkipLast,
+                      cgImage.alphaInfo != .noneSkipFirst
             {
                 utType = .png
             }
