@@ -189,15 +189,14 @@ struct MetaAudioFileDescriptionCodableTests {
         #expect(decoded.markerCollection.count == 0)
     }
 
-    @Test func isAVPlayableNotPersisted() throws {
+    @Test func isAVPlayablePersisted() throws {
         var original = MetaAudioFileDescription(url: URL(filePath: "/tmp/test.wav"))
         original.isAVPlayable = false
 
         let data = try JSONEncoder().encode(original)
         let decoded = try JSONDecoder().decode(MetaAudioFileDescription.self, from: data)
 
-        // isAVPlayable is transient — decoding always resets it to the default true
-        #expect(decoded.isAVPlayable == true)
+        #expect(decoded.isAVPlayable == false)
     }
 
     @Test func codableRoundTripWithOptionals() throws {
