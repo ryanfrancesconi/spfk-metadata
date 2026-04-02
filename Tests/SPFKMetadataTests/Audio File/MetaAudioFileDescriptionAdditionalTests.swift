@@ -1,6 +1,9 @@
+import AVFoundation
 import Foundation
 import SPFKAudioBase
+import SPFKBase
 import SPFKMetadataBase
+import SPFKTesting
 import Testing
 
 @testable import SPFKMetadata
@@ -186,6 +189,17 @@ struct MetaAudioFileDescriptionCodableTests {
         #expect(decoded.markerCollection.count == 0)
     }
 
+    @Test func isAVPlayableNotPersisted() throws {
+        var original = MetaAudioFileDescription(url: URL(filePath: "/tmp/test.wav"))
+        original.isAVPlayable = false
+
+        let data = try JSONEncoder().encode(original)
+        let decoded = try JSONDecoder().decode(MetaAudioFileDescription.self, from: data)
+
+        // isAVPlayable is transient — decoding always resets it to the default true
+        #expect(decoded.isAVPlayable == true)
+    }
+
     @Test func codableRoundTripWithOptionals() throws {
         var original = MetaAudioFileDescription(
             url: URL(filePath: "/tmp/test.wav"),
@@ -208,5 +222,41 @@ struct MetaAudioFileDescriptionCodableTests {
         #expect(decoded.iXMLMetadata == "<ixml>data</ixml>")
         #expect(decoded.tagProperties.tags[.title] == "Test")
         #expect(decoded.markerCollection.count == 1)
+    }
+}
+
+// MARK: - Malformed WAV investigation
+
+/// Development tests to characterise how AVAudioFile and MetaAudioFileDescription behave
+/// with a WAV that has a wrong RIFF chunk size (data chunk outside declared boundary).
+@Suite(.tags(.development)) struct MalformedWAVInvestigationTests {
+    let url = URL(filePath: "/Users/rf/Downloads/TestResources/invalid-chunk-size.wav")
+
+    /// Confirms the file exists before any other test runs.
+    @Test func fileExists() {
+        #expect(FileManager.default.fileExists(atPath: url.path))
+    }
+
+    /// AVAudioFile opens without error but reports 0 frames — the data chunk lies outside
+    /// the declared RIFF boundary so AVFoundation never finds it.
+    @Test func avAudioFileReportsZeroFrames() throws {
+        let audioFile = try AVAudioFile(forReading: url)
+        #expect(audioFile.length == 0)
+        #expect(audioFile.duration == 0.0)
+        // Format header is still readable
+        #expect(audioFile.fileFormat.sampleRate == 44100.0)
+        #expect(audioFile.fileFormat.channelCount == 2)
+    }
+
+    /// MetaAudioFileDescription reads correct metadata via TagLib but marks the file
+    /// as not AV-playable because AVAudioFile reports 0 frames.
+    @Test func metaAudioFileDescriptionIsNotPlayable() async throws {
+        let desc = try await MetaAudioFileDescription(parsing: url)
+        // TagLib reads past the bad RIFF boundary — format properties are correct
+        #expect(desc.audioFormat?.sampleRate == 44100.0)
+        #expect(desc.audioFormat?.channelCount == 2)
+        #expect((desc.audioFormat?.duration ?? 0) > 0)
+        // AVAudioFile sees 0 frames — not playable
+        #expect(desc.isAVPlayable == false)
     }
 }

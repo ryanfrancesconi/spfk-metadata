@@ -20,13 +20,16 @@ extension MetaAudioFileDescription {
     /// - Throws: If the file cannot be opened or its format is unsupported.
     public init(parsing url: URL) async throws {
         let fileType = AudioFileType(url: url)
+        var avFrameCount: AVAudioFramePosition = 0
 
         if fileType == .wav {
             self.init(url: url, fileType: fileType)
             try loadWave()
+            avFrameCount = (try? AVAudioFile(forReading: url))?.length ?? 0
 
         } else {
             let audioFile = try AVAudioFile(forReading: url)
+            avFrameCount = audioFile.length
             self.init(
                 url: url,
                 fileType: fileType,
@@ -34,6 +37,12 @@ extension MetaAudioFileDescription {
             )
             try await load()
         }
+
+        // A file is considered not AV-playable when AVAudioFile opens it successfully
+        // but reports 0 frames. This happens with malformed containers (e.g. WAV files
+        // whose RIFF chunk size header is wrong) where AVFoundation stops reading at the
+        // declared boundary and never finds the audio data.
+        isAVPlayable = avFrameCount > 0
 
         if let bitRate = tagProperties.audioProperties?.bitRate {
             audioFormat?.update(bitRate: bitRate)
