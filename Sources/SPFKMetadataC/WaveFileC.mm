@@ -81,7 +81,7 @@ using namespace TagLib;
     NSURL *url = [NSURL fileURLWithPath:_path];
     _markers = [AudioMarkerUtil getMarkers:url];
 
-    if (waveFile->hasBEXTTag() && !waveFile->BEXTData().isEmpty()) {
+    if (waveFile->hasBEXTData() && !waveFile->BEXTData().isEmpty()) {
         ByteVector bext = waveFile->BEXTData();
         NSData *bextData = [NSData dataWithBytes:bext.data() length:bext.size()];
         _bextDescriptionC = [[BEXTDescriptionC alloc] initWithData:bextData];
@@ -91,7 +91,7 @@ using namespace TagLib;
         }
     }
 
-    if (waveFile->hasiXMLTag()) {
+    if (waveFile->hasiXMLData()) {
         _iXML = [[NSString alloc] initWithCString:waveFile->iXMLData().data(String::UTF8).data()
                                          encoding:NSUTF8StringEncoding];
     }
