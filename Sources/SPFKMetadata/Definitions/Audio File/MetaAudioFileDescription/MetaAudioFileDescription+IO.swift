@@ -30,6 +30,7 @@ extension MetaAudioFileDescription {
         } else {
             let audioFile = try AVAudioFile(forReading: url)
             avFrameCount = audioFile.length
+
             self.init(
                 url: url,
                 fileType: fileType,
