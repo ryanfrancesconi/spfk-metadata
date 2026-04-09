@@ -122,6 +122,11 @@ static const auto pictureTypeKey = String("pictureType");
     CGImageDestinationRef destination =
         CGImageDestinationCreateWithData(mutableData, (__bridge CFStringRef)picture.utType.identifier, 1, NULL);
 
+    if (!destination) {
+        CFRelease(mutableData);
+        return false;
+    }
+
     CGImageDestinationAddImage(destination, picture.cgImage, NULL);
 
     if (!CGImageDestinationFinalize(destination)) {
