@@ -17,8 +17,8 @@ class ImageDescriptionTests: BinTestCase {
 
             let thumbnailImage = try #require(desc.thumbnailImage)
 
-            #expect(thumbnailImage.width == 32)
-            #expect(thumbnailImage.height == 32)
+            #expect(thumbnailImage.width == 64)
+            #expect(thumbnailImage.height == 64)
         }
     #endif
 }
