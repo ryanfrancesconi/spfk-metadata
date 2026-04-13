@@ -31,6 +31,55 @@ class WaveFileTests: BinTestCase {
         #expect(file[info: .bpm] == "666")
     }
 
+    /// Saving with empty dictionaries must clear all existing INFO and ID3 fields.
+    @Test func clearAllInfoAndID3Tags() async throws {
+        let tmpfile = try copyToBin(url: TestBundleResources.shared.wav_bext_v2)
+
+        // Confirm the file starts with known metadata
+        let initial = WaveFileC(path: tmpfile.path)
+        #expect(initial.load())
+        #expect(initial[info: .title] == "Stonehenge")
+        #expect(initial[info: .artist] == "Spinal Tap")
+        #expect(initial[info: .bpm] == "666")
+
+        // Save with empty dictionaries (no load — dicts start empty)
+        let file = WaveFileC(path: tmpfile.path)
+        file.markersNeedsSave = false
+        file.imageNeedsSave = false
+        #expect(file.save())
+
+        // All INFO fields must be gone
+        let reloaded = WaveFileC(path: tmpfile.path)
+        #expect(reloaded.load())
+        #expect(reloaded[info: .title] == nil)
+        #expect(reloaded[info: .artist] == nil)
+        #expect(reloaded[info: .bpm] == nil)
+    }
+
+    /// Saving with only some INFO keys must remove existing keys absent from the new set.
+    @Test func partialInfoUpdateClearsStaleKeys() async throws {
+        let tmpfile = try copyToBin(url: TestBundleResources.shared.wav_bext_v2)
+
+        // Confirm multiple fields exist
+        let initial = WaveFileC(path: tmpfile.path)
+        #expect(initial.load())
+        #expect(initial[info: .title] == "Stonehenge")
+        #expect(initial[info: .bpm] == "666")
+
+        // Save with only bpm set — title must be cleared
+        let file = WaveFileC(path: tmpfile.path)
+        file[info: .bpm] = "777"
+        file.markersNeedsSave = false
+        file.imageNeedsSave = false
+        #expect(file.save())
+
+        let reloaded = WaveFileC(path: tmpfile.path)
+        #expect(reloaded.load())
+        #expect(reloaded[info: .bpm] == "777")
+        #expect(reloaded[info: .title] == nil)
+        #expect(reloaded[info: .artist] == nil)
+    }
+
     @Test func writeInfo() async throws {
         deleteBinOnExit = false
         let tmpfile = try copyToBin(url: TestBundleResources.shared.wav_bext_v2)

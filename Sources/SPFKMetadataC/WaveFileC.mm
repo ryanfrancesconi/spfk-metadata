@@ -152,16 +152,21 @@ using namespace TagLib;
     PropertyMap properties = TagUtil::convertToPropertyMap(_id3Dictionary);
     waveFile->ID3v2Tag()->setProperties(properties);
 
-    // write info values directly
-    if (_infoDictionary.count > 0) {
-        for (NSString *key in [_infoDictionary allKeys]) {
-            NSString *value = [_infoDictionary objectForKey:key];
-
-            ByteVector tagKey = String(key.UTF8String).data(String::UTF8);
-            String tagValue = String(value.UTF8String);
-
-            waveFile->InfoTag()->setFieldText(tagKey, tagValue);
+    // clear all existing INFO fields first, then write new ones
+    {
+        auto existingInfoFields = waveFile->InfoTag()->fieldListMap();
+        for (const auto &pair : existingInfoFields) {
+            waveFile->InfoTag()->removeField(pair.first);
         }
+    }
+
+    for (NSString *key in [_infoDictionary allKeys]) {
+        NSString *value = [_infoDictionary objectForKey:key];
+
+        ByteVector tagKey = String(key.UTF8String).data(String::UTF8);
+        String tagValue = String(value.UTF8String);
+
+        waveFile->InfoTag()->setFieldText(tagKey, tagValue);
     }
 
     // save via taglib
