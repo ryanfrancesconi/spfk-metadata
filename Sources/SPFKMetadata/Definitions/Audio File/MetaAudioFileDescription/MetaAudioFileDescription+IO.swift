@@ -171,7 +171,10 @@ extension MetaAudioFileDescription {
     private mutating func saveOther(imageNeedsSave: Bool = false, markersNeedsSave: Bool = false) throws {
         try tagProperties.save(to: url)
 
-        if imageNeedsSave, let pictureRef = imageDescription.pictureRef {
+        // tagProperties.save strips all existing tags (including embedded artwork) to ensure
+        // clean replacement. Always restore the picture if one exists in memory so that
+        // saving metadata alone doesn't discard artwork.
+        if let pictureRef = imageDescription.pictureRef {
             try save(pictureRef: pictureRef)
         }
 
@@ -203,7 +206,10 @@ extension MetaAudioFileDescription {
         waveFile.imageNeedsSave = imageNeedsSave
 
         // image
-        if imageNeedsSave, let pictureRef = imageDescription.pictureRef {
+        // Always pass the picture to WaveFileC if one exists in memory, so that
+        // a metadata-only save doesn't discard existing embedded artwork. The
+        // imageNeedsSave flag still controls whether WaveFileC actually writes it.
+        if let pictureRef = imageDescription.pictureRef {
             waveFile.tagPicture = TagPicture(picture: pictureRef)
         }
 

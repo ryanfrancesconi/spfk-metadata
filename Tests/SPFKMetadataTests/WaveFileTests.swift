@@ -101,6 +101,25 @@ class WaveFileTests: BinTestCase {
         #expect(newFile[info: .numColors] == "256")
     }
 
+    /// Unicode characters in WAV INFO tags must survive a complete save/load round-trip.
+    /// TagLib uses UTF-8 for INFO tags in modern versions — this confirms non-ASCII content
+    /// (CJK, accented Latin, emoji) is not corrupted or lost.
+    @Test func unicodeINFOTagRoundTrip() async throws {
+        let tmpfile = try copyToBin(url: TestBundleResources.shared.tabla_wav)
+
+        let file = WaveFileC(path: tmpfile.path)
+        file[info: .title] = "テスト曲 Ölé 🎵"
+        file[info: .artist] = "Ärτιst"
+        file.markersNeedsSave = false
+        file.imageNeedsSave = false
+        #expect(file.save())
+
+        let reloaded = WaveFileC(path: tmpfile.path)
+        #expect(reloaded.load())
+        #expect(reloaded[info: .title] == "テスト曲 Ölé 🎵")
+        #expect(reloaded[info: .artist] == "Ärτιst")
+    }
+
     @Test func chunks() async throws {
         deleteBinOnExit = false
 

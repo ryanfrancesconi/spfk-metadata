@@ -4,11 +4,17 @@
 #import <iostream>
 
 #import <taglib/fileref.h>
+#import <taglib/flacfile.h>
+#import <taglib/mp4file.h>
+#import <taglib/mpegfile.h>
+#import <taglib/rifffile.h>
 #import <taglib/tpropertymap.h>
+#import <taglib/wavfile.h>
 
 #import "StringUtil.h"
 #import "TagAudioPropertiesC.h"
 #import "TagFile.h"
+#import "TagFileType.h"
 #import "TagLibBridge.h"
 
 @implementation TagFile
@@ -84,6 +90,27 @@ using namespace TagLib;
     if (fileRef.isNull()) {
         cout << "Unable to read path:" << path.UTF8String << endl;
         return false;
+    }
+
+    // Strip existing tags before writing so that atoms not present in the new
+    // dictionary are removed. setProperties alone does not clear format-specific
+    // storage like iTunes freeform atoms (e.g. ITUNSMPB in M4A files).
+    NSString *fileType = [TagFileType detectType:path];
+
+    if ([fileType isEqualToString:kTagFileTypeWave]) {
+        auto *f = dynamic_cast<RIFF::WAV::File *>(fileRef.file());
+        if (f) f->strip();
+    } else if ([fileType isEqualToString:kTagFileTypeM4a] || [fileType isEqualToString:kTagFileTypeMp4]) {
+        auto *f = dynamic_cast<MP4::File *>(fileRef.file());
+        if (f) f->strip();
+    } else if ([fileType isEqualToString:kTagFileTypeMp3]) {
+        auto *f = dynamic_cast<MPEG::File *>(fileRef.file());
+        if (f) f->strip();
+    } else if ([fileType isEqualToString:kTagFileTypeFlac]) {
+        auto *f = dynamic_cast<FLAC::File *>(fileRef.file());
+        if (f) f->strip();
+    } else {
+        fileRef.setProperties(PropertyMap());
     }
 
     PropertyMap properties = PropertyMap();

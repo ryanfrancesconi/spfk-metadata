@@ -134,6 +134,100 @@ class TagPropertiesTests: BinTestCase {
         }
     }
 
+    /// Saving with empty customTags must remove existing custom (TXXX) tags from the file.
+    @Test func clearCustomTagsOnSave() async throws {
+        let tmpfile = try copyToBin(url: TestBundleResources.shared.mp3_no_metadata)
+
+        // Write custom tags directly via TagLibBridge to simulate pre-existing state
+        var dict: [String: String] = TagLibBridge.getProperties(tmpfile.path) as? [String: String] ?? [:]
+        dict["SPFK_CUSTOM_FOO"] = "bar"
+        dict["SPFK_CUSTOM_BAZ"] = "qux"
+        TagLibBridge.setProperties(tmpfile.path, dictionary: dict)
+
+        // Confirm custom tags are present on disk
+        let loaded = try TagProperties(url: tmpfile)
+        #expect(loaded.customTags["SPFK_CUSTOM_FOO"] == "bar")
+        #expect(loaded.customTags["SPFK_CUSTOM_BAZ"] == "qux")
+
+        // Save with empty customTags (only standard tags, no custom)
+        var cleared = TagProperties()
+        cleared[.title] = "Test"
+        try cleared.save(to: tmpfile)
+
+        // Custom tags must be gone
+        let reloaded = try TagProperties(url: tmpfile)
+        #expect(reloaded.customTags["SPFK_CUSTOM_FOO"] == nil)
+        #expect(reloaded.customTags["SPFK_CUSTOM_BAZ"] == nil)
+        #expect(reloaded[.title] == "Test")
+    }
+
+    /// ITUNSMPB is stored as an iTunes freeform atom in M4A files.
+    /// Saving with empty tags must remove it.
+    @Test func clearITUNSMPBOnSave() async throws {
+        let source = TestBundleResources.shared.ituns_mpb_m4a
+        let tmpfile = try copyToBin(url: source)
+
+        // Use raw TagLib dictionary to check ITUNSMPB regardless of which bucket it routes to
+        let before = TagLibBridge.getProperties(tmpfile.path) as? [String: String] ?? [:]
+        Log.debug("raw properties before:", before)
+        #expect(before["ITUNSMPB"] != nil)
+
+        // Save with empty tags
+        var cleared = TagProperties()
+        cleared[.title] = "Test"
+        try cleared.save(to: tmpfile)
+
+        // ITUNSMPB must be gone from the raw dictionary
+        let after = TagLibBridge.getProperties(tmpfile.path) as? [String: String] ?? [:]
+        Log.debug("raw properties after:", after)
+        #expect(after["ITUNSMPB"] == nil)
+        #expect(after["TITLE"] == "Test")
+    }
+
+    /// AIFF uses ID3v2 in a chunk — custom tags must be cleared on save.
+    @Test func aiffCustomTagsClearedOnSave() async throws {
+        let tmpfile = try copyToBin(url: TestBundleResources.shared.tabla_aif)
+
+        // Write a custom tag directly
+        var dict: [String: String] = TagLibBridge.getProperties(tmpfile.path) as? [String: String] ?? [:]
+        dict["SPFK_CUSTOM_AIFF"] = "aiff_value"
+        TagLibBridge.setProperties(tmpfile.path, dictionary: dict)
+
+        let before = TagLibBridge.getProperties(tmpfile.path) as? [String: String] ?? [:]
+        #expect(before["SPFK_CUSTOM_AIFF"] == "aiff_value")
+
+        // Save with only a title — custom key must be gone
+        var cleared = TagProperties()
+        cleared[.title] = "Test"
+        try cleared.save(to: tmpfile)
+
+        let after = TagLibBridge.getProperties(tmpfile.path) as? [String: String] ?? [:]
+        #expect(after["SPFK_CUSTOM_AIFF"] == nil)
+        #expect(after["TITLE"] == "Test")
+    }
+
+    /// OGG Vorbis uses flat key-value comments — custom tags must be cleared on save.
+    @Test func oggCustomTagsClearedOnSave() async throws {
+        let tmpfile = try copyToBin(url: TestBundleResources.shared.tabla_ogg)
+
+        // Write a custom tag directly
+        var dict: [String: String] = TagLibBridge.getProperties(tmpfile.path) as? [String: String] ?? [:]
+        dict["SPFK_CUSTOM_OGG"] = "ogg_value"
+        TagLibBridge.setProperties(tmpfile.path, dictionary: dict)
+
+        let before = TagLibBridge.getProperties(tmpfile.path) as? [String: String] ?? [:]
+        #expect(before["SPFK_CUSTOM_OGG"] == "ogg_value")
+
+        // Save with only a title — custom key must be gone
+        var cleared = TagProperties()
+        cleared[.title] = "Test"
+        try cleared.save(to: tmpfile)
+
+        let after = TagLibBridge.getProperties(tmpfile.path) as? [String: String] ?? [:]
+        #expect(after["SPFK_CUSTOM_OGG"] == nil)
+        #expect(after["TITLE"] == "Test")
+    }
+
     @Test func customTag() async throws {
         deleteBinOnExit = false
         let tmpfile = try copyToBin(url: TestBundleResources.shared.wav_bext_v2)
@@ -165,6 +259,22 @@ class TagPropertiesTests: BinTestCase {
         #expect(audioProperties.bitRate == 129) // should be 128, taglib reports 129
         #expect(audioProperties.channelCount == 2)
         #expect(audioProperties.duration == 2.978)
+    }
+
+    /// Unicode characters must survive a complete save/load round-trip for non-WAV formats.
+    /// ID3v2 uses UTF-16 which can encode any Unicode codepoint — this confirms CJK, accented
+    /// Latin, and emoji are not corrupted during TagLib write/read.
+    @Test func unicodeTagRoundTrip() async throws {
+        let tmpfile = try copyToBin(url: TestBundleResources.shared.mp3_no_metadata)
+
+        var props = TagProperties()
+        props[.title] = "Títulö: 日本語テスト 🎵"
+        props[.artist] = "Ärτιst Ölé"
+        try props.save(to: tmpfile)
+
+        let reloaded = try TagProperties(url: tmpfile)
+        #expect(reloaded[.title] == "Títulö: 日本語テスト 🎵")
+        #expect(reloaded[.artist] == "Ärτιst Ölé")
     }
 }
 
