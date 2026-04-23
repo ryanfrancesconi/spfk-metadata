@@ -194,4 +194,96 @@ class MP4ChapterUtilTests: BinTestCase {
         #expect(readBack.count == 3)
         #expect(readBack.map { $0.name } == ["New1", "New2", "New3"])
     }
+
+    // MARK: - Remove from file with no chapters always succeeds
+
+    @Test func removeFromFileWithNoChapters() async throws {
+        let tmpfile = try copyToBin(url: TestBundleResources.shared.tabla_m4a)
+
+        // Ensure no chapters are present
+        #expect(MP4ChapterUtil.removeChapters(in: tmpfile.path))
+        #expect(getChapters(in: tmpfile).count == 0)
+
+        // Calling remove again on a file with no chapters should still succeed gracefully
+        #expect(MP4ChapterUtil.removeChapters(in: tmpfile.path))
+        #expect(getChapters(in: tmpfile).count == 0)
+    }
+
+    // MARK: - Error handling: missing or wrong-type file
+
+    @Test func chaptersInNilForMissingFile() async throws {
+        let missing = "/tmp/this-file-does-not-exist-\(UUID().uuidString).m4a"
+        let chapters = MP4ChapterUtil.chapters(in: missing) as? [ChapterMarker] ?? []
+        #expect(chapters.isEmpty, "Should return nil/empty for non-existent file")
+    }
+
+    @Test func writeChaptersFalseForMissingFile() async throws {
+        let missing = "/tmp/this-file-does-not-exist-\(UUID().uuidString).m4a"
+        let markers: [ChapterMarker] = [ChapterMarker(name: "Ch", startTime: 0, endTime: 1)]
+        #expect(!MP4ChapterUtil.writeChapters(markers, to: missing),
+                "Should return false when file does not exist")
+    }
+
+    @Test func chaptersInNilForNonMP4File() async throws {
+        // WAV file is not an MP4 container — should return empty gracefully
+        let chapters = MP4ChapterUtil.chapters(in: TestBundleResources.shared.tabla_wav.path)
+            as? [ChapterMarker] ?? []
+        #expect(chapters.isEmpty, "Should return nil/empty for non-MP4 file")
+    }
+
+    // MARK: - Unicode titles round-trip
+
+    @Test func unicodeTitleRoundTrip() async throws {
+        let tmpfile = try copyToBin(url: TestBundleResources.shared.tabla_m4a)
+
+        let markers: [ChapterMarker] = [
+            ChapterMarker(name: "第一章", startTime: 0, endTime: 1),
+            ChapterMarker(name: "🎵 Beat Drop", startTime: 1, endTime: 2),
+            ChapterMarker(name: "Ünïcödé", startTime: 2, endTime: 3),
+        ]
+
+        #expect(MP4ChapterUtil.writeChapters(markers, to: tmpfile.path))
+
+        let readBack = getChapters(in: tmpfile)
+        #expect(readBack.count == 3)
+        #expect(readBack[0].name == "第一章")
+        #expect(readBack[1].name == "🎵 Beat Drop")
+        #expect(readBack[2].name == "Ünïcödé")
+    }
+
+    // MARK: - No orphaned mdat atoms after repeated write/remove cycles
+    //
+    // Regression test for PR #1325 / commit 7b7b5ebd:
+    // Before the fix, each add/remove cycle appended a chapter mdat without
+    // removing it during chapter track removal. File size must stabilize.
+
+    @Test func noOrphanedMdatRegressionTest() async throws {
+        let tmpfile = try copyToBin(url: TestBundleResources.shared.tabla_m4a)
+
+        let markers: [ChapterMarker] = [
+            ChapterMarker(name: "Ch1", startTime: 0, endTime: 1),
+            ChapterMarker(name: "Ch2", startTime: 1, endTime: 2),
+        ]
+
+        // Establish a clean baseline with no chapters
+        #expect(MP4ChapterUtil.removeChapters(in: tmpfile.path))
+
+        // Three write/remove cycles — file size after each remove must be stable
+        var lastRemoveSize: Int = 0
+
+        for cycle in 0 ..< 3 {
+            #expect(MP4ChapterUtil.writeChapters(markers, to: tmpfile.path))
+            #expect(MP4ChapterUtil.removeChapters(in: tmpfile.path))
+
+            let removeSize = try FileManager.default.attributesOfItem(atPath: tmpfile.path)[.size] as? Int ?? 0
+
+            if cycle > 0 {
+                #expect(
+                    removeSize == lastRemoveSize,
+                    "File grew by \(removeSize - lastRemoveSize) bytes after remove #\(cycle + 1): orphaned mdat regression"
+                )
+            }
+            lastRemoveSize = removeSize
+        }
+    }
 }

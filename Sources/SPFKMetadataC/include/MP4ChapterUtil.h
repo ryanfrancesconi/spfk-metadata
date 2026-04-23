@@ -7,8 +7,8 @@ NS_ASSUME_NONNULL_BEGIN
 /// TagLib-based utility for reading, writing, and removing Nero-style chapter markers (chpl atom)
 /// in MP4/M4A files.
 ///
-/// Operates via the `MP4ChapterList` C++ class, which reads and writes the `chpl` atom at
-/// `moov/udta/chpl` independently of TagLib's `MP4::Tag` save flow.
+/// Operates via TagLib's `MP4::File` integrated chapter API, which handles both Nero-style
+/// `chpl` atoms and QuickTime chapter tracks.
 /// Chapter data is represented as `ChapterMarker` objects with start time, end time, and name.
 @interface MP4ChapterUtil : NSObject
 

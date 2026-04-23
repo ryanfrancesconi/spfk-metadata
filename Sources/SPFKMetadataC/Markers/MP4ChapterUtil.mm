@@ -2,8 +2,8 @@
 
 #import <cmath>
 
-#import <taglib/mp4chapterlist.h>
-#import <taglib/mp4qtchapterlist.h>
+#import <taglib/mp4file.h>
+#import <taglib/mp4chapter.h>
 
 #import "ChapterMarker.h"
 #import "MP4ChapterUtil.h"
@@ -12,14 +12,14 @@ using namespace TagLib;
 
 // MARK: - Helpers
 
-/// Converts seconds to chapter time units (100-nanosecond intervals).
+/// Converts seconds to chapter time units (milliseconds).
 static long long secondsToChapterTime(NSTimeInterval seconds) {
-    return static_cast<long long>(round(seconds * 10000000.0));
+    return static_cast<long long>(round(seconds * 1000.0));
 }
 
-/// Converts chapter time units (100-nanosecond intervals) to seconds.
+/// Converts chapter time units (milliseconds) to seconds.
 static NSTimeInterval chapterTimeToSeconds(long long chapterTime) {
-    return static_cast<NSTimeInterval>(chapterTime) / 10000000.0;
+    return static_cast<NSTimeInterval>(chapterTime) / 1000.0;
 }
 
 // MARK: - MP4ChapterUtil
@@ -27,11 +27,17 @@ static NSTimeInterval chapterTimeToSeconds(long long chapterTime) {
 @implementation MP4ChapterUtil
 
 + (NSArray *)chaptersIn:(NSString *)path {
+    MP4::File file(path.UTF8String);
+
+    if (!file.isOpen() || !file.isValid()) {
+        return nil;
+    }
+
     // Try QuickTime chapter track first, fall back to Nero chpl
-    MP4::ChapterList chapters = MP4::MP4QTChapterList::read(path.UTF8String);
+    MP4::ChapterList chapters = file.qtChapters();
 
     if (chapters.isEmpty()) {
-        chapters = MP4::MP4ChapterList::read(path.UTF8String);
+        chapters = file.neroChapters();
     }
 
     if (chapters.isEmpty()) {
@@ -41,8 +47,8 @@ static NSTimeInterval chapterTimeToSeconds(long long chapterTime) {
     NSMutableArray *array = [[NSMutableArray alloc] init];
 
     for (auto it = chapters.begin(); it != chapters.end(); ++it) {
-        NSTimeInterval startTime = chapterTimeToSeconds(it->startTime);
-        NSString *name = @(it->title.toCString(true));
+        NSTimeInterval startTime = chapterTimeToSeconds(it->startTime());
+        NSString *name = @(it->title().toCString(true));
 
         // endTime = next chapter's start time, or 0 for the last
         NSTimeInterval endTime = 0;
@@ -50,7 +56,7 @@ static NSTimeInterval chapterTimeToSeconds(long long chapterTime) {
         ++next;
 
         if (next != chapters.end()) {
-            endTime = chapterTimeToSeconds(next->startTime);
+            endTime = chapterTimeToSeconds(next->startTime());
         }
 
         ChapterMarker *marker = [[ChapterMarker alloc] initWithName:name startTime:startTime endTime:endTime];
@@ -64,24 +70,36 @@ static NSTimeInterval chapterTimeToSeconds(long long chapterTime) {
     MP4::ChapterList chapterList;
 
     for (ChapterMarker *marker in chapters) {
-        MP4::Chapter ch;
-        ch.startTime = secondsToChapterTime(marker.startTime);
+        String title;
 
         if (marker.name.length > 0) {
-            ch.title = String(marker.name.UTF8String, String::UTF8);
+            title = String(marker.name.UTF8String, String::UTF8);
         }
 
-        chapterList.append(ch);
+        chapterList.append(MP4::Chapter(title, secondsToChapterTime(marker.startTime)));
     }
 
-    return MP4::MP4QTChapterList::write(path.UTF8String, chapterList);
+    MP4::File file(path.UTF8String);
+
+    if (!file.isOpen() || !file.isValid()) {
+        return false;
+    }
+
+    file.setQtChapters(chapterList);
+    return file.save();
 }
 
 + (bool)removeChaptersIn:(NSString *)path {
+    MP4::File file(path.UTF8String);
+
+    if (!file.isOpen() || !file.isValid()) {
+        return false;
+    }
+
     // Remove both QT chapter track and Nero chpl (if present)
-    bool qtOk = MP4::MP4QTChapterList::remove(path.UTF8String);
-    bool neroOk = MP4::MP4ChapterList::remove(path.UTF8String);
-    return qtOk && neroOk;
+    file.setQtChapters(MP4::ChapterList());
+    file.setNeroChapters(MP4::ChapterList());
+    return file.save();
 }
 
 @end
