@@ -7,7 +7,7 @@ extension BEXTDescription {
     /// Creates a `BEXTDescription` from the BEXT container fields embedded in an iXML document.
     ///
     /// Used as a fallback when a FLAC file carries no binary BEXT APPLICATION block but does
-    /// carry iXML with a `<BEXT>` element (e.g. files produced by Steinberg Sequoia).
+    /// carry iXML with a `<BEXT>` element (e.g. files produced by Magix Sequoia).
     /// Returns `nil` if the iXML document contains no recognizable BEXT content.
     public init?(ixmlMetadata: IXMLMetadata) {
         guard ixmlMetadata.bextOriginator != nil ||
