@@ -126,6 +126,10 @@ extension MetaAudioFileDescription {
         let flacFile = FlacFileC(path: url.path)
         guard flacFile.load() else { return }
 
+        if let props = flacFile.audioPropertiesC, props.bitsPerSample > 0 {
+            audioFormat?.update(bitsPerChannel: Int(props.bitsPerSample))
+        }
+
         if let xml = flacFile.iXML {
             iXMLMetadata =
                 (try? AEXMLDocument(xml: xml).xml)

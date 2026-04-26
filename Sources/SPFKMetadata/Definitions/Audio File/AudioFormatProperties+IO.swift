@@ -9,10 +9,11 @@ import SPFKMetadataC
 extension AudioFormatProperties {
     /// Creates format properties by reading from an `AVAudioFile`.
     public init(audioFile: AVAudioFile) {
+        let bits = audioFile.fileFormat.bitsPerChannel
         self.init(
             channelCount: audioFile.fileFormat.channelCount,
             sampleRate: audioFile.fileFormat.sampleRate,
-            bitsPerChannel: audioFile.fileFormat.bitsPerChannel.int,
+            bitsPerChannel: bits > 0 ? Int(bits) : nil,
             bitRate: audioFile.dataRate?.int32,
             duration: audioFile.duration
         )
