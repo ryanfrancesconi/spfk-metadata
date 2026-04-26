@@ -245,6 +245,58 @@ final class BEXTFromIXMLTests: BinTestCase {
     }
 }
 
+// MARK: - Externally-authored APPLICATION blocks
+
+/// Tests that verify our reader can parse BEXT and iXML APPLICATION blocks
+/// written by third-party tools (metaflac), not our own FlacFileC bridge.
+@Suite(.serialized, .tags(.file))
+final class ExternalFLACApplicationBlockTests: BinTestCase {
+    /// metaflac-generated iXML APPLICATION block (direct "iXML" app ID) is read correctly.
+    @Test func readExternalIXMLApplicationBlock() async throws {
+        let url = TestBundleResources.shared.flac_bext_ixml_external
+
+        let flac = FlacFileC(path: url.path)
+        #expect(flac.load())
+        let ixml = try #require(flac.iXML)
+        #expect(ixml.contains("SPFKMetadata External Test"))
+        #expect(ixml.contains("TestScene"))
+    }
+
+    /// metaflac-generated BEXT APPLICATION block (direct "bext" app ID) is read correctly.
+    @Test func readExternalBEXTApplicationBlock() async throws {
+        let url = TestBundleResources.shared.flac_bext_ixml_external
+
+        let flac = FlacFileC(path: url.path)
+        #expect(flac.load())
+        let bext = try #require(flac.bextDescriptionC)
+        #expect(bext.originator == "metaflac-generator")
+        #expect(bext.originationDate == "2026-04-26")
+        #expect(bext.timeReferenceLow == 48_000)
+    }
+
+    /// MetaAudioFileDescription reads both externally-authored APPLICATION blocks end-to-end.
+    @Test func metaAudioFileDescriptionReadsExternalBlocks() async throws {
+        let url = TestBundleResources.shared.flac_bext_ixml_external
+
+        let maf = try await MetaAudioFileDescription(parsing: url)
+        let ixml = try #require(maf.iXMLMetadata)
+        let bext = try #require(maf.bextDescription)
+
+        #expect(ixml.contains("SPFKMetadata External Test"))
+        #expect(bext.originator == "metaflac-generator")
+        #expect(bext.originationDate == "2026-04-26")
+        #expect(bext.timeReferenceLow == 48_000)
+    }
+
+    /// Vorbis comment tags written by ffmpeg are read alongside APPLICATION blocks.
+    @Test func ffmpegVorbisTagsReadAlongsideApplicationBlocks() async throws {
+        let url = TestBundleResources.shared.flac_bext_ixml_external
+
+        let maf = try await MetaAudioFileDescription(parsing: url)
+        #expect(maf.tagProperties.tags[.title] == "BEXT iXML External Test")
+    }
+}
+
 // MARK: - MetaAudioFileDescription FLAC end-to-end
 
 /// End-to-end tests for `MetaAudioFileDescription` with FLAC files, covering
