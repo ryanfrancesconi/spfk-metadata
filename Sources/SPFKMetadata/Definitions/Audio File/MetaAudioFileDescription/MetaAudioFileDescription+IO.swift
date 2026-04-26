@@ -37,6 +37,10 @@ extension MetaAudioFileDescription {
                 audioFormat: AudioFormatProperties(audioFile: audioFile)
             )
             try await load()
+
+            if fileType == .flac {
+                loadFLAC()
+            }
         }
 
         // A file is considered not AV-playable when AVAudioFile opens it successfully
@@ -113,6 +117,30 @@ extension MetaAudioFileDescription {
         imageDescription.pictureRef = waveFile.tagPicture?.pictureRef
     }
 
+    /// Reads iXML and BEXT APPLICATION blocks from a FLAC file, supplementing the
+    /// generic Xiph-tag load already performed by `load()`.
+    ///
+    /// BEXT priority: binary APPLICATION block (canonical) → iXML `<BEXT>` element (fallback).
+    /// The fallback covers Sequoia-style FLAC files that embed BEXT info inside iXML only.
+    private mutating func loadFLAC() {
+        let flacFile = FlacFileC(path: url.path)
+        guard flacFile.load() else { return }
+
+        if let xml = flacFile.iXML {
+            iXMLMetadata =
+                (try? AEXMLDocument(xml: xml).xml)
+                    ?? xml
+        }
+
+        if let bext = flacFile.bextDescription?.validated() {
+            bextDescription = bext
+        } else if let xml = flacFile.iXML,
+                  let ixml = try? IXMLMetadata(xml: xml),
+                  let bext = BEXTDescription(ixmlMetadata: ixml) {
+            bextDescription = bext.validated()
+        }
+    }
+
     private mutating func load() async throws {
         // Not all formats are supported by TagLib (e.g., .caf),
         // so tag loading is best-effort.
@@ -157,6 +185,10 @@ extension MetaAudioFileDescription {
         if fileType == .wav {
             try saveWave(imageNeedsSave: imageNeedsSave, markersNeedsSave: markersNeedsSave)
 
+        } else if fileType == .flac {
+            try saveFLAC()
+            try saveOther(imageNeedsSave: imageNeedsSave, markersNeedsSave: markersNeedsSave)
+
         } else {
             try saveOther(imageNeedsSave: imageNeedsSave, markersNeedsSave: markersNeedsSave)
         }
@@ -166,6 +198,25 @@ extension MetaAudioFileDescription {
         try url.updateModificationDate()
 
         urlProperties = URLProperties(url: url)
+    }
+
+    /// Writes iXML and BEXT APPLICATION blocks to the FLAC file.
+    ///
+    /// Must be called before `saveOther()` so the APPLICATION blocks are on disk when
+    /// TagLib reopens the file to write Xiph comment tags. TagLib's `strip()` for FLAC
+    /// removes only ID3 and Xiph tags, not APPLICATION blocks, so the blocks survive.
+    private func saveFLAC() throws {
+        let flacFile = FlacFileC(path: url.path)
+        guard flacFile.load() else {
+            throw NSError(description: "Failed to open \(url.path) for FLAC iXML/BEXT writing")
+        }
+
+        flacFile.bextDescription = bextDescription
+        flacFile.iXML = iXMLMetadata
+
+        guard flacFile.save() else {
+            throw NSError(description: "Failed to write iXML/BEXT to \(url.path)")
+        }
     }
 
     private mutating func saveOther(imageNeedsSave: Bool = false, markersNeedsSave: Bool = false) throws {
