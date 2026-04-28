@@ -135,8 +135,30 @@ public struct IXMLMetadata: Equatable, Sendable {
     // MARK: - USER Container
 
     /// Raw XML content of the USER container, preserved as a string.
-    /// Vendor-specific data (ASWG, Steinberg, etc.) lives here.
+    /// Parsed fields are available via ``userFields``. UCS fields via ``ucsFields``.
     public var userContent: String?
+
+    // MARK: - ASWG Container
+
+    /// Raw XML content of the ASWG container, preserved as a string.
+    /// Parsed fields are available via ``aswgFields``.
+    public var aswgContent: String?
+
+    // MARK: - STEINBERG Container
+
+    /// Raw XML content of the STEINBERG container, preserved as a string.
+    public var steinbergContent: String?
+
+    // MARK: - LOCATION Container
+
+    /// GPS coordinates string from the LOCATION container.
+    public var locationGPS: String?
+
+    /// Altitude string from the LOCATION container.
+    public var locationAltitude: String?
+
+    /// Time string from the LOCATION container.
+    public var locationTime: String?
 
     // MARK: - Initialization
 
@@ -229,6 +251,23 @@ public struct IXMLMetadata: Equatable, Sendable {
         // USER container — preserve raw content
         if let user = root[.user], user.children.isNotEmpty {
             userContent = user.xml
+        }
+
+        // ASWG container — preserve raw content
+        if let aswg = root[.aswg], aswg.children.isNotEmpty {
+            aswgContent = aswg.xml
+        }
+
+        // STEINBERG container — preserve raw content
+        if let steinberg = root[.steinberg], steinberg.children.isNotEmpty {
+            steinbergContent = steinberg.xml
+        }
+
+        // LOCATION container
+        if let location = root[.location] {
+            locationGPS = location[.locationGPS]?.value
+            locationAltitude = location[.locationAltitude]?.value
+            locationTime = location[.locationTime]?.value
         }
     }
 
@@ -349,6 +388,24 @@ public struct IXMLMetadata: Equatable, Sendable {
         // USER container — write raw content back if present
         if let userContent, let userDoc = try? AEXMLDocument(xml: userContent) {
             root.addChild(userDoc.root)
+        }
+
+        // STEINBERG container — write raw content back if present
+        if let steinbergContent, let steinbergDoc = try? AEXMLDocument(xml: steinbergContent) {
+            root.addChild(steinbergDoc.root)
+        }
+
+        // ASWG container — write raw content back if present
+        if let aswgContent, let aswgDoc = try? AEXMLDocument(xml: aswgContent) {
+            root.addChild(aswgDoc.root)
+        }
+
+        // LOCATION container
+        if hasLocationContent {
+            let loc = root.addChild(name: IXMLElement.location.rawValue)
+            addIfPresent(to: loc, .locationGPS, locationGPS)
+            addIfPresent(to: loc, .locationAltitude, locationAltitude)
+            addIfPresent(to: loc, .locationTime, locationTime)
         }
 
         return doc.xml
@@ -524,5 +581,9 @@ extension IXMLMetadata {
 
     private var hasHistoryContent: Bool {
         originalFilename != nil || parentFilename != nil || parentUID != nil
+    }
+
+    private var hasLocationContent: Bool {
+        locationGPS != nil || locationAltitude != nil || locationTime != nil
     }
 }

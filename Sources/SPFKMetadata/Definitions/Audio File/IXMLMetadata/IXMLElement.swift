@@ -97,6 +97,15 @@ public enum IXMLElement: String, Sendable {
 
     case user = "USER"
 
+    // MARK: - ASWG Container (Audio Services Working Group)
+    // Child element names use camelCase per the ASWG spec (not UPPERCASE_UNDERSCORE).
+
+    case aswg = "ASWG"
+
+    // MARK: - STEINBERG Container
+
+    case steinberg = "STEINBERG"
+
     // MARK: - LOCATION Container
 
     case location = "LOCATION"
