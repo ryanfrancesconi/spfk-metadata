@@ -395,4 +395,217 @@ final class IXMLMetadataTests: BinTestCase {
         #expect(metadata.project == nil)
         #expect(metadata.tracks == nil)
     }
+
+    // MARK: - USER Container
+
+    @Test func userFieldsRoundTrip() throws {
+        var metadata = IXMLMetadata()
+        var fields = IXMLUserFields()
+        fields.trackTitle = "Forest Rain"
+        fields.category = "AMBIENCE"
+        fields.subCategory = "NATURE"
+        fields.keywords = "rain\nforest\nnature"
+        fields.bpm = "120"
+        metadata.setUserFields(fields)
+
+        let result = try #require(metadata.userFields)
+        #expect(result.trackTitle == "Forest Rain")
+        #expect(result.category == "AMBIENCE")
+        #expect(result.subCategory == "NATURE")
+        #expect(result.keywords == "rain\nforest\nnature")
+        #expect(result.bpm == "120")
+    }
+
+    @Test func setUserFieldsPreservesUnknownElements() throws {
+        var metadata = IXMLMetadata()
+        metadata.userContent = "<USER><VENDOR_CUSTOM_FIELD>keep me</VENDOR_CUSTOM_FIELD></USER>"
+
+        var fields = IXMLUserFields()
+        fields.trackTitle = "Test"
+        metadata.setUserFields(fields)
+
+        let content = try #require(metadata.userContent)
+        #expect(content.contains("VENDOR_CUSTOM_FIELD"))
+        #expect(content.contains("keep me"))
+
+        let result = try #require(metadata.userFields)
+        #expect(result.trackTitle == "Test")
+    }
+
+    @Test func userFieldsSurviveFullXMLRoundTrip() throws {
+        var metadata = IXMLMetadata()
+        var fields = IXMLUserFields()
+        fields.trackTitle = "Gunshot Close"
+        fields.library = "SFX Library"
+        fields.description = "Single gunshot, close perspective"
+        metadata.setUserFields(fields)
+
+        let xml = metadata.xml
+        let parsed = try IXMLMetadata(xml: xml)
+        let result = try #require(parsed.userFields)
+
+        #expect(result.trackTitle == "Gunshot Close")
+        #expect(result.library == "SFX Library")
+        #expect(result.description == "Single gunshot, close perspective")
+    }
+
+    // MARK: - ASWG Container
+
+    @Test func aswgFieldsRoundTrip() throws {
+        var metadata = IXMLMetadata()
+        var fields = IXMLASWGFields()
+        fields.songTitle = "Morning Ambience"
+        fields.category = "AMBIENCE"
+        fields.subCategory = "NATURE"
+        fields.isrcId = "USRC12345678"
+        fields.tempo = "90"
+        metadata.setASWGFields(fields)
+
+        let result = try #require(metadata.aswgFields)
+        #expect(result.songTitle == "Morning Ambience")
+        #expect(result.category == "AMBIENCE")
+        #expect(result.subCategory == "NATURE")
+        #expect(result.isrcId == "USRC12345678")
+        #expect(result.tempo == "90")
+    }
+
+    @Test func setASWGFieldsPreservesUnknownElements() throws {
+        var metadata = IXMLMetadata()
+        metadata.aswgContent = "<ASWG><customVendorField>keep me</customVendorField></ASWG>"
+
+        var fields = IXMLASWGFields()
+        fields.songTitle = "Test"
+        metadata.setASWGFields(fields)
+
+        let content = try #require(metadata.aswgContent)
+        #expect(content.contains("customVendorField"))
+        #expect(content.contains("keep me"))
+    }
+
+    // MARK: - UCS Fields
+
+    @Test func ucsFieldsCoexistWithUserContent() throws {
+        var metadata = IXMLMetadata()
+        var userFields = IXMLUserFields()
+        userFields.trackTitle = "Explosion"
+        userFields.bpm = "140"
+        metadata.setUserFields(userFields)
+
+        let ucs = UCSUserFields(category: "EXPLOSIONS", subCategory: "DESIGNED", catID: "EXPLDsgn")
+        metadata.setUCSFields(ucs)
+
+        let readUser = try #require(metadata.userFields)
+        #expect(readUser.trackTitle == "Explosion")
+        #expect(readUser.bpm == "140")
+
+        let readUCS = try #require(metadata.ucsFields)
+        #expect(readUCS.category == "EXPLOSIONS")
+        #expect(readUCS.subCategory == "DESIGNED")
+        #expect(readUCS.catID == "EXPLDsgn")
+    }
+
+    // MARK: - LOCATION Container
+
+    @Test func parseLocationContainer() throws {
+        let xml = """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <BWFXML>
+            <LOCATION>
+                <GPS>37.7749,-122.4194</GPS>
+                <ALTITUDE>10.5</ALTITUDE>
+                <TIME>2024-03-15T14:30:00Z</TIME>
+            </LOCATION>
+        </BWFXML>
+        """
+
+        let metadata = try IXMLMetadata(xml: xml)
+        #expect(metadata.locationGPS == "37.7749,-122.4194")
+        #expect(metadata.locationAltitude == "10.5")
+        #expect(metadata.locationTime == "2024-03-15T14:30:00Z")
+    }
+
+    @Test func locationRoundTrip() throws {
+        var metadata = IXMLMetadata()
+        metadata.locationGPS = "51.5074,-0.1278"
+        metadata.locationAltitude = "5.0"
+        metadata.locationTime = "2024-06-21T12:00:00Z"
+
+        let xml = metadata.xml
+        let parsed = try IXMLMetadata(xml: xml)
+        #expect(parsed.locationGPS == "51.5074,-0.1278")
+        #expect(parsed.locationAltitude == "5.0")
+        #expect(parsed.locationTime == "2024-06-21T12:00:00Z")
+    }
+
+    // MARK: - Descriptor Access
+
+    @Test func descriptorReadReturnsCoreFieldValue() {
+        var metadata = IXMLMetadata()
+        metadata.project = "My Project"
+
+        let descriptor = IXMLTagDescriptor.allDescriptors.first { $0.xmlTag == "PROJECT" }!
+        #expect(metadata.value(for: descriptor) == "My Project")
+    }
+
+    @Test func descriptorWriteUpdatesCoreField() {
+        var metadata = IXMLMetadata()
+        let descriptor = IXMLTagDescriptor.allDescriptors.first { $0.xmlTag == "SCENE" }!
+        metadata.setValue("SC01", for: descriptor)
+        #expect(metadata.scene == "SC01")
+    }
+
+    @Test func descriptorWriteIsNoOpForReadOnlySection() {
+        var metadata = IXMLMetadata()
+        metadata.bextOriginator = "Original"
+
+        let descriptor = IXMLTagDescriptor.allDescriptors.first { $0.section == .bext && $0.xmlTag == "BWF_ORIGINATOR" }!
+        #expect(descriptor.isReadOnly)
+        metadata.setValue("Changed", for: descriptor)
+        #expect(metadata.bextOriginator == "Original")
+    }
+
+    @Test func descriptorWriteIsNoOpForExplicitlyReadOnlyField() {
+        // EMBEDDER is in the user section (not section-wide read-only) but individually marked isReadOnly
+        var metadata = IXMLMetadata()
+        let descriptor = IXMLTagDescriptor.allDescriptors.first { $0.xmlTag == "EMBEDDER" }!
+        #expect(descriptor.isReadOnly)
+        metadata.setValue("ShadowTag", for: descriptor)
+        #expect(metadata.userFields?.embedder == nil)
+    }
+
+    @Test func descriptorWriteUpdatesUserField() {
+        var metadata = IXMLMetadata()
+        let descriptor = IXMLTagDescriptor.allDescriptors.first { $0.section == .user && $0.xmlTag == "TRACKTITLE" }!
+        metadata.setValue("Explosion SFX", for: descriptor)
+        #expect(metadata.userFields?.trackTitle == "Explosion SFX")
+    }
+
+    @Test func descriptorWriteUpdatesASWGField() {
+        var metadata = IXMLMetadata()
+        let descriptor = IXMLTagDescriptor.allDescriptors.first { $0.section == .aswg && $0.xmlTag == "songTitle" }!
+        metadata.setValue("Dawn Chorus", for: descriptor)
+        #expect(metadata.aswgFields?.songTitle == "Dawn Chorus")
+    }
+
+    @Test func descriptorWriteUpdatesLocationField() {
+        var metadata = IXMLMetadata()
+        let descriptor = IXMLTagDescriptor.allDescriptors.first { $0.section == .location && $0.xmlTag == "GPS" }!
+        metadata.setValue("48.8566,2.3522", for: descriptor)
+        #expect(metadata.locationGPS == "48.8566,2.3522")
+    }
+
+    // MARK: - Descriptor Registry
+
+    @Test func allDescriptorIdentifiersAreUnique() {
+        let identifiers = IXMLTagDescriptor.allDescriptors.map(\.identifier)
+        #expect(identifiers.count == Set(identifiers).count)
+    }
+
+    @Test func readOnlySectionsProduceReadOnlyDescriptors() {
+        let readOnlySections: Set<IXMLSection> = [.bext, .speed, .history, .loudness]
+        let violations = IXMLTagDescriptor.allDescriptors.filter {
+            readOnlySections.contains($0.section) && !$0.isReadOnly
+        }
+        #expect(violations.isEmpty)
+    }
 }
