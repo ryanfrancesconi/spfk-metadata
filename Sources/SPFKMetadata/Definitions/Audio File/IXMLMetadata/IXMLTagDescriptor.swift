@@ -20,14 +20,14 @@ public enum IXMLSection: String, Sendable, CaseIterable, Equatable {
 
     public var displayName: String {
         switch self {
-        case .core:     return "iXML"
-        case .user:     return "User"
-        case .aswg:     return "ASWG"
-        case .bext:     return "BEXT"
-        case .speed:    return "Speed"
-        case .history:  return "History"
-        case .location: return "Location"
-        case .loudness: return "Loudness"
+        case .core:     "iXML"
+        case .user:     "User"
+        case .aswg:     "ASWG"
+        case .bext:     "BEXT"
+        case .speed:    "Speed"
+        case .history:  "History"
+        case .location: "Location"
+        case .loudness: "Loudness"
         }
     }
 
@@ -39,9 +39,9 @@ public enum IXMLSection: String, Sendable, CaseIterable, Equatable {
     public var isSectionReadOnly: Bool {
         switch self {
         case .speed, .loudness, .bext, .history:
-            return true
+            true
         case .core, .user, .aswg, .location:
-            return false
+            false
         }
     }
 }
@@ -119,14 +119,14 @@ extension IXMLTagDescriptor {
     /// without text entry controls. Sections with no data present at runtime
     /// can be hidden by the UI.
     public static let allDescriptors: [IXMLTagDescriptor] =
-        coreDescriptors.sorted { $0.displayName < $1.displayName }
-        + userDescriptors.sorted { $0.displayName < $1.displayName }
-        + aswgDescriptors.sorted { $0.displayName < $1.displayName }
-        + bextDescriptors.sorted { $0.displayName < $1.displayName }
-        + speedDescriptors.sorted { $0.displayName < $1.displayName }
-        + historyDescriptors.sorted { $0.displayName < $1.displayName }
-        + locationDescriptors.sorted { $0.displayName < $1.displayName }
-        + loudnessDescriptors.sorted { $0.displayName < $1.displayName }
+        userDescriptors.sorted { $0.displayName < $1.displayName }
+            + aswgDescriptors.sorted { $0.displayName < $1.displayName }
+            + bextDescriptors.sorted { $0.displayName < $1.displayName }
+            + speedDescriptors.sorted { $0.displayName < $1.displayName }
+            + historyDescriptors.sorted { $0.displayName < $1.displayName }
+            + locationDescriptors.sorted { $0.displayName < $1.displayName }
+            + loudnessDescriptors.sorted { $0.displayName < $1.displayName }
+            + coreDescriptors.sorted { $0.displayName < $1.displayName }
 
     // MARK: - Core (BWFXML top-level)
 

@@ -141,7 +141,7 @@ using namespace TagLib;
     }
 
     // write ixml (empty String triggers chunk removal in wavfile.cpp)
-    waveFile->setiXMLData(_iXML ? String(_iXML.UTF8String) : String());
+    waveFile->setiXMLData(_iXML ? String(_iXML.UTF8String, String::UTF8) : String());
 
     // write artwork via the same TagLib session (skip if not dirty)
     if (_imageNeedsSave) {

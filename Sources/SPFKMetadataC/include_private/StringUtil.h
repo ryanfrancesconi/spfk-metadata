@@ -108,10 +108,15 @@ static std::string charToHexString(unsigned char c) {
    reading towards the next null byte which would overflow into a subsequent
    field in the bext data.
  */
+// BWF spec says ASCII, but real-world files often contain UTF-8 or Latin-1 content.
+// Try UTF-8 first (a superset of ASCII), fall back to Latin-1 so high bytes aren't lost.
 static NSString *asciiString(const char *s, size_t maxLength) {
     size_t len = strnlen(s, maxLength);
-
-    return [[NSString alloc] initWithBytes:s length:len encoding:NSASCIIStringEncoding];
+    NSString *result = [[NSString alloc] initWithBytes:s length:len encoding:NSUTF8StringEncoding];
+    if (!result) {
+        result = [[NSString alloc] initWithBytes:s length:len encoding:NSISOLatin1StringEncoding];
+    }
+    return result ?: @"";
 }
 
 static NSString *utf8NSString(TagLib::String string) {
