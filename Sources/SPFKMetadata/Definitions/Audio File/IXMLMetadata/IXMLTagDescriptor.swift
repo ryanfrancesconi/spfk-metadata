@@ -119,14 +119,14 @@ extension IXMLTagDescriptor {
     /// without text entry controls. Sections with no data present at runtime
     /// can be hidden by the UI.
     public static let allDescriptors: [IXMLTagDescriptor] =
-        userDescriptors.sorted { $0.displayName < $1.displayName }
-            + aswgDescriptors.sorted { $0.displayName < $1.displayName }
-            + bextDescriptors.sorted { $0.displayName < $1.displayName }
-            + speedDescriptors.sorted { $0.displayName < $1.displayName }
-            + historyDescriptors.sorted { $0.displayName < $1.displayName }
-            + locationDescriptors.sorted { $0.displayName < $1.displayName }
-            + loudnessDescriptors.sorted { $0.displayName < $1.displayName }
-            + coreDescriptors.sorted { $0.displayName < $1.displayName }
+        coreDescriptors.sorted { $0.displayName < $1.displayName }
+        + userDescriptors.sorted { $0.displayName < $1.displayName }
+        + aswgDescriptors.sorted { $0.displayName < $1.displayName }
+        + bextDescriptors.sorted { $0.displayName < $1.displayName }
+        + speedDescriptors.sorted { $0.displayName < $1.displayName }
+        + historyDescriptors.sorted { $0.displayName < $1.displayName }
+        + locationDescriptors.sorted { $0.displayName < $1.displayName }
+        + loudnessDescriptors.sorted { $0.displayName < $1.displayName }
 
     // MARK: - Core (BWFXML top-level)
 
