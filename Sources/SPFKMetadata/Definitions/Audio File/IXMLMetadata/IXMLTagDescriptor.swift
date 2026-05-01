@@ -110,6 +110,20 @@ extension IXMLTagDescriptor {
     }
 }
 
+// MARK: - Descriptor Lookup
+
+extension IXMLTagDescriptor {
+    /// Returns all descriptors for a given section, sorted by `displayName`.
+    public static func descriptors(for section: IXMLSection) -> [IXMLTagDescriptor] {
+        allDescriptors.filter { $0.section == section }.sorted { $0.displayName < $1.displayName }
+    }
+
+    /// Finds a descriptor by its stable identifier (`"section.xmlTag"`).
+    public static func descriptor(forIdentifier id: String) -> IXMLTagDescriptor? {
+        allDescriptors.first { $0.identifier == id }
+    }
+}
+
 // MARK: - Descriptor Registry
 
 extension IXMLTagDescriptor {
