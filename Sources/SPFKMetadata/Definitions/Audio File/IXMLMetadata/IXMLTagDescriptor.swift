@@ -20,7 +20,7 @@ public enum IXMLSection: String, Sendable, CaseIterable, Equatable {
 
     public var displayName: String {
         switch self {
-        case .core:     "iXML"
+        case .core:     "Core"
         case .user:     "User"
         case .aswg:     "ASWG"
         case .bext:     "BEXT"
