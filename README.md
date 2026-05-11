@@ -5,7 +5,7 @@
 
 Audio metadata I/O library wrapping [TagLib](https://github.com/taglib/taglib) via [spfk-taglib](https://github.com/ryanfrancesconi/spfk-taglib) and Core Audio to provide unified tag reading/writing, marker parsing, and broadcast wave (BEXT) support across common audio formats.
 
-The TagLib integration is provided by spfk-taglib, an independent SPM repackaging of TagLib that mirrors the upstream directory layout. The current upstream base is **TagLib 2.2.1**. spfk-taglib also includes fork additions for BEXT/iXML chunk support in WAV files and Nero-style chapter markers in MP4 files. See the [spfk-taglib README](https://github.com/ryanfrancesconi/spfk-taglib) for details.
+The TagLib integration is provided by spfk-taglib, an independent SPM repackaging of TagLib that mirrors the upstream directory layout. See the [spfk-taglib README](https://github.com/ryanfrancesconi/spfk-taglib) for the current upstream base version and any local additions.
 
 No single framework handles all audio metadata scenarios in Swift. AVFoundation lacks write support and misses RIFF markers, BEXT chunks, iXML, and MP3 chapter frames. SPFKMetadata fills those gaps with an ObjC++/C bridge for TagLib. All WAV I/O (tags, markers, BEXT, artwork) goes through a single TagLib-backed `WaveFileC` load/save cycle.
 
@@ -139,7 +139,7 @@ The package contains two targets: **SPFKMetadata** (pure Swift) and **SPFKMetada
 | Package | Description |
 |---|---|
 | [spfk-metadata-base](https://github.com/ryanfrancesconi/spfk-metadata-base) | Pure metadata data types (no C++ dependency) |
-| [spfk-taglib](https://github.com/ryanfrancesconi/spfk-taglib) | TagLib 2.2.1 C++ library repackaged for SPM, with BEXT/iXML and MP4 chapter extensions |
+| [spfk-taglib](https://github.com/ryanfrancesconi/spfk-taglib) | TagLib C++ library repackaged for SPM |
 | [spfk-audio-base](https://github.com/ryanfrancesconi/spfk-audio-base) | Shared audio type definitions |
 | [spfk-utils](https://github.com/ryanfrancesconi/spfk-utils) | Foundation utilities and extensions |
 | [ogg](https://github.com/sbooth/ogg-binary-xcframework) | Ogg container format (TagLib link-time dependency) |
