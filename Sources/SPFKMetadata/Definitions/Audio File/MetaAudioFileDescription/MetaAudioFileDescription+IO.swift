@@ -161,7 +161,9 @@ extension MetaAudioFileDescription {
 
     private mutating func updateDefaultImage() async {
         if imageDescription.cgImage == nil {
+            #if os(macOS)
             imageDescription.cgImage = url.bestImageRepresentation?.cgImage
+            #endif
             imageDescription.description = url.path
         }
 
@@ -197,11 +199,12 @@ extension MetaAudioFileDescription {
             try saveOther(imageNeedsSave: imageNeedsSave, markersNeedsSave: markersNeedsSave)
         }
 
+        #if os(macOS)
         let finderTags = urlProperties.finderTags
         try url.set(finderTags: finderTags)
         try url.updateModificationDate()
-
         urlProperties = URLProperties(url: url)
+        #endif
     }
 
     /// Writes iXML and BEXT APPLICATION blocks to the FLAC file.
