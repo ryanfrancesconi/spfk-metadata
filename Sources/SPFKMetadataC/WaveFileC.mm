@@ -163,8 +163,8 @@ using namespace TagLib;
     for (NSString *key in [_infoDictionary allKeys]) {
         NSString *value = [_infoDictionary objectForKey:key];
 
-        ByteVector tagKey = String(key.UTF8String).data(String::UTF8);
-        String tagValue = String(value.UTF8String);
+        ByteVector tagKey = String(key.UTF8String, String::UTF8).data(String::UTF8);
+        String tagValue = String(value.UTF8String, String::UTF8);
 
         waveFile->InfoTag()->setFieldText(tagKey, tagValue);
     }

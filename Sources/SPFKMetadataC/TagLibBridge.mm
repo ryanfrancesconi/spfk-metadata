@@ -72,7 +72,7 @@ using namespace TagLib;
         return NULL;
     }
 
-    return @(tag->title().toCString());
+    return @(tag->title().toCString(true));
 }
 
 + (bool)setTitle:(NSString *)path title:(NSString *)title {
@@ -90,7 +90,7 @@ using namespace TagLib;
         return false;
     }
 
-    tag->setTitle(title.UTF8String);
+    tag->setTitle(String(title.UTF8String, String::UTF8));
 
     return fileRef.save();
 }
@@ -110,7 +110,7 @@ using namespace TagLib;
         return NULL;
     }
 
-    return @(tag->comment().toCString());
+    return @(tag->comment().toCString(true));
 }
 
 + (bool)setComment:(NSString *)path comment:(NSString *)comment {
@@ -128,7 +128,7 @@ using namespace TagLib;
         return false;
     }
 
-    tag->setComment(comment.UTF8String);
+    tag->setComment(String(comment.UTF8String, String::UTF8));
 
     return fileRef.save();
 }

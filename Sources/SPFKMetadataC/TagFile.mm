@@ -64,13 +64,13 @@ using namespace TagLib;
     // See TagKey for translations.
 
     for (const auto &property : properties) {
-        const char *ckey = property.first.toCString();
+        const char *ckey = property.first.toCString(true);
         String cval = property.second.toString();
 
         // cout << ckey << " = " << cval << endl;
 
         NSString *key = @(ckey);
-        NSString *object = @(cval.toCString()) ?: @"";
+        NSString *object = @(cval.toCString(true)) ?: @"";
 
         if (key != nil && object != nil) {
             [_dictionary setValue:object forKey:key];
@@ -117,8 +117,8 @@ using namespace TagLib;
 
     for (NSString *key in [dictionary allKeys]) {
         NSString *value = [dictionary objectForKey:key];
-        String tagKey = String(key.UTF8String);
-        StringList tagValue = StringList(value.UTF8String);
+        String tagKey = String(key.UTF8String, String::UTF8);
+        StringList tagValue = StringList(String(value.UTF8String, String::UTF8));
         properties.insert(tagKey, tagValue);
     }
 

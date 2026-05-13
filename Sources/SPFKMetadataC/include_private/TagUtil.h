@@ -66,7 +66,7 @@ static NSMutableDictionary *convertToDictionary(ID3v2::FrameList frameList) {
 
         NSString *nsKey = [[NSString alloc] initWithBytes:bytes length:length encoding:NSUTF8StringEncoding];
 
-        NSString *nsValue = [[NSString alloc] initWithCString:value.toCString() encoding:NSUTF8StringEncoding];
+        NSString *nsValue = [[NSString alloc] initWithCString:value.toCString(true) encoding:NSUTF8StringEncoding];
 
         [dict setValue:nsValue ?: @"" forKey:nsKey];
     }
@@ -85,8 +85,8 @@ static PropertyMap convertToPropertyMap(NSMutableDictionary *dict) {
         NSString *value = [dict objectForKey:key];
 
         // can be taglib key or 4 char id3 frameID
-        String tagKey = String(key.UTF8String);
-        StringList tagValue = StringList(value.UTF8String);
+        String tagKey = String(key.UTF8String, String::UTF8);
+        StringList tagValue = StringList(String(value.UTF8String, String::UTF8));
 
         properties.insert(tagKey, tagValue);
     }
@@ -109,7 +109,7 @@ static NSMutableDictionary *convertToDictionary(RIFF::Info::FieldListMap infoMap
 
         NSString *nsKey = [[NSString alloc] initWithBytes:bytes length:length encoding:NSUTF8StringEncoding];
 
-        NSString *nsValue = [[NSString alloc] initWithCString:val.toCString() encoding:NSUTF8StringEncoding];
+        NSString *nsValue = [[NSString alloc] initWithCString:val.toCString(true) encoding:NSUTF8StringEncoding];
 
         // NSLog(@"%@ = %@", nsKey, nsValue);
 

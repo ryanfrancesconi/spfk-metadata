@@ -52,7 +52,7 @@ using namespace TagLib;
         // placeholder for title
         String elementName = String(frame->elementID());
 
-        const char *name = elementName.toCString();
+        const char *name = elementName.toCString(true);
 
         NSString *chapterName = @(name);
 

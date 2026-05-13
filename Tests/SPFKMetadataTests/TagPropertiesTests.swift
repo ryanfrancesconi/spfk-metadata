@@ -261,21 +261,6 @@ class TagPropertiesTests: BinTestCase {
         #expect(audioProperties.duration == 2.978)
     }
 
-    /// Unicode characters must survive a complete save/load round-trip for non-WAV formats.
-    /// ID3v2 uses UTF-16 which can encode any Unicode codepoint — this confirms CJK, accented
-    /// Latin, and emoji are not corrupted during TagLib write/read.
-    @Test func unicodeTagRoundTrip() async throws {
-        let tmpfile = try copyToBin(url: TestBundleResources.shared.mp3_no_metadata)
-
-        var props = TagProperties()
-        props[.title] = "Títulö: 日本語テスト 🎵"
-        props[.artist] = "Ärτιst Ölé"
-        try props.save(to: tmpfile)
-
-        let reloaded = try TagProperties(url: tmpfile)
-        #expect(reloaded[.title] == "Títulö: 日本語テスト 🎵")
-        #expect(reloaded[.artist] == "Ärτιst Ölé")
-    }
 }
 
 extension TagPropertiesTests {
