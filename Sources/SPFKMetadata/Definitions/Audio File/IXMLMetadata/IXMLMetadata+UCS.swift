@@ -21,6 +21,12 @@ public struct UCSUserFields: Sendable, Equatable {
     public var isEmpty: Bool {
         category == nil && subCategory == nil && catID == nil
     }
+
+    public init(category: String? = nil, subCategory: String? = nil, catID: String? = nil) {
+        self.category = category
+        self.subCategory = subCategory
+        self.catID = catID
+    }
 }
 
 extension IXMLMetadata {
@@ -63,6 +69,12 @@ extension IXMLMetadata {
         setElement(in: root, name: "CATEGORY", value: ucs.category)
         setElement(in: root, name: "SUBCATEGORY", value: ucs.subCategory)
         setElement(in: root, name: "CATID", value: ucs.catID)
+
+        // CATEGORYFULL is derived: "CATEGORY-SUBCATEGORY" (e.g. "AMBIENCE-FOREST")
+        let categoryFull: String? = ucs.category.flatMap { cat in
+            ucs.subCategory.map { sub in "\(cat)-\(sub)" }
+        }
+        setElement(in: root, name: "CATEGORYFULL", value: categoryFull)
 
         userContent = doc.xml
     }
