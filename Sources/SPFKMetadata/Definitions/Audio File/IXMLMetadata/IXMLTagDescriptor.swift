@@ -108,6 +108,29 @@ extension IXMLTagDescriptor {
     public var identifier: String {
         "\(section.rawValue).\(xmlTag)"
     }
+
+    /// The corresponding `BEXTDescription.Key` for BEXT-section descriptors; `nil` for all other sections.
+    ///
+    /// Used to read the authoritative binary BEXT chunk value before falling back to iXML BEXT data.
+    public var bextKey: BEXTDescription.Key? {
+        guard section == .bext else { return nil }
+        switch xmlTag {
+        case "BWF_ORIGINATOR":           return .originator
+        case "BWF_ORIGINATOR_REFERENCE": return .originatorReference
+        case "BWF_ORIGINATION_DATE":     return .originationDate
+        case "BWF_ORIGINATION_TIME":     return .originationTime
+        case "BWF_UMID":                 return .umid
+        case "BWF_DESCRIPTION":          return .description
+        case "BWF_VERSION":              return .version
+        case "BWF_CODING_HISTORY":       return .codingHistory
+        case "BEXT_LOUDNESS_VALUE":      return .loudnessIntegrated
+        case "BEXT_LOUDNESS_RANGE":      return .loudnessRange
+        case "BEXT_MAX_TRUE_PEAK_LEVEL": return .maxTruePeakLevel
+        case "BEXT_MAX_MOMENTARY":       return .maxMomentaryLoudness
+        case "BEXT_MAX_SHORT_TERM":      return .maxShortTermLoudness
+        default:                         return nil
+        }
+    }
 }
 
 // MARK: - Descriptor Lookup
@@ -223,14 +246,19 @@ extension IXMLTagDescriptor {
     // MARK: - BEXT (read-only mirror of binary BEXT chunk; managed by the BEXT editor tab)
 
     private static let bextDescriptors: [IXMLTagDescriptor] = [
-        .init(displayName: "BWF Coding History",       section: .bext, xmlTag: "BWF_CODING_HISTORY",      isMultiLine: true),
-        .init(displayName: "BWF Description",          section: .bext, xmlTag: "BWF_DESCRIPTION",         isMultiLine: true),
-        .init(displayName: "BWF Origination Date",     section: .bext, xmlTag: "BWF_ORIGINATION_DATE"),
-        .init(displayName: "BWF Origination Time",     section: .bext, xmlTag: "BWF_ORIGINATION_TIME"),
-        .init(displayName: "BWF Originator Reference", section: .bext, xmlTag: "BWF_ORIGINATOR_REFERENCE"),
-        .init(displayName: "BWF Originator",           section: .bext, xmlTag: "BWF_ORIGINATOR"),
-        .init(displayName: "BWF UMID",                 section: .bext, xmlTag: "BWF_UMID"),
-        .init(displayName: "BWF Version",              section: .bext, xmlTag: "BWF_VERSION"),
+        .init(displayName: "Coding History",                         section: .bext, xmlTag: "BWF_CODING_HISTORY",      isMultiLine: true),
+        .init(displayName: "Description",                            section: .bext, xmlTag: "BWF_DESCRIPTION",         isMultiLine: true),
+        .init(displayName: TagKey.loudnessIntegrated.displayName,    section: .bext, xmlTag: "BEXT_LOUDNESS_VALUE",      editStyle: .numeric),
+        .init(displayName: TagKey.loudnessRange.displayName,         section: .bext, xmlTag: "BEXT_LOUDNESS_RANGE",      editStyle: .numeric),
+        .init(displayName: TagKey.loudnessTruePeak.displayName,      section: .bext, xmlTag: "BEXT_MAX_TRUE_PEAK_LEVEL", editStyle: .numeric),
+        .init(displayName: TagKey.loudnessMaxMomentary.displayName,  section: .bext, xmlTag: "BEXT_MAX_MOMENTARY",       editStyle: .numeric),
+        .init(displayName: TagKey.loudnessMaxShortTerm.displayName,  section: .bext, xmlTag: "BEXT_MAX_SHORT_TERM",      editStyle: .numeric),
+        .init(displayName: "Origination Date",                       section: .bext, xmlTag: "BWF_ORIGINATION_DATE"),
+        .init(displayName: "Origination Time",                       section: .bext, xmlTag: "BWF_ORIGINATION_TIME"),
+        .init(displayName: "Originator Reference",                   section: .bext, xmlTag: "BWF_ORIGINATOR_REFERENCE"),
+        .init(displayName: "Originator",                             section: .bext, xmlTag: "BWF_ORIGINATOR"),
+        .init(displayName: "UMID",                                   section: .bext, xmlTag: "BWF_UMID"),
+        .init(displayName: "Version",                                section: .bext, xmlTag: "BWF_VERSION"),
     ]
 
     // MARK: - SPEED (read-only; auto-populated from audio format)
