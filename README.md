@@ -45,6 +45,15 @@ if let bext = description.bextDescription {
     print(bext.loudnessDescription)
 }
 
+// Read iXML metadata (WAV/FLAC)
+if let ixml = description.ixmlMetadata {
+    print(ixml.scene ?? "")
+    print(ixml.take ?? "")
+    // Descriptor-based access
+    let descriptor = IXMLTagDescriptor.descriptor(forIdentifier: "scene")
+    print(ixml.value(for: descriptor) ?? "")
+}
+
 // Read markers
 for marker in description.markerCollection.markerDescriptions {
     print("\(marker.name ?? "Untitled") @ \(marker.startTime)s")
@@ -61,7 +70,7 @@ Types marked with *(base)* are defined in [SPFKMetadataBase](https://github.com/
 ### MetaAudioFileDescription
 
 - **MetaAudioFileDescription** *(base)* — Top-level Codable struct aggregating tag properties, audio format info, BEXT data, iXML, markers, and embedded artwork.
-- **MetaAudioFileDescription+IO** *(I/O)* — Parsing initializer and `save()` method with format-specific dispatch (WAV via WaveFileC, other formats via TagLib/AVFoundation).
+- **MetaAudioFileDescription+IO** *(I/O)* — Parsing initializer and `save()` method with format-specific dispatch (WAV via WaveFileC, FLAC via FlacFileC, other formats via TagLib/AVFoundation).
 
 ### Tag Properties
 
@@ -79,16 +88,29 @@ Types marked with *(base)* are defined in [SPFKMetadataBase](https://github.com/
 
 - **AudioFormatProperties** *(base)* — Struct holding channel count, sample rate, bit depth, bit rate, and duration with cached human-readable description strings.
 - **AudioFormatProperties+IO** *(I/O)* — Initializer from `AVAudioFile`.
-- **AudioFileType+TagType** *(I/O)* — Bidirectional mapping between `AudioFileType` and `TagFileTypeDef`, with file extension and URL-based detection.
+- **AudioFileType+TagType** *(I/O)* — Bidirectional mapping between `AudioFileType` and `TagFileTypeDef`, with file extension, header inspection, and URL-based detection.
 - **BEXTDescription** *(base)* — Broadcast Wave Extension (BWF) chunk wrapper supporting v0/v1/v2 fields including originator, coding history, UMID, loudness values, and 64-bit time reference.
 - **BEXTDescription+IO** *(I/O)* — Read/write BEXT chunks via `WaveFileC` (TagLib). Conversion to/from the C bridge type `BEXTDescriptionC`.
+- **BEXTDescription+IXML** *(I/O)* — Fallback BEXT construction from an iXML document for files (e.g. Magix Sequoia FLAC) that embed BEXT data in the iXML APPLICATION block rather than a binary BEXT chunk.
 - **BEXTDescription.Key** *(base)* — Enum of BEXT field keys with `OrderedDictionary` subscript for dictionary-style get/set access.
 - **ImageDescription** *(base)* — Embedded artwork container with CGImage, thumbnail generation, and Codable conformance.
 - **ImageDescription+IO** *(I/O)* — Conversion to/from `TagPictureRef` for TagLib interop.
 - **TagPicture+** *(I/O)* — Extension for reading embedded artwork from files via TagLib.
 - **WaveFileC+** *(I/O)* — Swift convenience accessors on `WaveFileC` for `bextDescription`, INFO frame subscripts, and ID3 frame subscripts.
-- **IXMLMetadata** *(I/O)* — Structured parser and generator for the iXML (BWFXML) chunk embedded in WAV files. Covers SPEED, TRACK_LIST, LOUDNESS, BEXT mirror, HISTORY, and USER containers. Use `init(xml:)` to parse from an XML string and `.xml` to generate output. Can also be constructed from a `MetaAudioFileDescription` via `init(from:)`.
+- **FlacFileC+** *(I/O)* — Swift convenience accessors on `FlacFileC` for `bextDescription` read/write via FLAC APPLICATION blocks.
+
+### iXML (BWFXML)
+
+Full structured support for the [iXML](http://www.ixml.info) (BWFXML) specification embedded in WAV and FLAC APPLICATION blocks. 56+ fields across 8 sections with round-trip XML fidelity.
+
+- **IXMLMetadata** *(I/O)* — Core iXML document model. Covers top-level production fields (project, scene, take, tape, family, file UIDs), SPEED container (timecode, sample rate, bit depth), TRACK_LIST, LOUDNESS, BEXT mirror, HISTORY (original/parent filenames), USER (Soundminer-style fields), ASWG, STEINBERG, and LOCATION containers. Construct via `init(xml:)` to parse from an XML string, or `init(from:)` to build from a `MetaAudioFileDescription`. Generate XML via `.xml`.
 - **IXMLElement** *(I/O)* — Enum of iXML XML element names (BWFXML, SCENE, TAKE, TRACK_LIST, LOUDNESS, etc.) with a type-safe `AEXMLElement` subscript extension for safe element access.
+- **IXMLTagDescriptor** *(I/O)* — Field descriptor for UI editors. Defines display name, section, XML tag, read-only status, and edit style (text/boolean/numeric/date). Provides a registry of all 56+ fields queryable via `IXMLTagDescriptor.descriptors(for:section:)` and `IXMLTagDescriptor.descriptor(forIdentifier:)`.
+- **IXMLSection** *(I/O)* — Enum grouping iXML fields into UI sections: core, user, aswg, bext, speed, history, location, loudness.
+- **IXMLMetadata+Accessors** *(I/O)* — Descriptor-based read/write via `value(for:)` and `setValue(_:for:)`, enabling generic UI editors to access any iXML field without switch statements.
+- **IXMLUserFields** *(I/O)* — Structured model for the 37-field Soundminer USER container (show, episode, category, subcategory, notes, keywords, etc.). Parsed from and serialized back to the USER XML element with round-trip preservation of unknown fields.
+- **UCSUserFields** *(I/O)* — UCS (Universal Category System) fields extracted from the USER element: CATEGORY, SUBCATEGORY, CATID. Auto-generates CATEGORYFULL on write.
+- **IXMLASWGFields** *(I/O)* — 14-field structured model for the ASWG (Audio Software Group) container per the ASWG iXML spec (project, originator, originatorStudio, notes, session, state, etc.).
 
 ### Markers
 
@@ -110,6 +132,7 @@ Low-level bridge layer exposing TagLib functionality to Swift through Objective-
 | **TagPicture** | Embedded artwork extraction and embedding via TagLib |
 | **TagPictureRef** | CGImageRef container for artwork with UTType, managing Core Graphics reference counting across the Swift/ObjC boundary |
 | **WaveFileC** | RIFF WAV file operations via TagLib (INFO chunks, markers, BEXT) with single-load/single-save I/O |
+| **FlacFileC** | FLAC file operations via TagLib (Xiph tags, APPLICATION blocks for BEXT and iXML) |
 | **BEXTDescriptionC** | EBU Tech 3285 BEXT chunk binary serializer/deserializer with initWithData:/serializedData |
 | **AudioMarkerUtil** | RIFF audio marker (cue point) parsing for WAV and AIFF |
 | **MPEGChapterUtil** | ID3v2 CHAP frame parsing for MP3 chapter markers |
@@ -119,19 +142,19 @@ Low-level bridge layer exposing TagLib functionality to Swift through Objective-
 
 ## Installation
 
-The package contains two targets: **SPFKMetadata** (pure Swift) and **SPFKMetadataC** (ObjC++/C with TagLib).
+The package product `SPFKMetadata` includes both the `SPFKMetadata` (Swift) and `SPFKMetadataC` (ObjC++/C) targets.
 
 1. Add SPFKMetadata as a dependency:
    - In Xcode: **File → Swift Packages → Add Package Dependency...**
-     - Enter: `https://github.com/ryanfrancesconi/SPFKMetadata`
+     - Enter: `https://github.com/ryanfrancesconi/spfk-metadata`
    - In Package.swift:
      ```swift
      .package(url: "https://github.com/ryanfrancesconi/spfk-metadata", from: "0.0.1")
      ```
 2. Import:
    ```swift
-   import SPFKMetadata
-   import SPFKMetadataC
+   import SPFKMetadata          // Swift API + re-exported SPFKMetadataBase types
+   import SPFKMetadataC         // only needed for direct ObjC bridge access
    ```
 
 ## Dependencies
