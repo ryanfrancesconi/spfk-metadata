@@ -36,11 +36,9 @@ extension ImageDescription {
         }
 
         set {
-            guard let newValue else { return }
+            cgImage = newValue?.cgImage
 
-            cgImage = newValue.cgImage
-
-            if let desc = newValue.pictureDescription, desc != "" {
+            if let desc = newValue?.pictureDescription, desc != "" {
                 description = desc
             }
         }

@@ -29,11 +29,12 @@ NS_ASSUME_NONNULL_BEGIN
 /// @return `nil` if no artwork is found.
 - (nullable instancetype)initWithPath:(nonnull NSString *)path;
 
-/// Embeds artwork into the audio file, replacing any existing APIC frame.
-/// @param picture The artwork to write.
+/// Embeds or removes artwork in the audio file.
+/// Pass `nil` for `picture` to remove existing artwork.
+/// @param picture The artwork to embed, or `nil` to clear.
 /// @param path Absolute path to the audio file.
 /// @return `true` if the write succeeded.
-+ (bool)write:(TagPictureRef *)picture path:(nonnull NSString *)path;
++ (bool)write:(nullable TagPictureRef *)picture path:(nonnull NSString *)path;
 
 // MARK: - Tag-based (uses an existing TagLib session)
 

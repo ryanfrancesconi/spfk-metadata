@@ -140,7 +140,8 @@ extension MetaAudioFileDescription {
             bextDescription = bext
         } else if let xml = flacFile.iXML,
                   let ixml = try? IXMLMetadata(xml: xml),
-                  let bext = BEXTDescription(ixmlMetadata: ixml) {
+                  let bext = BEXTDescription(ixmlMetadata: ixml)
+        {
             bextDescription = bext.validated()
         }
     }
@@ -162,7 +163,7 @@ extension MetaAudioFileDescription {
     private mutating func updateDefaultImage() async {
         if imageDescription.cgImage == nil {
             #if os(macOS)
-            imageDescription.cgImage = url.bestImageRepresentation?.cgImage
+                imageDescription.cgImage = url.bestImageRepresentation?.cgImage
             #endif
             imageDescription.description = url.path
         }
@@ -200,10 +201,10 @@ extension MetaAudioFileDescription {
         }
 
         #if os(macOS)
-        let finderTags = urlProperties.finderTags
-        try url.set(finderTags: finderTags)
-        try url.updateModificationDate()
-        urlProperties = URLProperties(url: url)
+            let finderTags = urlProperties.finderTags
+            try url.set(finderTags: finderTags)
+            try url.updateModificationDate()
+            urlProperties = URLProperties(url: url)
         #endif
     }
 
@@ -247,6 +248,14 @@ extension MetaAudioFileDescription {
         guard TagPicture.write(pictureRef, path: url.path) else {
             throw NSError(description: "Failed to update image")
         }
+    }
+
+    /// Removes embedded artwork from the file via TagLib and clears it from memory.
+    public mutating func removePicture() throws {
+        guard TagPicture.write(nil, path: url.path) else {
+            throw NSError(description: "Failed to remove image from \(url.path)")
+        }
+        imageDescription.cgImage = nil
     }
 
     /// Writes WAV metadata via TagLib (BEXT, iXML, ID3, INFO, artwork) and markers via AudioToolbox.

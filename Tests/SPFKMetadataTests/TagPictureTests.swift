@@ -11,7 +11,7 @@ import UniformTypeIdentifiers
 @testable import SPFKMetadataC
 
 @Suite(.serialized)
-class TagLibPictureTests: BinTestCase {
+class TagPictureTests: BinTestCase {
     // MARK: - TagPictureRef.parsing
 
     @Test func parsingExtractsImageFromMP3() async throws {
@@ -80,6 +80,36 @@ class TagLibPictureTests: BinTestCase {
 
         let tagPicture = TagPicture(path: source.path)?.pictureRef
         #expect(tagPicture == nil)
+    }
+
+    @Test func removePicture() async throws {
+        deleteBinOnExit = true
+        let tmpfile = try copyToBin(url: TestBundleResources.shared.mp3_id3)
+
+        // Verify initial artwork exists
+        #expect(TagPicture(path: tmpfile.path)?.pictureRef != nil)
+
+        // Remove it
+        #expect(TagPicture.write(nil, path: tmpfile.path))
+
+        // Verify it's gone
+        #expect(TagPicture(path: tmpfile.path)?.pictureRef == nil)
+    }
+
+    @Test(arguments: TestBundleResources.shared.markerFormats)
+    func removePictureRoundtrip(url: URL) async throws {
+        deleteBinOnExit = true
+        let imageURL = TestBundleResources.shared.sharksandwich
+        let pictureRef = try #require(TagPictureRef(url: imageURL, pictureDescription: "Test", pictureType: "Front Cover"))
+        let tmpfile = try copyToBin(url: url)
+
+        // Write artwork
+        #expect(TagPicture.write(pictureRef, path: tmpfile.path))
+        #expect(TagPicture(path: tmpfile.path)?.pictureRef != nil)
+
+        // Remove artwork
+        #expect(TagPicture.write(nil, path: tmpfile.path))
+        #expect(TagPicture(path: tmpfile.path)?.pictureRef == nil)
     }
 
     @Test(arguments: TestBundleResources.shared.markerFormats)

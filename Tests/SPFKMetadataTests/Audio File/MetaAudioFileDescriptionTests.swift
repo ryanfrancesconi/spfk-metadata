@@ -26,7 +26,7 @@ class MetaAudioFileDescriptionTests: BinTestCase {
         let url = try copyToBin(url: TestBundleResources.shared.mp3_no_metadata)
         var mafDescription = try await MetaAudioFileDescription(parsing: url)
 
-        let cgImage = try #require(try? await CGImage.contentsOf(url: TestBundleResources.shared.sharksandwich))
+        let cgImage = try CGImage.contentsOf(url: TestBundleResources.shared.sharksandwich)
         await mafDescription.imageDescription.update(cgImage: cgImage)
         mafDescription.imageDescription.description = "A NEW DESCRIPTION"
         mafDescription.tagProperties[.title] = "NEW TITLE"
@@ -144,7 +144,7 @@ class MetaAudioFileDescriptionArtworkTests: BinTestCase {
 
         // Embed artwork
         var maf = try await MetaAudioFileDescription(parsing: tmpfile)
-        let cgImage = try #require(try? await CGImage.contentsOf(url: TestBundleResources.shared.sharksandwich))
+        let cgImage = try CGImage.contentsOf(url: TestBundleResources.shared.sharksandwich)
         await maf.imageDescription.update(cgImage: cgImage)
         maf.tagProperties[.title] = "Original"
         try maf.save(dirtyFlags: [.metadata, .image])
@@ -172,7 +172,7 @@ class MetaAudioFileDescriptionArtworkTests: BinTestCase {
 
         // Embed artwork
         var maf = try await MetaAudioFileDescription(parsing: tmpfile)
-        let cgImage = try #require(try? await CGImage.contentsOf(url: TestBundleResources.shared.sharksandwich))
+        let cgImage = try CGImage.contentsOf(url: TestBundleResources.shared.sharksandwich)
         await maf.imageDescription.update(cgImage: cgImage)
         try maf.save(dirtyFlags: [.metadata, .image])
 
@@ -194,7 +194,7 @@ class MetaAudioFileDescriptionArtworkTests: BinTestCase {
 
         // Embed artwork
         var maf = try await MetaAudioFileDescription(parsing: tmpfile)
-        let cgImage = try #require(try? await CGImage.contentsOf(url: TestBundleResources.shared.sharksandwich))
+        let cgImage = try CGImage.contentsOf(url: TestBundleResources.shared.sharksandwich)
         await maf.imageDescription.update(cgImage: cgImage)
         maf.tagProperties[.title] = "Original"
         try maf.save(dirtyFlags: [.metadata, .image])
@@ -214,6 +214,23 @@ class MetaAudioFileDescriptionArtworkTests: BinTestCase {
         #expect(reloaded.imageDescription.cgImage?.width == cgImage.width)
     }
 
+    /// removePicture() immediately removes embedded artwork from the file and clears it from memory
+    /// without requiring a full metadata save cycle.
+    @Test func removePictureAPI() async throws {
+        let tmpfile = try copyToBin(url: TestBundleResources.shared.mp3_id3)
+
+        var maf = try await MetaAudioFileDescription(parsing: tmpfile)
+        // Confirm artwork was loaded
+        #expect(throws: Never.self) { try TagPictureRef.parsing(url: tmpfile) }
+
+        try maf.removePicture()
+
+        // Memory is cleared
+        #expect(maf.imageDescription.cgImage == nil)
+        // File is cleared (no save() call needed)
+        #expect(throws: (any Error).self) { try TagPictureRef.parsing(url: tmpfile) }
+    }
+
     /// Clearing artwork in a WAV file must remove it from disk.
     /// Verified at the TagLib level because MetaAudioFileDescription.updateDefaultImage()
     /// always fills cgImage with a fallback image when no embedded artwork is found.
@@ -222,7 +239,7 @@ class MetaAudioFileDescriptionArtworkTests: BinTestCase {
 
         // Embed artwork
         var maf = try await MetaAudioFileDescription(parsing: tmpfile)
-        let cgImage = try #require(try? await CGImage.contentsOf(url: TestBundleResources.shared.sharksandwich))
+        let cgImage = try CGImage.contentsOf(url: TestBundleResources.shared.sharksandwich)
         await maf.imageDescription.update(cgImage: cgImage)
         try maf.save(dirtyFlags: [.metadata, .image])
 

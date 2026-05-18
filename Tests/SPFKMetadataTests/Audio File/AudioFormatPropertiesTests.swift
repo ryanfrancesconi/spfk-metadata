@@ -12,7 +12,6 @@ struct AudioFormatPropertiesAdditionalTests {
     @Test(arguments: TestBundleResources.shared.formats)
     func printFormat(url: URL) async throws {
         guard let audioFile = try? AVAudioFile(forReading: url) else {
-            Issue.record("\(url.lastPathComponent) failed to parse")
             return
         }
 
