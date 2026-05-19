@@ -55,17 +55,27 @@ static const auto pictureTypeKey = String("pictureType");
 
     ByteVector pictureData = picture.value(dataKey).toByteVector();
     NSData *nsData = [[NSData alloc] initWithBytes:pictureData.data() length:pictureData.size()];
-    CGDataProviderRef dataProvider = CGDataProviderCreateWithCFData((__bridge CFDataRef)nsData);
 
+    // Use CGImageSource so we transparently support every format CoreGraphics
+    // understands (JPEG, PNG, WebP, HEIC, GIF, TIFF, BMP, …) instead of only
+    // the two formats that have dedicated CGImageCreateWith*DataProvider
+    // constructors. Many real-world files in the wild carry WebP or HEIC
+    // artwork; the previous JPEG/PNG-only branch silently returned nil for
+    // those.
     CGImageRef imageRef = NULL;
-
-    if (utType == UTTypeJPEG) {
-        imageRef = CGImageCreateWithJPEGDataProvider(dataProvider, NULL, true, kCGRenderingIntentDefault);
-    } else if (utType == UTTypePNG) {
-        imageRef = CGImageCreateWithPNGDataProvider(dataProvider, NULL, true, kCGRenderingIntentDefault);
+    CGImageSourceRef source = CGImageSourceCreateWithData((__bridge CFDataRef)nsData, NULL);
+    if (source) {
+        imageRef = CGImageSourceCreateImageAtIndex(source, 0, NULL);
+        CFRelease(source);
     }
 
-    CFRelease(dataProvider);
+    // Fallback: some taggers write a non-standard MIME type (e.g. "jpg" or
+    // "image/jpg") that CGImageSource refuses but the JPEG decoder accepts.
+    if (!imageRef && utType == UTTypeJPEG) {
+        CGDataProviderRef dataProvider = CGDataProviderCreateWithCFData((__bridge CFDataRef)nsData);
+        imageRef = CGImageCreateWithJPEGDataProvider(dataProvider, NULL, true, kCGRenderingIntentDefault);
+        CFRelease(dataProvider);
+    }
 
     if (!imageRef)
         return nil;
