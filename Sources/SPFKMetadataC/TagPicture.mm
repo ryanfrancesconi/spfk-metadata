@@ -160,6 +160,113 @@ static const auto pictureTypeKey = String("pictureType");
 }
 
 // MARK: - Path-based (thin wrappers)
+//
+// The path-based methods route through FileRef::complexProperties /
+// setComplexProperties rather than Tag::complexProperties so that
+// format-specific picture implementations are honoured. The most
+// important case is FLAC: TagLib stores cover art in native
+// METADATA_BLOCK_PICTURE blocks at the FLAC::File level, NOT inside
+// the XiphComment that fileRef.tag() returns. Going through the
+// FileRef dispatch table picks up FLAC's PICTURE blocks, ID3v2 APIC
+// frames, MP4 'covr' atoms, etc., uniformly.
+
+// Build a TagPictureRef from a decoded picture variant map. Shared between
+// the Tag-based core path and the FileRef-based path-based path.
+static TagPictureRef *_Nullable buildPictureRef(const VariantMap &picture) {
+    String pictureMimeType = picture.value(mimeTypeKey).value<String>();
+    NSString *mimeType = StringUtil::utf8NSString(pictureMimeType);
+    UTType *utType = [UTType typeWithMIMEType:mimeType];
+
+    if (!utType)
+        return nil;
+
+    ByteVector pictureData = picture.value(dataKey).toByteVector();
+    NSData *nsData = [[NSData alloc] initWithBytes:pictureData.data() length:pictureData.size()];
+    CGDataProviderRef dataProvider = CGDataProviderCreateWithCFData((__bridge CFDataRef)nsData);
+
+    CGImageRef imageRef = NULL;
+
+    if (utType == UTTypeJPEG) {
+        imageRef = CGImageCreateWithJPEGDataProvider(dataProvider, NULL, true, kCGRenderingIntentDefault);
+    } else if (utType == UTTypePNG) {
+        imageRef = CGImageCreateWithPNGDataProvider(dataProvider, NULL, true, kCGRenderingIntentDefault);
+    }
+
+    CFRelease(dataProvider);
+
+    if (!imageRef)
+        return nil;
+
+    size_t width = CGImageGetWidth(imageRef);
+    size_t height = CGImageGetHeight(imageRef);
+
+    if (width == 0 || height == 0) {
+        CGImageRelease(imageRef);
+        return nil;
+    }
+
+    String pictureDescription = picture.value(descriptionKey).value<String>();
+    String pictureType = picture.value(pictureTypeKey).value<String>();
+
+    NSString *desc = StringUtil::utf8NSString(pictureDescription);
+    NSString *pict = StringUtil::utf8NSString(pictureType);
+
+    TagPictureRef *pictureRef = [[TagPictureRef alloc] initWithImage:imageRef
+                                                              utType:utType
+                                                  pictureDescription:desc
+                                                         pictureType:pict];
+    CGImageRelease(imageRef);
+    return pictureRef;
+}
+
+// Encode a TagPictureRef into a VariantMap suitable for setComplexProperties.
+// Returns true on success.
+static bool encodePicture(TagPictureRef *picture, VariantMap &outMap) {
+    if (picture.pictureDescription) {
+        const char *value = StringUtil::utf8CString(picture.pictureDescription);
+        outMap.insert(descriptionKey, String(value, String::Type::UTF8));
+    }
+
+    if (picture.pictureType) {
+        const char *value = StringUtil::utf8CString(picture.pictureType);
+        outMap.insert(pictureTypeKey, String(value, String::Type::UTF8));
+    }
+
+    NSString *mimeType = picture.utType.preferredMIMEType;
+    const char *value = StringUtil::utf8CString(mimeType);
+    outMap.insert(mimeTypeKey, String(value, String::Type::UTF8));
+
+    CFMutableDataRef mutableData = CFDataCreateMutable(NULL, 0);
+    CGImageDestinationRef destination =
+        CGImageDestinationCreateWithData(mutableData, (__bridge CFStringRef)picture.utType.identifier, 1, NULL);
+
+    if (!destination) {
+        CFRelease(mutableData);
+        return false;
+    }
+
+    CGImageDestinationAddImage(destination, picture.cgImage, NULL);
+
+    if (!CGImageDestinationFinalize(destination)) {
+        CFRelease(destination);
+        CFRelease(mutableData);
+        return false;
+    }
+
+    NSData *nsData = (__bridge NSData *)mutableData;
+
+    const char *bytes = (const char *)[nsData bytes];
+    NSUInteger length = [nsData length];
+    vector<char> vec(length);
+    copy(bytes, bytes + length, vec.begin());
+
+    ByteVector data = ByteVector(vec.data(), int(vec.size()));
+    outMap.insert(dataKey, data);
+
+    CFRelease(destination);
+    CFRelease(mutableData);
+    return true;
+}
 
 - (nullable instancetype)initWithPath:(nonnull NSString *)path {
     FileRef fileRef(path.UTF8String);
@@ -168,11 +275,11 @@ static const auto pictureTypeKey = String("pictureType");
         return NULL;
     }
 
-    Tag *tag = fileRef.tag();
-    if (!tag)
+    auto pictures = fileRef.complexProperties(pictureKey);
+    if (pictures.isEmpty())
         return NULL;
 
-    TagPictureRef *ref = [TagPicture readFromTag:tag];
+    TagPictureRef *ref = buildPictureRef(pictures.front());
     if (!ref)
         return NULL;
 
@@ -188,14 +295,17 @@ static const auto pictureTypeKey = String("pictureType");
         return false;
     }
 
-    Tag *tag = fileRef.tag();
-    if (!tag)
-        return false;
-
-    if (![TagPicture write:picture toTag:tag]) {
-        return false;
+    if (!picture) {
+        fileRef.setComplexProperties(pictureKey, {});
+        fileRef.save();
+        return true;
     }
 
+    VariantMap map;
+    if (!encodePicture(picture, map))
+        return false;
+
+    fileRef.setComplexProperties(pictureKey, {map});
     fileRef.save();
     return true;
 }
