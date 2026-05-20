@@ -1,11 +1,13 @@
 // Copyright Ryan Francesconi. All Rights Reserved. Revision History at https://github.com/ryanfrancesconi/spfk-metadata
 
 #import <Foundation/Foundation.h>
+#import <ImageIO/CGImageSource.h>
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 
 #import "TagPictureRef.h"
 
 @implementation TagPictureRef
+
 - (void)dealloc {
     if (_cgImage) {
         CGImageRelease(_cgImage);
@@ -47,19 +49,37 @@
         _pictureType = @"Front Cover";
     }
 
-    CGDataProviderRef dataProvider = CGDataProviderCreateWithCFData((CFDataRef)[NSData dataWithContentsOfURL:url]);
-
-    if (_utType == UTTypeJPEG) {
-        _cgImage = CGImageCreateWithJPEGDataProvider(dataProvider, NULL, true, kCGRenderingIntentDefault);
-    } else if (_utType == UTTypePNG) {
-        _cgImage = CGImageCreateWithPNGDataProvider(dataProvider, NULL, true, kCGRenderingIntentDefault);
-    } else {
-        NSLog(@"Image must be either JPEG or PNG");
-        CFRelease(dataProvider);
+    NSData *data = [NSData dataWithContentsOfURL:url];
+    if (!data)
         return nil;
+
+    // Generic path: handles JPEG, PNG, WebP, HEIC, TIFF, GIF, etc.
+    CGImageSourceRef source = CGImageSourceCreateWithData((__bridge CFDataRef)data, NULL);
+    if (source) {
+        _cgImage = CGImageSourceCreateImageAtIndex(source, 0, NULL);
+        CFRelease(source);
     }
 
-    CFRelease(dataProvider);
+    // JPEG fallback for marginal-but-decodable input that CGImageSource may reject.
+    if (!_cgImage) {
+        CGDataProviderRef provider = CGDataProviderCreateWithCFData((__bridge CFDataRef)data);
+        if (provider) {
+            _cgImage = CGImageCreateWithJPEGDataProvider(provider, NULL, true, kCGRenderingIntentDefault);
+            CFRelease(provider);
+        }
+    }
+
+    // PNG fallback for the same reason.
+    if (!_cgImage) {
+        CGDataProviderRef provider = CGDataProviderCreateWithCFData((__bridge CFDataRef)data);
+        if (provider) {
+            _cgImage = CGImageCreateWithPNGDataProvider(provider, NULL, true, kCGRenderingIntentDefault);
+            CFRelease(provider);
+        }
+    }
+
+    if (!_cgImage)
+        return nil;
 
     return self;
 }

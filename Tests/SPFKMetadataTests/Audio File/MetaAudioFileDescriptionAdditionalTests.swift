@@ -232,14 +232,11 @@ struct MetaAudioFileDescriptionCodableTests {
     @Suite(.tags(.development)) struct MalformedWAVInvestigationTests {
         let url = URL(filePath: "/Users/rf/Downloads/TestResources/invalid-chunk-size.wav")
 
-        /// Confirms the file exists before any other test runs.
-        @Test func fileExists() {
-            #expect(FileManager.default.fileExists(atPath: url.path))
-        }
-
         /// AVAudioFile opens without error but reports 0 frames — the data chunk lies outside
         /// the declared RIFF boundary so AVFoundation never finds it.
         @Test func avAudioFileReportsZeroFrames() throws {
+            guard url.exists else { return }
+
             let audioFile = try AVAudioFile(forReading: url)
             #expect(audioFile.length == 0)
             #expect(audioFile.duration == 0.0)
@@ -251,6 +248,8 @@ struct MetaAudioFileDescriptionCodableTests {
         /// MetaAudioFileDescription reads correct metadata via TagLib but marks the file
         /// as not AV-playable because AVAudioFile reports 0 frames.
         @Test func metaAudioFileDescriptionIsNotPlayable() async throws {
+            guard url.exists else { return }
+
             let desc = try await MetaAudioFileDescription(parsing: url)
             // TagLib reads past the bad RIFF boundary — format properties are correct
             #expect(desc.audioFormat?.sampleRate == 44100.0)

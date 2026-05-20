@@ -35,11 +35,13 @@ NS_ASSUME_NONNULL_BEGIN
          pictureDescription:(NSString *)pictureDescription
                 pictureType:(NSString *)pictureType;
 
-/// Creates a `TagPictureRef` by loading a JPEG or PNG image from a file URL.
-/// @param url URL to a JPEG or PNG image file. Other formats are not supported.
+/// Creates a `TagPictureRef` by loading an image from a file URL.
+/// Supports JPEG, PNG, WebP, HEIC, TIFF, GIF, and any other format
+/// supported by `CGImageSource` on the current platform.
+/// @param url URL to an image file.
 /// @param pictureDescription Optional description text.
 /// @param pictureType Optional type string per the APIC spec.
-/// @return `nil` if the image cannot be loaded or is not JPEG/PNG.
+/// @return `nil` if the image cannot be loaded.
 - (nullable instancetype)initWithURL:(NSURL *)url
                   pictureDescription:(NSString *)pictureDescription
                          pictureType:(NSString *)pictureType;
