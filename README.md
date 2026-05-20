@@ -75,6 +75,10 @@ if let pictureRef = TagPictureRef(
     try description.save()
 }
 
+// Remove embedded artwork
+description.imageDescription = nil
+try description.save()
+
 // Copy tags between files
 try TagProperties.copyTags(from: sourceURL, to: destinationURL)
 ```
