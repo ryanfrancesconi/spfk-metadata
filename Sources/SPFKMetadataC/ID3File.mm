@@ -34,7 +34,9 @@ using namespace TagLib;
 }
 
 - (bool)save {
-    return [TagFile write:_dictionary path:_path];
+    TagFile *tagFile = [[TagFile alloc] initWithPath:_path];
+    tagFile.dictionary = _dictionary;
+    return [tagFile save];
 }
 
 @end

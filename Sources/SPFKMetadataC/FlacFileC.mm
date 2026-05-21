@@ -8,11 +8,17 @@
 #import "BEXTDescriptionC.h"
 #import "FlacFileC.h"
 #import "TagAudioPropertiesC.h"
+#import "TagFileType.h"
+#import "TagRatingUtil.h"
 
-@implementation FlacFileC
+@implementation FlacFileC {
+    NSNumber *_rating;
+}
 
 using namespace std;
 using namespace TagLib;
+
+- (NSNumber *)rating { return _rating; }
 
 - (instancetype)initWithPath:(nonnull NSString *)path {
     self = [super init];
@@ -61,6 +67,15 @@ using namespace TagLib;
     if (flacFile->hasiXMLData()) {
         _iXML = [[NSString alloc] initWithCString:flacFile->iXMLData().data(String::UTF8).data()
                                          encoding:NSUTF8StringEncoding];
+    }
+
+    // read Xiph RATING / FMPS_RATING (false = don't create XiphComment if absent)
+    Ogg::XiphComment *xiph = flacFile->xiphComment(false);
+    if (xiph) {
+        int ratingValue = [TagRatingUtil readFromTag:xiph fileType:kTagFileTypeFlac];
+        if (ratingValue >= 0) {
+            _rating = @(ratingValue);
+        }
     }
 
     return true;

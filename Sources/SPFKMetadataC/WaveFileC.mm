@@ -14,6 +14,7 @@
 #import "AudioMarkerUtil.h"
 #import "ID3File.h"
 #import "TagFile.h"
+#import "TagRatingUtil.h"
 #import "TagUtil.h"
 #import "WaveFileC.h"
 
@@ -105,6 +106,11 @@ using namespace TagLib;
         ID3v2::Tag *tag = waveFile->ID3v2Tag();
         ID3v2::FrameList frameList = tag->frameList();
         _id3Dictionary = TagUtil::convertToDictionary(frameList);
+
+        int ratingValue = [TagRatingUtil readFromTag:tag fileType:kTagFileTypeWave];
+        if (ratingValue >= 0) {
+            _rating = @(ratingValue);
+        }
     }
 
     TagPictureRef *pictureRef = [TagPicture readFromTag:waveFile->tag()];
@@ -151,6 +157,11 @@ using namespace TagLib;
     // write id3
     PropertyMap properties = TagUtil::convertToPropertyMap(_id3Dictionary);
     waveFile->ID3v2Tag()->setProperties(properties);
+
+    // write rating as POPM frame (bridge-handled, not via PropertyMap)
+    if (_rating != nil) {
+        [TagRatingUtil writeToTag:waveFile->ID3v2Tag() fileType:kTagFileTypeWave normalized:_rating.intValue];
+    }
 
     // clear all existing INFO fields first, then write new ones
     {
