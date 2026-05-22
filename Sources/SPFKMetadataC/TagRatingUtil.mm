@@ -1,20 +1,23 @@
 // Copyright Ryan Francesconi. All Rights Reserved. Revision History at https://github.com/ryanfrancesconi/spfk-metadata
 
 #import <Foundation/Foundation.h>
-#import <iostream>
 #import <string>
 
-#import <taglib/apetag.h>
-#import <taglib/asfattribute.h>
-#import <taglib/asftag.h>
+#import <taglib/aifffile.h>
+#import <taglib/fileref.h>
+#import <taglib/flacfile.h>
+#import <taglib/id3v2tag.h>
+#import <taglib/mp4file.h>
 #import <taglib/mp4item.h>
 #import <taglib/mp4tag.h>
+#import <taglib/mpegfile.h>
+#import <taglib/opusfile.h>
 #import <taglib/popularimeterframe.h>
 #import <taglib/textidentificationframe.h>
-#import <taglib/id3v2tag.h>
+#import <taglib/vorbisfile.h>
+#import <taglib/wavfile.h>
 #import <taglib/xiphcomment.h>
 
-#import "TagFileType.h"
 #import "TagRatingUtil.h"
 
 using namespace std;
@@ -47,29 +50,6 @@ static int popmByteFromStars(int stars) {
         case 3: return 128;
         case 4: return 196;
         case 5: return 255;
-        default: return 0;
-    }
-}
-
-// ASF WM/SharedUserRating buckets → stars
-// Values: 0=no rating, 1=1★, 25=2★, 50=3★, 75=4★, 99=5★
-// Read buckets: ≤0→0, 1-12→1, 13-37→2, 38-62→3, 63-87→4, 88-99→5
-static int starsFromAsf(int v) {
-    if (v <= 0)  return 0;
-    if (v <= 12) return 1;
-    if (v <= 37) return 2;
-    if (v <= 62) return 3;
-    if (v <= 87) return 4;
-    return 5;
-}
-
-static int asfFromStars(int stars) {
-    switch (stars) {
-        case 1: return 1;
-        case 2: return 25;
-        case 3: return 50;
-        case 4: return 75;
-        case 5: return 99;
         default: return 0;
     }
 }
@@ -112,11 +92,26 @@ static int parseFmpsRating(const std::string &s) {
     return normalized;
 }
 
+// MARK: - Private interface
+
+@interface TagRatingUtil ()
+
++ (int)readID3v2:(TagLib::ID3v2::Tag *)id3Tag;
++ (void)writeID3v2:(TagLib::ID3v2::Tag *)id3Tag normalized:(int)normalized;
+
++ (int)readXiph:(TagLib::Ogg::XiphComment *)xiph;
++ (void)writeXiph:(TagLib::Ogg::XiphComment *)xiph normalized:(int)normalized;
+
++ (int)readMP4:(TagLib::MP4::Tag *)mp4Tag;
++ (void)writeMP4:(TagLib::MP4::Tag *)mp4Tag normalized:(int)normalized;
+
+@end
+
 @implementation TagRatingUtil
 
 // MARK: - ID3v2 / POPM
 
-+ (int)readID3v2Rating:(TagLib::ID3v2::Tag *)id3Tag {
++ (int)readID3v2:(TagLib::ID3v2::Tag *)id3Tag {
     if (!id3Tag) return -1;
 
     // Primary: POPM frame — prefer WMP email, fall back to any POPM
@@ -143,12 +138,14 @@ static int parseFmpsRating(const std::string &s) {
     }
 
     // Fallback: TXXX:RATING (written by simpler taggers)
+    // fieldList() for UserTextIdentificationFrame is [description, value, ...]
     for (const auto *f : id3Tag->frameList("TXXX")) {
         const auto *txxx = dynamic_cast<const ID3v2::UserTextIdentificationFrame *>(f);
         if (!txxx) continue;
         if (txxx->description().upper() == "RATING") {
-            int v = txxx->fieldList().toString().toInt();
-            // Heuristic: ≤5 means star count (some taggers write 0-5), else 0-100 normalized
+            StringList fl = txxx->fieldList();
+            int v = (fl.size() >= 2) ? fl[1].toInt() : fl.front().toInt();
+            // Heuristic: ≤5 means star count, else 0-100 normalized
             if (v <= 5) return normalizedFromStars(v);
             if (v <= 100) return v;
         }
@@ -157,10 +154,20 @@ static int parseFmpsRating(const std::string &s) {
     return -1;
 }
 
-+ (void)writeID3v2Rating:(TagLib::ID3v2::Tag *)id3Tag normalized:(int)normalized {
++ (void)writeID3v2:(TagLib::ID3v2::Tag *)id3Tag normalized:(int)normalized {
     if (!id3Tag) return;
 
     id3Tag->removeFrames("POPM");
+
+    // Remove any existing TXXX:RATING (collect first to avoid iterator invalidation)
+    {
+        ID3v2::FrameList toRemove;
+        for (auto *f : id3Tag->frameList("TXXX")) {
+            auto *ud = dynamic_cast<ID3v2::UserTextIdentificationFrame *>(f);
+            if (ud && ud->description().upper() == "RATING") toRemove.append(f);
+        }
+        for (auto *f : toRemove) id3Tag->removeFrame(f);
+    }
 
     if (normalized <= 0) return;
 
@@ -171,11 +178,17 @@ static int parseFmpsRating(const std::string &s) {
     frame->setRating(popmByte);
     frame->setCounter(0);
     id3Tag->addFrame(frame);
+
+    // Mirror to TXXX:RATING for interop with simpler taggers
+    auto *txxx = new ID3v2::UserTextIdentificationFrame(String::UTF8);
+    txxx->setDescription(String("RATING"));
+    txxx->setText(String::number(normalized));
+    id3Tag->addFrame(txxx);
 }
 
 // MARK: - Xiph / Vorbis Comment
 
-+ (int)readXiphRating:(TagLib::Ogg::XiphComment *)xiph {
++ (int)readXiph:(TagLib::Ogg::XiphComment *)xiph {
     if (!xiph) return -1;
 
     const Ogg::FieldListMap &fields = xiph->fieldListMap();
@@ -198,7 +211,7 @@ static int parseFmpsRating(const std::string &s) {
     return -1;
 }
 
-+ (void)writeXiphRating:(TagLib::Ogg::XiphComment *)xiph normalized:(int)normalized {
++ (void)writeXiph:(TagLib::Ogg::XiphComment *)xiph normalized:(int)normalized {
     if (!xiph) return;
 
     xiph->removeFields("RATING");
@@ -214,7 +227,7 @@ static int parseFmpsRating(const std::string &s) {
 
 // MARK: - MP4
 
-+ (int)readMP4Rating:(TagLib::MP4::Tag *)mp4Tag {
++ (int)readMP4:(TagLib::MP4::Tag *)mp4Tag {
     if (!mp4Tag) return -1;
 
     // Primary: rate atom (Apple Music, 0-100 integer)
@@ -241,7 +254,7 @@ static int parseFmpsRating(const std::string &s) {
     return -1;
 }
 
-+ (void)writeMP4Rating:(TagLib::MP4::Tag *)mp4Tag normalized:(int)normalized {
++ (void)writeMP4:(TagLib::MP4::Tag *)mp4Tag normalized:(int)normalized {
     if (!mp4Tag) return;
 
     mp4Tag->removeItem(kMP4RateKey);
@@ -258,106 +271,63 @@ static int parseFmpsRating(const std::string &s) {
     mp4Tag->setItem(kMP4FreeformKey, MP4::Item(sl));
 }
 
-// MARK: - APE
+// MARK: - Public path-based interface
 
-+ (int)readAPERating:(TagLib::APE::Tag *)apeTag {
-    if (!apeTag) return -1;
++ (int)readRating:(NSString *)path {
+    // false = skip audio properties parsing (not needed for rating I/O)
+    FileRef fileRef(path.UTF8String, false);
+    if (fileRef.isNull()) return -1;
 
-    const APE::ItemListMap &items = apeTag->itemListMap();
-    auto it = items.find("RATING");
-    if (it != items.end()) {
-        int v = it->second.toString().toInt();
-        if (v >= 0 && v <= 100) return v;
-    }
+    File *f = fileRef.file();
 
-    return -1;
-}
-
-+ (void)writeAPERating:(TagLib::APE::Tag *)apeTag normalized:(int)normalized {
-    if (!apeTag) return;
-
-    apeTag->removeItem("RATING");
-
-    if (normalized > 0) {
-        apeTag->addValue("RATING", String(to_string(normalized), String::Latin1));
-    }
-}
-
-// MARK: - ASF (WMA)
-
-+ (int)readASFRating:(TagLib::ASF::Tag *)asfTag {
-    if (!asfTag) return -1;
-
-    const ASF::AttributeListMap &attrMap = asfTag->attributeListMap();
-    auto it = attrMap.find("WM/SharedUserRating");
-    if (it != attrMap.end() && !it->second.isEmpty()) {
-        int v = (int)it->second.front().toUInt();
-        return normalizedFromStars(starsFromAsf(v));
-    }
+    if (auto *fp = dynamic_cast<MPEG::File *>(f))
+        return [self readID3v2:fp->ID3v2Tag(false)];
+    if (auto *fp = dynamic_cast<RIFF::WAV::File *>(f))
+        return [self readID3v2:fp->ID3v2Tag()];
+    if (auto *fp = dynamic_cast<RIFF::AIFF::File *>(f))
+        return [self readID3v2:fp->tag()];
+    if (auto *fp = dynamic_cast<FLAC::File *>(f))
+        return [self readXiph:fp->xiphComment(false)];
+    if (auto *fp = dynamic_cast<Ogg::Vorbis::File *>(f))
+        return [self readXiph:fp->tag()];
+    if (auto *fp = dynamic_cast<Ogg::Opus::File *>(f))
+        return [self readXiph:fp->tag()];
+    if (auto *fp = dynamic_cast<MP4::File *>(f))
+        return [self readMP4:fp->tag()];
 
     return -1;
 }
 
-+ (void)writeASFRating:(TagLib::ASF::Tag *)asfTag normalized:(int)normalized {
-    if (!asfTag) return;
++ (BOOL)writeRating:(int)normalized toPath:(NSString *)path {
+    if (normalized < 0) normalized = 0;
+    if (normalized > 100) normalized = 100;
 
-    asfTag->removeItem("WM/SharedUserRating");
+    // false = skip audio properties parsing (not needed for rating I/O)
+    FileRef fileRef(path.UTF8String, false);
+    if (fileRef.isNull()) return NO;
 
-    if (normalized > 0) {
-        int asfValue = asfFromStars(starsFromNormalized(normalized));
-        asfTag->setAttribute("WM/SharedUserRating", ASF::Attribute((unsigned int)asfValue));
+    File *f = fileRef.file();
+
+    if (auto *fp = dynamic_cast<MPEG::File *>(f))
+        [self writeID3v2:fp->ID3v2Tag(true) normalized:normalized];
+    else if (auto *fp = dynamic_cast<RIFF::WAV::File *>(f))
+        [self writeID3v2:fp->ID3v2Tag() normalized:normalized];
+    else if (auto *fp = dynamic_cast<RIFF::AIFF::File *>(f))
+        [self writeID3v2:fp->tag() normalized:normalized];
+    else if (auto *fp = dynamic_cast<FLAC::File *>(f)) {
+        Ogg::XiphComment *xiph = fp->xiphComment(true);
+        if (xiph) [self writeXiph:xiph normalized:normalized];
     }
-}
+    else if (auto *fp = dynamic_cast<Ogg::Vorbis::File *>(f))
+        [self writeXiph:fp->tag() normalized:normalized];
+    else if (auto *fp = dynamic_cast<Ogg::Opus::File *>(f))
+        [self writeXiph:fp->tag() normalized:normalized];
+    else if (auto *fp = dynamic_cast<MP4::File *>(f))
+        [self writeMP4:fp->tag() normalized:normalized];
+    else
+        return NO;
 
-// MARK: - Public dispatch
-
-+ (int)readFromTag:(nonnull void *)opaqueTag fileType:(TagFileTypeDef)type {
-    if (!opaqueTag) return -1;
-
-    if ([type isEqualToString:kTagFileTypeMp3] ||
-        [type isEqualToString:kTagFileTypeAiff] ||
-        [type isEqualToString:kTagFileTypeWave]) {
-        return [self readID3v2Rating:static_cast<TagLib::ID3v2::Tag *>(opaqueTag)];
-    }
-
-    if ([type isEqualToString:kTagFileTypeFlac] ||
-        [type isEqualToString:kTagFileTypeVorbis] ||
-        [type isEqualToString:kTagFileTypeOpus]) {
-        return [self readXiphRating:static_cast<TagLib::Ogg::XiphComment *>(opaqueTag)];
-    }
-
-    if ([type isEqualToString:kTagFileTypeM4a] ||
-        [type isEqualToString:kTagFileTypeMp4] ||
-        [type isEqualToString:kTagFileTypeAac]) {
-        return [self readMP4Rating:static_cast<TagLib::MP4::Tag *>(opaqueTag)];
-    }
-
-    return -1;
-}
-
-+ (void)writeToTag:(nonnull void *)opaqueTag fileType:(TagFileTypeDef)type normalized:(int)normalized {
-    if (!opaqueTag) return;
-
-    if ([type isEqualToString:kTagFileTypeMp3] ||
-        [type isEqualToString:kTagFileTypeAiff] ||
-        [type isEqualToString:kTagFileTypeWave]) {
-        [self writeID3v2Rating:static_cast<TagLib::ID3v2::Tag *>(opaqueTag) normalized:normalized];
-        return;
-    }
-
-    if ([type isEqualToString:kTagFileTypeFlac] ||
-        [type isEqualToString:kTagFileTypeVorbis] ||
-        [type isEqualToString:kTagFileTypeOpus]) {
-        [self writeXiphRating:static_cast<TagLib::Ogg::XiphComment *>(opaqueTag) normalized:normalized];
-        return;
-    }
-
-    if ([type isEqualToString:kTagFileTypeM4a] ||
-        [type isEqualToString:kTagFileTypeMp4] ||
-        [type isEqualToString:kTagFileTypeAac]) {
-        [self writeMP4Rating:static_cast<TagLib::MP4::Tag *>(opaqueTag) normalized:normalized];
-        return;
-    }
+    return fileRef.save();
 }
 
 @end

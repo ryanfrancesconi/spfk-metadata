@@ -29,10 +29,6 @@ NS_ASSUME_NONNULL_BEGIN
 /// Absolute path to the FLAC file.
 @property(nonatomic, strong, nonnull) NSString *path;
 
-/// Normalized star rating 0–100 read from the Xiph RATING or FMPS_RATING comment, or `nil` if absent.
-/// Read-only from load; rating write for FLAC is handled by the TagFile generic path.
-@property(nullable, nonatomic, readonly) NSNumber *rating;
-
 /// Creates a `FlacFileC` for the FLAC file at the given path.
 /// @param path Absolute path to the FLAC file.
 - (instancetype)initWithPath:(nonnull NSString *)path;

@@ -105,9 +105,6 @@ extension MetaAudioFileDescription {
                 switch key {
                 case .picture:
                     continue
-                case .rating:
-                    // POPM is a structured frame; rating is read via waveFile.rating below.
-                    continue
                 case .userDefined:
                     // Log.error("User Defined", item.value)
                     break
@@ -117,11 +114,12 @@ extension MetaAudioFileDescription {
             }
         }
 
-        if let rating = waveFile.rating, rating.intValue > 0 {
-            tagProperties.data.tags[.rating] = String(rating.intValue)
-        }
-
         imageDescription.pictureRef = waveFile.tagPicture?.pictureRef
+
+        let ratingValue = TagRatingUtil.readRating(url.path)
+        if ratingValue >= 0 {
+            tagProperties.data.tags[.rating] = String(ratingValue)
+        }
     }
 
     /// Reads iXML and BEXT APPLICATION blocks from a FLAC file, supplementing the
@@ -150,10 +148,6 @@ extension MetaAudioFileDescription {
                   let bext = BEXTDescription(ixmlMetadata: ixml)
         {
             bextDescription = bext.validated()
-        }
-
-        if let rating = flacFile.rating, rating.intValue > 0 {
-            tagProperties.data.tags[.rating] = String(rating.intValue)
         }
     }
 
@@ -293,8 +287,7 @@ extension MetaAudioFileDescription {
 
         // metadata
         for item in tagProperties.tags {
-            // Rating is written as a POPM frame by WaveFileC via waveFile.rating below.
-            if item.key == .rating { continue }
+            guard item.key != .rating else { continue } // handled via TagRatingUtil after save
 
             if item.key.id3Frame == .userDefined {
                 waveFile.id3Dictionary[item.key.taglibKey] = item.value
@@ -305,10 +298,6 @@ extension MetaAudioFileDescription {
             if let infoFrame = item.key.infoFrame {
                 waveFile[info: infoFrame] = item.value
             }
-        }
-
-        if let ratingString = tagProperties.data.tags[.rating], let ratingValue = Int(ratingString) {
-            waveFile.rating = NSNumber(value: ratingValue)
         }
 
         for item in tagProperties.customTags {
@@ -326,6 +315,10 @@ extension MetaAudioFileDescription {
 
         guard waveFile.save() else {
             throw NSError(description: "Failed to save \(url.path)")
+        }
+
+        if let ratingValue = tagProperties.data.tags[.rating]?.int32 {
+            _ = TagRatingUtil.writeRating(ratingValue, toPath: url.path)
         }
     }
 

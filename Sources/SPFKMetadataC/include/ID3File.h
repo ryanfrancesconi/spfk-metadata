@@ -18,9 +18,6 @@ NS_ASSUME_NONNULL_BEGIN
 /// Absolute path to the audio file.
 @property(nonatomic, strong, nonnull) NSString *path;
 
-/// The detected TagLib file type string (e.g., "mp3", "wav"), or `nil` if unknown.
-@property(nonatomic, strong, nullable) NSString *fileType;
-
 /// Creates an `ID3File` for the audio file at the given path.
 /// @param path Absolute path to the audio file.
 - (instancetype)initWithPath:(nonnull NSString *)path;

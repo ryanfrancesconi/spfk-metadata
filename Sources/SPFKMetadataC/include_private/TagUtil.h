@@ -17,8 +17,6 @@
 #import <taglib/privateframe.h>
 #import <taglib/tpropertymap.h>
 
-#include "TagFileType.h"
-
 using namespace TagLib;
 using namespace std;
 
@@ -32,6 +30,9 @@ static NSMutableDictionary *convertToDictionary(ID3v2::FrameList frameList) {
 
     for (auto it = frameList.begin(); it != frameList.end(); it++) {
         ByteVector frameID = (*it)->frameID();
+
+        if (frameID == "POPM") continue;  // structured frame, not a text tag
+
         String value = (*it)->toString();
 
         // custom frame handling
@@ -121,42 +122,26 @@ static NSMutableDictionary *convertToDictionary(RIFF::Info::FieldListMap infoMap
 
 /// Parse ID3v2 frames and return them as an NSDictionary.
 /// The FileRef is kept alive during conversion to avoid dangling pointers.
-static NSMutableDictionary *parseID3ToDictionary(NSString *path, NSString *fileType) {
-    FileRef fileRef(path.UTF8String);
+static NSMutableDictionary *parseID3ToDictionary(NSString *path) {
+    FileRef fileRef(path.UTF8String, false);
 
     if (fileRef.isNull()) {
         return [[NSMutableDictionary alloc] init];
     }
 
+    File *f = fileRef.file();
     ID3v2::Tag *tag = nullptr;
 
-    if ([fileType isEqualToString:kTagFileTypeWave]) {
-        auto *f = dynamic_cast<RIFF::WAV::File *>(fileRef.file());
+    if (auto *fp = dynamic_cast<RIFF::WAV::File *>(f))
+        tag = fp->hasID3v2Tag() ? fp->ID3v2Tag() : nullptr;
+    else if (auto *fp = dynamic_cast<RIFF::AIFF::File *>(f))
+        tag = fp->hasID3v2Tag() ? fp->tag() : nullptr;
+    else if (auto *fp = dynamic_cast<MPEG::File *>(f))
+        tag = fp->hasID3v2Tag() ? fp->ID3v2Tag() : nullptr;
+    else if (auto *fp = dynamic_cast<FLAC::File *>(f))
+        tag = fp->hasID3v2Tag() ? fp->ID3v2Tag() : nullptr;
 
-        if (f && f->hasID3v2Tag()) {
-            tag = f->ID3v2Tag();
-        }
-    } else if ([fileType isEqualToString:kTagFileTypeAiff]) {
-        auto *f = dynamic_cast<RIFF::AIFF::File *>(fileRef.file());
-
-        if (f && f->hasID3v2Tag()) {
-            tag = f->tag();
-        }
-    } else if ([fileType isEqualToString:kTagFileTypeMp3]) {
-        auto *f = dynamic_cast<MPEG::File *>(fileRef.file());
-
-        if (f && f->hasID3v2Tag()) {
-            tag = f->ID3v2Tag();
-        }
-    } else if ([fileType isEqualToString:kTagFileTypeFlac]) {
-        auto *f = dynamic_cast<FLAC::File *>(fileRef.file());
-
-        if (f && f->hasID3v2Tag()) {
-            tag = f->ID3v2Tag();
-        }
-    }
-
-    if (tag == nullptr) {
+    if (!tag) {
         cout << "Error: No ID3v2 tag found in " << path.UTF8String << endl;
         return [[NSMutableDictionary alloc] init];
     }

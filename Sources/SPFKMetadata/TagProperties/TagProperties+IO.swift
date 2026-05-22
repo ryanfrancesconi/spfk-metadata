@@ -33,6 +33,11 @@ extension TagProperties {
         for item in dict {
             data.set(taglibKey: item.key, value: item.value)
         }
+
+        let ratingValue = TagRatingUtil.readRating(url.path)
+        if ratingValue >= 0 {
+            data.tags[.rating] = String(ratingValue)
+        }
     }
 
     /// Writes all current tags back to the file via TagLib.
@@ -43,6 +48,10 @@ extension TagProperties {
 
         guard tagFile.save() else {
             throw NSError(description: "Failed to update tags in \(url.path)")
+        }
+
+        if let ratingValue = data.tags[.rating]?.int32 {
+            _ = TagRatingUtil.writeRating(ratingValue, toPath: url.path)
         }
     }
 

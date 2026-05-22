@@ -47,10 +47,6 @@ NS_ASSUME_NONNULL_BEGIN
 /// Set to `YES` to write artwork on save. Default is `YES`.
 @property(nonatomic) BOOL imageNeedsSave;
 
-/// Normalized star rating 0–100, or `nil` if no rating was found on load.
-/// When non-nil, written as a POPM frame in the ID3v2 chunk on save. A value of 0 clears any existing rating.
-@property(nullable, nonatomic) NSNumber *rating;
-
 - (instancetype)init;
 
 /// Creates a `WaveFileC` for the WAV file at the given path.
