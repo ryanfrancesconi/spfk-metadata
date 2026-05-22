@@ -30,7 +30,7 @@ static const char *kWMPEmail = "Windows Media Player 9 Series";
 static const char *kMP4RateKey = "rate";
 static const char *kMP4FreeformKey = "----:com.apple.iTunes:RATING";
 
-// MARK: - Conversion helpers
+// MARK: - Scale helpers
 
 // POPM WMP byte buckets → stars
 // Byte: 0=no rating, 1=1★, 64=2★, 128=3★, 196=4★, 255=5★
@@ -92,30 +92,13 @@ static int parseFmpsRating(const std::string &s) {
     return normalized;
 }
 
-// MARK: - Private interface
-
-@interface TagRatingUtil ()
-
-+ (int)readID3v2:(TagLib::ID3v2::Tag *)id3Tag;
-+ (void)writeID3v2:(TagLib::ID3v2::Tag *)id3Tag normalized:(int)normalized;
-
-+ (int)readXiph:(TagLib::Ogg::XiphComment *)xiph;
-+ (void)writeXiph:(TagLib::Ogg::XiphComment *)xiph normalized:(int)normalized;
-
-+ (int)readMP4:(TagLib::MP4::Tag *)mp4Tag;
-+ (void)writeMP4:(TagLib::MP4::Tag *)mp4Tag normalized:(int)normalized;
-
-@end
-
-@implementation TagRatingUtil
-
 // MARK: - ID3v2 / POPM
 
-+ (int)readID3v2:(TagLib::ID3v2::Tag *)id3Tag {
-    if (!id3Tag) return -1;
+static int readID3(ID3v2::Tag *tag) {
+    if (!tag) return -1;
 
     // Primary: POPM frame — prefer WMP email, fall back to any POPM
-    const ID3v2::FrameList &popmList = id3Tag->frameList("POPM");
+    const ID3v2::FrameList &popmList = tag->frameList("POPM");
     if (!popmList.isEmpty()) {
         const ID3v2::PopularimeterFrame *wmpFrame = nullptr;
         const ID3v2::PopularimeterFrame *anyFrame = nullptr;
@@ -131,15 +114,13 @@ static int parseFmpsRating(const std::string &s) {
         }
 
         const ID3v2::PopularimeterFrame *best = wmpFrame ? wmpFrame : anyFrame;
-        if (best) {
-            int stars = starsFromPopmByte(best->rating());
-            return normalizedFromStars(stars);
-        }
+        if (best)
+            return normalizedFromStars(starsFromPopmByte(best->rating()));
     }
 
     // Fallback: TXXX:RATING (written by simpler taggers)
     // fieldList() for UserTextIdentificationFrame is [description, value, ...]
-    for (const auto *f : id3Tag->frameList("TXXX")) {
+    for (const auto *f : tag->frameList("TXXX")) {
         const auto *txxx = dynamic_cast<const ID3v2::UserTextIdentificationFrame *>(f);
         if (!txxx) continue;
         if (txxx->description().upper() == "RATING") {
@@ -154,41 +135,39 @@ static int parseFmpsRating(const std::string &s) {
     return -1;
 }
 
-+ (void)writeID3v2:(TagLib::ID3v2::Tag *)id3Tag normalized:(int)normalized {
-    if (!id3Tag) return;
+static void writeID3(ID3v2::Tag *tag, int normalized) {
+    if (!tag) return;
 
-    id3Tag->removeFrames("POPM");
+    tag->removeFrames("POPM");
 
     // Remove any existing TXXX:RATING (collect first to avoid iterator invalidation)
     {
         ID3v2::FrameList toRemove;
-        for (auto *f : id3Tag->frameList("TXXX")) {
+        for (auto *f : tag->frameList("TXXX")) {
             auto *ud = dynamic_cast<ID3v2::UserTextIdentificationFrame *>(f);
             if (ud && ud->description().upper() == "RATING") toRemove.append(f);
         }
-        for (auto *f : toRemove) id3Tag->removeFrame(f);
+        for (auto *f : toRemove) tag->removeFrame(f);
     }
 
     if (normalized <= 0) return;
 
-    int popmByte = popmByteFromStars(starsFromNormalized(normalized));
-
     auto *frame = new ID3v2::PopularimeterFrame();
     frame->setEmail(String(kWMPEmail, String::Latin1));
-    frame->setRating(popmByte);
+    frame->setRating(popmByteFromStars(starsFromNormalized(normalized)));
     frame->setCounter(0);
-    id3Tag->addFrame(frame);
+    tag->addFrame(frame);
 
     // Mirror to TXXX:RATING for interop with simpler taggers
     auto *txxx = new ID3v2::UserTextIdentificationFrame(String::UTF8);
     txxx->setDescription(String("RATING"));
     txxx->setText(String::number(normalized));
-    id3Tag->addFrame(txxx);
+    tag->addFrame(txxx);
 }
 
 // MARK: - Xiph / Vorbis Comment
 
-+ (int)readXiph:(TagLib::Ogg::XiphComment *)xiph {
+static int readXiph(Ogg::XiphComment *xiph) {
     if (!xiph) return -1;
 
     const Ogg::FieldListMap &fields = xiph->fieldListMap();
@@ -211,7 +190,7 @@ static int parseFmpsRating(const std::string &s) {
     return -1;
 }
 
-+ (void)writeXiph:(TagLib::Ogg::XiphComment *)xiph normalized:(int)normalized {
+static void writeXiph(Ogg::XiphComment *xiph, int normalized) {
     if (!xiph) return;
 
     xiph->removeFields("RATING");
@@ -220,19 +199,19 @@ static int parseFmpsRating(const std::string &s) {
     if (normalized <= 0) return;
 
     xiph->addField("RATING", String(to_string(normalized), String::UTF8));
-
-    std::string fmpsStr = fmpsRatingString(normalized);
-    xiph->addField("FMPS_RATING", String(fmpsStr, String::Latin1));
+    // fmpsRatingString returns pure ASCII (digits + period); Latin1 and UTF8 are byte-identical here,
+    // but UTF8 is the conventional encoding for Xiph comment fields.
+    xiph->addField("FMPS_RATING", String(fmpsRatingString(normalized), String::UTF8));
 }
 
 // MARK: - MP4
 
-+ (int)readMP4:(TagLib::MP4::Tag *)mp4Tag {
-    if (!mp4Tag) return -1;
+static int readMP4(MP4::Tag *tag) {
+    if (!tag) return -1;
 
     // Primary: rate atom (Apple Music, 0-100 integer)
-    if (mp4Tag->contains(kMP4RateKey)) {
-        MP4::Item item = mp4Tag->item(kMP4RateKey);
+    if (tag->contains(kMP4RateKey)) {
+        MP4::Item item = tag->item(kMP4RateKey);
         if (item.isValid()) {
             int v = item.toInt();
             if (v > 0 && v <= 100) return v;
@@ -240,8 +219,8 @@ static int parseFmpsRating(const std::string &s) {
     }
 
     // Fallback: freeform RATING atom (third-party tagger compatible)
-    if (mp4Tag->contains(kMP4FreeformKey)) {
-        MP4::Item item = mp4Tag->item(kMP4FreeformKey);
+    if (tag->contains(kMP4FreeformKey)) {
+        MP4::Item item = tag->item(kMP4FreeformKey);
         if (item.isValid()) {
             StringList sl = item.toStringList();
             if (!sl.isEmpty()) {
@@ -254,24 +233,26 @@ static int parseFmpsRating(const std::string &s) {
     return -1;
 }
 
-+ (void)writeMP4:(TagLib::MP4::Tag *)mp4Tag normalized:(int)normalized {
-    if (!mp4Tag) return;
+static void writeMP4(MP4::Tag *tag, int normalized) {
+    if (!tag) return;
 
-    mp4Tag->removeItem(kMP4RateKey);
-    mp4Tag->removeItem(kMP4FreeformKey);
+    tag->removeItem(kMP4RateKey);
+    tag->removeItem(kMP4FreeformKey);
 
     if (normalized <= 0) return;
 
     // Write rate atom (Apple Music)
-    mp4Tag->setItem(kMP4RateKey, MP4::Item((int)normalized));
+    tag->setItem(kMP4RateKey, MP4::Item((int)normalized));
 
     // Write freeform atom (third-party tagger interop)
     StringList sl;
     sl.append(String(to_string(normalized), String::Latin1));
-    mp4Tag->setItem(kMP4FreeformKey, MP4::Item(sl));
+    tag->setItem(kMP4FreeformKey, MP4::Item(sl));
 }
 
 // MARK: - Public path-based interface
+
+@implementation TagRatingUtil
 
 + (int)readRating:(NSString *)path {
     // false = skip audio properties parsing (not needed for rating I/O)
@@ -281,19 +262,19 @@ static int parseFmpsRating(const std::string &s) {
     File *f = fileRef.file();
 
     if (auto *fp = dynamic_cast<MPEG::File *>(f))
-        return [self readID3v2:fp->ID3v2Tag(false)];
+        return readID3(fp->ID3v2Tag(false));
     if (auto *fp = dynamic_cast<RIFF::WAV::File *>(f))
-        return [self readID3v2:fp->ID3v2Tag()];
+        return readID3(fp->ID3v2Tag());
     if (auto *fp = dynamic_cast<RIFF::AIFF::File *>(f))
-        return [self readID3v2:fp->tag()];
+        return readID3(fp->tag());
     if (auto *fp = dynamic_cast<FLAC::File *>(f))
-        return [self readXiph:fp->xiphComment(false)];
+        return readXiph(fp->xiphComment(false));
     if (auto *fp = dynamic_cast<Ogg::Vorbis::File *>(f))
-        return [self readXiph:fp->tag()];
+        return readXiph(fp->tag());
     if (auto *fp = dynamic_cast<Ogg::Opus::File *>(f))
-        return [self readXiph:fp->tag()];
+        return readXiph(fp->tag());
     if (auto *fp = dynamic_cast<MP4::File *>(f))
-        return [self readMP4:fp->tag()];
+        return readMP4(fp->tag());
 
     return -1;
 }
@@ -309,21 +290,19 @@ static int parseFmpsRating(const std::string &s) {
     File *f = fileRef.file();
 
     if (auto *fp = dynamic_cast<MPEG::File *>(f))
-        [self writeID3v2:fp->ID3v2Tag(true) normalized:normalized];
+        writeID3(fp->ID3v2Tag(true), normalized);
     else if (auto *fp = dynamic_cast<RIFF::WAV::File *>(f))
-        [self writeID3v2:fp->ID3v2Tag() normalized:normalized];
+        writeID3(fp->ID3v2Tag(), normalized);
     else if (auto *fp = dynamic_cast<RIFF::AIFF::File *>(f))
-        [self writeID3v2:fp->tag() normalized:normalized];
-    else if (auto *fp = dynamic_cast<FLAC::File *>(f)) {
-        Ogg::XiphComment *xiph = fp->xiphComment(true);
-        if (xiph) [self writeXiph:xiph normalized:normalized];
-    }
+        writeID3(fp->tag(), normalized);
+    else if (auto *fp = dynamic_cast<FLAC::File *>(f))
+        writeXiph(fp->xiphComment(true), normalized);
     else if (auto *fp = dynamic_cast<Ogg::Vorbis::File *>(f))
-        [self writeXiph:fp->tag() normalized:normalized];
+        writeXiph(fp->tag(), normalized);
     else if (auto *fp = dynamic_cast<Ogg::Opus::File *>(f))
-        [self writeXiph:fp->tag() normalized:normalized];
+        writeXiph(fp->tag(), normalized);
     else if (auto *fp = dynamic_cast<MP4::File *>(f))
-        [self writeMP4:fp->tag() normalized:normalized];
+        writeMP4(fp->tag(), normalized);
     else
         return NO;
 

@@ -9,17 +9,19 @@ extension AudioFileType {
     /// TagLib parser. Returns `nil` for formats not supported by TagLib (e.g., `.caf`).
     public var tagType: TagFileTypeDef? {
         switch self {
-        case .aac: return .aac
-        case .aifc, .aiff: return .aiff
-        case .flac: return .flac
-        case .ogg: return .vorbis
-        case .m4a: return .m4a
-        case .mp3: return .mp3
-        case .mp4: return .mp4
-        case .opus: return .opus
-        case .wav, .w64: return .wave
+        case .aac:  .aac
+        case .aifc,
+             .aiff: .aiff
+        case .flac: .flac
+        case .ogg:  .vorbis
+        case .m4a:  .m4a
+        case .mp3:  .mp3
+        case .mp4:  .mp4
+        case .opus: .opus
+        case .wav,
+             .w64:  .wave
         default:
-            return nil
+            nil
         }
     }
 
@@ -50,10 +52,10 @@ extension AudioFileType {
     ///
     /// - Parameter url: URL to an audio file
     /// - Returns: A `MetaAudioFileFormat` or nil
-    fileprivate init?(parsing url: URL) {
+    private init?(parsing url: URL) {
         // tag lib is faster than CoreAudio so run it first for primary types
         if let tagType = TagFileType.detect(url.path),
-            let value = AudioFileType(tagType: tagType)
+           let value = AudioFileType(tagType: tagType)
         {
             self = value
             return
