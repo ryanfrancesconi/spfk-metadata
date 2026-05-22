@@ -10,7 +10,6 @@
 
 #import "ID3File.h"
 #import "TagFile.h"
-#import "TagFileType.h"
 #import "TagUtil.h"
 
 @implementation ID3File
@@ -22,19 +21,20 @@ using namespace TagLib;
     self = [super init];
 
     _path = path;
-    _fileType = [TagFileType detectType:path];
     _dictionary = [[NSMutableDictionary alloc] init];
 
     return self;
 }
 
 - (bool)load {
-    _dictionary = TagUtil::parseID3ToDictionary(_path, _fileType);
+    _dictionary = TagUtil::parseID3ToDictionary(_path);
     return _dictionary.count > 0;
 }
 
 - (bool)save {
-    return [TagFile write:_dictionary path:_path];
+    TagFile *tagFile = [[TagFile alloc] initWithPath:_path];
+    tagFile.dictionary = _dictionary;
+    return [tagFile save];
 }
 
 @end

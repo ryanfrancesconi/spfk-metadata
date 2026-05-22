@@ -148,7 +148,6 @@ using namespace TagLib;
         [TagPicture write:_tagPicture.pictureRef toTag:waveFile->tag()];
     }
 
-    // write id3
     PropertyMap properties = TagUtil::convertToPropertyMap(_id3Dictionary);
     waveFile->ID3v2Tag()->setProperties(properties);
 

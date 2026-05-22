@@ -29,7 +29,6 @@
 
 #import "ChapterMarker.h"
 #import "TagFile.h"
-#import "TagFileType.h"
 #import "TagLibBridge.h"
 #import "TagPictureRef.h"
 
@@ -134,46 +133,26 @@ using namespace TagLib;
 }
 
 + (bool)removeAllTags:(NSString *)path {
-    FileRef fileRef(path.UTF8String);
+    // false = skip audio properties parsing (not needed for strip)
+    FileRef fileRef(path.UTF8String, false);
 
     if (fileRef.isNull()) {
         cout << "Unable to read path: " << path.UTF8String << endl;
         return false;
     }
 
-    NSString *fileType = [TagFileType detectType:path];
+    // strip() implementation is specific to each file type
+    File *f = fileRef.file();
 
-    // implementation for strip() is specific to each type of file
-
-    bool stripped = false;
-
-    if ([fileType isEqualToString:kTagFileTypeWave]) {
-        auto *f = dynamic_cast<RIFF::WAV::File *>(fileRef.file());
-        if (f) {
-            f->strip();
-            stripped = true;
-        }
-    } else if ([fileType isEqualToString:kTagFileTypeM4a] || [fileType isEqualToString:kTagFileTypeMp4]) {
-        auto *f = dynamic_cast<MP4::File *>(fileRef.file());
-        if (f) {
-            f->strip();
-            stripped = true;
-        }
-    } else if ([fileType isEqualToString:kTagFileTypeMp3]) {
-        auto *f = dynamic_cast<MPEG::File *>(fileRef.file());
-        if (f) {
-            f->strip();
-            stripped = true;
-        }
-    } else if ([fileType isEqualToString:kTagFileTypeFlac]) {
-        auto *f = dynamic_cast<FLAC::File *>(fileRef.file());
-        if (f) {
-            f->strip();
-            stripped = true;
-        }
-    }
-
-    if (!stripped) {
+    if (auto *fp = dynamic_cast<RIFF::WAV::File *>(f))
+        fp->strip();
+    else if (auto *fp = dynamic_cast<MP4::File *>(f))
+        fp->strip();
+    else if (auto *fp = dynamic_cast<MPEG::File *>(f))
+        fp->strip();
+    else if (auto *fp = dynamic_cast<FLAC::File *>(f))
+        fp->strip();
+    else {
         cout << "Resetting property map for " << path.UTF8String << endl;
         fileRef.setProperties(PropertyMap());
     }

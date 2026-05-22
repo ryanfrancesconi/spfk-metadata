@@ -3,18 +3,20 @@
 #import <Foundation/Foundation.h>
 #import <iostream>
 
+#import <taglib/aifffile.h>
 #import <taglib/fileref.h>
 #import <taglib/flacfile.h>
 #import <taglib/mp4file.h>
 #import <taglib/mpegfile.h>
+#import <taglib/opusfile.h>
 #import <taglib/rifffile.h>
 #import <taglib/tpropertymap.h>
+#import <taglib/vorbisfile.h>
 #import <taglib/wavfile.h>
 
 #import "StringUtil.h"
 #import "TagAudioPropertiesC.h"
 #import "TagFile.h"
-#import "TagFileType.h"
 #import "TagLibBridge.h"
 
 @implementation TagFile
@@ -56,18 +58,9 @@ using namespace TagLib;
 
     PropertyMap properties = tag->properties();
 
-    if (properties.isEmpty()) {
-        return true;
-    }
-
-    // Copy TagLib's PropertyMap into our dictionary using the same keys they use.
-    // See TagKey for translations.
-
     for (const auto &property : properties) {
         const char *ckey = property.first.toCString(true);
         String cval = property.second.toString();
-
-        // cout << ckey << " = " << cval << endl;
 
         NSString *key = @(ckey);
         NSString *object = @(cval.toCString(true)) ?: @"";
@@ -81,42 +74,34 @@ using namespace TagLib;
 }
 
 - (bool)save {
-    return [TagFile write:_dictionary path:_path];
-}
-
-+ (bool)write:(nonnull NSDictionary *)dictionary path:(nonnull NSString *)path {
-    FileRef fileRef(path.UTF8String);
+    // false = skip audio properties parsing (not needed for tag write)
+    FileRef fileRef(_path.UTF8String, false);
 
     if (fileRef.isNull()) {
-        cout << "Unable to read path:" << path.UTF8String << endl;
+        cout << "Unable to read path:" << _path.UTF8String << endl;
         return false;
     }
 
     // Strip existing tags before writing so that atoms not present in the new
     // dictionary are removed. setProperties alone does not clear format-specific
     // storage like iTunes freeform atoms (e.g. ITUNSMPB in M4A files).
-    NSString *fileType = [TagFileType detectType:path];
+    File *f = fileRef.file();
 
-    if ([fileType isEqualToString:kTagFileTypeWave]) {
-        auto *f = dynamic_cast<RIFF::WAV::File *>(fileRef.file());
-        if (f) f->strip();
-    } else if ([fileType isEqualToString:kTagFileTypeM4a] || [fileType isEqualToString:kTagFileTypeMp4]) {
-        auto *f = dynamic_cast<MP4::File *>(fileRef.file());
-        if (f) f->strip();
-    } else if ([fileType isEqualToString:kTagFileTypeMp3]) {
-        auto *f = dynamic_cast<MPEG::File *>(fileRef.file());
-        if (f) f->strip();
-    } else if ([fileType isEqualToString:kTagFileTypeFlac]) {
-        auto *f = dynamic_cast<FLAC::File *>(fileRef.file());
-        if (f) f->strip();
-    } else {
+    if (auto *fp = dynamic_cast<RIFF::WAV::File *>(f))
+        fp->strip();
+    else if (auto *fp = dynamic_cast<MP4::File *>(f))
+        fp->strip();
+    else if (auto *fp = dynamic_cast<MPEG::File *>(f))
+        fp->strip();
+    else if (auto *fp = dynamic_cast<FLAC::File *>(f))
+        fp->strip();
+    else
         fileRef.setProperties(PropertyMap());
-    }
 
     PropertyMap properties = PropertyMap();
 
-    for (NSString *key in [dictionary allKeys]) {
-        NSString *value = [dictionary objectForKey:key];
+    for (NSString *key in [_dictionary allKeys]) {
+        NSString *value = [_dictionary objectForKey:key];
         String tagKey = String(key.UTF8String, String::UTF8);
         StringList tagValue = StringList(String(value.UTF8String, String::UTF8));
         properties.insert(tagKey, tagValue);

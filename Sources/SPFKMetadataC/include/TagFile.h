@@ -19,6 +19,9 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nullable, nonatomic) TagAudioPropertiesC *audioProperties;
 
 /// Tag properties as key-value pairs. Set this before calling `save` to write changes.
+/// The "RATING" key is handled internally via `TagRating` — it may be included like any
+/// other key and will be routed to the correct format-specific frame (POPM, rate atom, etc.)
+/// rather than going through the generic PropertyMap.
 @property(nullable, nonatomic) NSDictionary *dictionary;
 
 /// Absolute path to the audio file.
@@ -35,12 +38,6 @@ NS_ASSUME_NONNULL_BEGIN
 /// Writes the current `dictionary` contents back to the file's tags.
 /// @return `true` if the save succeeded.
 - (bool)save;
-
-/// Convenience: writes a dictionary of tags to a file in a single call.
-/// @param dictionary Tag properties to write.
-/// @param path Absolute path to the audio file.
-/// @return `true` if the write succeeded.
-+ (bool)write:(nonnull NSDictionary *)dictionary path:(nonnull NSString *)path;
 
 @end
 

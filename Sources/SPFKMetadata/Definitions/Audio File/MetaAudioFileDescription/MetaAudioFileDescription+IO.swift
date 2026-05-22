@@ -115,6 +115,12 @@ extension MetaAudioFileDescription {
         }
 
         imageDescription.pictureRef = waveFile.tagPicture?.pictureRef
+
+        // As rating is handled as a special case currently, we need to check it explicitly
+        let ratingValue = TagRating.read(url.path)
+        if ratingValue > 0 {
+            tagProperties.data.tags[.rating] = String(ratingValue)
+        }
     }
 
     /// Reads iXML and BEXT APPLICATION blocks from a FLAC file, supplementing the
@@ -282,6 +288,8 @@ extension MetaAudioFileDescription {
 
         // metadata
         for item in tagProperties.tags {
+            guard item.key != .rating else { continue } // handled via TagRating after save
+
             if item.key.id3Frame == .userDefined {
                 waveFile.id3Dictionary[item.key.taglibKey] = item.value
             } else {
@@ -308,6 +316,13 @@ extension MetaAudioFileDescription {
 
         guard waveFile.save() else {
             throw NSError(description: "Failed to save \(url.path)")
+        }
+
+        // As rating is handled as a special case currently, we need to check it explicitly
+        if let ratingValue = tagProperties.data.tags[.rating]?.int32 {
+            guard TagRating.write(ratingValue, toPath: url.path) else {
+                throw NSError(description: "Failed to write rating to \(url.path)")
+            }
         }
     }
 
