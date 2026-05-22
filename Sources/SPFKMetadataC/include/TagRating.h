@@ -1,7 +1,7 @@
 // Copyright Ryan Francesconi. All Rights Reserved. Revision History at https://github.com/ryanfrancesconi/spfk-metadata
 
-#ifndef TagRatingUtil_h
-#define TagRatingUtil_h
+#ifndef TagRating_h
+#define TagRating_h
 
 #import <Foundation/Foundation.h>
 
@@ -22,7 +22,7 @@ NS_ASSUME_NONNULL_BEGIN
 /// - **MP4** (M4A, MP4, AAC): `rate` integer atom + `----:com.apple.iTunes:RATING` freeform atom
 /// - **APE tag** (Monkey's Audio, WavPack): RATING integer field
 /// - **ASF** (WMA): `WM/SharedUserRating` unsigned integer (0–99 scale)
-@interface TagRatingUtil : NSObject
+@interface TagRating : NSObject
 
 /// Reads the star rating (0–5) from the audio file at the given path.
 /// Returns 0 if the file has no rating stored, or -1 on error or unsupported format.
@@ -36,4 +36,4 @@ NS_ASSUME_NONNULL_BEGIN
 
 NS_ASSUME_NONNULL_END
 
-#endif /* TagRatingUtil_h */
+#endif /* TagRating_h */

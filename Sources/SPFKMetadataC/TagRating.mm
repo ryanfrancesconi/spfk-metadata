@@ -1,4 +1,5 @@
 // Copyright Ryan Francesconi. All Rights Reserved. Revision History at https://github.com/ryanfrancesconi/spfk-metadata
+// Originally authored by tas231, refactored by Ryan Francesconi
 
 #import <Foundation/Foundation.h>
 #import <string>
@@ -23,7 +24,7 @@
 #import <taglib/wavpackfile.h>
 #import <taglib/xiphcomment.h>
 
-#import "TagRatingUtil.h"
+#import "TagRating.h"
 
 using namespace std;
 using namespace TagLib;
@@ -345,7 +346,7 @@ static void writeASF(ASF::Tag *tag, int stars) {
 
 // MARK: - Public path-based interface
 
-@implementation TagRatingUtil
+@implementation TagRating
 
 + (int)readRating:(NSString *)path {
     // false = skip audio properties parsing (not needed for rating I/O)

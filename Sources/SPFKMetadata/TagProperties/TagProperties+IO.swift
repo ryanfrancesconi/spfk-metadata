@@ -34,7 +34,7 @@ extension TagProperties {
             data.set(taglibKey: item.key, value: item.value)
         }
 
-        let ratingValue = TagRatingUtil.readRating(url.path)
+        let ratingValue = TagRating.read(url.path)
         if ratingValue > 0 {
             data.tags[.rating] = String(ratingValue)
         }
@@ -51,7 +51,9 @@ extension TagProperties {
         }
 
         if let ratingValue = data.tags[.rating]?.int32 {
-            _ = TagRatingUtil.writeRating(ratingValue, toPath: url.path)
+            guard TagRating.write(ratingValue, toPath: url.path) else {
+                throw NSError(description: "Failed to write rating to \(url.path)")
+            }
         }
     }
 

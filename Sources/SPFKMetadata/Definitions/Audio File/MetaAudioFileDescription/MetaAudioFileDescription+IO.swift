@@ -116,7 +116,7 @@ extension MetaAudioFileDescription {
 
         imageDescription.pictureRef = waveFile.tagPicture?.pictureRef
 
-        let ratingValue = TagRatingUtil.readRating(url.path)
+        let ratingValue = TagRating.read(url.path)
         if ratingValue > 0 {
             tagProperties.data.tags[.rating] = String(ratingValue)
         }
@@ -287,7 +287,7 @@ extension MetaAudioFileDescription {
 
         // metadata
         for item in tagProperties.tags {
-            guard item.key != .rating else { continue } // handled via TagRatingUtil after save
+            guard item.key != .rating else { continue } // handled via TagRating after save
 
             if item.key.id3Frame == .userDefined {
                 waveFile.id3Dictionary[item.key.taglibKey] = item.value
@@ -318,7 +318,9 @@ extension MetaAudioFileDescription {
         }
 
         if let ratingValue = tagProperties.data.tags[.rating]?.int32 {
-            _ = TagRatingUtil.writeRating(ratingValue, toPath: url.path)
+            guard TagRating.write(ratingValue, toPath: url.path) else {
+                throw NSError(description: "Failed to write rating to \(url.path)")
+            }
         }
     }
 

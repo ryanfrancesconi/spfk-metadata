@@ -19,7 +19,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nullable, nonatomic) TagAudioPropertiesC *audioProperties;
 
 /// Tag properties as key-value pairs. Set this before calling `save` to write changes.
-/// The "RATING" key is handled internally via `TagRatingUtil` — it may be included like any
+/// The "RATING" key is handled internally via `TagRating` — it may be included like any
 /// other key and will be routed to the correct format-specific frame (POPM, rate atom, etc.)
 /// rather than going through the generic PropertyMap.
 @property(nullable, nonatomic) NSDictionary *dictionary;
