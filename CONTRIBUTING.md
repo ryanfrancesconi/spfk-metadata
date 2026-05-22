@@ -1,6 +1,6 @@
 # Contributing to SPFKMetadata
 
-SPFKMetadata serves [ShadowTag](https://shadowtag.app)'s specific metadata workflows first. It's published as a reusable package because the C++/TagLib bridge is genuinely useful in isolation, but **new features are vetted against whether they fit ShadowTag's use cases** — please open an issue before implementing a feature so we can confirm fit before you invest the time. Bug fixes, performance improvements, and additions to existing functionality don't need this preamble; go ahead.
+SPFKMetadata serves [ShadowTag](https://spongefork.com/shadowtag/)'s specific metadata workflows first. It's published as a reusable package because the C++/TagLib bridge is genuinely useful in isolation, but **new features are vetted against whether they fit ShadowTag's use cases** — please open an issue before implementing a feature so we can confirm fit before you invest the time. Bug fixes, performance improvements, and additions to existing functionality don't need this preamble; go ahead.
 
 Saying "doesn't fit my use case" to a feature proposal isn't a judgment on the proposal — it's a signal that this package is opinionated toward one application, and code we wouldn't ship is code we can't accept regardless of quality. Talking it through up front saves both sides time.
 

@@ -7,6 +7,8 @@ Audio metadata I/O library wrapping [TagLib](https://github.com/taglib/taglib) v
 
 > **Note:** Pure data types (TagKey, TagProperties, MetaAudioFileDescription, AudioMarkerDescription, BEXTDescription, etc.) have been extracted to [spfk-metadata-base](https://github.com/ryanfrancesconi/spfk-metadata-base). That package has no C++/TagLib dependency and can be used standalone. SPFKMetadata re-exports these types and adds file I/O on top.
 
+SPFKMetadata serves [ShadowTag](https://spongefork.com/shadowtag/)'s specific metadata workflows first. It's published as a reusable package because the C++/TagLib bridge is genuinely useful in isolation, but **new features are vetted against whether they fit ShadowTag's use cases.**
+
 ![SPFKMetadata-logo-03-256](https://github.com/user-attachments/assets/1ad2a41c-5f4f-458f-9488-b916d355506e)
 
 ## Requirements
