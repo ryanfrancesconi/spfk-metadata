@@ -116,6 +116,7 @@ extension MetaAudioFileDescription {
 
         imageDescription.pictureRef = waveFile.tagPicture?.pictureRef
 
+        // As rating is handled as a special case currently, we need to check it explicitly
         let ratingValue = TagRating.read(url.path)
         if ratingValue > 0 {
             tagProperties.data.tags[.rating] = String(ratingValue)
@@ -317,6 +318,7 @@ extension MetaAudioFileDescription {
             throw NSError(description: "Failed to save \(url.path)")
         }
 
+        // As rating is handled as a special case currently, we need to check it explicitly
         if let ratingValue = tagProperties.data.tags[.rating]?.int32 {
             guard TagRating.write(ratingValue, toPath: url.path) else {
                 throw NSError(description: "Failed to write rating to \(url.path)")

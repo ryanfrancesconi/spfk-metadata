@@ -1,8 +1,5 @@
 // Copyright Ryan Francesconi. All Rights Reserved. Revision History at https://github.com/ryanfrancesconi/spfk-metadata
 
-#ifndef TagRating_h
-#define TagRating_h
-
 #import <Foundation/Foundation.h>
 
 NS_ASSUME_NONNULL_BEGIN
@@ -26,14 +23,13 @@ NS_ASSUME_NONNULL_BEGIN
 
 /// Reads the star rating (0–5) from the audio file at the given path.
 /// Returns 0 if the file has no rating stored, or -1 on error or unsupported format.
-+ (int)readRating:(nonnull NSString *)path;
++ (int)read:(nonnull NSString *)path;
 
 /// Writes the star rating (0–5) to the audio file at the given path.
 /// Pass 0 to clear any existing rating. Returns YES on success.
-+ (BOOL)writeRating:(int)stars toPath:(nonnull NSString *)path;
++ (BOOL)write:(int)stars toPath:(nonnull NSString *)path;
 
 @end
 
 NS_ASSUME_NONNULL_END
 
-#endif /* TagRating_h */

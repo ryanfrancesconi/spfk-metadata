@@ -2,7 +2,7 @@
 
 #import <Foundation/Foundation.h>
 
-/// Core Audio–based utility for reading, writing, and copying RIFF cue-point markers in WAV files.
+/// Core Audio–based utility for reading, writing, and copying RIFF cue-point markers.
 ///
 /// Uses the AudioToolbox `AudioFile` API to access the `kAudioFilePropertyMarkerList` property.
 /// All methods operate on file URLs and return `AudioMarker` objects.

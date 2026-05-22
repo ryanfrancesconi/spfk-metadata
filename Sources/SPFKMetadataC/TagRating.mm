@@ -348,7 +348,7 @@ static void writeASF(ASF::Tag *tag, int stars) {
 
 @implementation TagRating
 
-+ (int)readRating:(NSString *)path {
++ (int)read:(NSString *)path {
     // false = skip audio properties parsing (not needed for rating I/O)
     FileRef fileRef(path.UTF8String, false);
     if (fileRef.isNull()) return -1;
@@ -379,7 +379,7 @@ static void writeASF(ASF::Tag *tag, int stars) {
     return -1;
 }
 
-+ (BOOL)writeRating:(int)stars toPath:(NSString *)path {
++ (BOOL)write:(int)stars toPath:(NSString *)path {
     if (stars < 0) stars = 0;
     if (stars > 5) stars = 5;
 
