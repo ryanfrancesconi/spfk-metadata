@@ -46,7 +46,7 @@ static int starsFromPopmByte(int b) {
     if (b <= 117) return 2;   // 55–117
     if (b <= 159) return 3;   // 118–159
     if (b <= 223) return 4;   // 160–223
-    return 5;                  // 224–255
+    return 5;                 // 224–255
 }
 
 // Stars → POPM byte (Windows Media Player canonical values).
