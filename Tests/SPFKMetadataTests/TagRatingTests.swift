@@ -12,10 +12,13 @@ import Testing
 
 /// Round-trip rating tests for every supported format.
 ///
-/// Rating is stored in format-specific frames (not the generic PropertyMap),
-/// accessed exclusively via TagRatingUtil's path-based interface:
-///   - WAV/MP3/AIFF: POPM (ID3v2 Popularimeter)
-///   - FLAC/OGG: Xiph RATING (int string) + FMPS_RATING (float string)
+/// Ratings are stored in format-specific frames (not the generic PropertyMap),
+/// accessed exclusively via TagRatingUtil's path-based interface.
+/// The public API works in star counts (0 = unrated, 1–5 = rated).
+///
+/// Format storage:
+///   - WAV/MP3/AIFF: POPM (ID3v2 Popularimeter), WMP canonical byte values
+///   - FLAC/OGG: Xiph RATING (normalized int string) + FMPS_RATING (float string)
 ///   - M4A/MP4/AAC: `rate` atom + `----:com.apple.iTunes:RATING` freeform
 @Suite(.serialized, .tags(.file))
 final class TagRatingTests: BinTestCase {
@@ -24,17 +27,17 @@ final class TagRatingTests: BinTestCase {
     @Test func wavRatingRoundTrip() async throws {
         let tmp = try copyToBin(url: TestBundleResources.shared.tabla_wav)
 
-        #expect(TagRatingUtil.writeRating(80, toPath: tmp.path))
+        #expect(TagRatingUtil.writeRating(4, toPath: tmp.path))
 
         let read = TagRatingUtil.readRating(tmp.path)
-        #expect(read == 80)
+        #expect(read == 4)
     }
 
     @Test func wavRatingClearWithZero() async throws {
         let tmp = try copyToBin(url: TestBundleResources.shared.tabla_wav)
 
-        #expect(TagRatingUtil.writeRating(60, toPath: tmp.path))
-        #expect(TagRatingUtil.readRating(tmp.path) == 60)
+        #expect(TagRatingUtil.writeRating(3, toPath: tmp.path))
+        #expect(TagRatingUtil.readRating(tmp.path) == 3)
 
         #expect(TagRatingUtil.writeRating(0, toPath: tmp.path))
         let read = TagRatingUtil.readRating(tmp.path)
@@ -46,8 +49,8 @@ final class TagRatingTests: BinTestCase {
     @Test func mp3RatingRoundTrip() async throws {
         let tmp = try copyToBin(url: TestBundleResources.shared.tabla_mp3)
 
-        #expect(TagRatingUtil.writeRating(100, toPath: tmp.path))
-        #expect(TagRatingUtil.readRating(tmp.path) == 100)
+        #expect(TagRatingUtil.writeRating(5, toPath: tmp.path))
+        #expect(TagRatingUtil.readRating(tmp.path) == 5)
     }
 
     // MARK: - FLAC (Xiph RATING + FMPS_RATING)
@@ -55,8 +58,8 @@ final class TagRatingTests: BinTestCase {
     @Test func flacRatingRoundTrip() async throws {
         let tmp = try copyToBin(url: TestBundleResources.shared.tabla_flac)
 
-        #expect(TagRatingUtil.writeRating(60, toPath: tmp.path))
-        #expect(TagRatingUtil.readRating(tmp.path) == 60)
+        #expect(TagRatingUtil.writeRating(3, toPath: tmp.path))
+        #expect(TagRatingUtil.readRating(tmp.path) == 3)
     }
 
     // MARK: - M4A (rate atom + freeform)
@@ -64,8 +67,8 @@ final class TagRatingTests: BinTestCase {
     @Test func m4aRatingRoundTrip() async throws {
         let tmp = try copyToBin(url: TestBundleResources.shared.tabla_m4a)
 
-        #expect(TagRatingUtil.writeRating(40, toPath: tmp.path))
-        #expect(TagRatingUtil.readRating(tmp.path) == 40)
+        #expect(TagRatingUtil.writeRating(2, toPath: tmp.path))
+        #expect(TagRatingUtil.readRating(tmp.path) == 2)
     }
 
     // MARK: - OGG Vorbis (Xiph RATING + FMPS_RATING) — macOS only
@@ -74,8 +77,8 @@ final class TagRatingTests: BinTestCase {
     @Test func oggRatingRoundTrip() async throws {
         let tmp = try copyToBin(url: TestBundleResources.shared.tabla_ogg)
 
-        #expect(TagRatingUtil.writeRating(80, toPath: tmp.path))
-        #expect(TagRatingUtil.readRating(tmp.path) == 80)
+        #expect(TagRatingUtil.writeRating(4, toPath: tmp.path))
+        #expect(TagRatingUtil.readRating(tmp.path) == 4)
     }
     #endif
 
@@ -85,24 +88,24 @@ final class TagRatingTests: BinTestCase {
         let tmp = try copyToBin(url: TestBundleResources.shared.tabla_mp3)
 
         var props = TagProperties()
-        props.data.tags[.rating] = "80"
+        props.data.tags[.rating] = "4"
         try props.save(to: tmp)
 
         var loaded = TagProperties()
         try loaded.load(url: tmp)
-        #expect(loaded.data.tags[.rating] == "80")
+        #expect(loaded.data.tags[.rating] == "4")
     }
 
     @Test func tagPropertiesFLACRatingRoundTrip() async throws {
         let tmp = try copyToBin(url: TestBundleResources.shared.tabla_flac)
 
         var props = TagProperties()
-        props.data.tags[.rating] = "60"
+        props.data.tags[.rating] = "3"
         try props.save(to: tmp)
 
         var loaded = TagProperties()
         try loaded.load(url: tmp)
-        #expect(loaded.data.tags[.rating] == "60")
+        #expect(loaded.data.tags[.rating] == "3")
     }
 
     // MARK: - Locale safety (FMPS_RATING integer arithmetic)
@@ -117,7 +120,90 @@ final class TagRatingTests: BinTestCase {
         _ = setlocale(LC_NUMERIC, "fr_FR.UTF-8") ?? setlocale(LC_NUMERIC, "fr_FR")
         defer { savedLocale.withCString { _ = setlocale(LC_NUMERIC, $0) } }
 
-        #expect(TagRatingUtil.writeRating(80, toPath: tmp.path))
-        #expect(TagRatingUtil.readRating(tmp.path) == 80)
+        #expect(TagRatingUtil.writeRating(4, toPath: tmp.path))
+        #expect(TagRatingUtil.readRating(tmp.path) == 4)
+    }
+
+    // MARK: - Overwrite tests (write A, verify A, write B, verify B)
+
+    @Test func wavRatingOverwrite() async throws {
+        let tmp = try copyToBin(url: TestBundleResources.shared.tabla_wav)
+        #expect(TagRatingUtil.writeRating(3, toPath: tmp.path))
+        #expect(TagRatingUtil.readRating(tmp.path) == 3)
+        #expect(TagRatingUtil.writeRating(4, toPath: tmp.path))
+        #expect(TagRatingUtil.readRating(tmp.path) == 4)
+    }
+
+    @Test func mp3RatingOverwrite() async throws {
+        let tmp = try copyToBin(url: TestBundleResources.shared.tabla_mp3)
+        #expect(TagRatingUtil.writeRating(3, toPath: tmp.path))
+        #expect(TagRatingUtil.readRating(tmp.path) == 3)
+        #expect(TagRatingUtil.writeRating(4, toPath: tmp.path))
+        #expect(TagRatingUtil.readRating(tmp.path) == 4)
+    }
+
+    @Test func flacRatingOverwrite() async throws {
+        let tmp = try copyToBin(url: TestBundleResources.shared.tabla_flac)
+        #expect(TagRatingUtil.writeRating(3, toPath: tmp.path))
+        #expect(TagRatingUtil.readRating(tmp.path) == 3)
+        #expect(TagRatingUtil.writeRating(4, toPath: tmp.path))
+        #expect(TagRatingUtil.readRating(tmp.path) == 4)
+    }
+
+    @Test func m4aRatingOverwrite() async throws {
+        let tmp = try copyToBin(url: TestBundleResources.shared.tabla_m4a)
+        #expect(TagRatingUtil.writeRating(3, toPath: tmp.path))
+        #expect(TagRatingUtil.readRating(tmp.path) == 3)
+        #expect(TagRatingUtil.writeRating(4, toPath: tmp.path))
+        #expect(TagRatingUtil.readRating(tmp.path) == 4)
+    }
+
+    #if os(macOS)
+    @Test func oggRatingOverwrite() async throws {
+        let tmp = try copyToBin(url: TestBundleResources.shared.tabla_ogg)
+        #expect(TagRatingUtil.writeRating(3, toPath: tmp.path))
+        #expect(TagRatingUtil.readRating(tmp.path) == 3)
+        #expect(TagRatingUtil.writeRating(4, toPath: tmp.path))
+        #expect(TagRatingUtil.readRating(tmp.path) == 4)
+    }
+    #endif
+
+    @Test func aiffRatingOverwrite() async throws {
+        let tmp = try copyToBin(url: TestBundleResources.shared.tabla_aif)
+        #expect(TagRatingUtil.writeRating(3, toPath: tmp.path))
+        #expect(TagRatingUtil.readRating(tmp.path) == 3)
+        #expect(TagRatingUtil.writeRating(4, toPath: tmp.path))
+        #expect(TagRatingUtil.readRating(tmp.path) == 4)
+    }
+
+    // MARK: - Pre-rated fixture read tests
+    // These verify the read path in isolation: fixtures were tagged by an external
+    // Python script (mutagen + binary construction), not by TagRatingUtil.writeRating.
+    // All fixtures embed POPM byte=196 (4 stars) or Xiph RATING=80 (normalized 4 stars).
+
+    @Test func wavFixtureRatingRead() throws {
+        #expect(TagRatingUtil.readRating(TestBundleResources.shared.rated_80_wav.path) == 4)
+    }
+
+    @Test func mp3FixtureRatingRead() throws {
+        #expect(TagRatingUtil.readRating(TestBundleResources.shared.rated_80_mp3.path) == 4)
+    }
+
+    @Test func flacFixtureRatingRead() throws {
+        #expect(TagRatingUtil.readRating(TestBundleResources.shared.rated_80_flac.path) == 4)
+    }
+
+    @Test func m4aFixtureRatingRead() throws {
+        #expect(TagRatingUtil.readRating(TestBundleResources.shared.rated_80_m4a.path) == 4)
+    }
+
+    #if os(macOS)
+    @Test func oggFixtureRatingRead() throws {
+        #expect(TagRatingUtil.readRating(TestBundleResources.shared.rated_80_ogg.path) == 4)
+    }
+    #endif
+
+    @Test func aiffFixtureRatingRead() throws {
+        #expect(TagRatingUtil.readRating(TestBundleResources.shared.rated_80_aif.path) == 4)
     }
 }

@@ -117,7 +117,7 @@ extension MetaAudioFileDescription {
         imageDescription.pictureRef = waveFile.tagPicture?.pictureRef
 
         let ratingValue = TagRatingUtil.readRating(url.path)
-        if ratingValue >= 0 {
+        if ratingValue > 0 {
             tagProperties.data.tags[.rating] = String(ratingValue)
         }
     }

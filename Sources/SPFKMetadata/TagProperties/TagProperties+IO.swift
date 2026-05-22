@@ -35,7 +35,7 @@ extension TagProperties {
         }
 
         let ratingValue = TagRatingUtil.readRating(url.path)
-        if ratingValue >= 0 {
+        if ratingValue > 0 {
             data.tags[.rating] = String(ratingValue)
         }
     }
