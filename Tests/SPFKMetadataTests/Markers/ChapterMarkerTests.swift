@@ -45,7 +45,7 @@ class ChapterMarkerTests: BinTestCase {
             ChapterMarker(name: "Marker 3", startTime: 3, endTime: 4),
         ]
         
-        #expect(MP4ChapterUtil.writeChapters(w_markers, to: tmpfile.path))
+        #expect(MP4ChapterUtil.write(w_markers, to: tmpfile.path))
         
         let r_markers = try await getChapters(in: tmpfile)
         let names = r_markers.compactMap(\.name)

@@ -11,7 +11,7 @@ import Testing
 @Suite(.tags(.file), .serialized)
 class MP3ChapterMarkerTests: BinTestCase {
     func getChapters(in url: URL) -> [ChapterMarker] {
-        let chapters = MPEGChapterUtil.chapters(in: url.path) as? [ChapterMarker] ?? []
+        let chapters = MPEGChapterUtil.read(url.path) as? [ChapterMarker] ?? []
         Log.debug(chapters.map { ($0.name ?? "nil") + " @ \($0.startTime)" })
         return chapters
     }
@@ -34,14 +34,14 @@ class MP3ChapterMarkerTests: BinTestCase {
 
     @Test func writeMarkers() async throws {
         let tmpfile = try copyToBin(url: TestBundleResources.shared.mp3_id3)
-        #expect(MPEGChapterUtil.removeChapters(in: tmpfile.path))
+        #expect(MPEGChapterUtil.remove(tmpfile.path))
 
         let markers: [ChapterMarker] = [
             ChapterMarker(name: "New 1", startTime: 2, endTime: 4),
             ChapterMarker(name: "New 2", startTime: 4, endTime: 6),
         ]
 
-        #expect(MPEGChapterUtil.writeChapters(markers, to: tmpfile.path))
+        #expect(MPEGChapterUtil.write(markers, to: tmpfile.path))
 
         let editedMarkers = getChapters(in: tmpfile)
 
@@ -55,7 +55,7 @@ class MP3ChapterMarkerTests: BinTestCase {
 
     @Test func removeMarkers() async throws {
         let tmpfile = try copyToBin(url: TestBundleResources.shared.mp3_id3)
-        #expect(MPEGChapterUtil.removeChapters(in: tmpfile.path))
+        #expect(MPEGChapterUtil.remove(tmpfile.path))
 
         let chapters = getChapters(in: tmpfile)
         #expect(chapters.count == 0)
@@ -63,13 +63,13 @@ class MP3ChapterMarkerTests: BinTestCase {
 
     @Test func timestampPrecision() async throws {
         let tmpfile = try copyToBin(url: TestBundleResources.shared.mp3_id3)
-        #expect(MPEGChapterUtil.removeChapters(in: tmpfile.path))
+        #expect(MPEGChapterUtil.remove(tmpfile.path))
 
         let markers: [ChapterMarker] = [
             ChapterMarker(name: "Precise", startTime: 3661.123, endTime: 7322.456),
         ]
 
-        #expect(MPEGChapterUtil.writeChapters(markers, to: tmpfile.path))
+        #expect(MPEGChapterUtil.write(markers, to: tmpfile.path))
 
         let readBack = getChapters(in: tmpfile)
 
@@ -82,14 +82,14 @@ class MP3ChapterMarkerTests: BinTestCase {
 
     @Test func endTimeRoundTrip() async throws {
         let tmpfile = try copyToBin(url: TestBundleResources.shared.mp3_id3)
-        #expect(MPEGChapterUtil.removeChapters(in: tmpfile.path))
+        #expect(MPEGChapterUtil.remove(tmpfile.path))
 
         let markers: [ChapterMarker] = [
             ChapterMarker(name: "Ch1", startTime: 0.5, endTime: 1.5),
             ChapterMarker(name: "Ch2", startTime: 1.5, endTime: 3.0),
         ]
 
-        #expect(MPEGChapterUtil.writeChapters(markers, to: tmpfile.path))
+        #expect(MPEGChapterUtil.write(markers, to: tmpfile.path))
 
         let readBack = getChapters(in: tmpfile)
 

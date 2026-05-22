@@ -11,18 +11,18 @@
 /// Reads all RIFF cue-point markers from the audio file.
 /// @param url File URL to the audio file.
 /// @return An array of `AudioMarker` objects, or an empty array if no markers are present.
-+ (NSArray *)getMarkers:(NSURL *)url;
++ (NSArray *)read:(NSURL *)url;
 
 /// Replaces all markers in the audio file with the provided array.
-/// @param url File URL to the audio file.
 /// @param markers Array of `AudioMarker` objects to write.
+/// @param url File URL to the audio file.
 /// @return `YES` if the markers were written successfully.
-+ (BOOL)update:(NSURL *)url markers:(NSArray *)markers;
++ (BOOL)write:(NSArray *)markers to:(NSURL *)url;
 
 /// Removes all RIFF cue-point markers from the audio file.
 /// @param url File URL to the audio file.
 /// @return `YES` if the markers were removed successfully.
-+ (BOOL)removeAllMarkers:(NSURL *)url;
++ (BOOL)remove:(NSURL *)url;
 
 /// Copies all markers from one audio file to another.
 /// @param url Source file URL to read markers from.

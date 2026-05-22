@@ -23,7 +23,7 @@ extension AudioMarkerDescriptionCollection {
         case .m4a, .mp4, .aac, .m4b:
             // MP4ChapterUtil reads QT chapter track first, then Nero chpl fallback.
             // AVFoundation fallback for files with neither format.
-            let chapters = MP4ChapterUtil.chapters(in: url.path) as? [ChapterMarker] ?? []
+            let chapters = MP4ChapterUtil.read(url.path) as? [ChapterMarker] ?? []
             if chapters.isNotEmpty {
                 self = AudioMarkerDescriptionCollection(chapterMarkers: chapters)
             } else {
@@ -36,11 +36,11 @@ extension AudioMarkerDescriptionCollection {
             self = AudioMarkerDescriptionCollection(chapterMarkers: value)
 
         case .mp3:
-            let value: [ChapterMarker] = MPEGChapterUtil.chapters(in: url.path) as? [ChapterMarker] ?? []
+            let value: [ChapterMarker] = MPEGChapterUtil.read(url.path) as? [ChapterMarker] ?? []
             self = AudioMarkerDescriptionCollection(chapterMarkers: value)
 
         case .aiff, .aifc, .wav, .w64:
-            let value: [AudioMarker] = AudioMarkerUtil.getMarkers(url) as? [AudioMarker] ?? []
+            let value: [AudioMarker] = AudioMarkerUtil.read(url) as? [AudioMarker] ?? []
             self = AudioMarkerDescriptionCollection(audioMarkers: value)
 
         default:

@@ -100,7 +100,7 @@ static void removeAllChapterFields(Ogg::XiphComment *comment) {
 
 @implementation XiphChapterUtil
 
-+ (NSArray *)chaptersIn:(NSString *)path {
++ (NSArray *)read:(NSString *)path {
     FileRef fileRef(path.UTF8String);
 
     if (fileRef.isNull()) {
@@ -190,7 +190,7 @@ static void removeAllChapterFields(Ogg::XiphComment *comment) {
     return array.count > 0 ? array : nil;
 }
 
-+ (bool)writeChapters:(NSArray *)chapters to:(NSString *)path {
++ (bool)write:(NSArray *)chapters to:(NSString *)path {
     FileRef fileRef(path.UTF8String);
 
     if (fileRef.isNull()) {
@@ -226,7 +226,7 @@ static void removeAllChapterFields(Ogg::XiphComment *comment) {
     return fileRef.save();
 }
 
-+ (bool)removeChaptersIn:(NSString *)path {
++ (bool)remove:(NSString *)path {
     FileRef fileRef(path.UTF8String);
 
     if (fileRef.isNull()) {

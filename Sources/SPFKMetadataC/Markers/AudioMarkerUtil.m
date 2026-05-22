@@ -12,7 +12,7 @@
 
 /// Get all markers in this file and return an array of `AudioMarker`
 /// @param url URL to parse
-+ (NSArray *)getMarkers:(NSURL *)url {
++ (NSArray *)read:(NSURL *)url {
     AudioFileID fileID;
     CFURLRef cfurl = CFBridgingRetain(url);
 
@@ -103,7 +103,7 @@
 /// Set an array of RIFF markers in the file
 /// @param url `URL` to set markers in
 /// @param markerArray `[AudioMarker]`
-+ (BOOL)update:(NSURL *)url markers:(NSArray *)markers {
++ (BOOL)write:(NSArray *)markers to:(NSURL *)url {
     AudioFileID fileID;
     CFURLRef cfurl = CFBridgingRetain(url);
 
@@ -157,7 +157,7 @@
 
 #pragma mark - REMOVE
 
-+ (BOOL)removeAllMarkers:(NSURL *)url {
++ (BOOL)remove:(NSURL *)url {
     AudioFileID fileID;
     CFURLRef cfurl = CFBridgingRetain(url);
 
@@ -188,10 +188,10 @@
 #pragma mark - COPY
 
 + (BOOL)copyMarkers:(NSURL *)inputURL to:(NSURL *)destination {
-    NSArray *markers = [AudioMarkerUtil getMarkers:inputURL];
+    NSArray *markers = [AudioMarkerUtil read:inputURL];
 
     if (markers.count > 0) {
-        return [AudioMarkerUtil update:destination markers:markers];
+        return [AudioMarkerUtil write:markers to:destination];
     }
 
     return false;

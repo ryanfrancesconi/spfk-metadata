@@ -336,16 +336,16 @@ extension MetaAudioFileDescription {
 
         switch fileType {
         case .mp3:
-            success = MPEGChapterUtil.writeChapters(markerCollection.chapterMarkers, to: path)
+            success = MPEGChapterUtil.write(markerCollection.chapterMarkers, to: path)
 
         case .m4a, .mp4, .aac, .m4b:
-            success = MP4ChapterUtil.writeChapters(markerCollection.chapterMarkers, to: path)
+            success = MP4ChapterUtil.write(markerCollection.chapterMarkers, to: path)
 
         case .flac, .ogg, .opus:
-            success = XiphChapterUtil.writeChapters(markerCollection.chapterMarkers, to: path)
+            success = XiphChapterUtil.write(markerCollection.chapterMarkers, to: path)
 
         case .aiff, .aifc:
-            success = AudioMarkerUtil.update(url, markers: audioMarkers)
+            success = AudioMarkerUtil.write(audioMarkers, to: url)
 
         default:
             Log.error("Marker save not supported for \(fileType?.rawValue ?? "unknown")")

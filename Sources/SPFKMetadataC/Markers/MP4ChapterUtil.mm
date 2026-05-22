@@ -26,7 +26,7 @@ static NSTimeInterval chapterTimeToSeconds(long long chapterTime) {
 
 @implementation MP4ChapterUtil
 
-+ (NSArray *)chaptersIn:(NSString *)path {
++ (NSArray *)read:(NSString *)path {
     MP4::File file(path.UTF8String);
 
     if (!file.isOpen() || !file.isValid()) {
@@ -66,7 +66,7 @@ static NSTimeInterval chapterTimeToSeconds(long long chapterTime) {
     return array.count > 0 ? array : nil;
 }
 
-+ (bool)writeChapters:(NSArray *)chapters to:(NSString *)path {
++ (bool)write:(NSArray *)chapters to:(NSString *)path {
     MP4::ChapterList chapterList;
 
     for (ChapterMarker *marker in chapters) {
@@ -89,7 +89,7 @@ static NSTimeInterval chapterTimeToSeconds(long long chapterTime) {
     return file.save();
 }
 
-+ (bool)removeChaptersIn:(NSString *)path {
++ (bool)remove:(NSString *)path {
     MP4::File file(path.UTF8String);
 
     if (!file.isOpen() || !file.isValid()) {

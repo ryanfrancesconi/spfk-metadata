@@ -11,7 +11,7 @@ import Testing
 @Suite(.tags(.file), .serialized)
 class XiphChapterUtilTests: BinTestCase {
     func getChapters(in url: URL) -> [ChapterMarker] {
-        let chapters = XiphChapterUtil.chapters(in: url.path) as? [ChapterMarker] ?? []
+        let chapters = XiphChapterUtil.read(url.path) as? [ChapterMarker] ?? []
         Log.debug(chapters.map { ($0.name ?? "nil") + " @ \($0.startTime)" })
         return chapters
     }
@@ -27,7 +27,7 @@ class XiphChapterUtilTests: BinTestCase {
             ChapterMarker(name: "Outro", startTime: 3, endTime: 4.5),
         ]
 
-        #expect(XiphChapterUtil.writeChapters(markers, to: tmpfile.path))
+        #expect(XiphChapterUtil.write(markers, to: tmpfile.path))
 
         let readBack = getChapters(in: tmpfile)
 
@@ -44,10 +44,10 @@ class XiphChapterUtilTests: BinTestCase {
             ChapterMarker(name: "Ch2", startTime: 1, endTime: 2),
         ]
 
-        #expect(XiphChapterUtil.writeChapters(markers, to: tmpfile.path))
+        #expect(XiphChapterUtil.write(markers, to: tmpfile.path))
         #expect(getChapters(in: tmpfile).count == 2)
 
-        #expect(XiphChapterUtil.removeChapters(in: tmpfile.path))
+        #expect(XiphChapterUtil.remove(tmpfile.path))
         #expect(getChapters(in: tmpfile).count == 0)
     }
 
@@ -66,7 +66,7 @@ class XiphChapterUtilTests: BinTestCase {
             ChapterMarker(name: "Part B", startTime: 2, endTime: 3.5),
         ]
 
-        #expect(XiphChapterUtil.writeChapters(markers, to: tmpfile.path))
+        #expect(XiphChapterUtil.write(markers, to: tmpfile.path))
 
         let readBack = getChapters(in: tmpfile)
 
@@ -82,10 +82,10 @@ class XiphChapterUtilTests: BinTestCase {
             ChapterMarker(name: "Only", startTime: 0, endTime: 1),
         ]
 
-        #expect(XiphChapterUtil.writeChapters(markers, to: tmpfile.path))
+        #expect(XiphChapterUtil.write(markers, to: tmpfile.path))
         #expect(getChapters(in: tmpfile).count == 1)
 
-        #expect(XiphChapterUtil.removeChapters(in: tmpfile.path))
+        #expect(XiphChapterUtil.remove(tmpfile.path))
         #expect(getChapters(in: tmpfile).count == 0)
     }
 
@@ -98,7 +98,7 @@ class XiphChapterUtilTests: BinTestCase {
             ChapterMarker(name: "Precise", startTime: 3661.123, endTime: 7322.456),
         ]
 
-        #expect(XiphChapterUtil.writeChapters(markers, to: tmpfile.path))
+        #expect(XiphChapterUtil.write(markers, to: tmpfile.path))
 
         let readBack = getChapters(in: tmpfile)
 
@@ -119,7 +119,7 @@ class XiphChapterUtilTests: BinTestCase {
             ChapterMarker(name: "Ch3", startTime: 3.0, endTime: 4.0),
         ]
 
-        #expect(XiphChapterUtil.writeChapters(markers, to: tmpfile.path))
+        #expect(XiphChapterUtil.write(markers, to: tmpfile.path))
 
         let readBack = getChapters(in: tmpfile)
 

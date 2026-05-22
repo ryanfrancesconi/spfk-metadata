@@ -79,7 +79,7 @@ using namespace TagLib;
     }
 
     NSURL *url = [NSURL fileURLWithPath:_path];
-    _markers = [AudioMarkerUtil getMarkers:url];
+    _markers = [AudioMarkerUtil read:url];
 
     if (waveFile->hasBEXTData() && !waveFile->BEXTData().isEmpty()) {
         ByteVector bext = waveFile->BEXTData();
@@ -176,7 +176,7 @@ using namespace TagLib;
     // write markers (via AudioToolbox, separate from TagLib)
     if (_markersNeedsSave && _markers.count > 0) {
         NSURL *url = [NSURL fileURLWithPath:_path];
-        [AudioMarkerUtil update:url markers:_markers];
+        [AudioMarkerUtil write:_markers to:url];
     }
 }
 

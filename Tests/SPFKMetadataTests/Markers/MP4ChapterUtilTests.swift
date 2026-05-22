@@ -11,7 +11,7 @@ import Testing
 @Suite(.tags(.file), .serialized)
 class MP4ChapterUtilTests: BinTestCase {
     func getChapters(in url: URL) -> [ChapterMarker] {
-        let chapters = MP4ChapterUtil.chapters(in: url.path) as? [ChapterMarker] ?? []
+        let chapters = MP4ChapterUtil.read(url.path) as? [ChapterMarker] ?? []
         Log.debug(chapters.map { ($0.name ?? "nil") + " @ \($0.startTime)" })
         return chapters
     }
@@ -29,7 +29,7 @@ class MP4ChapterUtilTests: BinTestCase {
             ChapterMarker(name: "Outro", startTime: 3, endTime: 4),
         ]
 
-        #expect(MP4ChapterUtil.writeChapters(markers, to: tmpfile.path))
+        #expect(MP4ChapterUtil.write(markers, to: tmpfile.path))
 
         let sizeAfter = try FileManager.default.attributesOfItem(atPath: tmpfile.path)[.size] as? Int ?? 0
         Log.debug("File size: before=\(sizeBefore) after=\(sizeAfter) delta=\(sizeAfter - sizeBefore)")
@@ -54,17 +54,17 @@ class MP4ChapterUtilTests: BinTestCase {
             ChapterMarker(name: "Ch2", startTime: 1, endTime: 2),
         ]
 
-        #expect(MP4ChapterUtil.writeChapters(markers, to: tmpfile.path))
+        #expect(MP4ChapterUtil.write(markers, to: tmpfile.path))
         #expect(getChapters(in: tmpfile).count == 2)
 
-        #expect(MP4ChapterUtil.removeChapters(in: tmpfile.path))
+        #expect(MP4ChapterUtil.remove(tmpfile.path))
         #expect(getChapters(in: tmpfile).count == 0)
     }
 
     @Test func readChaptersFromFileWithNone() async throws {
         // Remove any pre-existing chapters, then verify reading returns empty.
         let tmpfile = try copyToBin(url: TestBundleResources.shared.tabla_m4a)
-        #expect(MP4ChapterUtil.removeChapters(in: tmpfile.path))
+        #expect(MP4ChapterUtil.remove(tmpfile.path))
         let chapters = getChapters(in: tmpfile)
         #expect(chapters.count == 0)
     }
@@ -80,7 +80,7 @@ class MP4ChapterUtilTests: BinTestCase {
             ChapterMarker(name: "Part B", startTime: 2, endTime: 3.5),
         ]
 
-        #expect(MP4ChapterUtil.writeChapters(markers, to: tmpfile.path))
+        #expect(MP4ChapterUtil.write(markers, to: tmpfile.path))
 
         let readBack = getChapters(in: tmpfile)
 
@@ -101,7 +101,7 @@ class MP4ChapterUtilTests: BinTestCase {
             ChapterMarker(name: "Precise", startTime: 1.5, endTime: 3.0),
         ]
 
-        #expect(MP4ChapterUtil.writeChapters(markers, to: tmpfile.path))
+        #expect(MP4ChapterUtil.write(markers, to: tmpfile.path))
 
         let readBack = getChapters(in: tmpfile)
 
@@ -125,7 +125,7 @@ class MP4ChapterUtilTests: BinTestCase {
             ChapterMarker(name: "Ch3", startTime: 2.5, endTime: 4.0),
         ]
 
-        #expect(MP4ChapterUtil.writeChapters(markers, to: tmpfile.path))
+        #expect(MP4ChapterUtil.write(markers, to: tmpfile.path))
 
         let readBack = getChapters(in: tmpfile)
 
@@ -156,7 +156,7 @@ class MP4ChapterUtilTests: BinTestCase {
             ChapterMarker(name: "Ch1", startTime: 0, endTime: 1),
         ]
 
-        #expect(MP4ChapterUtil.writeChapters(markers, to: tmpfile.path))
+        #expect(MP4ChapterUtil.write(markers, to: tmpfile.path))
 
         // Verify tags are still intact
         let propsAfter = try TagProperties(url: tmpfile)
@@ -179,7 +179,7 @@ class MP4ChapterUtilTests: BinTestCase {
             ChapterMarker(name: "Old2", startTime: 1, endTime: 2),
         ]
 
-        #expect(MP4ChapterUtil.writeChapters(first, to: tmpfile.path))
+        #expect(MP4ChapterUtil.write(first, to: tmpfile.path))
         #expect(getChapters(in: tmpfile).count == 2)
 
         let second: [ChapterMarker] = [
@@ -188,7 +188,7 @@ class MP4ChapterUtilTests: BinTestCase {
             ChapterMarker(name: "New3", startTime: 1, endTime: 1.5),
         ]
 
-        #expect(MP4ChapterUtil.writeChapters(second, to: tmpfile.path))
+        #expect(MP4ChapterUtil.write(second, to: tmpfile.path))
 
         let readBack = getChapters(in: tmpfile)
         #expect(readBack.count == 3)
@@ -201,11 +201,11 @@ class MP4ChapterUtilTests: BinTestCase {
         let tmpfile = try copyToBin(url: TestBundleResources.shared.tabla_m4a)
 
         // Ensure no chapters are present
-        #expect(MP4ChapterUtil.removeChapters(in: tmpfile.path))
+        #expect(MP4ChapterUtil.remove(tmpfile.path))
         #expect(getChapters(in: tmpfile).count == 0)
 
         // Calling remove again on a file with no chapters should still succeed gracefully
-        #expect(MP4ChapterUtil.removeChapters(in: tmpfile.path))
+        #expect(MP4ChapterUtil.remove(tmpfile.path))
         #expect(getChapters(in: tmpfile).count == 0)
     }
 
@@ -213,20 +213,20 @@ class MP4ChapterUtilTests: BinTestCase {
 
     @Test func chaptersInNilForMissingFile() async throws {
         let missing = "/tmp/this-file-does-not-exist-\(UUID().uuidString).m4a"
-        let chapters = MP4ChapterUtil.chapters(in: missing) as? [ChapterMarker] ?? []
+        let chapters = MP4ChapterUtil.read(missing) as? [ChapterMarker] ?? []
         #expect(chapters.isEmpty, "Should return nil/empty for non-existent file")
     }
 
     @Test func writeChaptersFalseForMissingFile() async throws {
         let missing = "/tmp/this-file-does-not-exist-\(UUID().uuidString).m4a"
         let markers: [ChapterMarker] = [ChapterMarker(name: "Ch", startTime: 0, endTime: 1)]
-        #expect(!MP4ChapterUtil.writeChapters(markers, to: missing),
+        #expect(!MP4ChapterUtil.write(markers, to: missing),
                 "Should return false when file does not exist")
     }
 
     @Test func chaptersInNilForNonMP4File() async throws {
         // WAV file is not an MP4 container — should return empty gracefully
-        let chapters = MP4ChapterUtil.chapters(in: TestBundleResources.shared.tabla_wav.path)
+        let chapters = MP4ChapterUtil.read(TestBundleResources.shared.tabla_wav.path)
             as? [ChapterMarker] ?? []
         #expect(chapters.isEmpty, "Should return nil/empty for non-MP4 file")
     }
@@ -242,7 +242,7 @@ class MP4ChapterUtilTests: BinTestCase {
             ChapterMarker(name: "Ünïcödé", startTime: 2, endTime: 3),
         ]
 
-        #expect(MP4ChapterUtil.writeChapters(markers, to: tmpfile.path))
+        #expect(MP4ChapterUtil.write(markers, to: tmpfile.path))
 
         let readBack = getChapters(in: tmpfile)
         #expect(readBack.count == 3)
@@ -266,14 +266,14 @@ class MP4ChapterUtilTests: BinTestCase {
         ]
 
         // Establish a clean baseline with no chapters
-        #expect(MP4ChapterUtil.removeChapters(in: tmpfile.path))
+        #expect(MP4ChapterUtil.remove(tmpfile.path))
 
         // Three write/remove cycles — file size after each remove must be stable
         var lastRemoveSize: Int = 0
 
         for cycle in 0 ..< 3 {
-            #expect(MP4ChapterUtil.writeChapters(markers, to: tmpfile.path))
-            #expect(MP4ChapterUtil.removeChapters(in: tmpfile.path))
+            #expect(MP4ChapterUtil.write(markers, to: tmpfile.path))
+            #expect(MP4ChapterUtil.remove(tmpfile.path))
 
             let removeSize = try FileManager.default.attributesOfItem(atPath: tmpfile.path)[.size] as? Int ?? 0
 

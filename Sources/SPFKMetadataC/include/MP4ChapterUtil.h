@@ -16,18 +16,18 @@ NS_ASSUME_NONNULL_BEGIN
 /// @param path Absolute path to an MP4/M4A file.
 /// @return An array of `ChapterMarker` objects sorted by start time, or `nil` if the file
 ///         cannot be opened or has no chapter markers.
-+ (nullable NSArray *)chaptersIn:(NSString *)path;
++ (nullable NSArray *)read:(NSString *)path;
 
 /// Replaces all chapter markers in the MP4 file with the provided chapters.
 /// @param chapters Array of `ChapterMarker` objects to write.
 /// @param path Absolute path to an MP4/M4A file.
 /// @return `true` if the chapters were written successfully.
-+ (bool)writeChapters:(NSArray *)chapters to:(NSString *)path;
++ (bool)write:(NSArray *)chapters to:(NSString *)path;
 
 /// Removes all Nero-style chapter markers from the MP4 file.
 /// @param path Absolute path to an MP4/M4A file.
 /// @return `true` if the removal succeeded.
-+ (bool)removeChaptersIn:(NSString *)path;
++ (bool)remove:(NSString *)path;
 
 @end
 
