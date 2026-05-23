@@ -173,8 +173,8 @@ static int readID3(ID3v2::Tag *tag) {
             StringList fl = txxx->fieldList();
             int v = (fl.size() >= 2) ? fl[1].toInt() : fl.front().toInt();
             // Heuristic: ≤5 is a raw star count; >5 and ≤100 is the old normalized scale → convert
-            if (v >= 1 && v <= 5) return v;
-            if (v > 5 && v <= 100) return starsFromNormalized(v);
+            if (v > TagRatingMinStars && v <= TagRatingMaxStars) return v;
+            if (v > TagRatingMaxStars && v <= normalizedFromStars(TagRatingMaxStars)) return starsFromNormalized(v);
         }
     }
 
@@ -216,8 +216,8 @@ static int readXiph(Ogg::XiphComment *xiph) {
     auto ratingIt = fields.find("RATING");
     if (ratingIt != fields.end() && !ratingIt->second.isEmpty()) {
         int v = ratingIt->second.front().toInt();
-        if (v >= 1 && v <= 5)   return v;                   // raw star count
-        if (v > 5 && v <= 100)  return starsFromNormalized(v); // normalized → stars
+        if (v > TagRatingMinStars && v <= TagRatingMaxStars)   return v;                   // raw star count
+        if (v > TagRatingMaxStars && v <= normalizedFromStars(TagRatingMaxStars))  return starsFromNormalized(v); // normalized → stars
     }
 
     // Fallback: FMPS_RATING (0.0–1.0 float, locale-safe parse → normalized 0–100 → stars)
@@ -254,8 +254,8 @@ static int readMP4(MP4::Tag *tag) {
         MP4::Item item = tag->item(kMP4RateKey);
         if (item.isValid()) {
             int v = item.toInt();
-            if (v >= 1 && v <= 5)   return v;
-            if (v > 5 && v <= 100)  return starsFromNormalized(v);
+            if (v > TagRatingMinStars && v <= TagRatingMaxStars)   return v;
+            if (v > TagRatingMaxStars && v <= normalizedFromStars(TagRatingMaxStars))  return starsFromNormalized(v);
         }
     }
 
@@ -266,8 +266,8 @@ static int readMP4(MP4::Tag *tag) {
             StringList sl = item.toStringList();
             if (!sl.isEmpty()) {
                 int v = sl.front().toInt();
-                if (v >= 1 && v <= 5)   return v;
-                if (v > 5 && v <= 100)  return starsFromNormalized(v);
+                if (v > TagRatingMinStars && v <= TagRatingMaxStars)   return v;
+                if (v > TagRatingMaxStars && v <= normalizedFromStars(TagRatingMaxStars))  return starsFromNormalized(v);
             }
         }
     }
@@ -303,8 +303,8 @@ static int readAPE(APE::Tag *tag) {
     auto it = m.find("RATING");
     if (it != m.end()) {
         int v = it->second.toString().toInt();
-        if (v >= 1 && v <= 5)   return v;                   // raw star count
-        if (v > 5 && v <= 100)  return starsFromNormalized(v); // normalized → stars
+        if (v > TagRatingMinStars && v <= TagRatingMaxStars)   return v;                   // raw star count
+        if (v > TagRatingMaxStars && v <= normalizedFromStars(TagRatingMaxStars))  return starsFromNormalized(v); // normalized → stars
     }
 
     return -1;
@@ -380,8 +380,8 @@ static void writeASF(ASF::Tag *tag, int stars) {
 }
 
 + (BOOL)write:(int)stars toPath:(NSString *)path {
-    if (stars < 0) stars = 0;
-    if (stars > 5) stars = 5;
+    if (stars < TagRatingMinStars) stars = TagRatingMinStars;
+    if (stars > TagRatingMaxStars) stars = TagRatingMaxStars;
 
     // false = skip audio properties parsing (not needed for rating I/O)
     FileRef fileRef(path.UTF8String, false);

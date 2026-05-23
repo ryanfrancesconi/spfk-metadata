@@ -19,6 +19,9 @@ NS_ASSUME_NONNULL_BEGIN
 /// - **MP4** (M4A, MP4, AAC): `rate` integer atom + `----:com.apple.iTunes:RATING` freeform atom
 /// - **APE tag** (Monkey's Audio, WavPack): RATING integer field
 /// - **ASF** (WMA): `WM/SharedUserRating` unsigned integer (0–99 scale)
+static const int TagRatingMinStars = 0;
+static const int TagRatingMaxStars = 5;
+
 @interface TagRating : NSObject
 
 /// Reads the star rating (0–5) from the audio file at the given path.
