@@ -77,6 +77,16 @@ if let pictureRef = TagPictureRef(
 description.imageDescription = nil
 try description.save()
 
+// Read/write star rating (0 = unrated, 1–5 stars)
+let stars = TagRating.read(url.path)          // -1 on error, 0 if unrated
+TagRating.write(4, toPath: url.path)          // write 4 stars
+TagRating.write(0, toPath: url.path)          // clear rating
+
+// Or via TagProperties / MetaAudioFileDescription
+let rating = description.tag(for: .rating)    // "0"–"5" string, or nil
+description.set(tag: .rating, value: "4")
+try description.save()
+
 // Copy tags between files
 try TagProperties.copyTags(from: sourceURL, to: destinationURL)
 ```
@@ -144,6 +154,7 @@ Low-level bridge layer exposing TagLib functionality to Swift through Objective-
 | Class | Description |
 |---|---|
 | **TagLibBridge** | Core TagLib operations: read/write tag properties, strip tags, copy metadata between files |
+| **TagRating** | Reads and writes 5-star ratings (0–5, where 0 = unrated) across all supported container formats. Each call opens its own `FileRef` independently of the generic tag pipeline. Format conventions: ID3v2 (MP3/WAV/AIFF) → POPM Popularimeter (WMP canonical bytes); Xiph (FLAC/OGG) → `RATING` integer field + `FMPS_RATING` float field; MP4 (M4A) → `rate` atom + `----:com.apple.iTunes:RATING` freeform; APE → `RATING` integer; ASF (WMA) → `WM/SharedUserRating`. Also surfaces via `TagKey.rating` in the `TagProperties`/`MetaAudioFileDescription` pipeline. |
 | **TagFile** | File handle wrapper for TagLib with format-specific tag access |
 | **ID3File** | ID3v2-specific file access with frame-level read/write and XMP support |
 | **TagPicture** | Embedded artwork extraction and embedding via TagLib. Reads using `CGImageSource` (JPEG, PNG, WebP, HEIC, TIFF, GIF, etc.). Writes using `CGImageDestination`; formats that cannot be written (e.g. WebP) are automatically transcoded to JPEG before embedding. For FLAC, routes through `FileRef::setComplexProperties` to write native PICTURE blocks and migrates legacy XiphComment `METADATA_BLOCK_PICTURE` entries on write. |
