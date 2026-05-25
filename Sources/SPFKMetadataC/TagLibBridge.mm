@@ -12,6 +12,7 @@
 
 #import <taglib/aifffile.h>
 #import <taglib/fileref.h>
+#import <taglib/tdebuglistener.h>
 #import <taglib/flacfile.h>
 #import <taglib/id3v2tag.h>
 #import <taglib/mp4file.h>
@@ -37,7 +38,20 @@
 using namespace std;
 using namespace TagLib;
 
+namespace {
+    class SilentListener : public DebugListener {
+    public:
+        void printMessage(const String &) override {}
+    };
+
+    SilentListener silentListener;
+}
+
 @implementation TagLibBridge
+
++ (void)load {
+    setDebugListener(&silentListener);
+}
 
 + (nullable NSDictionary *)getProperties:(NSString *)path {
     TagFile *tagFile = [[TagFile alloc] initWithPath:path];
