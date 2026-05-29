@@ -18,6 +18,12 @@
 #import "TagAudioPropertiesC.h"
 #import "TagFile.h"
 #import "TagLibBridge.h"
+#import "TagRating.h"
+
+// Forward declarations — implementations live in TagRating.mm.
+// Called here while the FileRef is still open to avoid a second file open.
+int TagRatingReadFromFile(TagLib::File *f);
+void TagRatingWriteToFile(TagLib::File *f, int stars);
 
 @implementation TagFile
 
@@ -70,6 +76,12 @@ using namespace TagLib;
         }
     }
 
+    // Inject rating via dedicated dispatch; avoids a second FileRef open after load returns.
+    int ratingStars = TagRatingReadFromFile(fileRef.file());
+    if (ratingStars >= 1) {
+        [_dictionary setValue:[NSString stringWithFormat:@"%d", ratingStars] forKey:@"RATING"];
+    }
+
     return true;
 }
 
@@ -80,6 +92,17 @@ using namespace TagLib;
     if (fileRef.isNull()) {
         cout << "Unable to read path:" << _path.UTF8String << endl;
         return false;
+    }
+
+    // Extract rating before building the PropertyMap — RATING is routed through
+    // format-specific frames (POPM/RATING field/rate atom) via TagRatingWriteToFile,
+    // not through the generic PropertyMap which would produce a TXXX:RATING frame.
+    int ratingStars = -1;
+    NSString *ratingValue = [_dictionary objectForKey:@"RATING"];
+    if (ratingValue != nil) {
+        int v = [ratingValue intValue];
+        if (v >= TagRatingMinStars && v <= TagRatingMaxStars)
+            ratingStars = v;
     }
 
     // Strip existing tags before writing so that atoms not present in the new
@@ -101,6 +124,8 @@ using namespace TagLib;
     PropertyMap properties = PropertyMap();
 
     for (NSString *key in [_dictionary allKeys]) {
+        if ([key isEqualToString:@"RATING"])
+            continue; // routed via TagRatingWriteToFile below
         NSString *value = [_dictionary objectForKey:key];
         String tagKey = String(key.UTF8String, String::UTF8);
         StringList tagValue = StringList(String(value.UTF8String, String::UTF8));
@@ -109,6 +134,9 @@ using namespace TagLib;
 
     properties.removeEmpty();
     fileRef.setProperties(properties);
+
+    if (ratingStars >= 0)
+        TagRatingWriteToFile(f, ratingStars);
 
     return fileRef.save();
 }

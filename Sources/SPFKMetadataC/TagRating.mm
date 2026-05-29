@@ -403,18 +403,13 @@ static void writeASF(ASF::Tag *tag, int stars) {
     tag->setAttribute("WM/SharedUserRating", ASF::Attribute(asfFromStars(stars)));
 }
 
-// MARK: - Public path-based interface
+// MARK: - File-pointer dispatch (called by TagFile and WaveFileC while their FileRef is open)
 
-@implementation TagRating
+// Non-static so TagFile.mm and WaveFileC.mm can call these via forward declaration,
+// avoiding a second FileRef open. All format-specific logic stays in this file.
 
-+ (int)read:(NSString *)path {
-    // false = skip audio properties parsing (not needed for rating I/O)
-    FileRef fileRef(path.UTF8String, false);
-    if (fileRef.isNull())
-        return -1;
-
-    File *f = fileRef.file();
-
+int TagRatingReadFromFile(TagLib::File *f) {
+    if (!f) return -1;
     if (auto *fp = dynamic_cast<MPEG::File *>(f))
         return readID3(fp->ID3v2Tag(false));
     if (auto *fp = dynamic_cast<RIFF::WAV::File *>(f))
@@ -435,23 +430,11 @@ static void writeASF(ASF::Tag *tag, int stars) {
         return readAPE(fp->APETag(false));
     if (auto *fp = dynamic_cast<ASF::File *>(f))
         return readASF(fp->tag());
-
     return -1;
 }
 
-+ (BOOL)write:(int)stars toPath:(NSString *)path {
-    if (stars < TagRatingMinStars)
-        stars = TagRatingMinStars;
-    if (stars > TagRatingMaxStars)
-        stars = TagRatingMaxStars;
-
-    // false = skip audio properties parsing (not needed for rating I/O)
-    FileRef fileRef(path.UTF8String, false);
-    if (fileRef.isNull())
-        return NO;
-
-    File *f = fileRef.file();
-
+void TagRatingWriteToFile(TagLib::File *f, int stars) {
+    if (!f) return;
     if (auto *fp = dynamic_cast<MPEG::File *>(f))
         writeID3(fp->ID3v2Tag(true), stars);
     else if (auto *fp = dynamic_cast<RIFF::WAV::File *>(f))
@@ -472,9 +455,32 @@ static void writeASF(ASF::Tag *tag, int stars) {
         writeAPE(fp->APETag(true), stars);
     else if (auto *fp = dynamic_cast<ASF::File *>(f))
         writeASF(fp->tag(), stars);
-    else
+}
+
+// MARK: - Public path-based interface
+
+@implementation TagRating
+
++ (int)read:(NSString *)path {
+    // false = skip audio properties parsing (not needed for rating I/O)
+    FileRef fileRef(path.UTF8String, false);
+    if (fileRef.isNull())
+        return -1;
+    return TagRatingReadFromFile(fileRef.file());
+}
+
++ (BOOL)write:(int)stars toPath:(NSString *)path {
+    if (stars < TagRatingMinStars)
+        stars = TagRatingMinStars;
+    if (stars > TagRatingMaxStars)
+        stars = TagRatingMaxStars;
+
+    // false = skip audio properties parsing (not needed for rating I/O)
+    FileRef fileRef(path.UTF8String, false);
+    if (fileRef.isNull())
         return NO;
 
+    TagRatingWriteToFile(fileRef.file(), stars);
     return fileRef.save();
 }
 

@@ -14,8 +14,13 @@
 #import "AudioMarkerUtil.h"
 #import "ID3File.h"
 #import "TagFile.h"
+#import "TagRating.h"
 #import "TagUtil.h"
 #import "WaveFileC.h"
+
+// Forward declarations — implementations live in TagRating.mm.
+int TagRatingReadFromFile(TagLib::File *f);
+void TagRatingWriteToFile(TagLib::File *f, int stars);
 
 @implementation WaveFileC
 
@@ -112,6 +117,12 @@ using namespace TagLib;
         _tagPicture = [[TagPicture alloc] initWithPicture:pictureRef];
     }
 
+    // Inject rating via dedicated dispatch; avoids a second FileRef open after load returns.
+    int ratingStars = TagRatingReadFromFile(waveFile);
+    if (ratingStars >= 1) {
+        [_id3Dictionary setValue:[NSString stringWithFormat:@"%d", ratingStars] forKey:@"RATING"];
+    }
+
     return true;
 }
 
@@ -148,7 +159,19 @@ using namespace TagLib;
         [TagPicture write:_tagPicture.pictureRef toTag:waveFile->tag()];
     }
 
-    PropertyMap properties = TagUtil::convertToPropertyMap(_id3Dictionary);
+    // Extract rating before PropertyMap conversion — RATING is routed through the
+    // POPM frame via TagRatingWriteToFile, not through setProperties.
+    int ratingStars = -1;
+    NSString *ratingValue = [_id3Dictionary objectForKey:@"RATING"];
+    if (ratingValue != nil) {
+        int v = [ratingValue intValue];
+        if (v >= TagRatingMinStars && v <= TagRatingMaxStars)
+            ratingStars = v;
+    }
+
+    NSMutableDictionary *filteredDict = [NSMutableDictionary dictionaryWithDictionary:_id3Dictionary];
+    [filteredDict removeObjectForKey:@"RATING"];
+    PropertyMap properties = TagUtil::convertToPropertyMap(filteredDict);
     waveFile->ID3v2Tag()->setProperties(properties);
 
     // clear all existing INFO fields first, then write new ones
@@ -167,6 +190,9 @@ using namespace TagLib;
 
         waveFile->InfoTag()->setFieldText(tagKey, tagValue);
     }
+
+    if (ratingStars >= 0)
+        TagRatingWriteToFile(waveFile, ratingStars);
 
     // save via taglib
     return waveFile->save();
