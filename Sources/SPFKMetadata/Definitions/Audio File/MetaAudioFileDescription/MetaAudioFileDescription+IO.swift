@@ -230,45 +230,22 @@ extension MetaAudioFileDescription {
     }
 
     private mutating func saveOther(imageNeedsSave: Bool = false, markersNeedsSave: Bool = false) throws {
-        let pictureToRestore = resolveArtworkForSave(imageNeedsSave: imageNeedsSave)
-
+        // tagProperties.save() preserves any existing embedded artwork at the C++ level —
+        // it captures the PICTURE block before stripping and restores it after. Callers that
+        // explicitly change artwork (imageNeedsSave) follow up below to overwrite or clear it.
         try tagProperties.save(to: url)
 
-        if let pictureToRestore {
-            try save(pictureRef: pictureToRestore)
+        if imageNeedsSave {
+            if let pictureRef = imageDescription.pictureRef {
+                try save(pictureRef: pictureRef)
+            } else {
+                try removePicture()
+            }
         }
 
         if markersNeedsSave {
             try saveMarkers()
         }
-    }
-
-    /// Resolves which artwork to restore after `tagProperties.save()` strips all tags.
-    ///
-    /// When `imageNeedsSave` is true, the caller is explicitly writing (or clearing) artwork —
-    /// return in-memory state exactly and do not touch the file or in-memory image.
-    ///
-    /// When `imageNeedsSave` is false (metadata-only or markers-only save), preserve whatever
-    /// is embedded in the file. If `cgImage` is populated use it directly. If it is nil
-    /// (deserialized element after JSON round-trip), read from disk and sync in-memory state
-    /// so the UI stays consistent after the save returns.
-    private mutating func resolveArtworkForSave(imageNeedsSave: Bool) -> TagPictureRef? {
-        if imageNeedsSave {
-            return imageDescription.pictureRef
-        }
-
-        if let inMemory = imageDescription.pictureRef {
-            return inMemory
-        }
-
-        // cgImage is nil — deserialized element. Read from disk before the strip so
-        // embedded artwork is preserved, and sync in-memory state so the UI reflects it.
-        if let fromDisk = try? TagPictureRef.parsing(url: url) {
-            imageDescription.pictureRef = fromDisk
-            return fromDisk
-        }
-
-        return nil
     }
 
     /// Writes embedded artwork to the file via TagLib.

@@ -105,6 +105,12 @@ using namespace TagLib;
             ratingStars = v;
     }
 
+    // Capture existing artwork before stripping so it can be preserved across the
+    // strip-rewrite cycle. strip() clears ALL tags including embedded pictures, but
+    // this method only manages text properties — callers use TagPicture to change
+    // or clear artwork explicitly when that is their intent.
+    auto existingPictures = fileRef.complexProperties(String("PICTURE"));
+
     // Strip existing tags before writing so that atoms not present in the new
     // dictionary are removed. setProperties alone does not clear format-specific
     // storage like iTunes freeform atoms (e.g. ITUNSMPB in M4A files).
@@ -137,6 +143,13 @@ using namespace TagLib;
 
     if (ratingStars >= 0)
         TagRatingWriteToFile(f, ratingStars);
+
+    // Restore artwork that was present before the strip. This method is responsible
+    // only for text tags; callers that explicitly write or clear artwork (via TagPicture)
+    // do so after this method returns, overwriting whatever we restore here.
+    if (!existingPictures.isEmpty()) {
+        fileRef.setComplexProperties(String("PICTURE"), existingPictures);
+    }
 
     return fileRef.save();
 }
