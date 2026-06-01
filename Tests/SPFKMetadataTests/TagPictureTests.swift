@@ -321,22 +321,4 @@ class TagPictureTests: BinTestCase {
         // #expect(outputPicture.pictureDescription == "Shit Sandwich", "\(tmpfile.lastPathComponent)")
         // #expect(outputPicture.pictureType == "Back Cover", "\(tmpfile.lastPathComponent)")
     }
-
-    // MARK: - Development
-
-    @Test(arguments: [
-        "/Volumes/ADD2/ADD/TEMP/Foley-Flac/Foley/Element/Bottles And Cups/Bottle Open/Bottle Top Open 01.flac",
-        "/Volumes/ADD2/ADD/TEMP/Foley-Flac/Foley/Element/Bottles And Cups/Bottle Open/Bottle Top Open 02.flac",
-    ])
-    func devVerifyEmbeddedArtworkInFoleyFlac(path: String) async throws {
-        let url = URL(fileURLWithPath: path)
-        guard url.exists else { return }
-
-        let picture = try #require(TagPicture(path: path)?.pictureRef)
-
-        Log.debug("[\(url.lastPathComponent)] \(picture.cgImage.width)x\(picture.cgImage.height) utType=\(picture.utType.identifier) mimeType=\(picture.utType.preferredMIMEType ?? "?")")
-
-        #expect(picture.cgImage.width > 0)
-        #expect(picture.cgImage.height > 0)
-    }
 }
