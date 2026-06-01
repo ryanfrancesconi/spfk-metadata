@@ -37,8 +37,12 @@ static TagPictureRef *_Nullable buildPictureRef(const VariantMap &picture) {
     String pictureMimeType = picture.value(mimeTypeKey).value<String>();
     NSString *mimeType = StringUtil::utf8NSString(pictureMimeType);
     UTType *utType = [UTType typeWithMIMEType:mimeType];
-    if (!utType)
-        return nil;
+    // MP4 CoverArt::Unknown format produces a bare "image/" MIME type that the OS
+    // cannot resolve to a UTType. Fall back to JPEG so CGImageSource can still
+    // probe and decode the actual bytes below.
+    if (!utType) {
+        utType = [UTType typeWithIdentifier:@"public.jpeg"];
+    }
 
     ByteVector pictureData = picture.value(dataKey).toByteVector();
     NSData *nsData = [[NSData alloc] initWithBytes:pictureData.data() length:pictureData.size()];

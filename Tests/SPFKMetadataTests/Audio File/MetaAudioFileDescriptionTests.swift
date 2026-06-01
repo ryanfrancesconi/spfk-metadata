@@ -214,6 +214,95 @@ class MetaAudioFileDescriptionArtworkTests: BinTestCase {
         #expect(reloaded.imageDescription.cgImage?.width == cgImage.width)
     }
 
+    /// Saving with .metadata only must not strip existing embedded artwork (M4A).
+    @Test func m4aMetadataOnlySavePreservesArtwork() async throws {
+        let tmpfile = try copyToBin(url: TestBundleResources.shared.tabla_m4a)
+
+        // Embed artwork
+        var maf = try await MetaAudioFileDescription(parsing: tmpfile)
+        let cgImage = try CGImage.contentsOf(url: TestBundleResources.shared.sharksandwich)
+        await maf.imageDescription.update(cgImage: cgImage)
+        maf.tagProperties[.title] = "Original"
+        try maf.save(dirtyFlags: [.metadata, .image])
+
+        // Confirm artwork is present at the TagLib level
+        #expect(throws: Never.self) { try TagPictureRef.parsing(url: tmpfile) }
+        let withArtwork = try await MetaAudioFileDescription(parsing: tmpfile)
+        #expect(withArtwork.imageDescription.cgImage != nil)
+
+        // Save metadata only — artwork must survive
+        var updated = withArtwork
+        updated.tagProperties[.title] = "Updated"
+        try updated.save(dirtyFlags: [.metadata])
+
+        let restoredRef = try TagPictureRef.parsing(url: tmpfile)
+        #expect(restoredRef.cgImage.width == cgImage.width)
+
+        let reloaded = try await MetaAudioFileDescription(parsing: tmpfile)
+        #expect(reloaded.tagProperties[.title] == "Updated")
+        #expect(reloaded.imageDescription.cgImage?.width == cgImage.width)
+    }
+
+    /// Saving with .metadata + .markers must not strip embedded artwork (M4A).
+    /// This exercises the saveMarkers() → MP4ChapterUtil.write() path, which opens
+    /// a second MP4::File and calls save() after artwork has been restored.
+    @Test func m4aMarkerSavePreservesArtwork() async throws {
+        let tmpfile = try copyToBin(url: TestBundleResources.shared.tabla_m4a)
+
+        // Embed artwork
+        var maf = try await MetaAudioFileDescription(parsing: tmpfile)
+        let cgImage = try CGImage.contentsOf(url: TestBundleResources.shared.sharksandwich)
+        await maf.imageDescription.update(cgImage: cgImage)
+        maf.tagProperties[.title] = "Original"
+        try maf.save(dirtyFlags: [.metadata, .image])
+
+        // Confirm artwork is present at the TagLib level
+        #expect(throws: Never.self) { try TagPictureRef.parsing(url: tmpfile) }
+
+        // Add a marker and save with both .metadata and .markers — artwork must survive
+        var updated = try await MetaAudioFileDescription(parsing: tmpfile)
+        updated.tagProperties[.title] = "Updated"
+        updated.markerCollection.update(markerDescriptions: [
+            AudioMarkerDescription(name: "Test Marker", startTime: 1.0)
+        ])
+        try updated.save(dirtyFlags: [.metadata, .markers])
+
+        let restoredRef = try TagPictureRef.parsing(url: tmpfile)
+        #expect(restoredRef.cgImage.width == cgImage.width)
+
+        let reloaded = try await MetaAudioFileDescription(parsing: tmpfile)
+        #expect(reloaded.tagProperties[.title] == "Updated")
+        #expect(reloaded.imageDescription.cgImage?.width == cgImage.width)
+        #expect(reloaded.markerCollection.markerDescriptions.isNotEmpty)
+    }
+
+    /// Parsing a file that already has embedded artwork must populate cgImage, and a subsequent
+    /// metadata-only save must not strip that artwork. This is distinct from metadataOnlySavePreservesArtwork,
+    /// which embeds artwork programmatically first — here the artwork comes from the file itself.
+    @Test func metadataOnlySavePreservesPreExistingArtwork() async throws {
+        let tmpfile = try copyToBin(url: TestBundleResources.shared.mp3_id3)
+
+        // Confirm artwork is embedded at the TagLib level before we start
+        let originalRef = try TagPictureRef.parsing(url: tmpfile)
+        let originalWidth = originalRef.cgImage.width
+
+        let initial = try await MetaAudioFileDescription(parsing: tmpfile)
+        #expect(initial.imageDescription.cgImage != nil)
+
+        // Metadata-only save — no .image flag, artwork must survive
+        var updated = initial
+        updated.tagProperties[.title] = "Pre-Existing Artwork Test"
+        try updated.save(dirtyFlags: [.metadata])
+
+        // Verify at the TagLib level to avoid updateDefaultImage fallback masking a missing picture
+        let restoredRef = try TagPictureRef.parsing(url: tmpfile)
+        #expect(restoredRef.cgImage.width == originalWidth)
+
+        let reloaded = try await MetaAudioFileDescription(parsing: tmpfile)
+        #expect(reloaded.tagProperties[.title] == "Pre-Existing Artwork Test")
+        #expect(reloaded.imageDescription.cgImage?.width == originalWidth)
+    }
+
     /// removePicture() immediately removes embedded artwork from the file and clears it from memory
     /// without requiring a full metadata save cycle.
     @Test func removePictureAPI() async throws {
