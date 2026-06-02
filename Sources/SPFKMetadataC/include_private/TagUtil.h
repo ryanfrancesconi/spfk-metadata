@@ -13,6 +13,7 @@
 #import <taglib/rifffile.h>
 #import <taglib/wavfile.h>
 
+#import <taglib/id3v2frame.h>
 #import <taglib/id3v2tag.h>
 #import <taglib/privateframe.h>
 #import <taglib/tpropertymap.h>
@@ -85,10 +86,21 @@ static PropertyMap convertToPropertyMap(NSMutableDictionary *dict) {
     for (NSString *key in [dict allKeys]) {
         NSString *value = [dict objectForKey:key];
 
-        // can be taglib key or 4 char id3 frameID
         String tagKey = String(key.UTF8String, String::UTF8);
-        StringList tagValue = StringList(String(value.UTF8String, String::UTF8));
 
+        // setProperties() uses semantic property keys (e.g. "ALBUM", "TITLE"), not
+        // raw 4-char frame IDs (e.g. "TALB", "TIT2"). Translate any 4-char frame ID
+        // to its semantic equivalent via TagLib's own mapping table. Custom TXXX
+        // descriptions (e.g. "LOUDNESSINTEGRATED") are longer than 4 chars and pass
+        // through unchanged, becoming TXXX user-defined frames as intended.
+        if (tagKey.size() == 4) {
+            String translated = ID3v2::Frame::frameIDToKey(tagKey.data(String::Latin1));
+            if (!translated.isEmpty()) {
+                tagKey = translated;
+            }
+        }
+
+        StringList tagValue = StringList(String(value.UTF8String, String::UTF8));
         properties.insert(tagKey, tagValue);
     }
 
