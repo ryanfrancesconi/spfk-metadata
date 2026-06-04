@@ -2,8 +2,8 @@
 
 #import <cmath>
 
-#import <taglib/mp4file.h>
 #import <taglib/mp4chapter.h>
+#import <taglib/mp4file.h>
 
 #import "ChapterMarker.h"
 #import "MP4ChapterUtil.h"
@@ -76,6 +76,9 @@ static NSTimeInterval chapterTimeToSeconds(long long chapterTime) {
             title = String(marker.name.UTF8String, String::UTF8);
         }
 
+        // EndTime cannot be stored in the MP4 chapter format. Both the QuickTime chapter
+        // track and the Nero chpl atom record only start times; endTime is always implicit
+        // (next chapter's start, or file duration for the last chapter).
         chapterList.append(MP4::Chapter(title, secondsToChapterTime(marker.startTime)));
     }
 

@@ -76,6 +76,13 @@ static String chapterNameKey(int index) {
     return String(buf);
 }
 
+/// Formats a chapter end time field key: CHAPTER000END, CHAPTER001END, etc.
+static String chapterEndKey(int index) {
+    char buf[20];
+    snprintf(buf, sizeof(buf), "CHAPTER%03dEND", index);
+    return String(buf);
+}
+
 /// Removes all CHAPTER* fields from a XiphComment.
 /// We must collect keys first, then remove, to avoid mutating during iteration.
 static void removeAllChapterFields(Ogg::XiphComment *comment) {
@@ -167,10 +174,21 @@ static void removeAllChapterFields(Ogg::XiphComment *comment) {
             name = @(nameIt->second.front().toCString(true));
         }
 
-        // endTime = next chapter's start time, or 0 for the last
+        // Prefer explicit CHAPTER000END field (written for segment markers).
+        // Fall back to next chapter's start time, or 0 for the last chapter.
         NSTimeInterval endTime = 0;
+        String endKey = chapterEndKey(idx);
+        auto endIt = fields.find(endKey);
 
-        if (i + 1 < indices.size()) {
+        if (endIt != fields.end() && !endIt->second.isEmpty()) {
+            NSTimeInterval explicitEnd = parseTimestamp(endIt->second.front().to8Bit());
+
+            if (explicitEnd > 0) {
+                endTime = explicitEnd;
+            }
+        }
+
+        if (endTime == 0 && i + 1 < indices.size()) {
             String nextTimeKey = chapterKey(indices[i + 1]);
             auto nextIt = fields.find(nextTimeKey);
 
@@ -218,6 +236,13 @@ static void removeAllChapterFields(Ogg::XiphComment *comment) {
 
         if (marker.name.length > 0) {
             comment->addField(nameKey, String(marker.name.UTF8String));
+        }
+
+        // Write end time only for region markers (endTime differs from startTime).
+        if (marker.endTime > marker.startTime) {
+            String endKey = chapterEndKey(index);
+            string endTimestamp = formatTimestamp(marker.endTime);
+            comment->addField(endKey, String(endTimestamp));
         }
 
         index++;

@@ -327,13 +327,13 @@ extension MetaAudioFileDescription {
 
         switch fileType {
         case .mp3:
-            success = MPEGChapterUtil.write(markerCollection.chapterMarkers, to: path)
+            success = MPEGChapterUtil.write(markerCollection.colorEncodedChapterMarkers, to: path)
 
         case .m4a, .mp4, .aac, .m4b:
-            success = MP4ChapterUtil.write(markerCollection.chapterMarkers, to: path)
+            success = MP4ChapterUtil.write(markerCollection.fileEncodedChapterMarkers, to: path)
 
         case .flac, .ogg, .opus:
-            success = XiphChapterUtil.write(markerCollection.chapterMarkers, to: path)
+            success = XiphChapterUtil.write(markerCollection.colorEncodedChapterMarkers, to: path)
 
         case .aiff, .aifc:
             success = AudioMarkerUtil.write(audioMarkers, to: url)
@@ -350,7 +350,10 @@ extension MetaAudioFileDescription {
 }
 
 extension MetaAudioFileDescription {
-    /// Converts the ``markerCollection`` to an array of `AudioMarker` bridge objects for WAV file writing.
+    /// Converts the ``markerCollection`` to an array of `AudioMarker` bridge objects for WAV/AIFF writing.
+    ///
+    /// Region markers (.region) encode their endTime and color as a JSON suffix in the name
+    /// so the data survives the RIFF cue-point format, which has no native endTime or color fields.
     public var audioMarkers: [AudioMarker] {
         var waveMarkers = [AudioMarker]()
 
@@ -359,7 +362,7 @@ extension MetaAudioFileDescription {
 
             waveMarkers.append(
                 AudioMarker(
-                    name: desc.name ?? "Marker",
+                    name: desc.fileEncodedName,
                     time: desc.startTime,
                     sampleRate: audioFormat?.sampleRate ?? 0,
                     markerID: Int32(i)

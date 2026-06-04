@@ -2,6 +2,7 @@
 
 import Foundation
 import SPFKBase
+import SPFKMetadataBase
 import SPFKTesting
 import Testing
 
@@ -104,13 +105,40 @@ class XiphChapterUtilTests: BinTestCase {
 
         #expect(readBack.count == 1)
         #expect(readBack[0].name == "Precise")
-        // Verify HH:MM:SS.mmm round-trip (01:01:01.123)
+        // Verify HH:MM:SS.mmm round-trip (01:01:01.123 and 02:02:02.456)
         #expect(abs(readBack[0].startTime - 3661.123) < 0.002)
-        // Xiph stores only start times; last chapter endTime is inferred as 0
-        #expect(readBack[0].endTime == 0)
+        #expect(abs(readBack[0].endTime - 7322.456) < 0.002)
     }
 
-    @Test func endTimeInferredFromNextChapter() async throws {
+    // MARK: - Color round-trip
+
+    @Test func colorRoundTripFLAC() async throws {
+        let tmpfile = try copyToBin(url: TestBundleResources.shared.tabla_flac)
+        let hex = HexColor(string: "FF0000FF")!
+
+        let desc = AudioMarkerDescription(name: "Red Cue", startTime: 1.0, hexColor: hex)
+        #expect(XiphChapterUtil.write([desc.colorEncodedChapterMarker], to: tmpfile.path))
+
+        let collection = try await AudioMarkerDescriptionCollection(url: tmpfile)
+        #expect(collection.markerDescriptions.count == 1)
+        #expect(collection.markerDescriptions[0].name == "Red Cue")
+        #expect(collection.markerDescriptions[0].hexColor?.stringValue == "FF0000FF")
+    }
+
+    @Test func colorRoundTripOGG() async throws {
+        let tmpfile = try copyToBin(url: TestBundleResources.shared.tabla_ogg)
+        let hex = HexColor(string: "00FF00FF")!
+
+        let desc = AudioMarkerDescription(name: "Green Cue", startTime: 0.5, hexColor: hex)
+        #expect(XiphChapterUtil.write([desc.colorEncodedChapterMarker], to: tmpfile.path))
+
+        let collection = try await AudioMarkerDescriptionCollection(url: tmpfile)
+        #expect(collection.markerDescriptions.count == 1)
+        #expect(collection.markerDescriptions[0].name == "Green Cue")
+        #expect(collection.markerDescriptions[0].hexColor?.stringValue == "00FF00FF")
+    }
+
+    @Test func endTimeRoundTrip() async throws {
         let tmpfile = try copyToBin(url: TestBundleResources.shared.tabla_flac)
 
         let markers: [ChapterMarker] = [
@@ -125,12 +153,11 @@ class XiphChapterUtilTests: BinTestCase {
 
         #expect(readBack.count == 3)
         #expect(abs(readBack[0].startTime - 0.5) < 0.002)
-        // Xiph infers endTime from next chapter's startTime
         #expect(abs(readBack[0].endTime - 1.5) < 0.002)
         #expect(abs(readBack[1].startTime - 1.5) < 0.002)
         #expect(abs(readBack[1].endTime - 3.0) < 0.002)
         #expect(abs(readBack[2].startTime - 3.0) < 0.002)
-        // Last chapter has no successor — endTime is 0
-        #expect(readBack[2].endTime == 0)
+        // CHAPTER000END is written, so last chapter endTime round-trips correctly
+        #expect(abs(readBack[2].endTime - 4.0) < 0.002)
     }
 }

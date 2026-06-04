@@ -2,6 +2,7 @@
 
 import Foundation
 import SPFKBase
+import SPFKMetadataBase
 import SPFKTesting
 import Testing
 
@@ -78,6 +79,20 @@ class MP3ChapterMarkerTests: BinTestCase {
         // ID3v2 CHAP frames store time in milliseconds
         #expect(abs(readBack[0].startTime - 3661.123) < 0.002)
         #expect(abs(readBack[0].endTime - 7322.456) < 0.002)
+    }
+
+    @Test func colorRoundTripMP3() async throws {
+        let tmpfile = try copyToBin(url: TestBundleResources.shared.mp3_id3)
+        #expect(MPEGChapterUtil.remove(tmpfile.path))
+
+        let hex = HexColor(string: "0000FFFF")!
+        let desc = AudioMarkerDescription(name: "Blue Cue", startTime: 1.0, hexColor: hex)
+        #expect(MPEGChapterUtil.write([desc.colorEncodedChapterMarker], to: tmpfile.path))
+
+        let collection = try await AudioMarkerDescriptionCollection(url: tmpfile)
+        #expect(collection.markerDescriptions.count == 1)
+        #expect(collection.markerDescriptions[0].name == "Blue Cue")
+        #expect(collection.markerDescriptions[0].hexColor?.stringValue == "0000FFFF")
     }
 
     @Test func endTimeRoundTrip() async throws {
