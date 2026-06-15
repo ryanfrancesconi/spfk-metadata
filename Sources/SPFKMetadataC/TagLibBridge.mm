@@ -200,7 +200,7 @@ namespace {
         return false;
     }
 
-    output.tag()->setProperties(tags);
+    output.file()->setProperties(tags);
 
     return output.save();
 }

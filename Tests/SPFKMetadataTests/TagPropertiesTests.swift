@@ -249,6 +249,18 @@ class TagPropertiesTests: BinTestCase {
         Log.debug(id3File.dictionary)
     }
 
+    @Test func copyTagsBetweenFiles() async throws {
+        let source = TestBundleResources.shared.mp3_id3
+        let destination = try copyToBin(url: TestBundleResources.shared.mp3_no_metadata)
+
+        try TagProperties.copyTags(from: source, to: destination)
+
+        let sourceTags = try TagProperties(url: source)
+        let destTags = try TagProperties(url: destination)
+
+        #expect(destTags.tags == sourceTags.tags)
+    }
+
     @Test func audioProperties() async throws {
         let url = TestBundleResources.shared.mp3_id3
         let file = try TagProperties(url: url)
