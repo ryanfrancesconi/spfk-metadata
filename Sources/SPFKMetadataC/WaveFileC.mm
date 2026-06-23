@@ -161,7 +161,8 @@ using namespace TagLib;
 
     // Extract rating before PropertyMap conversion — RATING is routed through the
     // POPM frame via TagRatingWriteToFile, not through setProperties.
-    int ratingStars = -1;
+    // Default to 0 so an absent key clears any existing POPM frame (rating removed).
+    int ratingStars = 0;
     NSString *ratingValue = [_id3Dictionary objectForKey:@"RATING"];
     if (ratingValue != nil) {
         int v = [ratingValue intValue];

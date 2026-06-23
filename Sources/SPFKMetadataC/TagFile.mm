@@ -97,7 +97,8 @@ using namespace TagLib;
     // Extract rating before building the PropertyMap — RATING is routed through
     // format-specific frames (POPM/RATING field/rate atom) via TagRatingWriteToFile,
     // not through the generic PropertyMap which would produce a TXXX:RATING frame.
-    int ratingStars = -1;
+    // Default to 0 so an absent key clears any existing rating frame (rating removed).
+    int ratingStars = 0;
     NSString *ratingValue = [_dictionary objectForKey:@"RATING"];
     if (ratingValue != nil) {
         int v = [ratingValue intValue];
