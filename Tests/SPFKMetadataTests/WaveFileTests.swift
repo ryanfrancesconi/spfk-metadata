@@ -81,7 +81,7 @@ class WaveFileTests: BinTestCase {
     }
 
     @Test func writeInfo() async throws {
-        deleteBinOnExit = false
+        deleteBinOnExit = true
         let tmpfile = try copyToBin(url: TestBundleResources.shared.wav_bext_v2)
 
         let file = WaveFileC(path: tmpfile.path)
@@ -121,7 +121,7 @@ class WaveFileTests: BinTestCase {
     }
 
     @Test func chunks() async throws {
-        deleteBinOnExit = false
+        deleteBinOnExit = true
 
         let url = try copyToBin(url: TestBundleResources.shared.ixml_chunk)
         let file = WaveFileC(path: url.path)

@@ -51,7 +51,7 @@ class TagPictureTests: BinTestCase {
     // MARK: - TagPicture (low-level)
 
     @Test func getPicture() async throws {
-        deleteBinOnExit = false
+        deleteBinOnExit = true
 
         let source = TestBundleResources.shared.mp3_id3
 
@@ -291,7 +291,7 @@ class TagPictureTests: BinTestCase {
 
     @Test(arguments: TestBundleResources.shared.markerFormats)
     func setPicture(url: URL) async throws {
-        deleteBinOnExit = false
+        deleteBinOnExit = true
 
         let imageURL = TestBundleResources.shared.sharksandwich
 

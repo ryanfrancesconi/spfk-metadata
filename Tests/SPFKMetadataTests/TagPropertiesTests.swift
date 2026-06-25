@@ -45,7 +45,7 @@ class TagPropertiesTests: BinTestCase {
     }
 
     @Test func readWriteTagProperties() async throws {
-        deleteBinOnExit = false
+        deleteBinOnExit = true
 
         let tmpfile = try copyToBin(url: TestBundleResources.shared.wav_bext_v2)
 
@@ -85,7 +85,7 @@ class TagPropertiesTests: BinTestCase {
     }
 
     @Test func writeFormats() async throws {
-        deleteBinOnExit = false
+        deleteBinOnExit = true
 
         let source = try TagProperties(url: TestBundleResources.shared.mp3_id3)
 
@@ -112,7 +112,7 @@ class TagPropertiesTests: BinTestCase {
     }
 
     @Test func stripTags() async throws {
-        deleteBinOnExit = false
+        deleteBinOnExit = true
 
         let files = TestBundleResources.shared.formats
 
@@ -229,7 +229,7 @@ class TagPropertiesTests: BinTestCase {
     }
 
     @Test func customTag() async throws {
-        deleteBinOnExit = false
+        deleteBinOnExit = true
         let tmpfile = try copyToBin(url: TestBundleResources.shared.wav_bext_v2)
 
         var dict: [String: String] = TagLibBridge.getProperties(tmpfile.path) as? [String: String] ?? [:]

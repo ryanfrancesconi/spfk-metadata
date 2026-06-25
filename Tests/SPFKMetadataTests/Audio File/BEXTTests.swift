@@ -67,7 +67,7 @@ class BEXTTests: BinTestCase {
     }
 
     @Test func parseBEXT_v2b() async throws {
-        deleteBinOnExit = false
+        deleteBinOnExit = true
 
         let url = TestBundleResources.shared.wav_bext_v2b
 
@@ -101,7 +101,7 @@ class BEXTTests: BinTestCase {
     }
 
     @Test func writeBEXT1() async throws {
-        deleteBinOnExit = false
+        deleteBinOnExit = true
         let tmpfile = try copyToBin(url: TestBundleResources.shared.wav_bext_v2)
 
         var desc = BEXTDescription()
@@ -131,7 +131,7 @@ class BEXTTests: BinTestCase {
     }
 
     @Test func writeBEXT2() async throws {
-        deleteBinOnExit = false
+        deleteBinOnExit = true
         let tmpfile = try copyToBin(url: TestBundleResources.shared.wav_bext_v1)
 
         var desc = BEXTDescription()
@@ -184,7 +184,7 @@ class BEXTTests: BinTestCase {
     }
 
     @Test func writeBEXT3() async throws {
-        deleteBinOnExit = false
+        deleteBinOnExit = true
         let tmpfile = try copyToBin(url: TestBundleResources.shared.wav_bext_v1)
 
         var desc1 = BEXTDescription()
