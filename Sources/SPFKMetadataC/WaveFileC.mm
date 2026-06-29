@@ -201,7 +201,7 @@ using namespace TagLib;
 
 - (void)saveExtras {
     // write markers (via AudioToolbox, separate from TagLib)
-    if (_markersNeedsSave && _markers.count > 0) {
+    if (_markersNeedsSave) {
         NSURL *url = [NSURL fileURLWithPath:_path];
         [AudioMarkerUtil write:_markers to:url];
     }
