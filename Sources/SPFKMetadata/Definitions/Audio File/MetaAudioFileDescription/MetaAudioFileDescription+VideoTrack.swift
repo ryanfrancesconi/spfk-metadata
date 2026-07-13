@@ -1,0 +1,150 @@
+// Copyright Ryan Francesconi. All Rights Reserved. Revision History at https://github.com/ryanfrancesconi/spfk-metadata
+
+import AVFoundation
+import CoreMedia
+import Foundation
+import SPFKBase
+import SPFKMetadataBase
+
+/// AVFoundation-based reader for video-technical and QuickTime user-data properties.
+///
+/// Sits alongside the TagLib-based path in `MetaAudioFileDescription+IO.swift` — TagLib
+/// remains the source for all tag data (title/artist/genre/etc.); this is a purely additive,
+/// parallel read path for video-technical and QuickTime-user-data fields only. Best-effort:
+/// failures leave `videoTrack`/`quickTimeUserData` `nil` rather than failing the whole parse,
+/// matching how the TagLib-based `load()` in `+IO.swift` treats its own reads as best-effort.
+extension MetaAudioFileDescription {
+    mutating func loadVideoTrack() async {
+        guard let fileType, fileType.isVideo else { return }
+
+        let asset = AVURLAsset(url: url)
+
+        do {
+            guard let track = try await asset.loadTracks(withMediaType: .video).first else { return }
+
+            let naturalSize = try await track.load(.naturalSize)
+            let transform = try await track.load(.preferredTransform)
+            let frameRate = try await track.load(.nominalFrameRate)
+            let formatDescriptions = try await track.load(.formatDescriptions)
+
+            var codec: String?
+            var pixelAspectRatio: Double?
+
+            if let description = formatDescriptions.first {
+                codec = Self.fourCCString(CMFormatDescriptionGetMediaSubType(description))
+                pixelAspectRatio = Self.pixelAspectRatio(from: description)
+            }
+
+            videoTrack = VideoTrackProperties(
+                width: Int(naturalSize.width),
+                height: Int(naturalSize.height),
+                frameRate: frameRate,
+                codec: codec,
+                pixelAspectRatio: pixelAspectRatio,
+                rotationDegrees: Self.rotationDegrees(from: transform)
+            )
+        } catch {
+            Log.error("Failed to read video track properties for \(url.lastPathComponent)", error)
+        }
+
+        await loadQuickTimeUserData(asset: asset)
+    }
+
+    private mutating func loadQuickTimeUserData(asset: AVAsset) async {
+        do {
+            let items = try await asset.loadMetadata(for: .quickTimeUserData)
+            guard !items.isEmpty else { return }
+
+            var userData = QuickTimeUserData()
+
+            for item in items {
+                switch item.identifier {
+                case .quickTimeUserDataMake:
+                    userData.deviceMake = try await item.load(.stringValue)
+                case .quickTimeUserDataModel:
+                    userData.deviceModel = try await item.load(.stringValue)
+                case .quickTimeUserDataSoftware:
+                    userData.deviceSoftware = try await item.load(.stringValue)
+                case .quickTimeUserDataCreationDate:
+                    userData.creationDate = try await item.load(.dateValue)
+                case .quickTimeUserDataLocationISO6709:
+                    if let iso6709 = try await item.load(.stringValue) {
+                        (userData.latitude, userData.longitude) = Self.parseISO6709(iso6709)
+                    }
+                default:
+                    continue
+                }
+            }
+
+            quickTimeUserData = userData
+        } catch {
+            Log.error("Failed to read QuickTime user data for \(url.lastPathComponent)", error)
+        }
+    }
+
+    /// Converts a `CMFormatDescription`'s four-character-code media subtype into its
+    /// standard ASCII string form (e.g. "avc1", "hvc1").
+    private static func fourCCString(_ fourCC: FourCharCode) -> String? {
+        let value = fourCC
+        let bytes: [UInt8] = [
+            UInt8((value >> 24) & 0xFF),
+            UInt8((value >> 16) & 0xFF),
+            UInt8((value >> 8) & 0xFF),
+            UInt8(value & 0xFF),
+        ]
+
+        guard bytes.allSatisfy({ (0x20...0x7E).contains($0) }) else { return nil }
+
+        return String(bytes: bytes, encoding: .ascii)
+    }
+
+    /// Reads pixel aspect ratio from a format description's `PixelAspectRatio` extension
+    /// dictionary (horizontal/vertical spacing). `nil` (implying 1:1 square pixels) when
+    /// the extension is absent, which is the common case for standard video.
+    private static func pixelAspectRatio(from description: CMFormatDescription) -> Double? {
+        guard
+            let extensions = CMFormatDescriptionGetExtension(
+                description,
+                extensionKey: kCMFormatDescriptionExtension_PixelAspectRatio
+            ) as? [CFString: Any],
+            let horizontal = extensions[kCMFormatDescriptionKey_PixelAspectRatioHorizontalSpacing] as? NSNumber,
+            let vertical = extensions[kCMFormatDescriptionKey_PixelAspectRatioVerticalSpacing] as? NSNumber,
+            vertical.doubleValue > 0
+        else {
+            return nil
+        }
+
+        return horizontal.doubleValue / vertical.doubleValue
+    }
+
+    /// Normalizes an `AVAssetTrack.preferredTransform` rotation to the nearest multiple of
+    /// 90 degrees (0, 90, 180, or 270) — what a portrait phone-shot video needs applied to
+    /// preview right-side-up.
+    private static func rotationDegrees(from transform: CGAffineTransform) -> Int {
+        let radians = atan2(Double(transform.b), Double(transform.a))
+        var degrees = Int((radians * 180 / .pi).rounded())
+        degrees = ((degrees % 360) + 360) % 360
+        return (Int((Double(degrees) / 90).rounded()) * 90) % 360
+    }
+
+    /// Parses an ISO 6709 location string (e.g. "+37.3349-122.0090+000.000/") into
+    /// decimal-degree latitude/longitude. Format: signed latitude immediately followed by
+    /// signed longitude, no separator between them, optional altitude, terminated by "/".
+    private static func parseISO6709(_ string: String) -> (latitude: Double?, longitude: Double?) {
+        // Match the leading two signed decimal numbers (latitude, then longitude).
+        let pattern = #"^([+-]\d+(?:\.\d+)?)([+-]\d+(?:\.\d+)?)"#
+
+        guard let regex = try? NSRegularExpression(pattern: pattern),
+            let match = regex.firstMatch(in: string, range: NSRange(string.startIndex..., in: string)),
+            match.numberOfRanges == 3,
+            let latRange = Range(match.range(at: 1), in: string),
+            let lonRange = Range(match.range(at: 2), in: string),
+            let latitude = Double(string[latRange]),
+            let longitude = Double(string[lonRange])
+        else {
+            return (nil, nil)
+        }
+
+        return (latitude, longitude)
+    }
+}

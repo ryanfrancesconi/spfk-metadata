@@ -53,6 +53,10 @@ extension MetaAudioFileDescription {
             audioFormat?.update(bitRate: bitRate)
         }
 
+        // Purely additive, parallel read path — populates videoTrack/quickTimeUserData via
+        // AVFoundation. No-ops for pure-audio files (isVideo gate inside loadVideoTrack()).
+        await loadVideoTrack()
+
         await updateDefaultImage()
     }
 
