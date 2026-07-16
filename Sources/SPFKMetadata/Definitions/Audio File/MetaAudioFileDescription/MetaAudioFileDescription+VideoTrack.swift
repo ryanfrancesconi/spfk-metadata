@@ -14,7 +14,10 @@ import SPFKMetadataBase
 /// failures leave `videoTrack`/`quickTimeUserData` `nil` rather than failing the whole parse,
 /// matching how the TagLib-based `load()` in `+IO.swift` treats its own reads as best-effort.
 extension MetaAudioFileDescription {
-    mutating func loadVideoTrack() async {
+    /// Public so callers beyond `init(parsing:)` (e.g. a store-level background backfill
+    /// for elements saved before `videoTrack`/`quickTimeUserData` were added to this type's
+    /// `Codable` conformance — see `shadowtag-video-metadata-plan.md`) can re-run this read.
+    public mutating func loadVideoTrack() async {
         guard let fileType, fileType.isVideo else { return }
 
         let asset = AVURLAsset(url: url)
