@@ -53,24 +53,30 @@ extension MetaAudioFileDescription {
         await loadQuickTimeUserData(asset: asset)
     }
 
+    /// Reads device/GPS/creation-date metadata, trying both QuickTime metadata keyspaces.
+    ///
+    /// Verified against real files, not assumed: a recent iPhone recording (iOS 26.5) stores
+    /// this data under the modern `mdta` keyspace (`.quickTimeMetadata`) — `.quickTimeUserData`
+    /// (the legacy `udta` keyspace this originally queried exclusively) returned zero items
+    /// for it, confirmed via `asset.load(.availableMetadataFormats)` listing only
+    /// `com.apple.quicktime.mdta`. Older devices/software may still only populate the legacy
+    /// keyspace, so both are queried and merged; `.quickTimeMetadata` takes priority as the
+    /// modern/common case, with `.quickTimeUserData` filling in only fields still `nil`.
     private mutating func loadQuickTimeUserData(asset: AVAsset) async {
+        var userData = QuickTimeUserData()
+
         do {
-            let items = try await asset.loadMetadata(for: .quickTimeUserData)
-            guard !items.isEmpty else { return }
-
-            var userData = QuickTimeUserData()
-
-            for item in items {
+            for item in try await asset.loadMetadata(for: .quickTimeMetadata) {
                 switch item.identifier {
-                case .quickTimeUserDataMake:
+                case .quickTimeMetadataMake:
                     userData.deviceMake = try await item.load(.stringValue)
-                case .quickTimeUserDataModel:
+                case .quickTimeMetadataModel:
                     userData.deviceModel = try await item.load(.stringValue)
-                case .quickTimeUserDataSoftware:
+                case .quickTimeMetadataSoftware:
                     userData.deviceSoftware = try await item.load(.stringValue)
-                case .quickTimeUserDataCreationDate:
+                case .quickTimeMetadataCreationDate:
                     userData.creationDate = try await item.load(.dateValue)
-                case .quickTimeUserDataLocationISO6709:
+                case .quickTimeMetadataLocationISO6709:
                     if let iso6709 = try await item.load(.stringValue) {
                         (userData.latitude, userData.longitude) = Self.parseISO6709(iso6709)
                     }
@@ -78,10 +84,35 @@ extension MetaAudioFileDescription {
                     continue
                 }
             }
-
-            quickTimeUserData = userData
         } catch {
-            Log.error("Failed to read QuickTime user data for \(url.lastPathComponent)", error)
+            Log.error("Failed to read QuickTime mdta metadata for \(url.lastPathComponent)", error)
+        }
+
+        do {
+            for item in try await asset.loadMetadata(for: .quickTimeUserData) {
+                switch item.identifier {
+                case .quickTimeUserDataMake:
+                    if userData.deviceMake == nil { userData.deviceMake = try await item.load(.stringValue) }
+                case .quickTimeUserDataModel:
+                    if userData.deviceModel == nil { userData.deviceModel = try await item.load(.stringValue) }
+                case .quickTimeUserDataSoftware:
+                    if userData.deviceSoftware == nil { userData.deviceSoftware = try await item.load(.stringValue) }
+                case .quickTimeUserDataCreationDate:
+                    if userData.creationDate == nil { userData.creationDate = try await item.load(.dateValue) }
+                case .quickTimeUserDataLocationISO6709:
+                    if userData.latitude == nil, let iso6709 = try await item.load(.stringValue) {
+                        (userData.latitude, userData.longitude) = Self.parseISO6709(iso6709)
+                    }
+                default:
+                    continue
+                }
+            }
+        } catch {
+            Log.error("Failed to read QuickTime udta user data for \(url.lastPathComponent)", error)
+        }
+
+        if userData != QuickTimeUserData() {
+            quickTimeUserData = userData
         }
     }
 
