@@ -118,7 +118,11 @@ extension MetaAudioFileDescription {
 
     /// Converts a `CMFormatDescription`'s four-character-code media subtype into its
     /// standard ASCII string form (e.g. "avc1", "hvc1").
-    private static func fourCCString(_ fourCC: FourCharCode) -> String? {
+    ///
+    /// Internal, not private: exposed to `@testable import` so `parseISO6709`/
+    /// `rotationDegrees(from:)`/this can be unit tested directly as pure functions,
+    /// without needing a real video file (unlike `loadVideoTrack()` itself).
+    static func fourCCString(_ fourCC: FourCharCode) -> String? {
         let value = fourCC
         let bytes: [UInt8] = [
             UInt8((value >> 24) & 0xFF),
@@ -135,7 +139,7 @@ extension MetaAudioFileDescription {
     /// Reads pixel aspect ratio from a format description's `PixelAspectRatio` extension
     /// dictionary (horizontal/vertical spacing). `nil` (implying 1:1 square pixels) when
     /// the extension is absent, which is the common case for standard video.
-    private static func pixelAspectRatio(from description: CMFormatDescription) -> Double? {
+    static func pixelAspectRatio(from description: CMFormatDescription) -> Double? {
         guard
             let extensions = CMFormatDescriptionGetExtension(
                 description,
@@ -154,7 +158,7 @@ extension MetaAudioFileDescription {
     /// Normalizes an `AVAssetTrack.preferredTransform` rotation to the nearest multiple of
     /// 90 degrees (0, 90, 180, or 270) — what a portrait phone-shot video needs applied to
     /// preview right-side-up.
-    private static func rotationDegrees(from transform: CGAffineTransform) -> Int {
+    static func rotationDegrees(from transform: CGAffineTransform) -> Int {
         let radians = atan2(Double(transform.b), Double(transform.a))
         var degrees = Int((radians * 180 / .pi).rounded())
         degrees = ((degrees % 360) + 360) % 360
@@ -164,7 +168,7 @@ extension MetaAudioFileDescription {
     /// Parses an ISO 6709 location string (e.g. "+37.3349-122.0090+000.000/") into
     /// decimal-degree latitude/longitude. Format: signed latitude immediately followed by
     /// signed longitude, no separator between them, optional altitude, terminated by "/".
-    private static func parseISO6709(_ string: String) -> (latitude: Double?, longitude: Double?) {
+    static func parseISO6709(_ string: String) -> (latitude: Double?, longitude: Double?) {
         // Match the leading two signed decimal numbers (latitude, then longitude).
         let pattern = #"^([+-]\d+(?:\.\d+)?)([+-]\d+(?:\.\d+)?)"#
 
