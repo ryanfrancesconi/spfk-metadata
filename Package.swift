@@ -19,6 +19,7 @@ let package = Package(
         .package(url: "https://github.com/ryanfrancesconi/spfk-metadata-base", from: "1.5.0"),
         .package(url: "https://github.com/ryanfrancesconi/spfk-testing", from: "1.1.0"),
         .package(url: "https://github.com/ryanfrancesconi/spfk-utils", from: "1.6.1"),
+        .package(url: "https://github.com/ryanfrancesconi/spfk-video", from: "1.1.0"),
         .package(url: "https://github.com/sbooth/ogg-binary-xcframework", from: "0.1.3"),
         .package(url: "https://github.com/sbooth/flac-binary-xcframework", from: "0.2.0"),
         .package(url: "https://github.com/sbooth/opus-binary-xcframework", from: "0.2.2"),
@@ -32,6 +33,7 @@ let package = Package(
                 .product(name: "SPFKAudioBase", package: "spfk-audio-base"),
                 .product(name: "SPFKMetadataBase", package: "spfk-metadata-base"),
                 .product(name: "SPFKUtils", package: "spfk-utils"),
+                .product(name: "SPFKVideo", package: "spfk-video"),
             ]
         ),
         .target(
