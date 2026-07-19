@@ -15,7 +15,11 @@ permissions:
   contents: write
 
 jobs:
+  build-and-test:
+    uses: ryanfrancesconi/spfk-ci/.github/workflows/swift-package-ci.yml@main
+
   release:
+    needs: build-and-test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
