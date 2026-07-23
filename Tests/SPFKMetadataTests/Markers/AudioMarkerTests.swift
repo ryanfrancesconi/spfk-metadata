@@ -8,7 +8,7 @@ import Testing
 @testable import SPFKMetadata
 @testable import SPFKMetadataC
 
-@Suite(.tags(.file), .serialized)
+@Suite(.tags(.file))
 class AudioMarkerTests: BinTestCase {
     @Test func parseMarkers() async throws {
         let markers = AudioMarkerUtil.read(TestBundleResources.shared.wav_bext_v2) as? [AudioMarker] ?? []

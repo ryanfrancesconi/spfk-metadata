@@ -9,7 +9,7 @@ import Testing
 @testable import SPFKMetadata
 @testable import SPFKMetadataC
 
-@Suite(.serialized)
+@Suite
 class ID3FileTests: BinTestCase {
     @Test func priv_xmp() async throws {
         // use the xmp file as it has the non standard PRIV frame

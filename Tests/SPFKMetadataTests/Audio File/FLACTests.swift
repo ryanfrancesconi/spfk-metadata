@@ -13,7 +13,7 @@ import Testing
 
 /// Tests for the `FlacFileC` Objective-C bridge: load/save of iXML and BEXT
 /// APPLICATION blocks in FLAC files.
-@Suite(.serialized, .tags(.file))
+@Suite(.tags(.file))
 final class FlacFileCTests: BinTestCase {
     // MARK: Load — clean file
 
@@ -166,7 +166,7 @@ final class FlacFileCTests: BinTestCase {
 
 /// Tests for the `BEXTDescription.init?(ixmlMetadata:)` iXML-to-BEXT fallback
 /// conversion used for Sequoia-style FLAC files that carry BEXT fields inside iXML.
-@Suite(.serialized)
+@Suite
 final class BEXTFromIXMLTests: BinTestCase {
     /// An IXMLMetadata with no BEXT fields should produce nil.
     @Test func returnsNilWhenNoBEXTContent() {
@@ -249,7 +249,7 @@ final class BEXTFromIXMLTests: BinTestCase {
 
 /// Tests that verify our reader can parse BEXT and iXML APPLICATION blocks
 /// written by third-party tools (metaflac), not our own FlacFileC bridge.
-@Suite(.serialized, .tags(.file))
+@Suite(.tags(.file))
 final class ExternalFLACApplicationBlockTests: BinTestCase {
     /// metaflac-generated iXML APPLICATION block (direct "iXML" app ID) is read correctly.
     @Test func readExternalIXMLApplicationBlock() async throws {
@@ -301,7 +301,7 @@ final class ExternalFLACApplicationBlockTests: BinTestCase {
 
 /// End-to-end tests for `MetaAudioFileDescription` with FLAC files, covering
 /// the `loadFLAC()` / `saveFLAC()` paths introduced for iXML/BEXT APPLICATION block support.
-@Suite(.serialized, .tags(.file))
+@Suite(.tags(.file))
 final class MetaAudioFileDescriptionFLACTests: BinTestCase {
     /// Parsing a plain FLAC produces valid audio format properties.
     @Test func parseFLACHasAudioFormat() async throws {

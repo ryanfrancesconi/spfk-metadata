@@ -7,7 +7,7 @@ import SPFKTesting
 import SPFKUtils
 import Testing
 
-@Suite(.serialized, .tags(.file))
+@Suite(.tags(.file))
 class MetaAudioFileDescriptionTests: BinTestCase {
     @Test func codableRoundTrip() async throws {
         let url = TestBundleResources.shared.mp3_id3
@@ -65,7 +65,7 @@ class MetaAudioFileDescriptionTests: BinTestCase {
 /// The underlying question is whether TagLib's WAV save preserves chunks it doesn't manage
 /// (smpl/cue for markers) and correctly re-writes chunks it does manage (BEXT, iXML)
 /// when they are passed through from the loaded MetaAudioFileDescription.
-@Suite(.serialized, .tags(.file))
+@Suite(.tags(.file))
 class MetaAudioFileDescriptionWAVChunkTests: BinTestCase {
     /// BEXT data must survive a metadata-only save.
     /// saveWave always passes bextDescription back to WaveFileC, so TagLib re-writes it.
@@ -136,7 +136,7 @@ class MetaAudioFileDescriptionWAVChunkTests: BinTestCase {
 
 /// Tests that metadata-only saves don't discard embedded artwork, and that
 /// clearing artwork in memory removes it from disk.
-@Suite(.serialized, .tags(.file))
+@Suite(.tags(.file))
 class MetaAudioFileDescriptionArtworkTests: BinTestCase {
     /// Saving with .metadata only must not strip existing embedded artwork (non-WAV).
     @Test func metadataOnlySavePreservesArtwork() async throws {

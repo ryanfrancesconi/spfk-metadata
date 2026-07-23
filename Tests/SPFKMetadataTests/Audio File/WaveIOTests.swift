@@ -15,7 +15,7 @@ import Testing
 
 /// Tests for the binary BEXT parser (`initWithData:`) and serializer (`serializedData`),
 /// verifying fields against known expected values from test files.
-@Suite(.serialized, .tags(.file))
+@Suite(.tags(.file))
 final class BEXTBinaryRoundTripTests: BinTestCase {
     /// Parse a BEXT v1 file via WaveFileC (TagLib bextTag -> initWithData)
     /// and verify all fields against known values.
@@ -135,7 +135,7 @@ final class BEXTBinaryRoundTripTests: BinTestCase {
 
 /// Tests the full BEXT pipeline: TagLib reads bextTag bytes -> initWithData parses ->
 /// Swift edits -> bextDescriptionC serializes -> TagLib writes bextTag -> verify.
-@Suite(.serialized, .tags(.file))
+@Suite(.tags(.file))
 final class BEXTTagLibEndToEndTests: BinTestCase {
     /// Load a WAV with BEXT, modify a field, save via TagLib, reload, verify.
     @Test func bextRoundTripViaSave() async throws {
@@ -226,7 +226,7 @@ final class BEXTTagLibEndToEndTests: BinTestCase {
 
 /// Tests that bitsPerSample flows from TagLib through TagAudioPropertiesC
 /// to AudioFormatProperties.bitsPerChannel.
-@Suite(.serialized, .tags(.file))
+@Suite(.tags(.file))
 final class BitsPerSampleTests: BinTestCase {
     /// Verify WaveFileC populates bitsPerSample from TagLib's WAV properties.
     @Test func waveFileCPopulatesBitsPerSample() async throws {
@@ -275,7 +275,7 @@ final class BitsPerSampleTests: BinTestCase {
 
 /// Tests that the WAV-only path (TagLib) produces equivalent format properties
 /// to the old AVAudioFile path.
-@Suite(.serialized, .tags(.file))
+@Suite(.tags(.file))
 final class WAVFormatEquivalenceTests: BinTestCase {
     /// Compare format properties from the TagLib-only WAV path with AVAudioFile.
     @Test func wavFormatMatchesAVAudioFile() async throws {
@@ -322,7 +322,7 @@ final class WAVFormatEquivalenceTests: BinTestCase {
 // MARK: - Dirty flags
 
 /// Tests that markersNeedsSave and imageNeedsSave flags control conditional writes.
-@Suite(.serialized, .tags(.file))
+@Suite(.tags(.file))
 final class DirtyFlagTests: BinTestCase {
     /// Verify that imageNeedsSave=false skips artwork writing even when tagPicture is set.
     @Test func imageNotSavedWhenFlagIsFalse() async throws {

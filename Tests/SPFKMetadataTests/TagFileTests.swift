@@ -8,7 +8,7 @@ import Testing
 @testable import SPFKMetadata
 @testable import SPFKMetadataC
 
-@Suite(.serialized)
+@Suite
 class TagFileTests: BinTestCase {
     @Test func testParse() async throws {
         let tagFile = TagFile(path: TestBundleResources.shared.wav_bext_v2.path)

@@ -8,7 +8,7 @@ import Testing
 @testable import SPFKMetadata
 @testable import SPFKMetadataC
 
-@Suite(.serialized)
+@Suite
 class TagLibBridgeTests: BinTestCase {
     @Test func readWriteProperties() async throws {
         let tmpfile = try copyToBin(url: TestBundleResources.shared.wav_bext_v2)

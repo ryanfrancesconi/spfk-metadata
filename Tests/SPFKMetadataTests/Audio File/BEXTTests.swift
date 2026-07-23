@@ -8,7 +8,7 @@ import SPFKMetadataC
 import SPFKTesting
 import Testing
 
-@Suite(.serialized)
+@Suite
 class BEXTTests: BinTestCase {
     @Test func initBEXTDescriptionC() async throws {
         let waveFile = WaveFileC(path: TestBundleResources.shared.tabla_wav.path)

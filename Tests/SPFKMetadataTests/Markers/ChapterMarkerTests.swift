@@ -8,7 +8,7 @@ import Testing
 @testable import SPFKMetadata
 @testable import SPFKMetadataC
 
-@Suite(.serialized)
+@Suite
 class ChapterMarkerTests: BinTestCase {
     func getChapters(in url: URL) async throws -> [ChapterMarker] {
         let chapters = try await ChapterParser.parse(url: url)

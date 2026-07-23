@@ -9,7 +9,7 @@ import Testing
 @testable import SPFKMetadata
 @testable import SPFKMetadataC
 
-@Suite(.serialized)
+@Suite
 class TagPropertiesTests: BinTestCase {
     @available(macOS 12, iOS 16, *)
     @Test func benchmarkTagLib() async throws {

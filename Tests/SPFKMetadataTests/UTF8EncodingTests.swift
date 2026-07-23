@@ -12,7 +12,7 @@ import Testing
 /// TagLib's String(const char*) and toCString() both default to Latin-1;
 /// these tests verify non-ASCII tags survive a complete save/load round-trip
 /// across all supported formats via the TagFile property map path.
-@Suite(.serialized)
+@Suite
 class UTF8EncodingTests: BinTestCase {
     private static let title = "für — Ångström • naïve"
     private static let artist = "Björk / Sigur Rós"

@@ -8,7 +8,7 @@ import Testing
 @testable import SPFKMetadata
 @testable import SPFKMetadataC
 
-@Suite(.serialized)
+@Suite
 class WaveFileTests: BinTestCase {
     @Test func parseInfo() async throws {
         let url = TestBundleResources.shared.wav_bext_v2

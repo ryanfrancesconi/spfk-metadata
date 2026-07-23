@@ -10,7 +10,7 @@ import Testing
 
 @testable import SPFKMetadata
 
-@Suite(.tags(.file), .serialized)
+@Suite(.tags(.file))
 final class IXMLMetadataTests: BinTestCase {
     // MARK: - Parse
 

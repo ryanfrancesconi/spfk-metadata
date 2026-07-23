@@ -9,7 +9,7 @@ import Testing
 @testable import SPFKMetadata
 @testable import SPFKMetadataC
 
-@Suite(.tags(.file), .serialized)
+@Suite(.tags(.file))
 class XiphChapterUtilTests: BinTestCase {
     func getChapters(in url: URL) -> [ChapterMarker] {
         let chapters = XiphChapterUtil.read(url.path) as? [ChapterMarker] ?? []

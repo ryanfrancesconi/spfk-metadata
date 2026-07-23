@@ -20,7 +20,7 @@ import Testing
 ///   - WAV/MP3/AIFF: POPM (ID3v2 Popularimeter), WMP canonical byte values
 ///   - FLAC/OGG: Xiph RATING (normalized int string) + FMPS_RATING (float string)
 ///   - M4A/MP4/AAC: `rate` atom + `----:com.apple.iTunes:RATING` freeform
-@Suite(.serialized, .tags(.file))
+@Suite(.tags(.file))
 final class TagRatingTests: BinTestCase {
     // MARK: - WAV (POPM via ID3v2)
 

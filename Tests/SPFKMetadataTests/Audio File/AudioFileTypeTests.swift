@@ -9,7 +9,7 @@ import Testing
 
 @testable import SPFKMetadata
 
-@Suite(.serialized, .tags(.file))
+@Suite(.tags(.file))
 class AudioFileTypeTests: BinTestCase {
     @Test func checkPathExtension() throws {
         var extensions = AudioFileType.allCases.map { $0.pathExtension }

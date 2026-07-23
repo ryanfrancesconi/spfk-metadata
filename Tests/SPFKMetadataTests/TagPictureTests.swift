@@ -10,7 +10,7 @@ import UniformTypeIdentifiers
 @testable import SPFKMetadata
 @testable import SPFKMetadataC
 
-@Suite(.serialized)
+@Suite
 class TagPictureTests: BinTestCase {
     // MARK: - TagPictureRef.parsing
 

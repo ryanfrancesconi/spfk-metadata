@@ -8,7 +8,7 @@ import Testing
 @testable import SPFKMetadata
 @testable import SPFKMetadataC
 
-@Suite(.tags(.file), .serialized)
+@Suite(.tags(.file))
 class MP4ChapterUtilTests: BinTestCase {
     func getChapters(in url: URL) -> [ChapterMarker] {
         let chapters = MP4ChapterUtil.read(url.path) as? [ChapterMarker] ?? []

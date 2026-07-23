@@ -9,7 +9,7 @@ import Testing
 
 @testable import SPFKMetadata
 
-@Suite(.tags(.file), .serialized)
+@Suite(.tags(.file))
 class AudioMarkerDescriptionCollectionTests: BinTestCase {
     @Test(arguments: TestBundleResources.shared.markerFormats)
     func parseFormat(url: URL) async throws {
