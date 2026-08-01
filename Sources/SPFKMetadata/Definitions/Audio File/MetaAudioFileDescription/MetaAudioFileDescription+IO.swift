@@ -324,7 +324,13 @@ extension MetaAudioFileDescription {
     /// Writes markers to non-WAV files via format-specific utilities.
     ///
     /// Dispatches to `MP4ChapterUtil`, `MPEGChapterUtil`, `XiphChapterUtil`, or
-    /// `AudioMarkerUtil` depending on `fileType`.
+    /// `AudioMarkerUtil` depending on `fileType`. Keep the type lists here in step with
+    /// `AudioMarkerDescriptionCollection.init(url:fileType:)` — markers written by one and not
+    /// readable by the other look to the user exactly like data loss.
+    ///
+    /// Only reached when the `.markers` dirty flag is set, and only after tags and artwork are
+    /// already on disk — so throwing for a format that genuinely can't hold markers reports the
+    /// real problem without costing the caller the rest of the save.
     private func saveMarkers() throws {
         let path = url.path
         let success: Bool
@@ -333,7 +339,7 @@ extension MetaAudioFileDescription {
         case .mp3:
             success = MPEGChapterUtil.write(markerCollection.colorEncodedChapterMarkers, to: path)
 
-        case .m4a, .mp4, .aac, .m4b:
+        case .m4a, .mp4, .aac, .m4b, .mov, .m4v:
             success = MP4ChapterUtil.write(markerCollection.fileEncodedChapterMarkers, to: path)
 
         case .flac, .ogg, .opus:
@@ -343,8 +349,12 @@ extension MetaAudioFileDescription {
             success = AudioMarkerUtil.write(audioMarkers, to: url)
 
         default:
-            Log.error("Marker save not supported for \(fileType?.rawValue ?? "unknown")")
-            return
+            // Previously logged and returned, which reported a successful save and cleared the
+            // dirty flag while discarding every marker the user had set.
+            throw NSError(
+                file: #file, function: #function,
+                description: "Markers are not supported for \(fileType?.rawValue ?? "unknown") files"
+            )
         }
 
         guard success else {

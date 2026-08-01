@@ -8,10 +8,17 @@ import SPFKMetadataC
 
 extension AudioMarkerDescriptionCollection {
     /// Parses markers from the audio file at the given URL, dispatching to the appropriate parser
-    /// based on file type: `MP4ChapterUtil` (m4a, mp4, aac, m4b — QT chapter track with Nero chpl
-    /// fallback, then AVFoundation), `XiphChapterUtil` (flac, ogg, opus — VorbisComment chapter
-    /// fields with `ChapterParser` AVFoundation fallback), `MPEGChapterUtil` (mp3),
+    /// based on file type: `MP4ChapterUtil` (m4a, mp4, aac, m4b, mov, m4v — QT chapter track with
+    /// Nero chpl fallback, then AVFoundation), `XiphChapterUtil` (flac, ogg, opus — VorbisComment
+    /// chapter fields with `ChapterParser` AVFoundation fallback), `MPEGChapterUtil` (mp3),
     /// or `AudioMarkerUtil` (aif, wav).
+    ///
+    /// `mov`/`m4v` belong with the MP4 family rather than in the unsupported `default`: a
+    /// QuickTime chapter track is `mov`'s native marker format, and `MP4ChapterUtil` writes
+    /// exactly that via `setQtChapters`. Verified round-tripping 3 chapters through real qt- and
+    /// isom-branded files. Their earlier absence here was an oversight from when this workflow
+    /// only ever saw audio containers, and it made marker reads on a `.mov` throw while the
+    /// matching save silently discarded them.
     public init(url: URL, fileType: AudioFileType? = nil) async throws {
         guard let fileType = fileType ?? AudioFileType(url: url) else {
             throw NSError(
@@ -21,7 +28,7 @@ extension AudioMarkerDescriptionCollection {
         }
 
         switch fileType {
-        case .m4a, .mp4, .aac, .m4b:
+        case .m4a, .mp4, .aac, .m4b, .mov, .m4v:
             // MP4ChapterUtil reads QT chapter track first, then Nero chpl fallback.
             // Chapter titles may carry a JSON metadata suffix written by ShadowTag;
             // decode names to recover endTime, color, and markerType.
