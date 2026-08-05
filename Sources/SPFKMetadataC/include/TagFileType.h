@@ -13,11 +13,13 @@ extern TagFileTypeDef kTagFileTypeAac;
 extern TagFileTypeDef kTagFileTypeAiff;
 extern TagFileTypeDef kTagFileTypeFlac;
 extern TagFileTypeDef kTagFileTypeM4a;
+extern TagFileTypeDef kTagFileTypeMatroska;
 extern TagFileTypeDef kTagFileTypeMp3;
 extern TagFileTypeDef kTagFileTypeMp4;
 extern TagFileTypeDef kTagFileTypeOpus;
 extern TagFileTypeDef kTagFileTypeVorbis;
 extern TagFileTypeDef kTagFileTypeWave;
+extern TagFileTypeDef kTagFileTypeWebm;
 
 /// Utility for detecting audio file formats via TagLib header inspection.
 @interface TagFileType : NSObject

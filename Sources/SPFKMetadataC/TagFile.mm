@@ -76,6 +76,22 @@ using namespace TagLib;
         }
     }
 
+    // Matroska keeps its title in the Segment's Info/Title element rather than as a SimpleTag, so
+    // it never appears in the PropertyMap above -- but Tag::title() reads it. That element is where
+    // real .mkv files carry their title (it is what `ffmpeg -metadata title=` writes), so without
+    // this a Matroska row shows no title at all while every other tag reads fine.
+    //
+    // Fills a gap only: a format whose PropertyMap already carried TITLE keeps that value, so this
+    // cannot change what any existing format reports. Same reasoning as the rating injection below
+    // -- done here rather than in Swift so it costs no second FileRef open.
+    if ([_dictionary objectForKey:@"TITLE"] == nil) {
+        String title = tag->title();
+
+        if (!title.isEmpty()) {
+            [_dictionary setValue:@(title.toCString(true)) forKey:@"TITLE"];
+        }
+    }
+
     // Inject rating via dedicated dispatch; avoids a second FileRef open after load returns.
     int ratingStars = TagRatingReadFromFile(fileRef.file());
     if (ratingStars >= 1) {

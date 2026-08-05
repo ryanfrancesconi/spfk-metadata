@@ -6,6 +6,7 @@
 #import <taglib/fileref.h>
 #import <taglib/flacfile.h>
 #import <taglib/id3v2tag.h>
+#import <taglib/matroskafile.h>
 #import <taglib/mp4file.h>
 #import <taglib/mpegfile.h>
 #import <taglib/oggfile.h>
@@ -34,11 +35,13 @@ TagFileTypeDef kTagFileTypeAac = @"aac";
 TagFileTypeDef kTagFileTypeAiff = @"aif";
 TagFileTypeDef kTagFileTypeFlac = @"flac";
 TagFileTypeDef kTagFileTypeM4a = @"m4a";
+TagFileTypeDef kTagFileTypeMatroska = @"mkv";
 TagFileTypeDef kTagFileTypeMp3 = @"mp3";
 TagFileTypeDef kTagFileTypeMp4 = @"mp4";
 TagFileTypeDef kTagFileTypeOpus = @"opus";
 TagFileTypeDef kTagFileTypeVorbis = @"ogg";
 TagFileTypeDef kTagFileTypeWave = @"wav";
+TagFileTypeDef kTagFileTypeWebm = @"webm";
 
 + (nullable TagFileTypeDef)detectType:(NSString *)path {
     NSString *pathExtension = [path.pathExtension lowercaseString];
@@ -84,6 +87,11 @@ TagFileTypeDef kTagFileTypeWave = @"wav";
         value = kTagFileTypeOpus;
     } else if (Ogg::Vorbis::File::isSupported(stream)) {
         value = kTagFileTypeVorbis;
+    } else if (Matroska::File::isSupported(stream)) {
+        // Matroska and WebM are the same container and share the EBML magic, so an extensionless
+        // file cannot be told apart here -- reporting Matroska is correct for both, since every
+        // downstream path treats them identically.
+        value = kTagFileTypeMatroska;
     }
 
     delete stream;

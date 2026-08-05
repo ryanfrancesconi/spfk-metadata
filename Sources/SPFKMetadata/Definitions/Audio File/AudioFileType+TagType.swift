@@ -17,9 +17,11 @@ extension AudioFileType {
         case .flac: .flac
         case .ogg:  .vorbis
         case .m4a:  .m4a
+        case .mkv:  .matroska
         case .mp3:  .mp3
         case .mp4:  .mp4
         case .opus: .opus
+        case .webm: .webm
         case .wav,
              .w64:  .wave
         default:

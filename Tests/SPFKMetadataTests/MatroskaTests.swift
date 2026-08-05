@@ -1,0 +1,123 @@
+// Copyright Ryan Francesconi. All Rights Reserved. Revision History at https://github.com/ryanfrancesconi/spfk-metadata
+
+import Foundation
+import SPFKAudioBase
+import SPFKMetadata
+import SPFKMetadataBase
+import SPFKMetadataC
+import SPFKTesting
+import Testing
+
+/// Matroska (`.mkv` / `.webm`) support.
+///
+/// TagLib 2.x ships a complete Matroska implementation and `FileRef` dispatches the extension, so
+/// the container needed no format-specific read or write path — only the Swift-side vocabulary that
+/// was gating it. These tests pin that the gate is really open, because the failure mode if it
+/// closes again is silent: `AudioFileType(pathExtension:)` returns nil, `fileType` goes nil, and
+/// every capability check downstream fails closed while the file still imports and displays.
+///
+/// **AVFoundation cannot open Matroska** (absent from `AVURLAsset.audiovisualTypes()`), so anything
+/// here that works is going through TagLib.
+@Suite(.tags(.file))
+struct MatroskaTests {
+    // MARK: - Vocabulary
+
+    @Test func matroskaExtensionsResolveToAFileType() {
+        #expect(AudioFileType(pathExtension: "mkv") == .mkv)
+        #expect(AudioFileType(pathExtension: "webm") == .webm)
+        #expect(AudioFileType(pathExtension: "MKV") == .mkv)
+    }
+
+    /// `isVideo` derives from UTType conformance rather than a hand-written list, so this asserts
+    /// macOS really does declare the type — it is `org.matroska.mkv`, conforming to `.movie`.
+    @Test func matroskaIsRecognizedAsVideo() {
+        #expect(AudioFileType.mkv.isVideo)
+        #expect(AudioFileType.webm.isVideo)
+        #expect(!AudioFileType.mkv.isAudio)
+    }
+
+    /// The gate that was actually closed. Without this, `supportsMetadata` is false and the whole
+    /// tag path is skipped for a file TagLib reads perfectly well.
+    @Test func matroskaSupportsMetadata() {
+        #expect(AudioFileType.mkv.supportsMetadata)
+        #expect(AudioFileType.webm.supportsMetadata)
+    }
+
+    /// Deliberately excluded. Matroska has no XMP smart handler and is not RIFF, so claiming either
+    /// would route writes into a path that cannot serve them.
+    @Test func matroskaClaimsNeitherXMPNorRIFFChunks() {
+        #expect(!AudioFileType.mkv.supportsXMP)
+        #expect(!AudioFileType.mkv.supportsBEXT)
+        #expect(!AudioFileType.mkv.supportsIXML)
+        #expect(!AudioFileType.webm.supportsXMP)
+    }
+
+    /// AVFoundation cannot write Matroska, so nothing may offer it as a conversion target or hand
+    /// it to `AVAudioFile`.
+    @Test func matroskaIsNotOfferedAsAWriteTarget() {
+        #expect(AudioFileType.mkv.avFileType == nil)
+        #expect(!AudioFileType.mkv.isAVAudioFileWritable)
+        #expect(AudioFileType.mkv.audioFileTypeID == nil)
+    }
+
+    @Test func matroskaMapsToATagLibParser() {
+        #expect(AudioFileType.mkv.tagType == .matroska)
+        #expect(AudioFileType.webm.tagType == .webm)
+    }
+
+    // MARK: - Real file
+
+    @Test func readsTagsFromARealMatroskaFile() throws {
+        let url = TestBundleResources.shared.sample_mkv
+
+        var properties = TagProperties()
+        try properties.load(url: url)
+
+        #expect(properties[.title] == "SPFK Sample Matroska")
+        #expect(properties[.artist] == "Spongefork")
+    }
+
+    /// The write half, and the one worth proving on a real container: TagLib re-serializes the
+    /// whole Matroska file to change a tag, so a round trip that survives is evidence the write
+    /// path is genuinely wired rather than silently no-oping.
+    @Test func writesTagsToARealMatroskaFile() throws {
+        let source = TestBundleResources.shared.sample_mkv
+        let copy = FileManager.default.temporaryDirectory
+            .appendingPathComponent("mkv-write-\(UUID().uuidString).mkv")
+        try FileManager.default.copyItem(at: source, to: copy)
+        defer { try? FileManager.default.removeItem(at: copy) }
+
+        var properties = TagProperties()
+        try properties.load(url: copy)
+        properties[.title] = "Rewritten"
+        properties[.comment] = "written by SPFKMetadataTests"
+        try properties.save(to: copy)
+
+        var readBack = TagProperties()
+        try readBack.load(url: copy)
+
+        #expect(readBack[.title] == "Rewritten")
+        #expect(readBack[.comment] == "written by SPFKMetadataTests")
+        // The untouched tag has to survive the rewrite, or a save is quietly destructive.
+        #expect(readBack[.artist] == "Spongefork")
+    }
+
+    /// The file must still be a valid Matroska container after a write — a rewrite that corrupts
+    /// the container would still read back through TagLib's own parser, so assert the type is
+    /// detectable from the bytes rather than from the extension.
+    @Test func theContainerSurvivesAWrite() throws {
+        let source = TestBundleResources.shared.sample_mkv
+        let copy = FileManager.default.temporaryDirectory
+            .appendingPathComponent("mkv-integrity-\(UUID().uuidString)") // no extension, on purpose
+        try FileManager.default.copyItem(at: source, to: copy)
+        defer { try? FileManager.default.removeItem(at: copy) }
+
+        var properties = TagProperties()
+        try properties.load(url: copy)
+        properties[.title] = "Integrity"
+        try properties.save(to: copy)
+
+        // Extensionless, so this can only come from header inspection.
+        #expect(TagFileType.detect(copy.path) == .matroska)
+    }
+}
