@@ -13,11 +13,14 @@
 #import <taglib/id3v2tag.h>
 #import <taglib/mp4file.h>
 #import <taglib/mp4item.h>
+#import <taglib/matroskafile.h>
+#import <taglib/matroskatag.h>
 #import <taglib/mp4tag.h>
 #import <taglib/mpegfile.h>
 #import <taglib/opusfile.h>
 #import <taglib/popularimeterframe.h>
 #import <taglib/textidentificationframe.h>
+#import <taglib/tpropertymap.h>
 #import <taglib/vorbisfile.h>
 #import <taglib/wavfile.h>
 #import <taglib/wavpackfile.h>
@@ -376,6 +379,50 @@ static void writeAPE(APE::Tag *tag, int stars) {
     tag->addValue("RATING", String::number(normalizedFromStars(stars)), true);
 }
 
+// MARK: - Matroska
+
+// Matroska has no dedicated rating element -- RATING is an ordinary SimpleTag, so it travels in
+// the PropertyMap rather than a format-specific frame. That is why these two go through
+// properties()/setProperties() while every other format above reaches for its own storage.
+//
+// Read-modify-write is required, not stylistic: setProperties() replaces the whole supported set,
+// and TagFile::save calls this *after* writing the rest of the tags, so building a fresh map here
+// would erase everything else that was just written.
+
+static int readMatroska(Matroska::Tag *tag) {
+    if (!tag)
+        return -1;
+
+    PropertyMap properties = tag->properties();
+    auto it = properties.find("RATING");
+    if (it == properties.end() || it->second.isEmpty())
+        return -1;
+
+    int v = it->second.front().toInt();
+    if (v > TagRatingMinStars && v <= TagRatingMaxStars)
+        return v; // raw star count
+    if (v > TagRatingMaxStars && v <= normalizedFromStars(TagRatingMaxStars))
+        return starsFromNormalized(v); // normalized → stars
+
+    return -1;
+}
+
+static void writeMatroska(Matroska::Tag *tag, int stars) {
+    if (!tag)
+        return;
+
+    PropertyMap properties = tag->properties();
+    properties.erase("RATING");
+
+    // Raw stars rather than the normalized 0-100 the Xiph/MP4 paths use: Matroska's spec leaves the
+    // RATING scale to the tagging application, and 0-5 is what mkvpropedit and ffmpeg pass through
+    // unchanged, so a value written here means the same thing when the file is opened elsewhere.
+    if (stars > 0)
+        properties.insert("RATING", StringList(String(to_string(stars), String::UTF8)));
+
+    tag->setProperties(properties);
+}
+
 // MARK: - ASF / WMA
 
 static int readASF(ASF::Tag *tag) {
@@ -430,6 +477,8 @@ int TagRatingReadFromFile(TagLib::File *f) {
         return readAPE(fp->APETag(false));
     if (auto *fp = dynamic_cast<ASF::File *>(f))
         return readASF(fp->tag());
+    if (auto *fp = dynamic_cast<Matroska::File *>(f))
+        return readMatroska(dynamic_cast<Matroska::Tag *>(fp->tag()));
     return -1;
 }
 
@@ -455,6 +504,8 @@ void TagRatingWriteToFile(TagLib::File *f, int stars) {
         writeAPE(fp->APETag(true), stars);
     else if (auto *fp = dynamic_cast<ASF::File *>(f))
         writeASF(fp->tag(), stars);
+    else if (auto *fp = dynamic_cast<Matroska::File *>(f))
+        writeMatroska(dynamic_cast<Matroska::Tag *>(fp->tag()), stars);
 }
 
 // MARK: - Public path-based interface

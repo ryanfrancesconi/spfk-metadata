@@ -102,6 +102,59 @@ struct MatroskaTests {
         #expect(readBack[.artist] == "Spongefork")
     }
 
+    /// Rating is the one tag that does **not** travel in the PropertyMap: `TagFile.save` pulls
+    /// `RATING` out and routes it through `TagRatingWriteToFile`, which had no Matroska branch — so
+    /// a rating was read correctly, accepted by the editor, and then silently dropped on save.
+    ///
+    /// The write is read-modify-write on the property map, so this also has to prove the tags
+    /// written moments earlier in the same save survive it.
+    @Test func writesARatingToARealMatroskaFile() throws {
+        let source = TestBundleResources.shared.sample_mkv
+        let copy = FileManager.default.temporaryDirectory
+            .appendingPathComponent("mkv-rating-\(UUID().uuidString).mkv")
+        try FileManager.default.copyItem(at: source, to: copy)
+        defer { try? FileManager.default.removeItem(at: copy) }
+
+        var properties = TagProperties()
+        try properties.load(url: copy)
+        properties[.rating] = "4"
+        properties[.keywords] = "one, two"
+        try properties.save(to: copy)
+
+        var readBack = TagProperties()
+        try readBack.load(url: copy)
+
+        #expect(readBack[.rating] == "4")
+        #expect(readBack[.keywords] == "one, two")
+        #expect(readBack[.title] == "SPFK Sample Matroska")
+        #expect(readBack[.artist] == "Spongefork")
+    }
+
+    /// Clearing has to reach the file too, or a rating the user removed comes back on reload.
+    @Test func clearingARatingRemovesItFromTheFile() throws {
+        let source = TestBundleResources.shared.sample_mkv
+        let copy = FileManager.default.temporaryDirectory
+            .appendingPathComponent("mkv-rating-clear-\(UUID().uuidString).mkv")
+        try FileManager.default.copyItem(at: source, to: copy)
+        defer { try? FileManager.default.removeItem(at: copy) }
+
+        var properties = TagProperties()
+        try properties.load(url: copy)
+        properties[.rating] = "5"
+        try properties.save(to: copy)
+
+        var cleared = TagProperties()
+        try cleared.load(url: copy)
+        cleared[.rating] = nil
+        try cleared.save(to: copy)
+
+        var readBack = TagProperties()
+        try readBack.load(url: copy)
+
+        #expect(readBack[.rating] == nil)
+        #expect(readBack[.title] == "SPFK Sample Matroska")
+    }
+
     /// The file must still be a valid Matroska container after a write — a rewrite that corrupts
     /// the container would still read back through TagLib's own parser, so assert the type is
     /// detectable from the bytes rather than from the extension.
