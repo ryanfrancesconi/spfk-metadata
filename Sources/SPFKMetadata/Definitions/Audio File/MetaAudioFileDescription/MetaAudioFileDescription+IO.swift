@@ -28,18 +28,41 @@ extension MetaAudioFileDescription {
             avFrameCount = (try? AVAudioFile(forReading: url))?.length ?? 0
 
         } else {
-            let audioFile = try AVAudioFile(forReading: url)
-            avFrameCount = audioFile.length
+            switch Result(catching: { try AVAudioFile(forReading: url) }) {
+            case let .success(audioFile):
+                avFrameCount = audioFile.length
 
-            self.init(
-                url: url,
-                fileType: fileType,
-                audioFormat: AudioFormatProperties(audioFile: audioFile)
-            )
-            try await load()
+                self.init(
+                    url: url,
+                    fileType: fileType,
+                    audioFormat: AudioFormatProperties(audioFile: audioFile)
+                )
+                try await load()
 
-            if fileType == .flac {
-                loadFLAC()
+                if fileType == .flac {
+                    loadFLAC()
+                }
+
+            case let .failure(error):
+                // A container AVFoundation cannot open at all -- Matroska in practice, the one
+                // video container it refuses among the set this app otherwise holds. TagLib reads
+                // its tags and its stream properties perfectly well, so the file becomes a real,
+                // taggable row rather than an import error; only playback is unavailable, which is
+                // what `isAVPlayable` below already says and the waveform path already handles.
+                //
+                // Deliberately not gated on Matroska by name. The question a format can answer for
+                // itself is "do I claim metadata support", and a hardcoded list here would be the
+                // fourth copy of a capability that already has an owner.
+                guard fileType?.supportsMetadata == true else { throw error }
+
+                self.init(url: url, fileType: fileType)
+                try await load()
+
+                // TagLib has to have produced real stream properties, or there is nothing behind
+                // this row at all and AVFoundation's original failure is the honest answer. This is
+                // what keeps a genuinely corrupt file an import error instead of an empty row.
+                guard let properties = tagProperties.audioProperties else { throw error }
+                audioFormat = properties
             }
         }
 
