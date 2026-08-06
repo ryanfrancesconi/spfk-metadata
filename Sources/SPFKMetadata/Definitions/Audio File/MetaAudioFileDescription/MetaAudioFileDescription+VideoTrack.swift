@@ -1,6 +1,7 @@
 // Copyright Ryan Francesconi. All Rights Reserved. Revision History at https://github.com/ryanfrancesconi/spfk-metadata
 
 import Foundation
+import SPFKMatroska
 import SPFKMetadataBase
 import SPFKVideo
 
@@ -17,7 +18,9 @@ extension MetaAudioFileDescription {
     public mutating func loadVideoTrack() async {
         guard let fileType, fileType.isVideo else { return }
 
-        let result = await VideoTrackReader.read(from: url)
+        // `readAnyContainer` rather than `read`: AVFoundation cannot open Matroska, so the plain
+        // read returns a nil video track for a .mkv that plainly has one.
+        let result = await VideoTrackReader.readAnyContainer(from: url)
         videoTrack = result.videoTrack
         quickTimeUserData = result.quickTimeUserData
     }

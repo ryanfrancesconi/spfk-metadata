@@ -222,4 +222,38 @@ struct MatroskaTests {
         // Extensionless, so this can only come from header inspection.
         #expect(TagFileType.detect(copy.path) == .matroska)
     }
+
+    // MARK: - Video track
+
+    /// Closes the resolution gap: `VideoTrackReader` returns nothing for Matroska because
+    /// AVFoundation cannot open the container, which is why a `.mkv` row showed a blank Resolution
+    /// while its tags read fine. `loadVideoTrack()` now falls back to the demuxer, and this asserts
+    /// the fallback runs as part of an ordinary parse rather than needing a special call.
+    @Test func parsingAMatroskaFilePopulatesTheVideoTrack() async throws {
+        let description = try await MetaAudioFileDescription(parsing: TestBundleResources.shared.sample_mkv)
+        let videoTrack = try #require(description.videoTrack)
+
+        #expect(videoTrack.width == 160)
+        #expect(videoTrack.height == 120)
+        #expect(videoTrack.codec == "avc1")
+    }
+
+    /// The `.mkv` is `sample.mov` remuxed with `-c copy`, so the two must report the same stream.
+    /// Comparing the containers against each other keeps this honest if the fixture is ever
+    /// regenerated at a different size.
+    @Test func matroskaAndQuickTimeAgreeOnTheSameStream() async throws {
+        let matroska = try await MetaAudioFileDescription(parsing: TestBundleResources.shared.sample_mkv)
+        let quickTime = try await MetaAudioFileDescription(parsing: TestBundleResources.shared.sample_mov)
+
+        #expect(matroska.videoTrack?.width == quickTime.videoTrack?.width)
+        #expect(matroska.videoTrack?.height == quickTime.videoTrack?.height)
+        #expect(matroska.videoTrack?.codec == quickTime.videoTrack?.codec)
+    }
+
+    /// The fallback fills the video track only. QuickTime user data is a `moov`-atom concept with
+    /// no Matroska equivalent, so it stays nil rather than being faked from segment tags.
+    @Test func theMatroskaFallbackDoesNotInventQuickTimeUserData() async throws {
+        let description = try await MetaAudioFileDescription(parsing: TestBundleResources.shared.sample_mkv)
+        #expect(description.quickTimeUserData == nil)
+    }
 }

@@ -16,6 +16,7 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/ryanfrancesconi/spfk-taglib", from: "1.2.3"),
         .package(url: "https://github.com/ryanfrancesconi/spfk-audio-base", from: "1.6.1"),
+        .package(url: "https://github.com/ryanfrancesconi/spfk-matroska", from: "1.0.0"),
         .package(url: "https://github.com/ryanfrancesconi/spfk-metadata-base", from: "1.5.0"),
         .package(url: "https://github.com/ryanfrancesconi/spfk-testing", from: "1.1.0"),
         .package(url: "https://github.com/ryanfrancesconi/spfk-utils", from: "1.6.1"),
@@ -31,6 +32,7 @@ let package = Package(
             dependencies: [
                 .targetItem(name: "SPFKMetadataC", condition: nil),
                 .product(name: "SPFKAudioBase", package: "spfk-audio-base"),
+                .product(name: "SPFKMatroska", package: "spfk-matroska"),
                 .product(name: "SPFKMetadataBase", package: "spfk-metadata-base"),
                 .product(name: "SPFKUtils", package: "spfk-utils"),
                 .product(name: "SPFKVideo", package: "spfk-video"),
