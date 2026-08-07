@@ -5,6 +5,7 @@ import AVFoundation
 import Foundation
 import SPFKAudioBase
 import SPFKBase
+import SPFKMatroska
 import SPFKMetadataBase
 import SPFKMetadataC
 import SPFKUtils
@@ -71,6 +72,10 @@ extension MetaAudioFileDescription {
         // whose RIFF chunk size header is wrong) where AVFoundation stops reading at the
         // declared boundary and never finds the audio data.
         isAVPlayable = avFrameCount > 0
+
+        if isAVPlayable == false {
+            isDecodable = (try? MatroskaFile(url: url))?.audioTrack?.isDecodable == true
+        }
 
         if let bitRate = tagProperties.audioProperties?.bitRate {
             audioFormat?.update(bitRate: bitRate)
