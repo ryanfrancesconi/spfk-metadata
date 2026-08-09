@@ -23,5 +23,9 @@ extension MetaAudioFileDescription {
         let result = await VideoTrackReader.readAnyContainer(from: url)
         videoTrack = result.videoTrack
         quickTimeUserData = result.quickTimeUserData
+
+        // Read here rather than in its own pass: a picker needs the list, and this is already the
+        // one place that asks a file about its tracks without caring which container it is.
+        audioTracks = await AudioTrackReader.readAnyContainer(from: url)
     }
 }
