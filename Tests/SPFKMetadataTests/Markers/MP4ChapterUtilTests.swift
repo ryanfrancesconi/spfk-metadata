@@ -361,4 +361,108 @@ class MP4ChapterUtilTests: BinTestCase {
         let framesAfter = (try? AVAudioFile(forReading: tmpfile))?.length ?? 0
         #expect(framesAfter == framesBefore, "audio frame count went \(framesBefore) → \(framesAfter)")
     }
+
+    // MARK: - Chapter reference on a track that already has one
+
+    /// A `trak` carries at most one `tref`, so the chapter reference has to join the atom already
+    /// there rather than bring a second one. AVFoundation drops a track carrying two, which costs
+    /// the file its audio while `ffprobe` and TagLib still read it back perfectly.
+    @Test func writingChaptersKeepsAudioWhenTheAudioTrackAlreadyHasATref() async throws {
+        let tmpfile = try copyToBin(url: TestBundleResources.shared.sample_timecode_mov)
+
+        let framesBefore = try AVAudioFile(forReading: tmpfile).length
+        #expect(framesBefore > 0, "fixture must start with readable audio")
+
+        let markers: [ChapterMarker] = [
+            ChapterMarker(name: "One", startTime: 0, endTime: 1),
+            ChapterMarker(name: "Two", startTime: 1, endTime: 2),
+        ]
+
+        #expect(MP4ChapterUtil.write(markers, to: tmpfile.path))
+
+        let framesAfter = (try? AVAudioFile(forReading: tmpfile))?.length ?? 0
+        #expect(framesAfter == framesBefore, "audio frame count went \(framesBefore) → \(framesAfter)")
+    }
+
+    /// The merge is structural, so it is asserted structurally: one `tref`, both references in it,
+    /// and removal taking only `chap` back out. A frame count cannot see the timecode reference,
+    /// which a removal that deletes the whole atom would take with it.
+    @Test func chapterReferenceSharesTheAudioTracksTref() async throws {
+        let tmpfile = try copyToBin(url: TestBundleResources.shared.sample_timecode_mov)
+
+        #expect(try audioTrackTrefs(in: tmpfile) == [["tmcd"]])
+
+        let markers: [ChapterMarker] = [
+            ChapterMarker(name: "One", startTime: 0, endTime: 1),
+        ]
+        #expect(MP4ChapterUtil.write(markers, to: tmpfile.path))
+        #expect(try audioTrackTrefs(in: tmpfile) == [["tmcd", "chap"]])
+
+        #expect(MP4ChapterUtil.remove(tmpfile.path))
+        #expect(try audioTrackTrefs(in: tmpfile) == [["tmcd"]])
+    }
+
+    // MARK: - Atom inspection
+
+    /// The reference types inside each `tref` of the file's first audio `trak`, in file order.
+    ///
+    /// Grouped per `tref` rather than flattened, so a track carrying two of them is distinguishable
+    /// from one carrying a single merged atom — which is the whole distinction under test.
+    private func audioTrackTrefs(in url: URL) throws -> [[String]] {
+        let data = try Data(contentsOf: url)
+
+        func children(of range: Range<Int>) -> [(type: String, body: Range<Int>)] {
+            var result: [(String, Range<Int>)] = []
+            var pos = range.lowerBound
+
+            while pos + 8 <= range.upperBound {
+                var size = Int(data.beUInt32(at: pos))
+                var header = 8
+
+                if size == 1 {
+                    size = Int(data.beUInt64(at: pos + 8))
+                    header = 16
+                } else if size == 0 {
+                    size = range.upperBound - pos
+                }
+                guard size >= header, pos + size <= range.upperBound else { break }
+
+                result.append((data.fourCC(at: pos + 4), (pos + header) ..< (pos + size)))
+                pos += size
+            }
+            return result
+        }
+
+        func find(_ type: String, in range: Range<Int>) -> Range<Int>? {
+            children(of: range).first { $0.type == type }?.body
+        }
+
+        guard let moov = find("moov", in: 0 ..< data.count) else { return [] }
+
+        for trak in children(of: moov).filter({ $0.type == "trak" }) {
+            guard let mdia = find("mdia", in: trak.body),
+                  let hdlr = find("hdlr", in: mdia),
+                  // handler_type follows version/flags and 4 reserved bytes
+                  data.fourCC(at: hdlr.lowerBound + 8) == "soun" else { continue }
+
+            return children(of: trak.body)
+                .filter { $0.type == "tref" }
+                .map { children(of: $0.body).map(\.type) }
+        }
+        return []
+    }
+}
+
+private extension Data {
+    func beUInt32(at offset: Int) -> UInt32 {
+        self[offset ..< offset + 4].reduce(0) { $0 << 8 | UInt32($1) }
+    }
+
+    func beUInt64(at offset: Int) -> UInt64 {
+        self[offset ..< offset + 8].reduce(0) { $0 << 8 | UInt64($1) }
+    }
+
+    func fourCC(at offset: Int) -> String {
+        String(decoding: self[offset ..< offset + 4], as: UTF8.self)
+    }
 }
