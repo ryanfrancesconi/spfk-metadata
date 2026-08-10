@@ -1,5 +1,6 @@
 // Copyright Ryan Francesconi. All Rights Reserved. Revision History at https://github.com/ryanfrancesconi/spfk-metadata
 
+import AVFoundation
 import Foundation
 import SPFKBase
 import SPFKTesting
@@ -285,5 +286,79 @@ class MP4ChapterUtilTests: BinTestCase {
             }
             lastRemoveSize = removeSize
         }
+    }
+
+    // MARK: - Video
+
+    /// **Writing chapters must not cost the file its other tracks.** A video file reaches this
+    /// writer through the same path an m4a does — ShadowTag clamps region markers into a trimmed
+    /// video, and the result replaces the user's original. A track dropped here is silent data
+    /// loss: the write reports success and the caller has no reason to look.
+    @Test func writingChaptersToAVideoKeepsItsAudioTrack() async throws {
+        let tmpfile = try copyToBin(url: TestBundleResources.shared.sample_mov)
+
+        let before = try await AVURLAsset(url: tmpfile).load(.tracks)
+        let audioBefore = before.filter { $0.mediaType == .audio }
+        let videoBefore = before.filter { $0.mediaType == .video }
+
+        #expect(audioBefore.count == 1, "fixture must start with an audio track")
+        #expect(videoBefore.count == 1, "fixture must start with a video track")
+
+        let markers: [ChapterMarker] = [
+            ChapterMarker(name: "One", startTime: 0, endTime: 0.5),
+            ChapterMarker(name: "Two", startTime: 0.5, endTime: 1),
+            ChapterMarker(name: "Three", startTime: 1, endTime: 1.5),
+            ChapterMarker(name: "Four", startTime: 1.5, endTime: 2),
+        ]
+
+        #expect(MP4ChapterUtil.write(markers, to: tmpfile.path))
+
+        let after = try await AVURLAsset(url: tmpfile).load(.tracks)
+
+        #expect(after.filter { $0.mediaType == .audio }.count == 1, "audio track lost")
+        #expect(after.filter { $0.mediaType == .video }.count == 1, "video track lost")
+    }
+
+    /// **A chapter past the end of the file must not cost the file its audio.** After a trim, the
+    /// in-memory markers still carry pre-trim times, so `saveMarkers()` writes start times beyond
+    /// the shortened duration. TagLib links its chapter track to the first audio track via
+    /// `tref/chap`, so anything that confuses the builder lands on the audio.
+    @Test func writingAChapterPastTheEndKeepsTheAudioTrack() async throws {
+        let tmpfile = try copyToBin(url: TestBundleResources.shared.sample_mov)
+
+        let duration = try await AVURLAsset(url: tmpfile).load(.duration).seconds
+        let framesBefore = try AVAudioFile(forReading: tmpfile).length
+
+        let markers: [ChapterMarker] = [
+            ChapterMarker(name: "InRange", startTime: 0.5, endTime: 1),
+            ChapterMarker(name: "PastEnd", startTime: duration + 4, endTime: duration + 5),
+        ]
+
+        #expect(MP4ChapterUtil.write(markers, to: tmpfile.path))
+
+        let tracks = try await AVURLAsset(url: tmpfile).load(.tracks)
+        #expect(tracks.filter { $0.mediaType == .audio }.count == 1, "audio track lost")
+
+        let framesAfter = (try? AVAudioFile(forReading: tmpfile))?.length ?? 0
+        #expect(framesAfter == framesBefore, "audio frames went \(framesBefore) → \(framesAfter)")
+    }
+
+    /// The audio must still decode, not merely be listed. `isAVPlayable` is derived from this exact
+    /// measurement, and it is what decides whether the file can be edited again at all.
+    @Test func writingChaptersToAVideoLeavesTheAudioReadable() async throws {
+        let tmpfile = try copyToBin(url: TestBundleResources.shared.sample_mov)
+
+        let framesBefore = try AVAudioFile(forReading: tmpfile).length
+        #expect(framesBefore > 0, "fixture must start with readable audio")
+
+        let markers: [ChapterMarker] = [
+            ChapterMarker(name: "One", startTime: 0, endTime: 1),
+            ChapterMarker(name: "Two", startTime: 1, endTime: 2),
+        ]
+
+        #expect(MP4ChapterUtil.write(markers, to: tmpfile.path))
+
+        let framesAfter = (try? AVAudioFile(forReading: tmpfile))?.length ?? 0
+        #expect(framesAfter == framesBefore, "audio frame count went \(framesBefore) → \(framesAfter)")
     }
 }
