@@ -238,6 +238,17 @@ struct MatroskaTests {
         #expect(videoTrack.codec == "avc1")
     }
 
+    /// The Audio Track menu reads `audioTracks` off the parsed description, so testing
+    /// `AudioTrackReader` alone would pass while the shipping path returned nothing. Asserts the
+    /// list arrives from an ordinary parse, for a container AVFoundation cannot open at all.
+    @Test func parsingAMatroskaFilePopulatesItsAudioTracks() async throws {
+        let description = try await MetaAudioFileDescription(
+            parsing: TestBundleResources.shared.sample_dualaudio_mkv
+        )
+
+        #expect(description.audioTracks.map(\.language) == ["eng", "jpn"])
+    }
+
     /// The `.mkv` is `sample.mov` remuxed with `-c copy`, so the two must report the same stream.
     /// Comparing the containers against each other keeps this honest if the fixture is ever
     /// regenerated at a different size.
