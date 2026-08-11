@@ -21,10 +21,6 @@ let package = Package(
         .package(url: "https://github.com/ryanfrancesconi/spfk-testing", from: "1.1.0"),
         .package(url: "https://github.com/ryanfrancesconi/spfk-utils", from: "1.6.1"),
         .package(url: "https://github.com/ryanfrancesconi/spfk-video", from: "1.1.0"),
-        .package(url: "https://github.com/sbooth/ogg-binary-xcframework", from: "0.1.3"),
-        .package(url: "https://github.com/sbooth/flac-binary-xcframework", from: "0.2.0"),
-        .package(url: "https://github.com/sbooth/opus-binary-xcframework", from: "0.2.2"),
-        .package(url: "https://github.com/sbooth/vorbis-binary-xcframework", from: "0.1.2"),
     ],
     targets: [
         .target(
@@ -42,10 +38,6 @@ let package = Package(
             name: "SPFKMetadataC",
             dependencies: [
                 .product(name: "taglib", package: "spfk-taglib"),
-                .product(name: "ogg", package: "ogg-binary-xcframework"),
-                .product(name: "FLAC", package: "flac-binary-xcframework"),
-                .product(name: "opus", package: "opus-binary-xcframework"),
-                .product(name: "vorbis", package: "vorbis-binary-xcframework"),
             ],
             publicHeadersPath: "include",
             cSettings: [
