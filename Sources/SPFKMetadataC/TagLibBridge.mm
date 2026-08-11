@@ -32,6 +32,12 @@
 #import "TagFile.h"
 #import "TagLibBridge.h"
 #import "TagPictureRef.h"
+#import "TagRating.h"
+
+// Forward declarations — implementations live in TagRating.mm.
+// Called here while the FileRef is still open to avoid a second file open.
+int TagRatingReadFromFile(TagLib::File *f);
+void TagRatingWriteToFile(TagLib::File *f, int stars);
 
 #import "StringUtil.h"
 
@@ -184,7 +190,11 @@ namespace {
 
     PropertyMap tags = input.file()->properties();
 
-    if (tags.isEmpty()) {
+    // The rating is absent from the PropertyMap — each container stores it differently
+    // (ID3 POPM, the MP4 `rate` atom, Xiph RATING) — so it needs carrying separately.
+    int ratingStars = TagRatingReadFromFile(input.file());
+
+    if (tags.isEmpty() && ratingStars <= 0) {
         return true;
     }
 
@@ -201,6 +211,10 @@ namespace {
     }
 
     output.file()->setProperties(tags);
+
+    if (ratingStars > 0) {
+        TagRatingWriteToFile(output.file(), ratingStars);
+    }
 
     return output.save();
 }
