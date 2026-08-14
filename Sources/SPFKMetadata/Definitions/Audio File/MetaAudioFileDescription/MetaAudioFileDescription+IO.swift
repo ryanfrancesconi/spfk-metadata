@@ -86,7 +86,7 @@ extension MetaAudioFileDescription {
         // reaches neither.
         await loadVideoTrack()
 
-        await updateDefaultImage()
+        await updateImageThumbnail()
     }
 
     private mutating func loadWave() throws {
@@ -195,11 +195,12 @@ extension MetaAudioFileDescription {
         imageDescription.pictureRef = try? TagPictureRef.parsing(url: url)
     }
 
-    private mutating func updateDefaultImage() async {
+    /// A file with no embedded artwork keeps a nil image and gets no thumbnail. Substituting the
+    /// file's Finder icon here would store a per-machine, per-installed-app image as if it were
+    /// artwork, and leave a row's icon changing whenever a reparse happened to touch it. Display
+    /// resolves that fallback instead -- see `NSWorkspace.FinderIcon.fileType(for:)`.
+    private mutating func updateImageThumbnail() async {
         if imageDescription.cgImage == nil {
-            #if os(macOS)
-                imageDescription.cgImage = url.bestImageRepresentation?.cgImage
-            #endif
             imageDescription.description = url.path
         }
 

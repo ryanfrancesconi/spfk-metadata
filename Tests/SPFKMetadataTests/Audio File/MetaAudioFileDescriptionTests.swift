@@ -165,8 +165,8 @@ class MetaAudioFileDescriptionArtworkTests: BinTestCase {
     }
 
     /// Setting cgImage to nil and saving must remove embedded artwork from the file (non-WAV).
-    /// Verified at the TagLib level because MetaAudioFileDescription.updateDefaultImage()
-    /// always fills cgImage with a fallback image when no embedded artwork is found.
+    /// Verified at the TagLib level so the assertion is on the file's own bytes rather than on
+    /// whatever the loaded description happens to hold.
     @Test func clearingArtworkRemovesItFromFile() async throws {
         let tmpfile = try copyToBin(url: TestBundleResources.shared.mp3_no_metadata)
 
@@ -184,7 +184,7 @@ class MetaAudioFileDescriptionArtworkTests: BinTestCase {
         loaded.imageDescription.cgImage = nil
         try loaded.save(dirtyFlags: [.metadata, .image])
 
-        // Embedded artwork must be gone (TagLib level — avoids updateDefaultImage fallback)
+        // Embedded artwork must be gone (TagLib level — asserts on the file itself)
         #expect(throws: (any Error).self) { try TagPictureRef.parsing(url: tmpfile) }
     }
 
@@ -294,7 +294,7 @@ class MetaAudioFileDescriptionArtworkTests: BinTestCase {
         updated.tagProperties[.title] = "Pre-Existing Artwork Test"
         try updated.save(dirtyFlags: [.metadata])
 
-        // Verify at the TagLib level to avoid updateDefaultImage fallback masking a missing picture
+        // Verify at the TagLib level so the assertion is on the file's own bytes
         let restoredRef = try TagPictureRef.parsing(url: tmpfile)
         #expect(restoredRef.cgImage.width == originalWidth)
 
@@ -321,8 +321,8 @@ class MetaAudioFileDescriptionArtworkTests: BinTestCase {
     }
 
     /// Clearing artwork in a WAV file must remove it from disk.
-    /// Verified at the TagLib level because MetaAudioFileDescription.updateDefaultImage()
-    /// always fills cgImage with a fallback image when no embedded artwork is found.
+    /// Verified at the TagLib level so the assertion is on the file's own bytes rather than on
+    /// whatever the loaded description happens to hold.
     @Test func wavClearingArtworkRemovesItFromFile() async throws {
         let tmpfile = try copyToBin(url: TestBundleResources.shared.tabla_wav)
 
@@ -340,7 +340,7 @@ class MetaAudioFileDescriptionArtworkTests: BinTestCase {
         loaded.imageDescription.cgImage = nil
         try loaded.save(dirtyFlags: [.metadata, .image])
 
-        // Embedded artwork must be gone (TagLib level — avoids updateDefaultImage fallback)
+        // Embedded artwork must be gone (TagLib level — asserts on the file itself)
         #expect(throws: (any Error).self) { try TagPictureRef.parsing(url: tmpfile) }
     }
 }
