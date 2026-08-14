@@ -35,6 +35,14 @@ extension TagProperties {
         }
     }
 
+    /// The tag changes this instance carries relative to the file on disk, sorted by field name.
+    ///
+    /// Reads the file rather than trusting a recorded copy: an element marked dirty holds the
+    /// values it had when edited, and only the file can say what they are being compared against.
+    public func difference(fromFileAt url: URL) throws -> [TagValueChange] {
+        try difference(from: TagProperties(url: url))
+    }
+
     /// Writes all current tags back to the file via TagLib.
     /// - Parameter url: URL of the file to update.
     public func save(to url: URL) throws {
