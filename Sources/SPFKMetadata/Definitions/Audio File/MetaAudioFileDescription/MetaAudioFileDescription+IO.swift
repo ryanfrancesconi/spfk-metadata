@@ -222,6 +222,12 @@ extension MetaAudioFileDescription {
     public mutating func save(dirtyFlags: Set<MetadataDirtyFlag> = [.metadata]) throws {
         // Log.debug("Saving", url)
 
+        // Before any write. The `uchg` flag refuses the tag write, the Finder-tag write and the
+        // modification-date bump alike, and TagLib reports its share of that as a bare `false`
+        // with no reason attached -- so one error here, rather than a partial save that leaves
+        // tags on disk and Finder tags not.
+        try url.requireWritable()
+
         let imageNeedsSave = dirtyFlags.contains(.image)
         let markersNeedsSave = dirtyFlags.contains(.markers)
 
