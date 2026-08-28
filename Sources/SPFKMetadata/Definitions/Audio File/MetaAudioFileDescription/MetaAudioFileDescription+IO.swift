@@ -240,15 +240,20 @@ extension MetaAudioFileDescription {
         let imageNeedsSave = dirtyFlags.contains(.image)
         let markersNeedsSave = dirtyFlags.contains(.markers)
 
-        if fileType == .wav {
-            try saveWave(imageNeedsSave: imageNeedsSave, markersNeedsSave: markersNeedsSave)
+        // Gated, because the tail below runs on every save and these do not. Rewriting the
+        // container costs the whole file -- 20-30 s on a 4 GB source, the same rewrite the save
+        // progress reports -- and a Finder tag or a lock change has no business paying it.
+        if dirtyFlags.contains(.metadata) || imageNeedsSave || markersNeedsSave {
+            if fileType == .wav {
+                try saveWave(imageNeedsSave: imageNeedsSave, markersNeedsSave: markersNeedsSave)
 
-        } else if fileType == .flac {
-            try saveFLAC()
-            try saveOther(imageNeedsSave: imageNeedsSave, markersNeedsSave: markersNeedsSave)
+            } else if fileType == .flac {
+                try saveFLAC()
+                try saveOther(imageNeedsSave: imageNeedsSave, markersNeedsSave: markersNeedsSave)
 
-        } else {
-            try saveOther(imageNeedsSave: imageNeedsSave, markersNeedsSave: markersNeedsSave)
+            } else {
+                try saveOther(imageNeedsSave: imageNeedsSave, markersNeedsSave: markersNeedsSave)
+            }
         }
 
         #if os(macOS)
