@@ -14,7 +14,7 @@ let package = Package(
         )
     ],
     dependencies: [
-        .package(url: "https://github.com/ryanfrancesconi/spfk-taglib", from: "1.2.3"),
+        .package(url: "https://github.com/ryanfrancesconi/spfk-taglib", from: "1.5.0"),
         .package(url: "https://github.com/ryanfrancesconi/spfk-audio-base", from: "1.6.1"),
         .package(url: "https://github.com/ryanfrancesconi/spfk-matroska", from: "1.0.0"),
         .package(url: "https://github.com/ryanfrancesconi/spfk-metadata-base", from: "1.5.0"),
