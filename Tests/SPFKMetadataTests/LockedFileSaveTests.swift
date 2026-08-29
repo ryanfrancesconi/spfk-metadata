@@ -69,67 +69,6 @@
             #expect(throws: Never.self) { try description.save(dirtyFlags: [.metadata]) }
         }
 
-        // MARK: - A pending lock change, applied by the save
-
-        /// The ordering the guard depends on. A pending unlock has to be applied *before*
-        /// `requireWritable()`, or the save refuses the very edit that would let it proceed — and the
-        /// tag edit riding along with it proves the writes below the guard actually ran.
-        @Test func aPendingUnlockIsAppliedBeforeTheGuard() throws {
-            let url = try Self.temporaryCopyOfFixture()
-            defer { Self.discard(url) }
-
-            // Locked before the description is built, so `urlProperties` records the locked state and
-            // clearing it below is a real pending edit rather than a no-op.
-            try url.lock()
-
-            var description = MetaAudioFileDescription(url: url, fileType: .wav)
-            #expect(description.urlProperties.lockState == .locked)
-
-            description.urlProperties.lockState = .writable
-            description.tagProperties.data.set(tag: .title, value: "Unlocked")
-
-            #expect(throws: Never.self) {
-                try description.save(dirtyFlags: [.lock, .metadata])
-            }
-
-            #expect(url.lockState == .writable)
-            #expect(description.urlProperties.lockState == .writable)
-            #expect(try TagProperties(url: url).data.tag(for: .title) == "Unlocked")
-        }
-
-        /// The other half: a pending lock is applied *last*, after the tag write, the Finder-tag write
-        /// and the modification-date bump — every one of which fails on a locked file.
-        @Test func aPendingLockIsAppliedAfterTheWrites() throws {
-            let url = try Self.temporaryCopyOfFixture()
-            defer { Self.discard(url) }
-
-            var description = MetaAudioFileDescription(url: url, fileType: .wav)
-            description.urlProperties.lockState = .locked
-            description.tagProperties.data.set(tag: .title, value: "Locked")
-
-            #expect(throws: Never.self) {
-                try description.save(dirtyFlags: [.lock, .metadata])
-            }
-
-            #expect(url.lockState == .locked)
-            #expect(description.urlProperties.lockState == .locked)
-            #expect(try TagProperties(url: url).data.tag(for: .title) == "Locked")
-        }
-
-        /// Without `.lock` among the dirty flags the state is not applied, however `urlProperties`
-        /// reads — the flag is what says the user asked for it.
-        @Test func theLockIsOnlyAppliedWhenItIsDirty() throws {
-            let url = try Self.temporaryCopyOfFixture()
-            defer { Self.discard(url) }
-
-            var description = MetaAudioFileDescription(url: url, fileType: .wav)
-            description.urlProperties.lockState = .locked
-
-            try description.save(dirtyFlags: [.metadata])
-
-            #expect(url.lockState == .writable)
-        }
-
         // MARK: - Harness
 
         private static func temporaryCopyOfFixture() throws -> URL {

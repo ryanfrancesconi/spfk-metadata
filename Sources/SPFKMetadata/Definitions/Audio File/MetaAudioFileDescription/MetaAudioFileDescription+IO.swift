@@ -223,19 +223,10 @@ extension MetaAudioFileDescription {
     public mutating func save(dirtyFlags: Set<MetadataDirtyFlag> = [.metadata]) throws {
         // Log.debug("Saving", url)
 
-        // A pending unlock is applied *before* the guard, not gated by it: clearing the flag is
-        // part of this save rather than a precondition of it, and checking first would make the
-        // save refuse the very edit that would let it proceed.
-        #if os(macOS)
-            if dirtyFlags.contains(.lock), urlProperties.lockState == .writable {
-                try url.unlock()
-            }
-        #endif
-
-        // The `uchg` flag refuses the tag write, the Finder-tag write and the modification-date
-        // bump alike, and TagLib reports its share of that as a bare `false` with no reason
-        // attached -- so one error here, rather than a partial save that leaves tags on disk and
-        // Finder tags not.
+        // Before any write. The `uchg` flag refuses the tag write, the Finder-tag write and the
+        // modification-date bump alike, and TagLib reports its share of that as a bare `false`
+        // with no reason attached -- so one error here, rather than a partial save that leaves
+        // tags on disk and Finder tags not.
         try url.requireWritable()
 
         let imageNeedsSave = dirtyFlags.contains(.image)
@@ -261,11 +252,6 @@ extension MetaAudioFileDescription {
             let finderTags = urlProperties.finderTags
             try url.set(finderTags: finderTags)
             try url.updateModificationDate()
-
-            // Last, and after the modification-date bump: everything above fails on a locked file.
-            if dirtyFlags.contains(.lock), urlProperties.lockState == .locked {
-                try url.lock()
-            }
 
             // Rebuilt rather than patched, which is what keeps the recorded dates equal to the
             // ones this save produced. An element left claiming a date the file no longer has is
