@@ -5,6 +5,7 @@ import AVFoundation
 import Foundation
 import SPFKAudioBase
 import SPFKBase
+import SPFKFileSystem
 import SPFKMatroska
 import SPFKMetadataBase
 import SPFKMetadataC
