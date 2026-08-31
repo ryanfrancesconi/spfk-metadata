@@ -18,80 +18,6 @@ SPFKMetadata serves [ShadowTag](https://spongefork.com/shadowtag/)'s specific me
 - **Swift:** 6.2+
 - C++20
 
-## Usage
-
-```swift
-import SPFKMetadata
-
-// Parse all metadata from an audio file
-var description = try await MetaAudioFileDescription(parsing: url)
-
-// Read tags
-let title = description.tag(for: .title)
-let artist = description.tag(for: .artist)
-let bpm = description.tempo
-
-// Write tags
-description.set(tag: .title, value: "New Title")
-description.set(tag: .genre, value: "Electronic")
-description.set(customTag: "MY_CUSTOM_TAG", value: "custom value")
-try description.save()
-
-// Read BEXT chunk (WAV only)
-if let bext = description.bextDescription {
-    print(bext[.originator])
-    print(bext.timeReferenceString)
-    print(bext.loudnessDescription)
-}
-
-// Read iXML metadata (WAV/FLAC)
-if let ixml = description.ixmlMetadata {
-    print(ixml.scene ?? "")
-    print(ixml.take ?? "")
-    // Descriptor-based access
-    let descriptor = IXMLTagDescriptor.descriptor(forIdentifier: "scene")
-    print(ixml.value(for: descriptor) ?? "")
-}
-
-// Read markers
-for marker in description.markerCollection.markerDescriptions {
-    print("\(marker.name ?? "Untitled") @ \(marker.startTime)s")
-}
-
-// Read embedded artwork
-if let image = description.imageDescription {
-    let cgImage = image.cgImage
-    print("\(cgImage.width)×\(cgImage.height)")
-}
-
-// Write embedded artwork
-if let pictureRef = TagPictureRef(
-    url: artworkURL,
-    pictureDescription: "Front Cover",
-    pictureType: "Front Cover"
-) {
-    description.imageDescription = ImageDescription(pictureRef: pictureRef)
-    try description.save()
-}
-
-// Remove embedded artwork
-description.imageDescription = nil
-try description.save()
-
-// Read/write star rating (0 = unrated, 1–5 stars) — preferred path
-let rating = description.tag(for: .rating)    // "0"–"5" string, or nil
-description.set(tag: .rating, value: "4")
-try description.save()
-
-// Standalone path-based access (opens its own FileRef — use for isolated rating I/O)
-let stars = TagRating.read(url.path)          // -1 on error, 0 if unrated
-TagRating.write(4, toPath: url.path)          // write 4 stars
-TagRating.write(0, toPath: url.path)          // clear rating
-
-// Copy tags between files
-try TagProperties.copyTags(from: sourceURL, to: destinationURL)
-```
-
 ## API Reference
 
 Types marked with *(base)* are defined in [SPFKMetadataBase](https://github.com/ryanfrancesconi/spfk-metadata-base) and available without TagLib. Types marked with *(I/O)* are defined in this package and require the C++/ObjC bridge.
@@ -168,6 +94,9 @@ Low-level bridge layer exposing TagLib functionality to Swift through Objective-
 | **XiphChapterUtil** | TagLib-based Vorbis comment chapter read/write for FLAC, OGG Vorbis, and OGG Opus |
 | **MP4ChapterUtil** | Nero-style MP4/M4A chapter marker read/write via `chpl` atom |
 | **ChapterMarker** | Chapter marker data object for AVFoundation chapter parsing |
+| **AudioMarker** | One RIFF cue point, as read off the file |
+| **TagAudioPropertiesC** | Channel count, sample rate, bit depth, bit rate and duration, read through TagLib |
+| **TagFileType** | The container types the bridge recognizes |
 
 ## Installation
 
@@ -191,6 +120,7 @@ import SPFKMetadataC         // only needed for direct ObjC bridge access
 | [spfk-metadata-base](https://github.com/ryanfrancesconi/spfk-metadata-base) | Pure metadata data types (no C++ dependency) |
 | [spfk-taglib](https://github.com/ryanfrancesconi/spfk-taglib) | TagLib C++ library repackaged for SPM |
 | [spfk-audio-base](https://github.com/ryanfrancesconi/spfk-audio-base) | Shared audio type definitions |
+| [spfk-filesystem](https://github.com/ryanfrancesconi/spfk-filesystem) | File properties and Finder tags on a parsed description |
 | [spfk-utils](https://github.com/ryanfrancesconi/spfk-utils) | Foundation utilities and extensions |
 | [spfk-matroska](https://github.com/ryanfrancesconi/spfk-matroska) | Container reading for formats AVFoundation cannot open |
 | [spfk-video](https://github.com/ryanfrancesconi/spfk-video) | Video track properties on a media description |
