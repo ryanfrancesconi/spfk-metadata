@@ -25,6 +25,7 @@ extension MetaAudioFileDescription {
             let result = await VideoTrackReader.readAnyContainer(from: url)
             videoTrack = result.videoTrack
             quickTimeUserData = result.quickTimeUserData
+            isProtected = result.hasProtectedContent
         }
 
         // Read here rather than in its own pass: a picker needs the list, and this is already the
@@ -34,6 +35,13 @@ extension MetaAudioFileDescription {
         // exactly the same choice to offer, and asking a WAV costs an asset open per import to name
         // the only track it has.
         guard fileType.supportsMultipleAudioTracks else { return }
+
+        // The same family of containers holds FairPlay audio (`.m4b`, `.m4a`), and the video read
+        // above is the only other place that asks. A protected file that reaches the waveform scan
+        // fails every read of it, and reaches the transport next.
+        if !fileType.isVideo {
+            isProtected = await ProtectedContentReader.hasProtectedContent(url: url)
+        }
 
         audioTracks = await AudioTrackReader.readAnyContainer(from: url)
     }
