@@ -55,6 +55,7 @@ let package = Package(
                 .targetItem(name: "SPFKMetadata", condition: nil),
                 .targetItem(name: "SPFKMetadataC", condition: nil),
                 .product(name: "SPFKTesting", package: "spfk-testing"),
+                .product(name: "SPFKVideo", package: "spfk-video"),
             ],
             swiftSettings: [
                 .swiftLanguageMode(.v5),

@@ -46,25 +46,47 @@ extension MetaAudioFileDescription {
                 }
 
             case let .failure(error):
-                // A container AVFoundation cannot open at all -- Matroska in practice, the one
-                // video container it refuses among the set this app otherwise holds. TagLib reads
-                // its tags and its stream properties perfectly well, so the file becomes a real,
-                // taggable row rather than an import error; only playback is unavailable, which is
-                // what `isAVPlayable` below already says and the waveform path already handles.
+                // A container `AVAudioFile` will not open, which splits two ways: one a tag store
+                // can describe (Matroska), and one only `AVAsset` can (MXF). Either becomes a real
+                // row rather than an import error, and what each is missing -- playback for the
+                // first, tags for the second -- is stated by `isAVPlayable` and by the tag backing.
                 //
-                // Deliberately not gated on Matroska by name. The question a format can answer for
-                // itself is "do I claim metadata support", and a hardcoded list here would be the
-                // fourth copy of a capability that already has an owner.
-                guard fileType?.supportsMetadata == true else { throw error }
+                // Deliberately not gated on a container by name. The question a format can answer
+                // for itself is "do I claim metadata support", and a hardcoded list here would be
+                // one more copy of a capability that already has an owner.
+                if fileType?.supportsMetadata == true {
+                    self.init(url: url, fileType: fileType)
+                    try await load()
 
-                self.init(url: url, fileType: fileType)
-                try await load()
+                    // TagLib has to have produced real stream properties, or there is nothing
+                    // behind this row at all and AVFoundation's original failure is the honest
+                    // answer. This is what keeps a genuinely corrupt file an import error instead
+                    // of an empty row.
+                    guard let properties = tagProperties.audioProperties else { throw error }
+                    audioFormat = properties
 
-                // TagLib has to have produced real stream properties, or there is nothing behind
-                // this row at all and AVFoundation's original failure is the honest answer. This is
-                // what keeps a genuinely corrupt file an import error instead of an empty row.
-                guard let properties = tagProperties.audioProperties else { throw error }
-                audioFormat = properties
+                } else {
+                    // Neither stack can open it and no tag store claims it, but `AVAsset` may still
+                    // play it: `AVAudioFile` is ExtAudioFile underneath, which MediaToolbox format
+                    // readers do not serve. MXF is that case, once `ProVideoFormats.register()` has
+                    // run. The asset read is the only source of format and length here, and its
+                    // failure leaves AVFoundation's own error as the answer.
+                    guard let format = await AudioTrackReader.format(of: url) else { throw error }
+
+                    self.init(
+                        url: url,
+                        fileType: fileType,
+                        audioFormat: AudioFormatProperties(
+                            channelCount: format.channelCount,
+                            sampleRate: format.sampleRate,
+                            bitsPerChannel: format.bitsPerChannel,
+                            duration: format.duration
+                        )
+                    )
+                    try await load()
+
+                    avFrameCount = format.frameCount
+                }
             }
         }
 
