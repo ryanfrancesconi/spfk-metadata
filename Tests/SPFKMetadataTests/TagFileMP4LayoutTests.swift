@@ -148,4 +148,23 @@ final class TagFileMP4LayoutTests: BinTestCase {
         #expect(written < after.mdatLength, "the save wrote \(written) bytes against an mdat of \(after.mdatLength)")
         #expect(try TagProperties(url: url).tag(for: .title)?.hasPrefix("Tabla x") == true)
     }
+
+    /// Removing every tag is a save of an empty `ilst` into the same space, not a removal of the
+    /// atom from disk followed by an insertion of an empty one.
+    @Test func removingAllTagsLeavesMDATInPlace() throws {
+        let url = try inflatedCopy()
+
+        try save(title: "Tabla", to: url)
+        let before = try layout(of: url)
+
+        let writtenBefore = try logicalBytesWritten()
+        try TagProperties.removeAllTags(in: url)
+        let written = try logicalBytesWritten() - writtenBefore
+
+        let after = try layout(of: url)
+
+        #expect(after.mdatOffset == before.mdatOffset)
+        #expect(written < after.mdatLength, "removing the tags wrote \(written) bytes against an mdat of \(after.mdatLength)")
+        #expect(try TagProperties(url: url).tag(for: .title) == nil)
+    }
 }

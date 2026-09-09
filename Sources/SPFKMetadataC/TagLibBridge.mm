@@ -40,6 +40,7 @@ int TagRatingReadFromFile(TagLib::File *f);
 void TagRatingWriteToFile(TagLib::File *f, int stars);
 
 #import "StringUtil.h"
+#import "TagUtil.h"
 
 using namespace std;
 using namespace TagLib;
@@ -161,21 +162,7 @@ namespace {
         return false;
     }
 
-    // strip() implementation is specific to each file type
-    File *f = fileRef.file();
-
-    if (auto *fp = dynamic_cast<RIFF::WAV::File *>(f))
-        fp->strip();
-    else if (auto *fp = dynamic_cast<MP4::File *>(f))
-        fp->strip();
-    else if (auto *fp = dynamic_cast<MPEG::File *>(f))
-        fp->strip();
-    else if (auto *fp = dynamic_cast<FLAC::File *>(f))
-        fp->strip();
-    else {
-        cout << "Resetting property map for " << path.UTF8String << endl;
-        fileRef.setProperties(PropertyMap());
-    }
+    TagUtil::clearTags(fileRef);
 
     return fileRef.save();
 }

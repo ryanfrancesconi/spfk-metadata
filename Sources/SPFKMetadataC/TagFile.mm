@@ -16,6 +16,7 @@
 
 #import "StringUtil.h"
 #import "TagAudioPropertiesC.h"
+#import "TagUtil.h"
 #import "TagFile.h"
 #import "TagLibBridge.h"
 #import "TagRating.h"
@@ -128,31 +129,10 @@ using namespace TagLib;
     // or clear artwork explicitly when that is their intent.
     auto existingPictures = fileRef.complexProperties(String("PICTURE"));
 
-    // Strip existing tags before writing so that atoms not present in the new
-    // dictionary are removed. setProperties alone does not clear format-specific
-    // storage like iTunes freeform atoms (e.g. ITUNSMPB in M4A files).
-    File *f = fileRef.file();
+    // Cleared before writing, so anything absent from the new dictionary is removed.
+    TagUtil::clearTags(fileRef);
 
-    if (auto *fp = dynamic_cast<RIFF::WAV::File *>(f))
-        fp->strip();
-    else if (auto *fp = dynamic_cast<MP4::File *>(f)) {
-        // Cleared in memory rather than with strip(), which removes `meta` from disk at once and
-        // so slides the whole `mdat` down, only for the save below to slide it back up. One save
-        // from an emptied tag reuses the padding beside `ilst` and leaves `mdat` where it is.
-        if (MP4::Tag *tag = fp->tag()) {
-            StringList keys;
-            for (const auto &[key, item] : tag->itemMap())
-                keys.append(key);
-            for (const auto &key : std::as_const(keys))
-                tag->removeItem(key);
-        }
-    }
-    else if (auto *fp = dynamic_cast<MPEG::File *>(f))
-        fp->strip();
-    else if (auto *fp = dynamic_cast<FLAC::File *>(f))
-        fp->strip();
-    else
-        fileRef.setProperties(PropertyMap());
+    File *f = fileRef.file();
 
     PropertyMap properties = PropertyMap();
 

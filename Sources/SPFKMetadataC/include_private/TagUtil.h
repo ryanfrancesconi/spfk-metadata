@@ -9,6 +9,7 @@
 #import <taglib/aifffile.h>
 #import <taglib/fileref.h>
 #import <taglib/flacfile.h>
+#import <taglib/mp4file.h>
 #import <taglib/mpegfile.h>
 #import <taglib/rifffile.h>
 #import <taglib/wavfile.h>
@@ -16,12 +17,46 @@
 #import <taglib/id3v2frame.h>
 #import <taglib/id3v2tag.h>
 #import <taglib/privateframe.h>
+#import <taglib/textidentificationframe.h>
 #import <taglib/tpropertymap.h>
 
 using namespace TagLib;
 using namespace std;
 
 namespace TagUtil {
+/// Empties every tag the file carries, so a save that follows writes only what the caller sets.
+/// `setProperties` alone leaves format-specific storage behind -- iTunes freeform atoms, for one.
+///
+/// Per format, because TagLib's `strip()` is not one operation: for WAV, MP3 and FLAC it removes
+/// the tags from disk on the spot and the save puts them back. **MP4 is cleared in memory and never
+/// stripped**: `MP4::File::strip()` removes `meta` at once, sliding everything after it down, and
+/// the save then finds no `ilst` and inserts a new one, sliding it all back up -- two passes over
+/// the whole `mdat`, and for an emptied tag an empty atom plus padding left behind. Measured
+/// 2026-09-08: 33.7 MB written for a 16.8 MB `mdat` on a 100-byte title edit, against a few KB in
+/// place. Formats with no strip of their own (Vorbis, Opus, AIFF) only have their mapped
+/// properties cleared, and keep anything else in the tag.
+static void clearTags(FileRef &fileRef) {
+    File *f = fileRef.file();
+
+    if (auto *fp = dynamic_cast<RIFF::WAV::File *>(f)) {
+        fp->strip();
+    } else if (auto *fp = dynamic_cast<MP4::File *>(f)) {
+        if (MP4::Tag *tag = fp->tag()) {
+            StringList keys;
+            for (const auto &[key, item] : tag->itemMap())
+                keys.append(key);
+            for (const auto &key : std::as_const(keys))
+                tag->removeItem(key);
+        }
+    } else if (auto *fp = dynamic_cast<MPEG::File *>(f)) {
+        fp->strip();
+    } else if (auto *fp = dynamic_cast<FLAC::File *>(f)) {
+        fp->strip();
+    } else {
+        fileRef.setProperties(PropertyMap());
+    }
+}
+
 static NSMutableDictionary *convertToDictionary(ID3v2::FrameList frameList) {
     NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
 
