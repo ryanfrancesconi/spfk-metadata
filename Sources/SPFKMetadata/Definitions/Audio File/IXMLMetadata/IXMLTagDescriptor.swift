@@ -145,6 +145,22 @@ extension IXMLTagDescriptor {
     public static func descriptor(forIdentifier id: String) -> IXMLTagDescriptor? {
         allDescriptors.first { $0.identifier == id }
     }
+
+    /// The fields whose values belong in a text search index.
+    ///
+    /// BEXT is excluded because it mirrors the binary chunk, which is indexed from its own
+    /// dictionary; SPEED, LOUDNESS and HISTORY hold technical values nobody searches by. Read-only
+    /// and non-text fields stay in — a file UID or a BPM is still a term a user can type.
+    public static let searchableDescriptors: [IXMLTagDescriptor] =
+        allDescriptors.filter { [.core, .user, .aswg, .location].contains($0.section) }
+
+    /// The subset of ``searchableDescriptors`` a find-and-replace pass may write to.
+    ///
+    /// Free text only: a boolean, a number or a date has a format the replacement string is not
+    /// checked against, and a read-only field is refused by ``IXMLMetadata/setValue(_:for:)``
+    /// whatever is offered.
+    public static let replaceableDescriptors: [IXMLTagDescriptor] =
+        searchableDescriptors.filter { $0.editStyle == .text && !$0.isReadOnly }
 }
 
 // MARK: - Descriptor Registry

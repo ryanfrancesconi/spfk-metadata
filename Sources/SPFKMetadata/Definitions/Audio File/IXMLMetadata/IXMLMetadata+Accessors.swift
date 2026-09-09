@@ -1,6 +1,7 @@
 // Copyright Ryan Francesconi. All Rights Reserved. Revision History at https://github.com/ryanfrancesconi/spfk-metadata
 
 import Foundation
+import SPFKBase
 
 // MARK: - Descriptor-based read/write
 
@@ -163,5 +164,47 @@ extension IXMLMetadata {
         default:
             return nil
         }
+    }
+}
+
+// MARK: - Bulk read
+
+extension IXMLMetadata {
+    /// Values for `descriptors`, with unset and blank fields dropped.
+    ///
+    /// ``userFields`` and ``aswgFields`` re-parse their container's XML on every access, so a loop
+    /// calling ``value(for:)`` over a whole section costs one parse per field. This resolves each
+    /// container once.
+    public func values(for descriptors: [IXMLTagDescriptor]) -> [String] {
+        var user: IXMLUserFields?
+        var aswg: IXMLASWGFields?
+
+        if descriptors.contains(where: { $0.section == .user }) { user = userFields }
+        if descriptors.contains(where: { $0.section == .aswg }) { aswg = aswgFields }
+
+        var out: [String] = []
+
+        for descriptor in descriptors {
+            var value: String?
+
+            switch descriptor.section {
+            case .user:
+                if let user, let entry = iXMLUserFieldMap.first(where: { $0.xmlName == descriptor.xmlTag }) {
+                    value = user[keyPath: entry.keyPath]
+                }
+            case .aswg:
+                if let aswg, let entry = iXMLASWGFieldMap.first(where: { $0.xmlName == descriptor.xmlTag }) {
+                    value = aswg[keyPath: entry.keyPath]
+                }
+            default:
+                value = self.value(for: descriptor)
+            }
+
+            if let trimmed = value?.trimmed, trimmed.isNotEmpty {
+                out.append(trimmed)
+            }
+        }
+
+        return out
     }
 }
