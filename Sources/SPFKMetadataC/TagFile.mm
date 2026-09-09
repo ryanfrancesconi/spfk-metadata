@@ -135,8 +135,18 @@ using namespace TagLib;
 
     if (auto *fp = dynamic_cast<RIFF::WAV::File *>(f))
         fp->strip();
-    else if (auto *fp = dynamic_cast<MP4::File *>(f))
-        fp->strip();
+    else if (auto *fp = dynamic_cast<MP4::File *>(f)) {
+        // Cleared in memory rather than with strip(), which removes `meta` from disk at once and
+        // so slides the whole `mdat` down, only for the save below to slide it back up. One save
+        // from an emptied tag reuses the padding beside `ilst` and leaves `mdat` where it is.
+        if (MP4::Tag *tag = fp->tag()) {
+            StringList keys;
+            for (const auto &[key, item] : tag->itemMap())
+                keys.append(key);
+            for (const auto &key : std::as_const(keys))
+                tag->removeItem(key);
+        }
+    }
     else if (auto *fp = dynamic_cast<MPEG::File *>(f))
         fp->strip();
     else if (auto *fp = dynamic_cast<FLAC::File *>(f))
