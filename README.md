@@ -121,6 +121,7 @@ import SPFKMetadataC         // only needed for direct ObjC bridge access
 | [spfk-taglib](https://github.com/ryanfrancesconi/spfk-taglib) | TagLib C++ library repackaged for SPM |
 | [spfk-audio-base](https://github.com/ryanfrancesconi/spfk-audio-base) | Shared audio type definitions |
 | [spfk-filesystem](https://github.com/ryanfrancesconi/spfk-filesystem) | File properties and Finder tags on a parsed description |
+| [spfk-image](https://github.com/ryanfrancesconi/spfk-image) | Image decoding and encoding in the artwork tests (test target only) |
 | [spfk-utils](https://github.com/ryanfrancesconi/spfk-utils) | Foundation utilities and extensions |
 | [spfk-matroska](https://github.com/ryanfrancesconi/spfk-matroska) | Container reading for formats AVFoundation cannot open |
 | [spfk-video](https://github.com/ryanfrancesconi/spfk-video) | Video track properties on a media description |

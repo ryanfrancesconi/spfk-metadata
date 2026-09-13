@@ -1,5 +1,6 @@
 import AVFoundation
 import SPFKBase
+import SPFKImage
 import SPFKMetadata
 import SPFKMetadataBase
 import SPFKMetadataC

@@ -2,6 +2,7 @@
 
 import Foundation
 import SPFKBase
+import SPFKImage
 import SPFKTesting
 import SPFKUtils
 import Testing
