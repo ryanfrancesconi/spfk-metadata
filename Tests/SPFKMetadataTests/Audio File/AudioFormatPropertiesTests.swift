@@ -33,7 +33,7 @@ struct AudioFormatPropertiesAdditionalTests {
 
     @Test func channelsDescriptionMulti() {
         let props = AudioFormatProperties(channelCount: 6, sampleRate: 48000, duration: 1.0)
-        #expect(props.channelsDescription == "6 Channel")
+        #expect(props.channelsDescription == "6 Channels")
     }
 
     @Test func channelsDescriptionZero() {
@@ -45,7 +45,7 @@ struct AudioFormatPropertiesAdditionalTests {
 
     @Test func bitRateDescription() {
         let props = AudioFormatProperties(channelCount: 2, sampleRate: 44100, bitRate: 320, duration: 1.0)
-        #expect(props.bitRateDescription == "320 kbit/s")
+        #expect(props.bitRateDescription == "320 kbps")
     }
 
     @Test func bitRateDescriptionNil() {
@@ -72,15 +72,14 @@ struct AudioFormatPropertiesAdditionalTests {
         let props = AudioFormatProperties(channelCount: 2, sampleRate: 48000, bitRate: 128, duration: 1.0)
         let desc = props.formatDescription
         #expect(desc.contains("48 kHz"))
-        #expect(desc.contains("128 kbit/s"))
+        #expect(desc.contains("128 kbps"))
         #expect(desc.contains("Stereo"))
     }
 
     @Test func formatDescriptionNonStandardRate() {
-        // 22050 / 1000 = 22.05, truncated to 1 decimal = 22.0, formatted as integer "22"
         let props = AudioFormatProperties(channelCount: 1, sampleRate: 22050, duration: 1.0)
         let desc = props.formatDescription
-        #expect(desc.contains("22 kHz"))
+        #expect(desc.contains("22.05 kHz"))
         #expect(desc.contains("Mono"))
     }
 
@@ -103,8 +102,8 @@ struct AudioFormatPropertiesAdditionalTests {
         #expect(props.bitRateDescription == "")
 
         props.update(bitRate: 256)
-        #expect(props.bitRateDescription == "256 kbit/s")
-        #expect(props.formatDescription.contains("256 kbit/s"))
+        #expect(props.bitRateDescription == "256 kbps")
+        #expect(props.formatDescription.contains("256 kbps"))
     }
 
     // MARK: - Codable
