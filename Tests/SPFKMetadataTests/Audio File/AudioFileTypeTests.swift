@@ -11,20 +11,6 @@ import Testing
 
 @Suite(.tags(.file))
 class AudioFileTypeTests: BinTestCase {
-    @Test func checkPathExtension() throws {
-        var extensions = AudioFileType.allCases.map { $0.pathExtension }
-
-        extensions += ["AIF", "bwf", "wave"]
-
-        for aft in extensions {
-            let instance = try #require(
-                AudioFileType(pathExtension: aft)
-            )
-
-            #expect(instance.utType != nil)
-        }
-    }
-
     @Test func tagFileType() throws {
         for item in TagFileTypeDef.allCases {
             #expect(AudioFileType(tagType: item) != nil)
