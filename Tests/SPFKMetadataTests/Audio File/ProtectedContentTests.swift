@@ -31,7 +31,7 @@ struct ProtectedContentTests {
 /// Parses the file named by `SPFK_PROTECTED_MEDIA` (as `TEST_RUNNER_SPFK_PROTECTED_MEDIA` under
 /// `xcodebuild`) and prints what the import would store for it. Point it at a protected `.m4b`
 /// or `.m4v`; there is no such fixture in the bundle.
-@Suite(.tags(.development), .enabled(if: ProtectedMediaFixture.url != nil))
+@Suite(.tags(.development, .slow), .enabled(if: ProtectedMediaFixture.url != nil))
 struct ProtectedMediaParseDevelopmentTests {
     @Test func parseProtectedMedia() async throws {
         let url = try #require(ProtectedMediaFixture.url)

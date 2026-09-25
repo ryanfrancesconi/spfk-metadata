@@ -11,7 +11,7 @@ import Testing
 /// Times two tag saves on a copy of the file named by `SPFK_LARGE_MP4` (as
 /// `TEST_RUNNER_SPFK_LARGE_MP4` under `xcodebuild`): one that fits the padding beside `ilst`, and
 /// one that outgrows it and so has to move `mdat`. Point it at a feature-length `.m4v`/`.mov`.
-@Suite(.tags(.development), .enabled(if: LargeMP4Fixture.url != nil))
+@Suite(.tags(.development, .slow), .enabled(if: LargeMP4Fixture.url != nil))
 final class TagFileLargeMP4DevelopmentTests: BinTestCase {
     @Test func timeSaves() throws {
         let source = try #require(LargeMP4Fixture.url)
