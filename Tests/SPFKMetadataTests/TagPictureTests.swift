@@ -97,6 +97,21 @@ class TagPictureTests: BinTestCase {
         #expect(TagPicture(path: tmpfile.path)?.pictureRef == nil)
     }
 
+    /// TagLib opens a file it cannot write read-only, so only the save itself fails.
+    @Test func writeToReadOnlyFileReportsFailure() async throws {
+        deleteBinOnExit = true
+        let pictureRef = try #require(
+            TagPictureRef(url: TestBundleResources.shared.sharksandwich, pictureDescription: "Test", pictureType: "Front Cover")
+        )
+        let tmpfile = try copyToBin(url: TestBundleResources.shared.tabla_mp3)
+
+        try FileManager.default.setAttributes([.posixPermissions: 0o444], ofItemAtPath: tmpfile.path)
+        defer { try? FileManager.default.setAttributes([.posixPermissions: 0o644], ofItemAtPath: tmpfile.path) }
+
+        let result = TagPicture.write(pictureRef, path: tmpfile.path)
+        #expect(result == false)
+    }
+
     @Test(arguments: TestBundleResources.shared.markerFormats)
     func removePictureRoundtrip(url: URL) async throws {
         deleteBinOnExit = true

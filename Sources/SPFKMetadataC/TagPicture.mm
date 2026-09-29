@@ -220,10 +220,11 @@ static void clearLegacyFlacXiphCommentPictures(FileRef &fileRef) {
         pictures.append(map);
     }
 
-    fileRef.setComplexProperties(pictureKey, pictures);
+    if (!fileRef.setComplexProperties(pictureKey, pictures))
+        return false;
+
     clearLegacyFlacXiphCommentPictures(fileRef);
-    fileRef.save();
-    return true;
+    return fileRef.save();
 }
 
 @end
