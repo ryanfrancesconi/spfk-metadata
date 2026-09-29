@@ -21,9 +21,7 @@ using namespace TagLib;
 
 @implementation MPEGChapterUtil
 
-/// Returns an array of `ChapterMarker` via TagLib.
-/// ID3v2 only currently
-/// - Parameter path: file to open
+/// ID3v2 CHAP frames only.
 + (NSArray *)read:(NSString *)path {
     FileRef fileRef(path.UTF8String);
 
@@ -34,13 +32,10 @@ using namespace TagLib;
     MPEG::File *file = dynamic_cast<MPEG::File *>(fileRef.file());
 
     if (!file || !file->hasID3v2Tag()) {
-        // cout << "getMP3Chapters: Not a MPEG File or no ID3v2 tag" << endl;
         return nil;
     }
 
-    ID3v2::Tag *tag = file->ID3v2Tag();
-    ID3v2::FrameList chapterList = tag->frameList("CHAP");
-
+    ID3v2::FrameList chapterList = file->ID3v2Tag()->frameList("CHAP");
     NSMutableArray *array = [[NSMutableArray alloc] init];
 
     for (auto it = chapterList.begin(); it != chapterList.end(); ++it) {
@@ -49,25 +44,14 @@ using namespace TagLib;
         NSTimeInterval startTime = NSTimeInterval(frame->startTime()) / 1000;
         NSTimeInterval endTime = NSTimeInterval(frame->endTime()) / 1000;
 
-        // placeholder for title
-        String elementName = String(frame->elementID());
+        // The element ID stands in until an embedded TIT2 names the chapter.
+        NSString *chapterName = @(String(frame->elementID()).toCString(true));
 
-        const char *name = elementName.toCString(true);
+        for (auto it = frame->embeddedFrameList().begin(); it != frame->embeddedFrameList().end(); ++it) {
+            auto tit2Frame = dynamic_cast<const ID3v2::TextIdentificationFrame *>(*it);
 
-        NSString *chapterName = @(name);
-
-        const ID3v2::FrameList &embeddedFrames = frame->embeddedFrameList();
-
-        if (!embeddedFrames.isEmpty()) {
-            // Look for a title frame in the chapter, if found use that for the title
-            for (auto it = frame->embeddedFrameList().begin(); it != frame->embeddedFrameList().end(); ++it) {
-                auto tit2Frame = dynamic_cast<const ID3v2::TextIdentificationFrame *>(*it);
-
-                // cout << tit2Frame->frameID() << endl;
-
-                if (tit2Frame->frameID() == "TIT2") {
-                    chapterName = @(tit2Frame->toString().toCString());
-                }
+            if (tit2Frame->frameID() == "TIT2") {
+                chapterName = @(tit2Frame->toString().toCString());
             }
         }
 
@@ -97,7 +81,6 @@ using namespace TagLib;
 
     mpegFile->ID3v2Tag()->removeFrames("CHAP");
 
-    // add new CHAP tags
     ID3v2::Header header;
 
     for (ChapterMarker *object in chapters) {
@@ -109,7 +92,6 @@ using namespace TagLib;
         String string = String(cname);
         chapter->setElementID(string.data(String::Type::UTF8));
 
-        // set the chapter title
         ID3v2::TextIdentificationFrame *titleFrame = new ID3v2::TextIdentificationFrame("TIT2");
         titleFrame->setText(cname);
         chapter->addEmbeddedFrame(titleFrame);

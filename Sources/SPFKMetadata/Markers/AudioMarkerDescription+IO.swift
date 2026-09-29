@@ -7,10 +7,7 @@ import SPFKMetadataBase
 import SPFKMetadataC
 
 extension AudioMarkerDescription {
-    /// Creates an `AudioMarkerDescription` from a Core Audio RIFF cue point.
-    ///
-    /// Decodes the JSON metadata suffix from the marker name, if present, to recover
-    /// `endTime`, `hexColor`, and `markerType` for markers written by ShadowTag.
+    /// From a WAV or AIFF marker, recovering end time and color from the name's JSON suffix.
     public init(riffMarker marker: AudioMarker) {
         let (name, duration, hexColor) = Self.decodeFileName(marker.name ?? "")
 
@@ -25,11 +22,7 @@ extension AudioMarkerDescription {
         )
     }
 
-    /// Creates an `AudioMarkerDescription` from a Chapter marker.
-    ///
-    /// Decodes the JSON color suffix from the chapter title, if present. The native
-    /// `endTime` from the chapter format is authoritative and is not overridden by
-    /// the JSON `d` key (which is only present in formats without native endTime support).
+    /// From a chapter whose format stores its own end time; the title's suffix supplies color only.
     public init(chapterMarker marker: ChapterMarker) {
         let (name, _, hexColor) = Self.decodeFileName(marker.name ?? "")
         self.init(
@@ -65,24 +58,18 @@ extension AudioMarkerDescription {
         )
     }
 
-    /// Converts to a `ChapterMarker` for writing via format-specific utilities.
+    /// The plain name, with no suffix.
     public var chapterMarker: ChapterMarker {
         ChapterMarker(name: name ?? "Marker", startTime: startTime, endTime: endTime ?? startTime)
     }
 
-    /// Converts to a `ChapterMarker` with only the color JSON suffix encoded in the title.
-    ///
-    /// Used for MP3 and Xiph (FLAC/OGG/Opus) writes, where endTime is stored natively
-    /// (ID3v2 CHAP element, Xiph CHAPTER000END) so the `d` key is redundant.
-    /// The suffix is decoded back in `init(chapterMarker:)`.
+    /// For MP3 and Xiph, which store the end time natively. Read back by `init(chapterMarker:)`.
     public var colorEncodedChapterMarker: ChapterMarker {
         ChapterMarker(name: colorEncodedName, startTime: startTime, endTime: endTime ?? startTime)
     }
 
-    /// Converts to a `ChapterMarker` with the JSON metadata suffix encoded in the title.
-    ///
-    /// Used for MP4 chapter write, where the format has no native endTime or color fields.
-    /// The suffix is decoded back in `AudioMarkerDescriptionCollection+Parser.swift`.
+    /// For MP4, whose chapters store neither end time nor color. Read back by
+    /// `init(fileEncodedChapter:)`.
     public var fileEncodedChapterMarker: ChapterMarker {
         ChapterMarker(name: fileEncodedName, startTime: startTime, endTime: endTime ?? startTime)
     }
@@ -91,15 +78,11 @@ extension AudioMarkerDescription {
 // MARK: - JSON name encoding
 
 extension AudioMarkerDescription {
-    /// Duration decimal places stored in the JSON suffix.
-    /// 3 = millisecond precision (1 ms = 0.001 s).
+    /// Millisecond precision.
     private static let durationDecimalPlaces = 3
 
-    /// Returns the marker name with a compact JSON metadata suffix for use in file formats
-    /// that have no native endTime or color fields (WAV/AIFF cue points, MP4 chapter titles).
-    ///
-    /// Only the fields that are present are included. Returns the plain name when no metadata
-    /// needs encoding. Suffix format: `{"c":"RRGGBBAA","d":5.0}` (keys sorted alphabetically).
+    /// The name plus a JSON suffix of whichever of color and duration are set,
+    /// `{"c":"RRGGBBAA","d":5.0}`, for formats with neither field. The plain name when neither is.
     public var fileEncodedName: String {
         let baseName = name ?? "Marker"
         guard let suffix = fileEncodingSuffix else { return baseName }
@@ -149,8 +132,7 @@ extension AudioMarkerDescription {
             let rounded = (duration * scale).rounded() / scale
 
             if rounded > 0 {
-                // NSDecimalNumber stores the value as an exact decimal string, so JSONSerialization
-                // outputs "5.001" rather than the IEEE 754 representation "5.001000000000000045".
+                // Serializes as "5.001", where a Double gives "5.001000000000000045".
                 meta["d"] = NSDecimalNumber(string: String(format: "%.\(Self.durationDecimalPlaces)f", rounded))
             }
         }
@@ -166,10 +148,7 @@ extension AudioMarkerDescription {
         return String(data: data, encoding: .utf8)
     }
 
-    /// Returns the marker name with only a color JSON suffix, for formats that store endTime natively
-    /// (MP3 ID3v2 CHAP, Xiph CHAPTER000END). Returns the plain name when no color is set.
-    ///
-    /// Suffix format: `{"c":"RRGGBBAA"}`.
+    /// The name plus `{"c":"RRGGBBAA"}`, or the plain name when no color is set.
     public var colorEncodedName: String {
         let baseName = name ?? "Marker"
         guard let colorString = hexColor?.stringValue else { return baseName }
@@ -182,14 +161,8 @@ extension AudioMarkerDescription {
         return "\(baseName) \(json)"
     }
 
-    /// Parses a file-encoded marker name, returning the display name and any decoded metadata.
-    ///
-    /// Finds the last `{` in the string and attempts `JSONSerialization` from that position.
-    /// If parsing fails (not valid JSON — e.g. `"intro {part a}"`), returns the full
-    /// string as the name with no metadata decoded.
-    ///
-    /// - Parameter encoded: The raw name string as read from the audio file.
-    /// - Returns: Display name (whitespace-trimmed), optional duration in seconds, optional hex color.
+    /// Splits a file-encoded name at its last `{`. When that text is not JSON (`"intro {part a}"`)
+    /// the whole string is the name.
     public static func decodeFileName(_ encoded: String) -> (name: String, duration: TimeInterval?, hexColor: HexColor?) {
         guard let braceIndex = encoded.lastIndex(of: "{") else {
             return (encoded, nil, nil)

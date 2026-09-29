@@ -7,18 +7,8 @@ import SPFKMetadataBase
 import SPFKMetadataC
 
 extension AudioMarkerDescriptionCollection {
-    /// Parses markers from the audio file at the given URL, dispatching to the appropriate parser
-    /// based on file type: `MP4ChapterUtil` (m4a, mp4, aac, m4b, mov, m4v — QT chapter track with
-    /// Nero chpl fallback, then AVFoundation), `XiphChapterUtil` (flac, ogg, opus — VorbisComment
-    /// chapter fields with `ChapterParser` AVFoundation fallback), `MPEGChapterUtil` (mp3),
-    /// or `AudioMarkerUtil` (aif, wav).
-    ///
-    /// `mov`/`m4v` belong with the MP4 family rather than in the unsupported `default`: a
-    /// QuickTime chapter track is `mov`'s native marker format, and `MP4ChapterUtil` writes
-    /// exactly that via `setQtChapters`. Verified round-tripping 3 chapters through real qt- and
-    /// isom-branded files. Their earlier absence here was an oversight from when this workflow
-    /// only ever saw audio containers, and it made marker reads on a `.mov` throw while the
-    /// matching save silently discarded them.
+    /// Reads the file's markers. Keep the cases in step with `MetaAudioFileDescription.saveMarkers()`,
+    /// or markers are saved that can't be read back.
     public init(url: URL, fileType: AudioFileType? = nil) async throws {
         guard let fileType = fileType ?? AudioFileType(url: url) else {
             throw NSError(
@@ -29,10 +19,7 @@ extension AudioMarkerDescriptionCollection {
 
         switch fileType {
         case .m4a, .mp4, .aac, .m4b, .mov, .m4v:
-            // MP4ChapterUtil reads QT chapter track first, then Nero chpl fallback.
-            // Chapter titles may carry a JSON metadata suffix written by ShadowTag;
-            // decode names to recover endTime, color, and markerType.
-            // AVFoundation fallback for files with neither chapter format.
+            // AVFoundation covers files with neither a QuickTime nor a Nero chapter list.
             let rawChapters = MP4ChapterUtil.read(url.path) as? [ChapterMarker] ?? []
             if rawChapters.isNotEmpty {
                 self = AudioMarkerDescriptionCollection(
@@ -44,9 +31,7 @@ extension AudioMarkerDescriptionCollection {
             }
 
         case .ogg, .opus, .flac:
-            // XiphChapterUtil reads VorbisComment CHAPTER* fields and preserves
-            // CHAPTER000END endTime for segment markers. Fall back to AVFoundation
-            // ChapterParser for files without VorbisComment chapter fields.
+            // AVFoundation covers files without CHAPTER* fields.
             let xiph: [ChapterMarker] = XiphChapterUtil.read(url.path) as? [ChapterMarker] ?? []
             if xiph.isNotEmpty {
                 self = AudioMarkerDescriptionCollection(chapterMarkers: xiph)
@@ -70,7 +55,7 @@ extension AudioMarkerDescriptionCollection {
         }
     }
 
-    /// Creates a collection from Core Audio RIFF markers.
+    /// From WAV or AIFF markers.
     public init(audioMarkers value: [AudioMarker]) {
         self.init(
             markerDescriptions: value.map {
@@ -78,7 +63,7 @@ extension AudioMarkerDescriptionCollection {
             })
     }
 
-    /// Creates a collection from ID3 or AVFoundation chapter markers.
+    /// From chapters whose format stores its own end time.
     public init(chapterMarkers value: [ChapterMarker]) {
         self.init(
             markerDescriptions: value.map {
@@ -86,21 +71,17 @@ extension AudioMarkerDescriptionCollection {
             })
     }
 
-    /// Converts the stored marker descriptions to `ChapterMarker` objects for writing
-    /// via format-specific utilities (MPEG, Xiph).
+    /// Plain names, with no suffix.
     public var chapterMarkers: [ChapterMarker] {
         markerDescriptions.map(\.chapterMarker)
     }
 
-    /// Converts the stored marker descriptions to `ChapterMarker` objects with JSON metadata
-    /// suffixes in the title, for writing to MP4 (which has no native endTime or color fields).
+    /// For MP4: end time and color in each title's suffix.
     public var fileEncodedChapterMarkers: [ChapterMarker] {
         markerDescriptions.map(\.fileEncodedChapterMarker)
     }
 
-    /// Converts the stored marker descriptions to `ChapterMarker` objects with a color-only
-    /// JSON suffix in the title, for writing to MP3 and Xiph (FLAC/OGG/Opus) formats.
-    /// These formats store endTime natively, so only color needs to be embedded in the title.
+    /// For MP3 and Xiph: color only in each title's suffix.
     public var colorEncodedChapterMarkers: [ChapterMarker] {
         markerDescriptions.map(\.colorEncodedChapterMarker)
     }

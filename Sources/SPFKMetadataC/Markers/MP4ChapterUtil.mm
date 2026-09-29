@@ -12,12 +12,11 @@ using namespace TagLib;
 
 // MARK: - Helpers
 
-/// Converts seconds to chapter time units (milliseconds).
+/// Chapter times are milliseconds.
 static long long secondsToChapterTime(NSTimeInterval seconds) {
     return static_cast<long long>(round(seconds * 1000.0));
 }
 
-/// Converts chapter time units (milliseconds) to seconds.
 static NSTimeInterval chapterTimeToSeconds(long long chapterTime) {
     return static_cast<NSTimeInterval>(chapterTime) / 1000.0;
 }
@@ -33,7 +32,7 @@ static NSTimeInterval chapterTimeToSeconds(long long chapterTime) {
         return nil;
     }
 
-    // Try QuickTime chapter track first, fall back to Nero chpl
+    // QuickTime chapter track first, then Nero chpl.
     MP4::ChapterList chapters = file.qtChapters();
 
     if (chapters.isEmpty()) {
@@ -50,7 +49,6 @@ static NSTimeInterval chapterTimeToSeconds(long long chapterTime) {
         NSTimeInterval startTime = chapterTimeToSeconds(it->startTime());
         NSString *name = @(it->title().toCString(true));
 
-        // endTime = next chapter's start time, or 0 for the last
         NSTimeInterval endTime = 0;
         auto next = it;
         ++next;
@@ -76,9 +74,7 @@ static NSTimeInterval chapterTimeToSeconds(long long chapterTime) {
             title = String(marker.name.UTF8String, String::UTF8);
         }
 
-        // EndTime cannot be stored in the MP4 chapter format. Both the QuickTime chapter
-        // track and the Nero chpl atom record only start times; endTime is always implicit
-        // (next chapter's start, or file duration for the last chapter).
+        // Neither the QuickTime track nor Nero chpl stores an end time.
         chapterList.append(MP4::Chapter(title, secondsToChapterTime(marker.startTime)));
     }
 
@@ -99,7 +95,6 @@ static NSTimeInterval chapterTimeToSeconds(long long chapterTime) {
         return false;
     }
 
-    // Remove both QT chapter track and Nero chpl (if present)
     file.setQtChapters(MP4::ChapterList());
     file.setNeroChapters(MP4::ChapterList());
     return file.save();
