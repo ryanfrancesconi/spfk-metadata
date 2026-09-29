@@ -208,6 +208,84 @@ final class TagRatingTests: BinTestCase {
         #expect(TagRating.read(TestBundleResources.shared.rated_80_aif.path) == 4)
     }
 
+    // MARK: - Every rating branch
+
+    /// One case per container branch in `TagRating.mm`.
+    enum RatingContainer: String, CaseIterable, Sendable {
+        case mpeg, wav, aiff, flac, vorbis, opus, mp4, ape, wavPack, asf, matroska
+    }
+
+    private func file(for container: RatingContainer) throws -> URL {
+        let resources = TestBundleResources.shared
+
+        switch container {
+        case .mpeg: return try copyToBin(url: resources.tabla_mp3)
+        case .wav: return try copyToBin(url: resources.tabla_wav)
+        case .aiff: return try copyToBin(url: resources.tabla_aif)
+        case .flac: return try copyToBin(url: resources.tabla_flac)
+        case .vorbis: return try copyToBin(url: resources.tabla_ogg)
+        case .opus: return try copyToBin(url: resources.sine_opus)
+        case .mp4: return try copyToBin(url: resources.tabla_m4a)
+        case .ape: return try makeMonkeysAudioFile()
+        case .wavPack: return try copyToBin(url: resources.sine_wv)
+        case .asf: return try copyToBin(url: resources.sine_wma)
+        case .matroska: return try copyToBin(url: resources.tabla_mka)
+        }
+    }
+
+    /// A Monkey's Audio 3.99 descriptor and header with no frames, which TagLib opens as `APE::File`.
+    private func makeMonkeysAudioFile() throws -> URL {
+        var bytes = Data("MAC ".utf8)
+        func append<T: FixedWidthInteger>(_ value: T) {
+            withUnsafeBytes(of: value.littleEndian) { bytes.append(contentsOf: $0) }
+        }
+        append(UInt16(3990)) // version
+        append(UInt16(0)) // padding
+        append(UInt32(52)) // descriptor bytes
+        append(UInt32(24)) // header bytes
+        bytes.append(Data(count: 36)) // seek table, header data, frame data sizes, MD5
+        append(UInt16(2000)) // compression level
+        append(UInt16(0)) // format flags
+        append(UInt32(73728)) // blocks per frame
+        append(UInt32(0)) // final frame blocks
+        append(UInt32(0)) // total frames
+        append(UInt16(16)) // bits per sample
+        append(UInt16(1)) // channels
+        append(UInt32(44100))
+
+        let url = bin.appendingPathComponent("rating.ape")
+        try bytes.write(to: url)
+        return url
+    }
+
+    @Test(arguments: RatingContainer.allCases)
+    func ratingRoundTripsAndClears(container: RatingContainer) throws {
+        let url = try file(for: container)
+
+        #expect(TagRating.write(4, toPath: url.path), "\(container)")
+        #expect(TagRating.read(url.path) == 4, "\(container)")
+
+        #expect(TagRating.write(0, toPath: url.path), "\(container)")
+        #expect(TagRating.read(url.path) == -1, "\(container)")
+    }
+
+    /// TagLib opens an APE or WavPack file with an ID3v1 tag and no APE tag without creating one,
+    /// so the write has to.
+    @Test(arguments: [RatingContainer.ape, .wavPack])
+    func ratingIsWrittenBesideAnID3v1Tag(container: RatingContainer) throws {
+        let url = try file(for: container)
+        var id3v1 = Data("TAG".utf8)
+        id3v1.append(Data(count: 124))
+        id3v1.append(255) // genre: none
+        let handle = try FileHandle(forWritingTo: url)
+        try handle.seekToEnd()
+        try handle.write(contentsOf: id3v1)
+        try handle.close()
+
+        #expect(TagRating.write(4, toPath: url.path), "\(container)")
+        #expect(TagRating.read(url.path) == 4, "\(container)")
+    }
+
     // MARK: - A container with no rating branch
 
     /// A TrueAudio header TagLib opens as `TrueAudio::File`, which has no rating branch.
