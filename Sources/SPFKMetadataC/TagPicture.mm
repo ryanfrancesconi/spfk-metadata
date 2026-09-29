@@ -1,7 +1,6 @@
 // Copyright Ryan Francesconi. All Rights Reserved. Revision History at https://github.com/ryanfrancesconi/spfk-metadata
 
 #import <iostream>
-#import <vector>
 
 #import <CoreGraphics/CGImage.h>
 #import <Foundation/Foundation.h>
@@ -21,7 +20,7 @@
 using namespace std;
 using namespace TagLib;
 
-// MARK: - TagLib string constants
+// MARK: - Keys
 
 static const auto pictureKey = String("PICTURE");
 static const auto dataKey = String("data");
@@ -31,15 +30,41 @@ static const auto pictureTypeKey = String("pictureType");
 
 // MARK: - Static helpers
 
-/// Decode a single picture VariantMap into a TagPictureRef. Single source of
-/// truth for picture decoding across all read sites.
+/// +1 image, or NULL. CGImageSource first; the JPEG and PNG decoders accept some marginal input it
+/// rejects.
+static CGImageRef createImage(NSData *data) {
+    if (CGImageSourceRef source = CGImageSourceCreateWithData((__bridge CFDataRef)data, NULL)) {
+        CGImageRef image = CGImageSourceCreateImageAtIndex(source, 0, NULL);
+        CFRelease(source);
+
+        if (image)
+            return image;
+    }
+
+    if (CGDataProviderRef provider = CGDataProviderCreateWithCFData((__bridge CFDataRef)data)) {
+        CGImageRef image = CGImageCreateWithJPEGDataProvider(provider, NULL, true, kCGRenderingIntentDefault);
+        CFRelease(provider);
+
+        if (image)
+            return image;
+    }
+
+    if (CGDataProviderRef provider = CGDataProviderCreateWithCFData((__bridge CFDataRef)data)) {
+        CGImageRef image = CGImageCreateWithPNGDataProvider(provider, NULL, true, kCGRenderingIntentDefault);
+        CFRelease(provider);
+        return image;
+    }
+
+    return NULL;
+}
+
 static TagPictureRef *_Nullable buildPictureRef(const VariantMap &picture) {
     String pictureMimeType = picture.value(mimeTypeKey).value<String>();
     NSString *mimeType = StringUtil::utf8NSString(pictureMimeType);
     UTType *utType = [UTType typeWithMIMEType:mimeType];
-    // MP4 CoverArt::Unknown format produces a bare "image/" MIME type that the OS
-    // cannot resolve to a UTType. Fall back to JPEG so CGImageSource can still
-    // probe and decode the actual bytes below.
+
+    // MP4 CoverArt::Unknown gives a bare "image/", which resolves to no UTType. The bytes are
+    // probed below regardless.
     if (!utType) {
         utType = [UTType typeWithIdentifier:@"public.jpeg"];
     }
@@ -47,34 +72,7 @@ static TagPictureRef *_Nullable buildPictureRef(const VariantMap &picture) {
     ByteVector pictureData = picture.value(dataKey).toByteVector();
     NSData *nsData = [[NSData alloc] initWithBytes:pictureData.data() length:pictureData.size()];
 
-    CGImageRef imageRef = NULL;
-
-    // Generic path: handles JPEG, PNG, WebP, HEIC, TIFF, GIF, etc.
-    {
-        CGImageSourceRef source = CGImageSourceCreateWithData((__bridge CFDataRef)nsData, NULL);
-        if (source) {
-            imageRef = CGImageSourceCreateImageAtIndex(source, 0, NULL);
-            CFRelease(source);
-        }
-    }
-
-    // JPEG fallback for marginal-but-decodable input that CGImageSource may reject.
-    if (!imageRef) {
-        CGDataProviderRef provider = CGDataProviderCreateWithCFData((__bridge CFDataRef)nsData);
-        if (provider) {
-            imageRef = CGImageCreateWithJPEGDataProvider(provider, NULL, true, kCGRenderingIntentDefault);
-            CFRelease(provider);
-        }
-    }
-
-    // PNG fallback for the same reason.
-    if (!imageRef) {
-        CGDataProviderRef provider = CGDataProviderCreateWithCFData((__bridge CFDataRef)nsData);
-        if (provider) {
-            imageRef = CGImageCreateWithPNGDataProvider(provider, NULL, true, kCGRenderingIntentDefault);
-            CFRelease(provider);
-        }
-    }
+    CGImageRef imageRef = createImage(nsData);
 
     if (!imageRef)
         return nil;
@@ -97,14 +95,13 @@ static TagPictureRef *_Nullable buildPictureRef(const VariantMap &picture) {
                                                               utType:utType
                                                   pictureDescription:desc
                                                          pictureType:pict];
-    // TagPictureRef retains, so release the local +1 from CGImageCreate/CGImageSourceCreate
+    // TagPictureRef retains its own.
     CGImageRelease(imageRef);
 
     return pictureRef;
 }
 
-/// Encode a CGImage to NSData using the given UTType identifier.
-/// Returns nil if the format is unsupported or encoding fails.
+/// Nil when ImageIO cannot write the type.
 static NSData *tryEncodeImage(CGImageRef image, NSString *typeIdentifier) {
     CFMutableDataRef buf = CFDataCreateMutable(NULL, 0);
     CGImageDestinationRef dst = CGImageDestinationCreateWithData(buf, (__bridge CFStringRef)typeIdentifier, 1, NULL);
@@ -122,9 +119,7 @@ static NSData *tryEncodeImage(CGImageRef image, NSString *typeIdentifier) {
     return (__bridge_transfer NSData *)buf;
 }
 
-/// Encode a TagPictureRef into a picture VariantMap for setComplexProperties.
-/// Falls back to JPEG if the source format cannot be written by CGImageDestination.
-/// Returns true on success.
+/// Encodes in the picture's own type, or JPEG where ImageIO cannot write that (WebP).
 static bool encodePicture(TagPictureRef *picture, VariantMap &outMap) {
     if (picture.pictureDescription) {
         const char *value = StringUtil::utf8CString(picture.pictureDescription);
@@ -140,7 +135,6 @@ static bool encodePicture(TagPictureRef *picture, VariantMap &outMap) {
     NSData *encoded = tryEncodeImage(picture.cgImage, encodeType.identifier);
 
     if (!encoded) {
-        // Fall back to JPEG for formats CGImageDestination cannot write (e.g. WebP).
         encodeType = [UTType typeWithIdentifier:@"public.jpeg"];
         encoded = tryEncodeImage(picture.cgImage, encodeType.identifier);
     }
@@ -152,18 +146,11 @@ static bool encodePicture(TagPictureRef *picture, VariantMap &outMap) {
     const char *mimeValue = StringUtil::utf8CString(mimeType);
     outMap.insert(mimeTypeKey, String(mimeValue, String::Type::UTF8));
 
-    const char *bytes = (const char *)[encoded bytes];
-    NSUInteger length = [encoded length];
-    vector<char> vec(length);
-    copy(bytes, bytes + length, vec.begin());
-
-    outMap.insert(dataKey, ByteVector(vec.data(), int(vec.size())));
+    outMap.insert(dataKey, ByteVector(static_cast<const char *>(encoded.bytes), (unsigned int)encoded.length));
     return true;
 }
 
-/// Read fallback: when FileRef::complexProperties("PICTURE") is empty for a
-/// FLAC, look in the XiphComment for legacy METADATA_BLOCK_PICTURE/COVERART
-/// entries written by older versions of spfk-metadata.
+/// FLAC artwork in the XiphComment (METADATA_BLOCK_PICTURE/COVERART), where older versions wrote it.
 static List<VariantMap> flacXiphCommentPictureFallback(FileRef &fileRef) {
     if (auto *flac = dynamic_cast<FLAC::File *>(fileRef.file())) {
         if (auto *xiph = flac->xiphComment()) {
@@ -173,16 +160,11 @@ static List<VariantMap> flacXiphCommentPictureFallback(FileRef &fileRef) {
     return {};
 }
 
-/// Write hygiene: after writing native FLAC PICTURE blocks via
-/// FileRef::setComplexProperties, strip any legacy XiphComment picture
-/// entries so the file ends up with exactly one copy of the artwork in
-/// the canonical native location.
+/// Leaves a FLAC with one copy of its artwork, in the native PICTURE blocks.
 static void clearLegacyFlacXiphCommentPictures(FileRef &fileRef) {
     if (auto *flac = dynamic_cast<FLAC::File *>(fileRef.file())) {
         if (auto *xiph = flac->xiphComment()) {
-            // METADATA_BLOCK_PICTURE and COVERART are stored in the XiphComment's
-            // internal pictureList (not fieldListMap), so removeAllPictures() is
-            // the correct API. removeFields() has no effect on picture entries.
+            // These live in the picture list, which removeFields() does not reach.
             xiph->removeAllPictures();
         }
     }
@@ -235,8 +217,6 @@ static void clearLegacyFlacXiphCommentPictures(FileRef &fileRef) {
 
     auto pictures = fileRef.complexProperties(pictureKey);
 
-    // For FLAC files that stored artwork via the old XiphComment path,
-    // fall back to reading from the XiphComment directly.
     if (pictures.isEmpty())
         pictures = flacXiphCommentPictureFallback(fileRef);
 
@@ -257,18 +237,17 @@ static void clearLegacyFlacXiphCommentPictures(FileRef &fileRef) {
     if (fileRef.isNull())
         return false;
 
-    if (!picture) {
-        fileRef.setComplexProperties(pictureKey, {});
-        clearLegacyFlacXiphCommentPictures(fileRef);
-        fileRef.save();
-        return true;
+    List<VariantMap> pictures;
+
+    if (picture) {
+        VariantMap map;
+        if (!encodePicture(picture, map))
+            return false;
+
+        pictures.append(map);
     }
 
-    VariantMap map;
-    if (!encodePicture(picture, map))
-        return false;
-
-    fileRef.setComplexProperties(pictureKey, {map});
+    fileRef.setComplexProperties(pictureKey, pictures);
     clearLegacyFlacXiphCommentPictures(fileRef);
     fileRef.save();
     return true;
