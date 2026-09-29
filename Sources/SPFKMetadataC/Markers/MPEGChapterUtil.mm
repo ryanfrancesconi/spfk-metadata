@@ -50,7 +50,7 @@ using namespace TagLib;
         for (auto it = frame->embeddedFrameList().begin(); it != frame->embeddedFrameList().end(); ++it) {
             auto tit2Frame = dynamic_cast<const ID3v2::TextIdentificationFrame *>(*it);
 
-            if (tit2Frame->frameID() == "TIT2") {
+            if (tit2Frame && tit2Frame->frameID() == "TIT2") {
                 chapterName = @(tit2Frame->toString().toCString());
             }
         }

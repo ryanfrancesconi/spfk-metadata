@@ -95,6 +95,28 @@ class MP3ChapterMarkerTests: BinTestCase {
         #expect(collection.markerDescriptions[0].hexColor?.stringValue == "0000FFFF")
     }
 
+    /// A non-text frame embedded in a CHAP must not stop the TIT2 naming it, in either order.
+    @Test(arguments: [false, true])
+    func chapterWithEmbeddedURLFrame(urlFrameFirst: Bool) async throws {
+        let tmpfile = try copyToBin(url: TestBundleResources.shared.tabla_mp3)
+
+        let tit2 = ID3v24TagBuilder.tit2("Intro")
+        let wxxx = ID3v24TagBuilder.wxxx(description: "", url: "https://example.com")
+        let chap = ID3v24TagBuilder.chap(
+            elementID: "ch0",
+            startMs: 1500,
+            endMs: 2500,
+            embedded: urlFrameFirst ? [wxxx, tit2] : [tit2, wxxx]
+        )
+        try ID3v24TagBuilder.replaceTag(in: tmpfile, with: [chap])
+
+        let chapters = getChapters(in: tmpfile)
+
+        #expect(chapters.count == 1)
+        #expect(chapters.first?.name == "Intro")
+        #expect(chapters.first?.startTime == 1.5)
+    }
+
     @Test func endTimeRoundTrip() async throws {
         let tmpfile = try copyToBin(url: TestBundleResources.shared.mp3_id3)
         #expect(MPEGChapterUtil.remove(tmpfile.path))
