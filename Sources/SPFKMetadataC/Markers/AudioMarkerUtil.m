@@ -143,14 +143,15 @@
 
     markerList->mNumberMarkers = (UInt32)inNumMarkers;
 
-    if (noErr != AudioFileSetProperty(fileID, kAudioFilePropertyMarkerList, propertySize, markerList)) {
-        NSLog(@"AudioMarkerUtil: Failed to set kAudioFilePropertyMarkerList "
-              @"for %@",
-              url);
-    }
+    OSStatus status = AudioFileSetProperty(fileID, kAudioFilePropertyMarkerList, propertySize, markerList);
 
     free(markerList);
     AudioFileClose(fileID);
+
+    if (noErr != status) {
+        NSLog(@"AudioMarkerUtil: Failed to set kAudioFilePropertyMarkerList (%d) for %@", (int)status, url);
+        return false;
+    }
 
     return true;
 }

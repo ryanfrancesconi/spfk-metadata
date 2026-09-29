@@ -63,6 +63,14 @@ final class AudioMarkerWriteTests: BinTestCase {
         #expect(marker.hexColor == color)
     }
 
+    /// MP3 opens read-write through AudioFile but refuses a marker list.
+    @Test func markerWriteReportsRefusedMarkerList() throws {
+        let url = try copyToBin(url: TestBundleResources.shared.tabla_mp3)
+        let marker = AudioMarker(name: "Marker", time: 0.5, sampleRate: 44100, markerID: 0)
+
+        #expect(AudioMarkerUtil.write([marker], to: url) == false)
+    }
+
     private func roundTrip(url: URL, name: String? = nil) async throws -> AudioMarkerDescription {
         var description = try await MetaAudioFileDescription(parsing: url)
         description.markerCollection.update(markerDescriptions: [regionMarker(name: name ?? longName)])
