@@ -505,6 +505,36 @@ final class IXMLMetadataTests: BinTestCase {
         #expect(readUCS.catID == "EXPLDsgn")
     }
 
+    @Test func malformedUserContentIsLeftUntouchedByUCSEdit() {
+        let malformed = "<USER><CATEGORY>AMBIENCE</USER"
+        var metadata = IXMLMetadata()
+        metadata.userContent = malformed
+
+        metadata.setUCSFields(UCSUserFields(category: "EXPLOSIONS", subCategory: "DESIGNED", catID: "EXPLDsgn"))
+
+        #expect(metadata.userContent == malformed)
+    }
+
+    @Test func malformedIXMLIsLeftUntouchedByUCSSync() {
+        let malformed = "<BWFXML><USER><CATEGORY>AMBIENCE</CATEGORY></USER>"
+        var description = MetaAudioFileDescription(
+            url: TestBundleResources.shared.tabla_wav, fileType: .wav, iXMLMetadata: malformed
+        )
+
+        description.syncUCSToIXML(category: "EXPLOSIONS", subCategory: "DESIGNED", catID: "EXPLDsgn")
+
+        #expect(description.iXMLMetadata == malformed)
+    }
+
+    @Test func ucsSyncCreatesIXMLWhenAbsent() throws {
+        var description = MetaAudioFileDescription(url: TestBundleResources.shared.tabla_wav, fileType: .wav)
+
+        description.syncUCSToIXML(category: "EXPLOSIONS", subCategory: "DESIGNED", catID: "EXPLDsgn")
+
+        let xml = try #require(description.iXMLMetadata)
+        #expect(try IXMLMetadata(xml: xml).ucsFields?.catID == "EXPLDsgn")
+    }
+
     // MARK: - LOCATION Container
 
     @Test func parseLocationContainer() throws {
