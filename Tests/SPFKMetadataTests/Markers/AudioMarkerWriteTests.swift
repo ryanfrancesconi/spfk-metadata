@@ -84,6 +84,22 @@ final class AudioMarkerWriteTests: BinTestCase {
         }
     }
 
+    /// A WAV whose codec Core Audio does not know still saves through TagLib, but not its markers.
+    @Test func waveSaveReportsRefusedMarkerWrite() throws {
+        let url = bin.appendingPathComponent("unknown-codec.wav")
+        var data = try Data(contentsOf: TestBundleResources.shared.tabla_wav)
+        let fmt = try #require(data.range(of: Data("fmt ".utf8)))
+        data.replaceSubrange((fmt.upperBound + 4) ..< (fmt.upperBound + 6), with: [0x34, 0x12])
+        try data.write(to: url)
+
+        let waveFile = WaveFileC(path: url.path)
+        #expect(waveFile.load())
+        waveFile.markers = [AudioMarker(name: "Marker", time: 0.5, sampleRate: 44100, markerID: 0)]
+        waveFile.markersNeedsSave = true
+
+        #expect(waveFile.save() == false)
+    }
+
     private func roundTrip(url: URL, name: String? = nil) async throws -> AudioMarkerDescription {
         var description = try await MetaAudioFileDescription(parsing: url)
         description.markerCollection.update(markerDescriptions: [regionMarker(name: name ?? longName)])

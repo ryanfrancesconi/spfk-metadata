@@ -127,7 +127,7 @@ using namespace TagLib;
 }
 
 - (bool)save {
-    [self saveExtras];
+    bool markersSaved = [self saveExtras];
 
     FileRef fileRef(_path.UTF8String);
 
@@ -196,15 +196,18 @@ using namespace TagLib;
         TagRatingWriteToFile(waveFile, ratingStars);
 
     // save via taglib
-    return waveFile->save();
+    bool tagsSaved = waveFile->save();
+    return tagsSaved && markersSaved;
 }
 
-- (void)saveExtras {
+- (bool)saveExtras {
     // write markers (via AudioToolbox, separate from TagLib)
     if (_markersNeedsSave) {
         NSURL *url = [NSURL fileURLWithPath:_path];
-        [AudioMarkerUtil write:_markers to:url];
+        return [AudioMarkerUtil write:_markers to:url];
     }
+
+    return true;
 }
 
 @end
