@@ -2,6 +2,7 @@
 
 #import <Foundation/Foundation.h>
 #import <string>
+#import <variant>
 
 #import <taglib/aifffile.h>
 #import <taglib/apefile.h>
@@ -293,59 +294,65 @@ static void writeASF(ASF::Tag *tag, int stars) {
 
 // MARK: - File-pointer dispatch
 
-int TagRatingReadFromFile(TagLib::File *f) {
-    if (!f) return -1;
+// A null tag is still its container's alternative: the reader and writer treat it as nothing to do.
+using RatingStore = variant<monostate, ID3v2::Tag *, Ogg::XiphComment *, MP4::Tag *, APE::Tag *, ASF::Tag *,
+                            Matroska::Tag *>;
+
+template <class... Fs>
+struct Overloaded : Fs... {
+    using Fs::operator()...;
+};
+
+static RatingStore ratingStore(TagLib::File *f, bool create) {
     if (auto *fp = dynamic_cast<MPEG::File *>(f))
-        return readID3(fp->ID3v2Tag(false));
+        return fp->ID3v2Tag(create);
     if (auto *fp = dynamic_cast<RIFF::WAV::File *>(f))
-        return readID3(fp->ID3v2Tag());
+        return fp->ID3v2Tag();
     if (auto *fp = dynamic_cast<RIFF::AIFF::File *>(f))
-        return readID3(fp->tag());
+        return fp->tag();
     if (auto *fp = dynamic_cast<FLAC::File *>(f))
-        return readXiph(fp->xiphComment(false));
+        return fp->xiphComment(create);
     if (auto *fp = dynamic_cast<Ogg::Vorbis::File *>(f))
-        return readXiph(fp->tag());
+        return fp->tag();
     if (auto *fp = dynamic_cast<Ogg::Opus::File *>(f))
-        return readXiph(fp->tag());
+        return fp->tag();
     if (auto *fp = dynamic_cast<MP4::File *>(f))
-        return readMP4(fp->tag());
+        return fp->tag();
     if (auto *fp = dynamic_cast<APE::File *>(f))
-        return readAPE(fp->APETag(false));
+        return fp->APETag(create);
     if (auto *fp = dynamic_cast<WavPack::File *>(f))
-        return readAPE(fp->APETag(false));
+        return fp->APETag(create);
     if (auto *fp = dynamic_cast<ASF::File *>(f))
-        return readASF(fp->tag());
+        return fp->tag();
     if (auto *fp = dynamic_cast<Matroska::File *>(f))
-        return readMatroska(dynamic_cast<Matroska::Tag *>(fp->tag()));
-    return -1;
+        return dynamic_cast<Matroska::Tag *>(fp->tag());
+    return monostate();
+}
+
+int TagRatingReadFromFile(TagLib::File *f) {
+    return visit(Overloaded {
+                     [](monostate) { return -1; },
+                     [](ID3v2::Tag *tag) { return readID3(tag); },
+                     [](Ogg::XiphComment *tag) { return readXiph(tag); },
+                     [](MP4::Tag *tag) { return readMP4(tag); },
+                     [](APE::Tag *tag) { return readAPE(tag); },
+                     [](ASF::Tag *tag) { return readASF(tag); },
+                     [](Matroska::Tag *tag) { return readMatroska(tag); },
+                 },
+                 ratingStore(f, false));
 }
 
 bool TagRatingWriteToFile(TagLib::File *f, int stars) {
-    if (auto *fp = dynamic_cast<MPEG::File *>(f))
-        writeID3(fp->ID3v2Tag(true), stars);
-    else if (auto *fp = dynamic_cast<RIFF::WAV::File *>(f))
-        writeID3(fp->ID3v2Tag(), stars);
-    else if (auto *fp = dynamic_cast<RIFF::AIFF::File *>(f))
-        writeID3(fp->tag(), stars);
-    else if (auto *fp = dynamic_cast<FLAC::File *>(f))
-        writeXiph(fp->xiphComment(true), stars);
-    else if (auto *fp = dynamic_cast<Ogg::Vorbis::File *>(f))
-        writeXiph(fp->tag(), stars);
-    else if (auto *fp = dynamic_cast<Ogg::Opus::File *>(f))
-        writeXiph(fp->tag(), stars);
-    else if (auto *fp = dynamic_cast<MP4::File *>(f))
-        writeMP4(fp->tag(), stars);
-    else if (auto *fp = dynamic_cast<APE::File *>(f))
-        writeAPE(fp->APETag(true), stars);
-    else if (auto *fp = dynamic_cast<WavPack::File *>(f))
-        writeAPE(fp->APETag(true), stars);
-    else if (auto *fp = dynamic_cast<ASF::File *>(f))
-        writeASF(fp->tag(), stars);
-    else if (auto *fp = dynamic_cast<Matroska::File *>(f))
-        writeMatroska(dynamic_cast<Matroska::Tag *>(fp->tag()), stars);
-    else
-        return stars <= 0;
-    return true;
+    return visit(Overloaded {
+                     [&](monostate) { return stars <= 0; },
+                     [&](ID3v2::Tag *tag) { writeID3(tag, stars); return true; },
+                     [&](Ogg::XiphComment *tag) { writeXiph(tag, stars); return true; },
+                     [&](MP4::Tag *tag) { writeMP4(tag, stars); return true; },
+                     [&](APE::Tag *tag) { writeAPE(tag, stars); return true; },
+                     [&](ASF::Tag *tag) { writeASF(tag, stars); return true; },
+                     [&](Matroska::Tag *tag) { writeMatroska(tag, stars); return true; },
+                 },
+                 ratingStore(f, true));
 }
 
 int TagRatingStarsInDictionary(NSDictionary *dictionary) {
