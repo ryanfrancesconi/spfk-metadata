@@ -438,13 +438,16 @@ extension MetaAudioFileDescription {
     /// so the data survives the RIFF cue-point format, which has no native endTime or color fields.
     public var audioMarkers: [AudioMarker] {
         var waveMarkers = [AudioMarker]()
+        let isAIFF = fileType == .aiff || fileType == .aifc
 
         for i in 0 ..< markerCollection.markerDescriptions.count {
             let desc = markerCollection.markerDescriptions[i]
 
             waveMarkers.append(
                 AudioMarker(
-                    name: desc.fileEncodedName,
+                    name: isAIFF
+                        ? desc.fileEncodedName(maxByteCount: AudioMarkerDescription.aiffMaxNameByteCount)
+                        : desc.fileEncodedName,
                     time: desc.startTime,
                     sampleRate: audioFormat?.sampleRate ?? 0,
                     markerID: Int32(i)

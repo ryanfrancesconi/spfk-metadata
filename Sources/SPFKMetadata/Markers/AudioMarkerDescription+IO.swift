@@ -76,6 +76,45 @@ extension AudioMarkerDescription {
     /// needs encoding. Suffix format: `{"c":"RRGGBBAA","d":5.0}` (keys sorted alphabetically).
     public var fileEncodedName: String {
         let baseName = name ?? "Marker"
+        guard let suffix = fileEncodingSuffix else { return baseName }
+        return "\(baseName) \(suffix)"
+    }
+
+    /// Longest marker name, in UTF-8 bytes, that an AIFF `MARK` chunk holds. Core Audio replaces
+    /// a longer name with `"?"`, losing the JSON suffix with it.
+    public static let aiffMaxNameByteCount = 255
+
+    /// `fileEncodedName`, with the display name trimmed so the whole string fits in
+    /// `maxByteCount` UTF-8 bytes. The suffix is kept whole; only the name is shortened.
+    public func fileEncodedName(maxByteCount: Int) -> String {
+        let baseName = name ?? "Marker"
+        let suffix = fileEncodingSuffix.map { " \($0)" } ?? ""
+        let budget = maxByteCount - suffix.utf8.count
+
+        guard budget >= 0 else { return Self.prefix(of: baseName, maxByteCount: maxByteCount) }
+
+        return Self.prefix(of: baseName, maxByteCount: budget) + suffix
+    }
+
+    /// The longest whole-character prefix of `string` that fits in `maxByteCount` UTF-8 bytes.
+    private static func prefix(of string: String, maxByteCount: Int) -> String {
+        guard string.utf8.count > maxByteCount else { return string }
+
+        var result = ""
+        var byteCount = 0
+
+        for character in string {
+            let characterBytes = character.utf8.count
+            guard byteCount + characterBytes <= maxByteCount else { break }
+            result.append(character)
+            byteCount += characterBytes
+        }
+
+        return result
+    }
+
+    /// The compact JSON suffix carrying endTime and color, or nil when there is nothing to encode.
+    private var fileEncodingSuffix: String? {
         var meta: [String: Any] = [:]
 
         if let endTime, endTime > startTime {
@@ -95,11 +134,10 @@ extension AudioMarkerDescription {
         }
 
         guard !meta.isEmpty,
-              let data = try? JSONSerialization.data(withJSONObject: meta, options: .sortedKeys),
-              let json = String(data: data, encoding: .utf8)
-        else { return baseName }
+              let data = try? JSONSerialization.data(withJSONObject: meta, options: .sortedKeys)
+        else { return nil }
 
-        return "\(baseName) \(json)"
+        return String(data: data, encoding: .utf8)
     }
 
     /// Returns the marker name with only a color JSON suffix, for formats that store endTime natively
