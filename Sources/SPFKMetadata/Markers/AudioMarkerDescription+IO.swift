@@ -40,6 +40,19 @@ extension AudioMarkerDescription {
         )
     }
 
+    /// From an MP4 chapter, whose title's suffix carries end time as well as color.
+    init(fileEncodedChapter chapter: ChapterMarker) {
+        let (name, duration, hexColor) = Self.decodeFileName(chapter.name ?? "")
+
+        self.init(
+            name: name.isEmpty ? nil : name,
+            startTime: chapter.startTime,
+            endTime: duration.map { chapter.startTime + $0 },
+            hexColor: hexColor,
+            markerType: duration != nil ? .region : .cue
+        )
+    }
+
     /// Converts to an `AudioMarker` for WAV/AIFF writing, with endTime and color in the name suffix.
     public func audioMarker(markerID: Int, fileType: AudioFileType?, fileSampleRate: Double? = nil) -> AudioMarker {
         let isAIFF = fileType == .aiff || fileType == .aifc

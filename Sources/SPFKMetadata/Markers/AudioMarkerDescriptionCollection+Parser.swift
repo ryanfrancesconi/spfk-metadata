@@ -35,17 +35,9 @@ extension AudioMarkerDescriptionCollection {
             // AVFoundation fallback for files with neither chapter format.
             let rawChapters = MP4ChapterUtil.read(url.path) as? [ChapterMarker] ?? []
             if rawChapters.isNotEmpty {
-                let descriptions = rawChapters.map { chapter -> AudioMarkerDescription in
-                    let (name, duration, hexColor) = AudioMarkerDescription.decodeFileName(chapter.name ?? "")
-                    return AudioMarkerDescription(
-                        name: name.isEmpty ? nil : name,
-                        startTime: chapter.startTime,
-                        endTime: duration.map { chapter.startTime + $0 },
-                        hexColor: hexColor,
-                        markerType: duration != nil ? .region : .cue
-                    )
-                }
-                self = AudioMarkerDescriptionCollection(markerDescriptions: descriptions)
+                self = AudioMarkerDescriptionCollection(
+                    markerDescriptions: rawChapters.map(AudioMarkerDescription.init(fileEncodedChapter:))
+                )
             } else {
                 let value: [ChapterMarker] = try await ChapterParser.parse(url: url)
                 self = AudioMarkerDescriptionCollection(chapterMarkers: value)
