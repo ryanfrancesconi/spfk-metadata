@@ -19,6 +19,23 @@
 using namespace std;
 using namespace TagLib;
 
+/// A Latin-1 frame whose bytes are valid UTF-8 is read as UTF-8, which is how titles written before
+/// UTF-8 frames are stored. Genuine Latin-1 text that is also valid UTF-8 is misread; it is rare.
+static NSString *chapterTitle(const ID3v2::TextIdentificationFrame *frame) {
+    String text = frame->toString();
+
+    if (frame->textEncoding() == String::Latin1) {
+        ByteVector bytes = text.data(String::Latin1);
+        NSString *utf8 = [[NSString alloc] initWithBytes:bytes.data()
+                                                  length:bytes.size()
+                                                encoding:NSUTF8StringEncoding];
+        if (utf8)
+            return utf8;
+    }
+
+    return @(text.toCString(true));
+}
+
 @implementation MPEGChapterUtil
 
 /// ID3v2 CHAP frames only.
@@ -51,7 +68,7 @@ using namespace TagLib;
             auto tit2Frame = dynamic_cast<const ID3v2::TextIdentificationFrame *>(*it);
 
             if (tit2Frame && tit2Frame->frameID() == "TIT2") {
-                chapterName = @(tit2Frame->toString().toCString());
+                chapterName = chapterTitle(tit2Frame);
             }
         }
 
@@ -92,8 +109,9 @@ using namespace TagLib;
         String string = String(cname);
         chapter->setElementID(string.data(String::Type::UTF8));
 
-        ID3v2::TextIdentificationFrame *titleFrame = new ID3v2::TextIdentificationFrame("TIT2");
-        titleFrame->setText(cname);
+        // Rendered as UTF-16 instead if the tag is ever written as ID3v2.3.
+        ID3v2::TextIdentificationFrame *titleFrame = new ID3v2::TextIdentificationFrame("TIT2", String::UTF8);
+        titleFrame->setText(String(cname, String::UTF8));
         chapter->addEmbeddedFrame(titleFrame);
         mpegFile->ID3v2Tag()->addFrame(chapter);
     }

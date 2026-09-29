@@ -26,9 +26,20 @@ enum ID3v24TagBuilder {
         Data(id.utf8) + syncsafe(body.count) + Data([0, 0]) + body
     }
 
-    /// `TIT2` with Latin-1 encoding.
+    /// `TIT2` marked Latin-1 but holding `text`'s UTF-8 bytes.
     static func tit2(_ text: String) -> Data {
         frame(id: "TIT2", body: Data([0]) + Data(text.utf8))
+    }
+
+    /// `TIT2` with Latin-1 encoding; `text` must be representable in Latin-1.
+    static func tit2(latin1 text: String) -> Data {
+        frame(id: "TIT2", body: Data([0]) + (text.data(using: .isoLatin1) ?? Data()))
+    }
+
+    /// `TIT2` with UTF-16 encoding: a little-endian BOM, then the text.
+    static func tit2(utf16 text: String) -> Data {
+        let units = text.utf16.flatMap { unit in [UInt8(unit & 0xFF), UInt8(unit >> 8)] }
+        return frame(id: "TIT2", body: Data([1, 0xFF, 0xFE]) + Data(units))
     }
 
     /// `WXXX` with Latin-1 encoding.

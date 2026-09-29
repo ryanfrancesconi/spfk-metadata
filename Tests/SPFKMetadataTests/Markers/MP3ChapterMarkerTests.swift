@@ -117,6 +117,33 @@ class MP3ChapterMarkerTests: BinTestCase {
         #expect(chapters.first?.startTime == 1.5)
     }
 
+    /// Each title is how some writer stores it: another tool's UTF-16, genuine Latin-1, and the
+    /// UTF-8 bytes in a Latin-1 frame this package wrote before titles were written as UTF-8.
+    @Test(arguments: [
+        (ID3v24TagBuilder.tit2(utf16: "日本語"), "日本語"),
+        (ID3v24TagBuilder.tit2(latin1: "Café"), "Café"),
+        (ID3v24TagBuilder.tit2("日本語"), "日本語"),
+        (ID3v24TagBuilder.tit2("Café"), "Café"),
+    ])
+    func nonASCIIChapterTitleReads(tit2: Data, expected: String) async throws {
+        let tmpfile = try copyToBin(url: TestBundleResources.shared.tabla_mp3)
+        let chap = ID3v24TagBuilder.chap(elementID: "ch0", startMs: 0, endMs: 1000, embedded: [tit2])
+        try ID3v24TagBuilder.replaceTag(in: tmpfile, with: [chap])
+
+        #expect(getChapters(in: tmpfile).first?.name == expected)
+    }
+
+    @Test func nonASCIIChapterTitleIsWrittenAsUTF8() async throws {
+        let tmpfile = try copyToBin(url: TestBundleResources.shared.tabla_mp3)
+        let title = "日本語 Café"
+
+        #expect(MPEGChapterUtil.write([ChapterMarker(name: title, startTime: 0, endTime: 1)], to: tmpfile.path))
+
+        let bytes = try Data(contentsOf: tmpfile)
+        #expect(bytes.range(of: Data([3]) + Data(title.utf8)) != nil)
+        #expect(getChapters(in: tmpfile).first?.name == title)
+    }
+
     @Test func endTimeRoundTrip() async throws {
         let tmpfile = try copyToBin(url: TestBundleResources.shared.mp3_id3)
         #expect(MPEGChapterUtil.remove(tmpfile.path))
