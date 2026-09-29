@@ -162,16 +162,27 @@ extension MetaAudioFileDescription {
 extension MetaAudioFileDescription {
     /// Writes what `dirtyFlags` names, then the Finder tags and modification date. `.xmp` is
     /// written elsewhere.
+    ///
+    /// Throws ``UnstorableMetadataError`` for flags the container has no writer for, after
+    /// writing everything else.
     public mutating func save(dirtyFlags: Set<MetadataDirtyFlag> = [.metadata]) throws {
         // First, so a locked file fails with one error rather than a partial save; TagLib
         // reports the lock only as `false`.
         try url.requireWritable()
 
-        let imageNeedsSave = dirtyFlags.contains(.image)
-        let markersNeedsSave = dirtyFlags.contains(.markers)
+        let unstorable = unstorableFlags(in: dirtyFlags)
+        let writable = dirtyFlags.subtracting(unstorable)
+
+        // Nothing else to write, so the file is left untouched, modification date included.
+        if unstorable.isNotEmpty, writable.isEmpty {
+            throw UnstorableMetadataError(fileType: fileType, flags: unstorable)
+        }
+
+        let imageNeedsSave = writable.contains(.image)
+        let markersNeedsSave = writable.contains(.markers)
 
         // A container rewrite costs the whole file (20-30 s at 4 GB); a Finder tag change shouldn't pay it.
-        if dirtyFlags.contains(.metadata) || imageNeedsSave || markersNeedsSave {
+        if writable.contains(.metadata) || imageNeedsSave || markersNeedsSave {
             if fileType == .wav {
                 try saveWave(imageNeedsSave: imageNeedsSave, markersNeedsSave: markersNeedsSave)
 
@@ -192,6 +203,10 @@ extension MetaAudioFileDescription {
             // Rebuilt, or a stale date reads as an external change on the next scan.
             urlProperties = URLProperties(url: url)
         #endif
+
+        if unstorable.isNotEmpty {
+            throw UnstorableMetadataError(fileType: fileType, flags: unstorable)
+        }
     }
 
     /// Writes FLAC's iXML and BEXT APPLICATION blocks. Must run before `saveOther()`, whose TagLib
@@ -285,8 +300,9 @@ extension MetaAudioFileDescription {
         }
     }
 
-    /// Keep the format lists in step with `AudioMarkerDescriptionCollection.init(url:fileType:)`,
-    /// or markers are written that can't be read back. Runs last, so throwing costs only the markers.
+    /// Keep the cases in step with `AudioFileType.markerWriteTypes` and
+    /// `AudioMarkerDescriptionCollection.init(url:fileType:)`, or markers are written that can't be
+    /// read back. Runs last, so throwing costs only the markers.
     private func saveMarkers() throws {
         let path = url.path
         let success: Bool
@@ -305,11 +321,9 @@ extension MetaAudioFileDescription {
             success = AudioMarkerUtil.write(audioMarkers, to: url)
 
         default:
-            // Returning here would clear the dirty flag and lose the markers.
-            throw NSError(
-                file: #file, function: #function,
-                description: "Markers are not supported for \(fileType?.rawValue ?? "unknown") files"
-            )
+            // `save(dirtyFlags:)` filters on `AudioFileType.markerWriteTypes`, so this is that list
+            // disagreeing with the switch. Returning would clear the dirty flag and lose the markers.
+            throw UnstorableMetadataError(fileType: fileType, flags: [.markers])
         }
 
         guard success else {

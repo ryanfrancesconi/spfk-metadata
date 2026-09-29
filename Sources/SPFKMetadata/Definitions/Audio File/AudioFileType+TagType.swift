@@ -8,7 +8,7 @@ import SPFKMetadataC
 
 extension AudioFileType {
     /// The corresponding `TagFileTypeDef` for this audio format, used to select the correct
-    /// TagLib parser. Returns `nil` for formats not supported by TagLib (e.g., `.caf`).
+    /// TagLib parser. Returns `nil` for formats not supported by TagLib (e.g., `.caf`, `.w64`).
     public var tagType: TagFileTypeDef? {
         switch self {
         case .aac:  .aac
@@ -23,8 +23,7 @@ extension AudioFileType {
         case .mp4:  .mp4
         case .opus: .opus
         case .webm: .webm
-        case .wav,
-             .w64:  .wave
+        case .wav:  .wave
         default:
             nil
         }
