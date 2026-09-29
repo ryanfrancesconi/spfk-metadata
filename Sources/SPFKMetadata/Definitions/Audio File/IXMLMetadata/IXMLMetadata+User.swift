@@ -2,6 +2,7 @@
 
 import Foundation
 @preconcurrency import AEXML
+import SPFKBase
 
 /// Full set of user-defined fields from the iXML `<USER>` container.
 ///
@@ -123,10 +124,16 @@ extension IXMLMetadata {
     // MARK: - USER Write
 
     /// Merges into ``userContent``, creating it if needed; other vendors' elements are kept.
+    /// Content that does not parse is left as it is and the fields are not written.
     public mutating func setUserFields(_ fields: IXMLUserFields) {
         let doc: AEXMLDocument
-        if let existing = userContent, let parsed = try? AEXMLDocument(xml: existing) {
-            doc = parsed
+        if let existing = userContent {
+            do {
+                doc = try AEXMLDocument(xml: existing)
+            } catch {
+                Log.error("USER content does not parse, fields not written:", error)
+                return
+            }
         } else {
             doc = AEXMLDocument()
             doc.addChild(name: IXMLElement.user.rawValue)

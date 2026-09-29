@@ -2,6 +2,7 @@
 
 import Foundation
 @preconcurrency import AEXML
+import SPFKBase
 
 /// The iXML `<ASWG>` container (https://www.aswg.audio/). Unlike the rest of iXML, its element names
 /// are camelCase.
@@ -69,10 +70,16 @@ extension IXMLMetadata {
     // MARK: - ASWG Write
 
     /// Merges into ``aswgContent``, creating it if needed; unmodeled ASWG elements are kept.
+    /// Content that does not parse is left as it is and the fields are not written.
     public mutating func setASWGFields(_ fields: IXMLASWGFields) {
         let doc: AEXMLDocument
-        if let existing = aswgContent, let parsed = try? AEXMLDocument(xml: existing) {
-            doc = parsed
+        if let existing = aswgContent {
+            do {
+                doc = try AEXMLDocument(xml: existing)
+            } catch {
+                Log.error("ASWG content does not parse, fields not written:", error)
+                return
+            }
         } else {
             doc = AEXMLDocument()
             doc.addChild(name: IXMLElement.aswg.rawValue)

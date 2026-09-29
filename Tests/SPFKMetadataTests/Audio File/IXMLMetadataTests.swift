@@ -433,6 +433,18 @@ final class IXMLMetadataTests: BinTestCase {
         #expect(result.trackTitle == "Test")
     }
 
+    @Test func malformedUserContentIsLeftUntouchedByUserEdit() {
+        let malformed = "<USER><TRACKTITLE>Old</USER"
+        var metadata = IXMLMetadata()
+        metadata.userContent = malformed
+
+        var fields = IXMLUserFields()
+        fields.trackTitle = "New"
+        metadata.setUserFields(fields)
+
+        #expect(metadata.userContent == malformed)
+    }
+
     @Test func userFieldsSurviveFullXMLRoundTrip() throws {
         var metadata = IXMLMetadata()
         var fields = IXMLUserFields()
@@ -481,6 +493,18 @@ final class IXMLMetadataTests: BinTestCase {
         let content = try #require(metadata.aswgContent)
         #expect(content.contains("customVendorField"))
         #expect(content.contains("keep me"))
+    }
+
+    @Test func malformedASWGContentIsLeftUntouchedByASWGEdit() {
+        let malformed = "<ASWG><songTitle>Old</ASWG"
+        var metadata = IXMLMetadata()
+        metadata.aswgContent = malformed
+
+        var fields = IXMLASWGFields()
+        fields.songTitle = "New"
+        metadata.setASWGFields(fields)
+
+        #expect(metadata.aswgContent == malformed)
     }
 
     // MARK: - UCS Fields
