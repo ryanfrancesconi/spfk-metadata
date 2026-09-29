@@ -185,12 +185,11 @@ extension MetaAudioFileDescription {
         if writable.contains(.metadata) || imageNeedsSave || markersNeedsSave {
             if fileType == .wav {
                 try saveWave(imageNeedsSave: imageNeedsSave, markersNeedsSave: markersNeedsSave)
-
-            } else if fileType == .flac {
-                try saveFLAC()
-                try saveOther(imageNeedsSave: imageNeedsSave, markersNeedsSave: markersNeedsSave)
-
             } else {
+                if fileType == .flac {
+                    try saveFLAC()
+                }
+
                 try saveOther(imageNeedsSave: imageNeedsSave, markersNeedsSave: markersNeedsSave)
             }
         }
@@ -225,7 +224,7 @@ extension MetaAudioFileDescription {
         }
     }
 
-    private mutating func saveOther(imageNeedsSave: Bool = false, markersNeedsSave: Bool = false) throws {
+    private mutating func saveOther(imageNeedsSave: Bool, markersNeedsSave: Bool) throws {
         // Keeps the existing artwork; an artwork change is applied below.
         try tagProperties.save(to: url)
 
@@ -258,7 +257,7 @@ extension MetaAudioFileDescription {
     }
 
     /// Tags and chunks are always written; markers and artwork only when flagged.
-    private mutating func saveWave(imageNeedsSave: Bool = false, markersNeedsSave: Bool = false) throws {
+    private mutating func saveWave(imageNeedsSave: Bool, markersNeedsSave: Bool) throws {
         let waveFile = WaveFileC(path: url.path)
 
         waveFile.bextDescription = bextDescription
