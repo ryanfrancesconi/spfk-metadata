@@ -9,7 +9,6 @@
 #import <taglib/wavfile.h>
 
 #import "ID3File.h"
-#import "TagFile.h"
 #import "TagUtil.h"
 
 @implementation ID3File
@@ -29,12 +28,6 @@ using namespace TagLib;
 - (bool)load {
     _dictionary = TagUtil::parseID3ToDictionary(_path);
     return _dictionary.count > 0;
-}
-
-- (bool)save {
-    TagFile *tagFile = [[TagFile alloc] initWithPath:_path];
-    tagFile.dictionary = _dictionary;
-    return [tagFile save];
 }
 
 @end

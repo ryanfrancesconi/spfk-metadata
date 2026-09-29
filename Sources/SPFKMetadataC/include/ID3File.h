@@ -21,9 +21,6 @@ NS_ASSUME_NONNULL_BEGIN
 /// False when there is no ID3v2 tag or it has no frames.
 - (bool)load;
 
-/// Writes through `TagFile`.
-- (bool)save;
-
 @end
 
 NS_ASSUME_NONNULL_END
