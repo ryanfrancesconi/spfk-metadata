@@ -7,13 +7,13 @@ import SPFKBase
 import SPFKMetadataBase
 
 /// iXML (BWFXML) chunk metadata, per http://www.gallery.co.uk/ixml/. Parse with ``init(xml:)``;
-/// ``xml`` serializes the modeled properties.
+/// ``xml`` writes the modeled properties back into the parsed document.
 public struct IXMLMetadata: Equatable, Sendable {
     public static func == (lhs: IXMLMetadata, rhs: IXMLMetadata) -> Bool {
         lhs.xml == rhs.xml
     }
 
-    /// The document parsed from. ``xml`` does not read it.
+    /// The document parsed from, never mutated; ``xml`` edits a copy so unmodeled elements survive.
     public private(set) var document: AEXMLDocument
 
     // MARK: - Top-Level Properties
@@ -225,7 +225,7 @@ public struct IXMLMetadata: Equatable, Sendable {
 
 extension IXMLMetadata {
     /// `doc.root` is the first child; this covers a document whose root is BWFXML itself.
-    private func nonErrorRoot(_ doc: AEXMLDocument) -> AEXMLElement? {
+    func nonErrorRoot(_ doc: AEXMLDocument) -> AEXMLElement? {
         let root = doc.root
         guard root.error == nil, root.name == IXMLElement.bwfxml.rawValue else {
             return nil

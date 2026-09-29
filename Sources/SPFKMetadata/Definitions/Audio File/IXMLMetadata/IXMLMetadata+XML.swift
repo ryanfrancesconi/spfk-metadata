@@ -7,133 +7,185 @@ import SPFKBase
 import SPFKMetadataBase
 
 extension IXMLMetadata {
-    /// The modeled properties as iXML; nil and empty values are omitted.
+    /// ``document`` with the modeled properties applied: nil and empty values remove their element,
+    /// and elements the type does not model are kept in place.
     public var xml: String {
-        let doc = AEXMLDocument()
-        let root = doc.addChild(name: IXMLElement.bwfxml.rawValue)
+        let (doc, root) = editableCopy()
 
-        addIfPresent(to: root, .ixmlVersion, version)
-        addIfPresent(to: root, .project, project)
-        addIfPresent(to: root, .scene, scene)
-        addIfPresent(to: root, .take, take)
-        addIfPresent(to: root, .tape, tape)
-        addIfPresent(to: root, .familyUID, familyUID)
-        addIfPresent(to: root, .familyName, familyName)
-        addIfPresent(to: root, .fileUID, fileUID)
-        addIfPresent(to: root, .note, note)
-        addIfPresent(to: root, .circled, circled)
-        addIfPresent(to: root, .wildTrack, wildTrack)
+        set(root, .ixmlVersion, version)
+        set(root, .project, project)
+        set(root, .scene, scene)
+        set(root, .take, take)
+        set(root, .tape, tape)
+        set(root, .familyUID, familyUID)
+        set(root, .familyName, familyName)
+        set(root, .fileUID, fileUID)
+        set(root, .note, note)
+        set(root, .circled, circled)
+        set(root, .wildTrack, wildTrack)
 
-        if hasSpeedContent {
-            let speed = root.addChild(name: IXMLElement.speed.rawValue)
-            addIfPresent(to: speed, .masterSpeed, masterSpeed)
-            addIfPresent(to: speed, .currentSpeed, currentSpeed)
-            addIfPresent(to: speed, .timecodeRate, timecodeRate)
-            addIfPresent(to: speed, .timecodeFlag, timecodeFlag)
-            addIfPresent(to: speed, .fileSampleRate, fileSampleRate)
-            addIfPresent(to: speed, .audioBitDepth, audioBitDepth)
-            addIfPresent(to: speed, .digitizerSampleRate, digitizerSampleRate)
-            addIfPresent(to: speed, .timestampSamplesSinceMidnightHi, timestampSamplesSinceMidnightHi)
-            addIfPresent(to: speed, .timestampSamplesSinceMidnightLo, timestampSamplesSinceMidnightLo)
-            addIfPresent(to: speed, .timestampSampleRate, timestampSampleRate)
+        update(container: .speed, in: root) { speed in
+            set(speed, .masterSpeed, masterSpeed)
+            set(speed, .currentSpeed, currentSpeed)
+            set(speed, .timecodeRate, timecodeRate)
+            set(speed, .timecodeFlag, timecodeFlag)
+            set(speed, .fileSampleRate, fileSampleRate)
+            set(speed, .audioBitDepth, audioBitDepth)
+            set(speed, .digitizerSampleRate, digitizerSampleRate)
+            set(speed, .timestampSamplesSinceMidnightHi, timestampSamplesSinceMidnightHi)
+            set(speed, .timestampSamplesSinceMidnightLo, timestampSamplesSinceMidnightLo)
+            set(speed, .timestampSampleRate, timestampSampleRate)
         }
 
-        if let tracks, tracks.isNotEmpty {
-            let trackList = root.addChild(name: IXMLElement.trackList.rawValue)
-            trackList.addChild(name: IXMLElement.trackCount.rawValue, value: "\(tracks.count)")
+        updateTrackList(in: root)
 
-            for track in tracks {
-                let trackElement = trackList.addChild(name: IXMLElement.track.rawValue)
-                addIfPresent(to: trackElement, .channelIndex, track.channelIndex)
-                addIfPresent(to: trackElement, .interleaveIndex, track.interleaveIndex)
-                addIfPresent(to: trackElement, .name, track.name)
-                addIfPresent(to: trackElement, .function, track.function)
-            }
+        replace(.loudness, in: root, with: loudnessElement())
+
+        update(container: .bext, in: root) { bext in
+            set(bext, .bextVersion, bextVersion)
+            set(bext, .bextDescription, bextDescriptionText)
+            set(bext, .bextOriginator, bextOriginator)
+            set(bext, .bextOriginatorReference, bextOriginatorReference)
+            set(bext, .bextOriginationDate, bextOriginationDate)
+            set(bext, .bextOriginationTime, bextOriginationTime)
+            set(bext, .bextTimeReferenceLow, bextTimeReferenceLow)
+            set(bext, .bextTimeReferenceHigh, bextTimeReferenceHigh)
+            set(bext, .bextCodingHistory, bextCodingHistory)
+            set(bext, .bextUMID, bextUMID)
         }
 
-        if let loudness = loudnessDescription, loudness.isValid {
-            let loudnessElement = root.addChild(name: IXMLElement.loudness.rawValue)
-
-            addIfPresent(to: loudnessElement, .loudnessValue, loudness.loudnessIntegrated)
-            addIfPresent(to: loudnessElement, .loudnessRange, loudness.loudnessRange)
-            addIfPresent(to: loudnessElement, .maxTruePeakLevel, loudness.maxTruePeakLevel.map(Double.init))
-            addIfPresent(to: loudnessElement, .maxMomentary, loudness.maxMomentaryLoudness)
-            addIfPresent(to: loudnessElement, .maxShortTerm, loudness.maxShortTermLoudness)
+        update(container: .history, in: root) { history in
+            set(history, .originalFilename, originalFilename)
+            set(history, .parentFilename, parentFilename)
+            set(history, .parentUID, parentUID)
         }
 
-        if hasBextContent {
-            let bext = root.addChild(name: IXMLElement.bext.rawValue)
-            addIfPresent(to: bext, .bextVersion, bextVersion)
-            addIfPresent(to: bext, .bextDescription, bextDescriptionText)
-            addIfPresent(to: bext, .bextOriginator, bextOriginator)
-            addIfPresent(to: bext, .bextOriginatorReference, bextOriginatorReference)
-            addIfPresent(to: bext, .bextOriginationDate, bextOriginationDate)
-            addIfPresent(to: bext, .bextOriginationTime, bextOriginationTime)
-            addIfPresent(to: bext, .bextTimeReferenceLow, bextTimeReferenceLow)
-            addIfPresent(to: bext, .bextTimeReferenceHigh, bextTimeReferenceHigh)
-            addIfPresent(to: bext, .bextCodingHistory, bextCodingHistory)
-            addIfPresent(to: bext, .bextUMID, bextUMID)
-        }
+        updateRaw(.user, in: root, userContent)
+        updateRaw(.steinberg, in: root, steinbergContent)
+        updateRaw(.aswg, in: root, aswgContent)
 
-        if hasHistoryContent {
-            let history = root.addChild(name: IXMLElement.history.rawValue)
-            addIfPresent(to: history, .originalFilename, originalFilename)
-            addIfPresent(to: history, .parentFilename, parentFilename)
-            addIfPresent(to: history, .parentUID, parentUID)
-        }
-
-        if let userContent, let userDoc = try? AEXMLDocument(xml: userContent) {
-            root.addChild(userDoc.root)
-        }
-
-        if let steinbergContent, let steinbergDoc = try? AEXMLDocument(xml: steinbergContent) {
-            root.addChild(steinbergDoc.root)
-        }
-
-        if let aswgContent, let aswgDoc = try? AEXMLDocument(xml: aswgContent) {
-            root.addChild(aswgDoc.root)
-        }
-
-        if hasLocationContent {
-            let loc = root.addChild(name: IXMLElement.location.rawValue)
-            addIfPresent(to: loc, .locationGPS, locationGPS)
-            addIfPresent(to: loc, .locationAltitude, locationAltitude)
-            addIfPresent(to: loc, .locationTime, locationTime)
+        update(container: .location, in: root) { loc in
+            set(loc, .locationGPS, locationGPS)
+            set(loc, .locationAltitude, locationAltitude)
+            set(loc, .locationTime, locationTime)
         }
 
         return doc.xml
     }
 
-    private func addIfPresent(to parent: AEXMLElement, _ key: IXMLElement, _ value: String?) {
-        guard let value, !value.isEmpty else { return }
-        parent.addChild(name: key.rawValue, value: value)
+    /// A private copy of ``document`` and its BWFXML element; a fresh document when it has none.
+    private func editableCopy() -> (AEXMLDocument, AEXMLElement) {
+        if let copy = try? AEXMLDocument(xml: document.xml),
+           let root = copy.root[.bwfxml] ?? nonErrorRoot(copy)
+        {
+            return (copy, root)
+        }
+
+        let doc = AEXMLDocument()
+        return (doc, doc.addChild(name: IXMLElement.bwfxml.rawValue))
+    }
+
+    private func set(_ parent: AEXMLElement, _ key: IXMLElement, _ value: String?) {
+        let existing = parent.children.filter { $0.name == key.rawValue }
+
+        guard let value, !value.isEmpty else {
+            existing.forEach { $0.removeFromParent() }
+            return
+        }
+
+        if let first = existing.first {
+            first.value = value
+        } else {
+            parent.addChild(name: key.rawValue, value: value)
+        }
+    }
+
+    /// Creates the container when absent and removes it when the update leaves it empty.
+    private func update(container key: IXMLElement, in root: AEXMLElement, _ body: (AEXMLElement) -> Void) {
+        let element = root[key] ?? root.addChild(name: key.rawValue)
+        body(element)
+
+        if element.children.isEmpty {
+            element.removeFromParent()
+        }
+    }
+
+    /// Tracks map onto the existing TRACK elements by position, so a track's unmodeled children stay with it.
+    private func updateTrackList(in root: AEXMLElement) {
+        guard let tracks, tracks.isNotEmpty else {
+            root[.trackList]?.removeFromParent()
+            return
+        }
+
+        let trackList = root[.trackList] ?? root.addChild(name: IXMLElement.trackList.rawValue)
+        set(trackList, .trackCount, "\(tracks.count)")
+
+        var elements = trackList.children.filter { $0.name == IXMLElement.track.rawValue }
+
+        while elements.count > tracks.count {
+            elements.removeLast().removeFromParent()
+        }
+
+        while elements.count < tracks.count {
+            elements.append(trackList.addChild(name: IXMLElement.track.rawValue))
+        }
+
+        for (track, element) in zip(tracks, elements) {
+            set(element, .channelIndex, track.channelIndex)
+            set(element, .interleaveIndex, track.interleaveIndex)
+            set(element, .name, track.name)
+            set(element, .function, track.function)
+        }
+    }
+
+    private func loudnessElement() -> AEXMLElement? {
+        guard let loudness = loudnessDescription, loudness.isValid else { return nil }
+
+        let element = AEXMLElement(name: IXMLElement.loudness.rawValue)
+        addIfPresent(to: element, .loudnessValue, loudness.loudnessIntegrated)
+        addIfPresent(to: element, .loudnessRange, loudness.loudnessRange)
+        addIfPresent(to: element, .maxTruePeakLevel, loudness.maxTruePeakLevel.map(Double.init))
+        addIfPresent(to: element, .maxMomentary, loudness.maxMomentaryLoudness)
+        addIfPresent(to: element, .maxShortTerm, loudness.maxShortTermLoudness)
+        return element
+    }
+
+    /// A container held as raw XML. Content that does not parse leaves the existing element as it is.
+    private func updateRaw(_ key: IXMLElement, in root: AEXMLElement, _ content: String?) {
+        guard let content else {
+            // `init(document:)` leaves the content nil for a childless container.
+            if let existing = root[key], existing.children.isNotEmpty {
+                existing.removeFromParent()
+            }
+            return
+        }
+
+        guard let parsed = try? AEXMLDocument(xml: content) else { return }
+        replace(key, in: root, with: parsed.root)
+    }
+
+    /// Swaps `key`'s contents for `replacement`'s, keeping its position; nil removes it.
+    private func replace(_ key: IXMLElement, in root: AEXMLElement, with replacement: AEXMLElement?) {
+        guard let replacement else {
+            root[key]?.removeFromParent()
+            return
+        }
+
+        guard let existing = root[key] else {
+            root.addChild(replacement)
+            return
+        }
+
+        existing.name = replacement.name
+        existing.value = replacement.value
+        existing.attributes = replacement.attributes
+        existing.children.forEach { $0.removeFromParent() }
+        replacement.children.forEach { existing.addChild($0) }
     }
 
     /// Two decimal places.
     private func addIfPresent(to parent: AEXMLElement, _ key: IXMLElement, _ value: Double?) {
         guard let value else { return }
         parent.addChild(name: key.rawValue, value: String(format: "%.2f", value))
-    }
-
-    private var hasSpeedContent: Bool {
-        masterSpeed != nil || currentSpeed != nil || timecodeRate != nil ||
-            timecodeFlag != nil || fileSampleRate != nil || audioBitDepth != nil ||
-            digitizerSampleRate != nil || timestampSamplesSinceMidnightHi != nil ||
-            timestampSamplesSinceMidnightLo != nil || timestampSampleRate != nil
-    }
-
-    private var hasBextContent: Bool {
-        bextVersion != nil || bextDescriptionText != nil || bextOriginator != nil ||
-            bextOriginatorReference != nil || bextOriginationDate != nil ||
-            bextOriginationTime != nil || bextTimeReferenceLow != nil ||
-            bextTimeReferenceHigh != nil || bextCodingHistory != nil || bextUMID != nil
-    }
-
-    private var hasHistoryContent: Bool {
-        originalFilename != nil || parentFilename != nil || parentUID != nil
-    }
-
-    private var hasLocationContent: Bool {
-        locationGPS != nil || locationAltitude != nil || locationTime != nil
     }
 }

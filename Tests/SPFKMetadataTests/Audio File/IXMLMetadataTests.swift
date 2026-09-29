@@ -1,5 +1,6 @@
 // Copyright Ryan Francesconi. All Rights Reserved.
 
+import AEXML
 import Foundation
 import SPFKAudioBase
 import SPFKBase
@@ -607,5 +608,84 @@ final class IXMLMetadataTests: BinTestCase {
             readOnlySections.contains($0.section) && !$0.isReadOnly
         }
         #expect(violations.isEmpty)
+    }
+
+    // MARK: - Unmodeled Elements
+
+    private static let unmodeledXML = """
+    <?xml version="1.0" encoding="UTF-8"?>
+    <BWFXML>
+        <IXML_VERSION>1.52</IXML_VERSION>
+        <SCENE>SC01</SCENE>
+        <SYNC_POINT_LIST>
+            <SYNC_POINT_COUNT>1</SYNC_POINT_COUNT>
+            <SYNC_POINT>
+                <SYNC_POINT_TYPE>RELATIVE</SYNC_POINT_TYPE>
+                <SYNC_POINT_LOW>1000</SYNC_POINT_LOW>
+            </SYNC_POINT>
+        </SYNC_POINT_LIST>
+        <TRACK_LIST>
+            <TRACK_COUNT>2</TRACK_COUNT>
+            <TRACK>
+                <CHANNEL_INDEX>1</CHANNEL_INDEX>
+                <NAME>Boom</NAME>
+                <VENDOR_TRACK_GAIN>-3</VENDOR_TRACK_GAIN>
+            </TRACK>
+            <TRACK>
+                <CHANNEL_INDEX>2</CHANNEL_INDEX>
+                <NAME>Lav</NAME>
+            </TRACK>
+        </TRACK_LIST>
+        <VENDOR_X>
+            <SETTING>keep me</SETTING>
+        </VENDOR_X>
+    </BWFXML>
+    """
+
+    private func expectUnmodeledElementsSurvive(_ xml: String) throws {
+        let root = try AEXMLDocument(xml: xml).root
+
+        #expect(root["SYNC_POINT_LIST"]["SYNC_POINT"]["SYNC_POINT_LOW"].value == "1000")
+        #expect(root["VENDOR_X"]["SETTING"].value == "keep me")
+        #expect(root["TRACK_LIST"]["TRACK"]["VENDOR_TRACK_GAIN"].value == "-3")
+    }
+
+    @Test func unmodeledElementsSurviveRoundTrip() throws {
+        let metadata = try IXMLMetadata(xml: Self.unmodeledXML)
+        try expectUnmodeledElementsSurvive(metadata.xml)
+    }
+
+    @Test func unmodeledElementsSurviveModeledEdit() throws {
+        var metadata = try IXMLMetadata(xml: Self.unmodeledXML)
+        metadata.scene = "SC02"
+
+        let xml = metadata.xml
+        try expectUnmodeledElementsSurvive(xml)
+        #expect(try IXMLMetadata(xml: xml).scene == "SC02")
+    }
+
+    @Test func unmodeledElementsSurviveUCSEdit() throws {
+        var metadata = try IXMLMetadata(xml: Self.unmodeledXML)
+        metadata.setUCSFields(UCSUserFields(category: "AMBIENCE", subCategory: "FOREST", catID: "AMBForst"))
+
+        let xml = metadata.xml
+        try expectUnmodeledElementsSurvive(xml)
+        #expect(try IXMLMetadata(xml: xml).ucsFields?.catID == "AMBForst")
+    }
+
+    @Test func unmodeledElementsSurviveTrackRename() throws {
+        var metadata = try IXMLMetadata(xml: Self.unmodeledXML)
+        var tracks = try #require(metadata.tracks)
+        tracks[0].name = "Boom 2"
+        metadata.tracks = tracks
+
+        let xml = metadata.xml
+        try expectUnmodeledElementsSurvive(xml)
+        #expect(try IXMLMetadata(xml: xml).tracks?.first?.name == "Boom 2")
+    }
+
+    @Test func documentsDifferingOnlyInUnmodeledElementsAreNotEqual() throws {
+        let other = Self.unmodeledXML.replacingOccurrences(of: "keep me", with: "changed")
+        #expect(try IXMLMetadata(xml: Self.unmodeledXML) != IXMLMetadata(xml: other))
     }
 }
