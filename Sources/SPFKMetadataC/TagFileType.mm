@@ -29,8 +29,6 @@ NS_ASSUME_NONNULL_BEGIN
 using namespace std;
 using namespace TagLib;
 
-#pragma mark - Helpers
-
 TagFileTypeDef kTagFileTypeAac = @"aac";
 TagFileTypeDef kTagFileTypeAiff = @"aif";
 TagFileTypeDef kTagFileTypeFlac = @"flac";
@@ -46,12 +44,9 @@ TagFileTypeDef kTagFileTypeWebm = @"webm";
 + (nullable TagFileTypeDef)detectType:(NSString *)path {
     NSString *pathExtension = [path.pathExtension lowercaseString];
 
-    // no extension, open the file
     if ([pathExtension isEqualToString:@""]) {
         return [TagFileType detectStreamType:path];
     }
-
-    // ----
 
     if ([pathExtension isEqualToString:@"wave"] || [pathExtension isEqualToString:@"bwf"]) {
         return kTagFileTypeWave;
@@ -88,9 +83,7 @@ TagFileTypeDef kTagFileTypeWebm = @"webm";
     } else if (Ogg::Vorbis::File::isSupported(stream)) {
         value = kTagFileTypeVorbis;
     } else if (Matroska::File::isSupported(stream)) {
-        // Matroska and WebM are the same container and share the EBML magic, so an extensionless
-        // file cannot be told apart here -- reporting Matroska is correct for both, since every
-        // downstream path treats them identically.
+        // WebM shares the EBML magic and is treated identically downstream.
         value = kTagFileTypeMatroska;
     }
 

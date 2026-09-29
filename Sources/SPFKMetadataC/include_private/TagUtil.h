@@ -24,17 +24,12 @@ using namespace TagLib;
 using namespace std;
 
 namespace TagUtil {
-/// Empties every tag the file carries, so a save that follows writes only what the caller sets.
-/// `setProperties` alone leaves format-specific storage behind -- iTunes freeform atoms, for one.
+/// Empties every tag, so the save writes only what the caller sets; `setProperties` alone leaves
+/// format-specific storage (iTunes freeform atoms) behind.
 ///
-/// Per format, because TagLib's `strip()` is not one operation: for WAV, MP3 and FLAC it removes
-/// the tags from disk on the spot and the save puts them back. **MP4 is cleared in memory and never
-/// stripped**: `MP4::File::strip()` removes `meta` at once, sliding everything after it down, and
-/// the save then finds no `ilst` and inserts a new one, sliding it all back up -- two passes over
-/// the whole `mdat`, and for an emptied tag an empty atom plus padding left behind. Measured
-/// 2026-09-08: 33.7 MB written for a 16.8 MB `mdat` on a 100-byte title edit, against a few KB in
-/// place. Formats with no strip of their own (Vorbis, Opus, AIFF) only have their mapped
-/// properties cleared, and keep anything else in the tag.
+/// MP4 is cleared in memory, never stripped: `strip()` removes `meta` at once and the save reinserts
+/// it, two passes over `mdat` (measured 2026-09-08: 33.7 MB written for a 16.8 MB `mdat` on a
+/// 100-byte title edit). Vorbis, Opus and AIFF have no strip; only their mapped properties clear.
 static void clearTags(FileRef &fileRef) {
     File *f = fileRef.file();
 
@@ -67,11 +62,9 @@ static NSMutableDictionary *convertToDictionary(ID3v2::FrameList frameList) {
     for (auto it = frameList.begin(); it != frameList.end(); it++) {
         ByteVector frameID = (*it)->frameID();
 
-        if (frameID == "POPM") continue;  // structured frame, not a text tag
+        if (frameID == "POPM") continue; // read by TagRating
 
         String value = (*it)->toString();
-
-        // custom frame handling
 
         if (frameID == "TXXX") {
             auto *txxxFrame = dynamic_cast<ID3v2::UserTextIdentificationFrame *>(*it);
@@ -80,10 +73,8 @@ static NSMutableDictionary *convertToDictionary(ID3v2::FrameList frameList) {
                 continue;
             }
 
-            // in taglib fashion, we'll call the the description the ID
+            // Keyed by description, as TagLib's PropertyMap does. fieldList() is [description, ..., value].
             frameID = txxxFrame->description().data(String::UTF8);
-
-            // the fieldList() has all text items, so the description() is first and the actual value is last
             value = txxxFrame->fieldList().back();
 
         } else if (frameID == "PRIV") {
@@ -95,8 +86,6 @@ static NSMutableDictionary *convertToDictionary(ID3v2::FrameList frameList) {
 
             value = privFrame->data();
         }
-
-        // cout << frameID << " = " << value << endl;
 
         const char *bytes = frameID.data();
         const unsigned int length = frameID.size();
@@ -123,11 +112,8 @@ static PropertyMap convertToPropertyMap(NSMutableDictionary *dict) {
 
         String tagKey = String(key.UTF8String, String::UTF8);
 
-        // setProperties() uses semantic property keys (e.g. "ALBUM", "TITLE"), not
-        // raw 4-char frame IDs (e.g. "TALB", "TIT2"). Translate any 4-char frame ID
-        // to its semantic equivalent via TagLib's own mapping table. Custom TXXX
-        // descriptions (e.g. "LOUDNESSINTEGRATED") are longer than 4 chars and pass
-        // through unchanged, becoming TXXX user-defined frames as intended.
+        // setProperties() takes property keys ("TITLE"), not frame IDs ("TIT2"). A TXXX
+        // description is longer than four characters and passes through as a TXXX frame.
         if (tagKey.size() == 4) {
             String translated = ID3v2::Frame::frameIDToKey(tagKey.data(String::Latin1));
             if (!translated.isEmpty()) {
@@ -159,16 +145,13 @@ static NSMutableDictionary *convertToDictionary(RIFF::Info::FieldListMap infoMap
 
         NSString *nsValue = [[NSString alloc] initWithCString:val.toCString(true) encoding:NSUTF8StringEncoding];
 
-        // NSLog(@"%@ = %@", nsKey, nsValue);
-
         [dict setValue:nsValue ?: @"" forKey:nsKey];
     }
 
     return dict;
 }
 
-/// Parse ID3v2 frames and return them as an NSDictionary.
-/// The FileRef is kept alive during conversion to avoid dangling pointers.
+/// Empty when the file has no ID3v2 tag.
 static NSMutableDictionary *parseID3ToDictionary(NSString *path) {
     FileRef fileRef(path.UTF8String, false);
 
@@ -193,7 +176,7 @@ static NSMutableDictionary *parseID3ToDictionary(NSString *path) {
         return [[NSMutableDictionary alloc] init];
     }
 
-    // Convert while FileRef is still alive to avoid dangling pointers
+    // The frames belong to fileRef, so convert before it goes out of scope.
     return convertToDictionary(tag->frameList());
 }
 } // namespace TagUtil

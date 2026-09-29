@@ -8,36 +8,21 @@
 #import <taglib/tstring.h>
 
 namespace StringUtil {
-/**
-   If the length of the string is less than n characters, add null byte.
-   returns the size written.
-   - Parameters:
-   - dest: destination
-   - src: source
-   - n: max length of field
- */
+/// Copies at most `n` bytes, null-terminated only when shorter than the field. Returns the count.
 static size_t strncpy_validate(char *dest, const char *src, size_t n) {
-    // reserve space for null
     size_t length = strlen(src) + 1;
 
     if (length >= n) {
-        // truncate to exactly n
         strncpy(dest, src, n);
         return n;
-        //
     } else {
         strncpy(dest, src, length);
-
-        // if less than n, add null termination
         dest[length - 1] = '\0';
         return length;
     }
 }
 
-/**
-   If a string is < n, pad with character 0 -- for UMID bext spec which
-   says to fill the remaining size with 0s.
- */
+/// Pads a short value to `n` with the character '0' (not a null), as BEXT's date and time fields expect.
 static void strncpy_pad0(char *dest, const char *src, size_t n, bool terminate) {
     size_t length = strlen(src);
 
@@ -57,8 +42,7 @@ static void strncpy_pad0(char *dest, const char *src, size_t n, bool terminate) 
     }
 }
 
-/// Converts a hex character ('0'-'9', 'A'-'F', 'a'-'f') to its numeric value.
-/// Returns -1 for invalid characters.
+/// -1 for a character that is not hex.
 static int hexCharToNibble(char c) {
     if (c >= '0' && c <= '9')
         return c - '0';
@@ -69,11 +53,7 @@ static int hexCharToNibble(char c) {
     return -1;
 }
 
-/// Decodes a hex string into raw bytes. Each pair of hex characters becomes one byte.
-/// @param hex The hex string (e.g. "53504F4E"). Length should be even.
-/// @param dest Destination buffer for decoded bytes.
-/// @param maxBytes Maximum number of bytes to write.
-/// @return Number of bytes written.
+/// Decodes up to `maxBytes` bytes; an invalid pair decodes as 0. Returns the count written.
 static size_t hexToBytes(const char *hex, uint8_t *dest, size_t maxBytes) {
     size_t hexLen = strlen(hex);
     size_t byteCount = MIN(hexLen / 2, maxBytes);
@@ -97,19 +77,13 @@ static std::string charToHexString(unsigned char c) {
                                                    '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
     std::string result;
 
-    result += hex_chars[(c >> 4) & 0xF]; // High nibble
-    result += hex_chars[c & 0xF];        // Low nibble
+    result += hex_chars[(c >> 4) & 0xF];
+    result += hex_chars[c & 0xF];
     return result;
 }
 
-/**
-   A string is null terminated in the bext chunk if it is less than the full size,
-   otherwise it isn't. This will clamp to maxLength to make sure it doesn't keep
-   reading towards the next null byte which would overflow into a subsequent
-   field in the bext data.
- */
-// BWF spec says ASCII, but real-world files often contain UTF-8 or Latin-1 content.
-// Try UTF-8 first (a superset of ASCII), fall back to Latin-1 so high bytes aren't lost.
+/// A BEXT field, null-terminated only when shorter than `maxLength`, so the read is clamped to it.
+/// The spec says ASCII; real files carry UTF-8 or Latin-1, so both are tried.
 static NSString *asciiString(const char *s, size_t maxLength) {
     size_t len = strnlen(s, maxLength);
     NSString *result = [[NSString alloc] initWithBytes:s length:len encoding:NSUTF8StringEncoding];
