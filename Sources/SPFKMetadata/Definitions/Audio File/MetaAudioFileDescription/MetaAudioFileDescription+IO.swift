@@ -437,24 +437,8 @@ extension MetaAudioFileDescription {
     /// Region markers (.region) encode their endTime and color as a JSON suffix in the name
     /// so the data survives the RIFF cue-point format, which has no native endTime or color fields.
     public var audioMarkers: [AudioMarker] {
-        var waveMarkers = [AudioMarker]()
-        let isAIFF = fileType == .aiff || fileType == .aifc
-
-        for i in 0 ..< markerCollection.markerDescriptions.count {
-            let desc = markerCollection.markerDescriptions[i]
-
-            waveMarkers.append(
-                AudioMarker(
-                    name: isAIFF
-                        ? desc.fileEncodedName(maxByteCount: AudioMarkerDescription.aiffMaxNameByteCount)
-                        : desc.fileEncodedName,
-                    time: desc.startTime,
-                    sampleRate: audioFormat?.sampleRate ?? 0,
-                    markerID: Int32(i)
-                )
-            )
+        markerCollection.markerDescriptions.enumerated().map { i, desc in
+            desc.audioMarker(markerID: i, fileType: fileType, fileSampleRate: audioFormat?.sampleRate)
         }
-
-        return waveMarkers
     }
 }

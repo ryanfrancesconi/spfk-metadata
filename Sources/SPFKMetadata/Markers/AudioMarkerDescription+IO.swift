@@ -1,6 +1,7 @@
 // Copyright Ryan Francesconi. All Rights Reserved. Revision History at https://github.com/ryanfrancesconi/spfk-metadata
 
 import Foundation
+import SPFKAudioBase
 import SPFKBase
 import SPFKMetadataBase
 import SPFKMetadataC
@@ -36,6 +37,18 @@ extension AudioMarkerDescription {
             startTime: marker.startTime,
             endTime: marker.endTime,
             hexColor: hexColor
+        )
+    }
+
+    /// Converts to an `AudioMarker` for WAV/AIFF writing, with endTime and color in the name suffix.
+    public func audioMarker(markerID: Int, fileType: AudioFileType?, fileSampleRate: Double? = nil) -> AudioMarker {
+        let isAIFF = fileType == .aiff || fileType == .aifc
+
+        return AudioMarker(
+            name: isAIFF ? fileEncodedName(maxByteCount: Self.aiffMaxNameByteCount) : fileEncodedName,
+            time: startTime,
+            sampleRate: fileSampleRate ?? sampleRate ?? 0,
+            markerID: Int32(markerID)
         )
     }
 
