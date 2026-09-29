@@ -4,10 +4,8 @@ import Foundation
 import SPFKMetadataBase
 
 extension MetaAudioFileDescription {
-    /// Syncs UCS category/subcategory/catID into the iXML USER container.
-    ///
-    /// Skips files with no existing iXML when all values are nil (avoids creating
-    /// empty iXML chunks on reset).
+    /// Syncs UCS category/subcategory/catID into the iXML USER container. All-nil values on a
+    /// file with no iXML are a no-op, so a reset creates no empty chunk.
     public mutating func syncUCSToIXML(category: String?, subCategory: String?, catID: String?) {
         let ucs = UCSUserFields(category: category, subCategory: subCategory, catID: catID)
         guard !ucs.isEmpty || iXMLMetadata != nil else { return }
