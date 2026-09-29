@@ -27,9 +27,11 @@
 #import <taglib/xiphcomment.h>
 
 #import "TagRating.h"
+#import "TagRatingScale.h"
 
 using namespace std;
 using namespace TagLib;
+using namespace TagRatingScale;
 
 // WMP POPM email
 static const char *kWMPEmail = "Windows Media Player 9 Series";
@@ -38,143 +40,13 @@ static const char *kWMPEmail = "Windows Media Player 9 Series";
 static const char *kMP4RateKey = "rate";
 static const char *kMP4FreeformKey = "----:com.apple.iTunes:RATING";
 
-// MARK: - Scale helpers
-
-// "Normalized" (0–100) is an internal intermediate scale used only within this file.
-// It represents stars × 20 (so 1★=20, 2★=40, 3★=60, 4★=80, 5★=100) and serves
-// as a common currency when converting between the POPM byte scale (0–255),
-// the Xiph RATING integer field (stored as normalized), and the FMPS_RATING float (0.0–1.0).
-// It is NOT part of the public API — callers submit and receive star counts (0–5).
-static int starsFromNormalized(int n) { return n / 20; }
-static int normalizedFromStars(int stars) { return stars * 20; }
-
-// POPM byte → stars using the standard 5-star range mapping adopted by WMP,
-// MediaMonkey, and most DJ software (ranges from the POPM de-facto standard).
-static int starsFromPopmByte(int b) {
-    if (b <= 0)
-        return 0;
-    if (b <= 54)
-        return 1; // 1–54
-    if (b <= 117)
-        return 2; // 55–117
-    if (b <= 159)
-        return 3; // 118–159
-    if (b <= 223)
-        return 4; // 160–223
-    return 5;     // 224–255
-}
-
-// Stars → POPM byte (Windows Media Player canonical values).
-static int popmByteFromStars(int stars) {
-    switch (stars) {
-    case 1:
-        return 1;
-    case 2:
-        return 64;
-    case 3:
-        return 128;
-    case 4:
-        return 196;
-    case 5:
-        return 255;
-    default:
-        return 0;
-    }
-}
-
-// ASF WM/SharedUserRating scale: 0–99 integer stored as unsigned attribute
-static unsigned int asfFromStars(int stars) {
-    switch (stars) {
-    case 1:
-        return 1;
-    case 2:
-        return 25;
-    case 3:
-        return 50;
-    case 4:
-        return 75;
-    case 5:
-        return 99;
-    default:
-        return 0;
-    }
-}
-
-static int starsFromAsf(int v) {
-    if (v <= 0)
-        return 0;
-    if (v < 13)
-        return 1;
-    if (v < 38)
-        return 2;
-    if (v < 63)
-        return 3;
-    if (v < 88)
-        return 4;
-    return 5;
-}
-
-// Locale-safe FMPS_RATING formatting: normalized 0-100 → "d.ddd" string.
-// Uses integer arithmetic to avoid LC_NUMERIC locale issues with snprintf/atof.
-static std::string fmpsRatingString(int normalized) {
-    // normalized 80 → "0.800", 100 → "1.000", 0 → "0.000"
-    int whole = normalized / 100;
-    int frac3 = (normalized % 100) * 10; // e.g. 80 → 800
-    char buf[16];
-    snprintf(buf, sizeof(buf), "%d.%03d", whole, frac3);
-    return std::string(buf);
-}
-
-// Locale-safe FMPS_RATING parsing. Returns normalized 0-100, or -1 on failure.
-//
-// FMPS_RATING stores a decimal string in the range "0.000"–"1.000" representing 0–100%.
-// We avoid atof() because it is locale-dependent: on German/French systems (LC_NUMERIC
-// uses ',' as decimal separator), atof("0.800") stops at the period and returns 0.0,
-// silently wiping 1–4 star ratings on read. On write, snprintf("%.3f", 0.8) produces
-// "0,800" — a comma-delimited value that corrupts the field for any other software
-// reading the file. We parse and format with pure integer arithmetic instead.
-static int parseFmpsRating(const std::string &s) {
-    size_t dot = s.find('.');
-    if (dot == std::string::npos)
-        return -1; // no decimal point → invalid
-
-    // Parse integer part before the dot ("0" or "1")
-    int whole = 0;
-    for (size_t i = 0; i < dot; i++) {
-        if (s[i] < '0' || s[i] > '9')
-            return -1;
-        whole = whole * 10 + (s[i] - '0');
-    }
-
-    // Parse up to 3 fractional digits after the dot, then pad to 3.
-    // "800" → frac=800, "8" → frac=800, "80" → frac=800 (all mean 0.800)
-    int frac = 0, digits = 0;
-    for (size_t i = dot + 1; i < s.size() && digits < 3; i++, digits++) {
-        if (s[i] < '0' || s[i] > '9')
-            return -1;
-        frac = frac * 10 + (s[i] - '0');
-    }
-    while (digits < 3) {
-        frac *= 10;
-        digits++;
-    } // pad: "8" → 800, "80" → 800
-
-    // Convert to 0-100 scale: whole part contributes 100, frac/10 converts thousandths to hundredths.
-    // e.g. whole=0, frac=800 → 0 + 80 = 80;  whole=1, frac=0 → 100 + 0 = 100
-    int normalized = whole * 100 + frac / 10;
-    if (normalized < 0 || normalized > 100)
-        return -1;
-    return normalized;
-}
-
 // MARK: - ID3v2 / POPM
 
 static int readID3(ID3v2::Tag *tag) {
     if (!tag)
         return -1;
 
-    // Primary: POPM frame — the canonical ID3v2 rating frame.
-    // Prefer WMP email, fall back to any POPM present.
+    // POPM, preferring the WMP frame over any other.
     const ID3v2::FrameList &popmList = tag->frameList("POPM");
     if (!popmList.isEmpty()) {
         const ID3v2::PopularimeterFrame *wmpFrame = nullptr;
@@ -197,9 +69,8 @@ static int readID3(ID3v2::Tag *tag) {
             return starsFromPopmByte(best->rating());
     }
 
-    // Fallback: TXXX:RATING — read-only fallback for files tagged by older versions or external tools
-    // that wrote a 0–100 normalized integer here without a POPM frame.
-    // fieldList() for UserTextIdentificationFrame is [description, value, ...]
+    // TXXX:RATING is read, never written: older versions and other tools stored the value there.
+    // fieldList() is [description, value, ...].
     for (const auto *f : tag->frameList("TXXX")) {
         const auto *txxx = dynamic_cast<const ID3v2::UserTextIdentificationFrame *>(f);
         if (!txxx)
@@ -207,11 +78,8 @@ static int readID3(ID3v2::Tag *tag) {
         if (txxx->description().upper() == "RATING") {
             StringList fl = txxx->fieldList();
             int v = (fl.size() >= 2) ? fl[1].toInt() : fl.front().toInt();
-            // Heuristic: ≤5 is a raw star count; >5 and ≤100 is the old normalized scale → convert
-            if (v > TagRatingMinStars && v <= TagRatingMaxStars)
-                return v;
-            if (v > TagRatingMaxStars && v <= normalizedFromStars(TagRatingMaxStars))
-                return starsFromNormalized(v);
+            if (int stars = starsFromStoredValue(v); stars > 0)
+                return stars;
         }
     }
 
@@ -224,7 +92,7 @@ static void writeID3(ID3v2::Tag *tag, int stars) {
 
     tag->removeFrames("POPM");
 
-    // Remove any existing TXXX:RATING written by older versions (collect first to avoid iterator invalidation)
+    // Collected first: removing invalidates the iteration.
     {
         ID3v2::FrameList toRemove;
         for (auto *f : tag->frameList("TXXX")) {
@@ -254,17 +122,12 @@ static int readXiph(Ogg::XiphComment *xiph) {
 
     const Ogg::FieldListMap &fields = xiph->fieldListMap();
 
-    // Primary: RATING — stored as normalized (stars × 20), but some external tools write raw stars
     auto ratingIt = fields.find("RATING");
     if (ratingIt != fields.end() && !ratingIt->second.isEmpty()) {
-        int v = ratingIt->second.front().toInt();
-        if (v > TagRatingMinStars && v <= TagRatingMaxStars)
-            return v; // raw star count
-        if (v > TagRatingMaxStars && v <= normalizedFromStars(TagRatingMaxStars))
-            return starsFromNormalized(v); // normalized → stars
+        if (int stars = starsFromStoredValue(ratingIt->second.front().toInt()); stars > 0)
+            return stars;
     }
 
-    // Fallback: FMPS_RATING (0.0–1.0 float, locale-safe parse → normalized 0–100 → stars)
     auto fmpsIt = fields.find("FMPS_RATING");
     if (fmpsIt != fields.end() && !fmpsIt->second.isEmpty()) {
         std::string fmpsStr = fmpsIt->second.front().to8Bit(true);
@@ -286,7 +149,7 @@ static void writeXiph(Ogg::XiphComment *xiph, int stars) {
     if (stars <= 0)
         return;
 
-    int normalized = normalizedFromStars(stars); // stars → 0-100 for field storage
+    int normalized = normalizedFromStars(stars);
     xiph->addField("RATING", String(to_string(normalized), String::UTF8));
     xiph->addField("FMPS_RATING", String(fmpsRatingString(normalized), String::UTF8));
 }
@@ -297,29 +160,21 @@ static int readMP4(MP4::Tag *tag) {
     if (!tag)
         return -1;
 
-    // Primary: rate atom — stored as normalized (stars × 20), but some tools write raw stars
     if (tag->contains(kMP4RateKey)) {
         MP4::Item item = tag->item(kMP4RateKey);
         if (item.isValid()) {
-            int v = item.toInt();
-            if (v > TagRatingMinStars && v <= TagRatingMaxStars)
-                return v;
-            if (v > TagRatingMaxStars && v <= normalizedFromStars(TagRatingMaxStars))
-                return starsFromNormalized(v);
+            if (int stars = starsFromStoredValue(item.toInt()); stars > 0)
+                return stars;
         }
     }
 
-    // Fallback: freeform RATING atom — same encoding as rate atom
     if (tag->contains(kMP4FreeformKey)) {
         MP4::Item item = tag->item(kMP4FreeformKey);
         if (item.isValid()) {
             StringList sl = item.toStringList();
             if (!sl.isEmpty()) {
-                int v = sl.front().toInt();
-                if (v > TagRatingMinStars && v <= TagRatingMaxStars)
-                    return v;
-                if (v > TagRatingMaxStars && v <= normalizedFromStars(TagRatingMaxStars))
-                    return starsFromNormalized(v);
+                if (int stars = starsFromStoredValue(sl.front().toInt()); stars > 0)
+                    return stars;
             }
         }
     }
@@ -337,12 +192,11 @@ static void writeMP4(MP4::Tag *tag, int stars) {
     if (stars <= 0)
         return;
 
-    int normalized = normalizedFromStars(stars); // stars → 0-100 for atom storage
+    int normalized = normalizedFromStars(stars);
 
-    // Write rate atom (Apple Music)
+    // `rate` for Apple Music, the freeform atom for other taggers.
     tag->setItem(kMP4RateKey, MP4::Item((int)normalized));
 
-    // Write freeform atom (third-party tagger interop)
     StringList sl;
     sl.append(String(to_string(normalized), String::UTF8));
     tag->setItem(kMP4FreeformKey, MP4::Item(sl));
@@ -357,11 +211,8 @@ static int readAPE(APE::Tag *tag) {
     const APE::ItemListMap &m = tag->itemListMap();
     auto it = m.find("RATING");
     if (it != m.end()) {
-        int v = it->second.toString().toInt();
-        if (v > TagRatingMinStars && v <= TagRatingMaxStars)
-            return v; // raw star count
-        if (v > TagRatingMaxStars && v <= normalizedFromStars(TagRatingMaxStars))
-            return starsFromNormalized(v); // normalized → stars
+        if (int stars = starsFromStoredValue(it->second.toString().toInt()); stars > 0)
+            return stars;
     }
 
     return -1;
@@ -381,13 +232,8 @@ static void writeAPE(APE::Tag *tag, int stars) {
 
 // MARK: - Matroska
 
-// Matroska has no dedicated rating element -- RATING is an ordinary SimpleTag, so it travels in
-// the PropertyMap rather than a format-specific frame. That is why these two go through
-// properties()/setProperties() while every other format above reaches for its own storage.
-//
-// Read-modify-write is required, not stylistic: setProperties() replaces the whole supported set,
-// and TagFile::save calls this *after* writing the rest of the tags, so building a fresh map here
-// would erase everything else that was just written.
+// RATING is an ordinary SimpleTag, so it goes through the PropertyMap. Read-modify-write:
+// setProperties() replaces the whole set, and TagFile::save calls this after writing the other tags.
 
 static int readMatroska(Matroska::Tag *tag) {
     if (!tag)
@@ -398,13 +244,8 @@ static int readMatroska(Matroska::Tag *tag) {
     if (it == properties.end() || it->second.isEmpty())
         return -1;
 
-    int v = it->second.front().toInt();
-    if (v > TagRatingMinStars && v <= TagRatingMaxStars)
-        return v; // raw star count
-    if (v > TagRatingMaxStars && v <= normalizedFromStars(TagRatingMaxStars))
-        return starsFromNormalized(v); // normalized → stars
-
-    return -1;
+    int stars = starsFromStoredValue(it->second.front().toInt());
+    return stars > 0 ? stars : -1;
 }
 
 static void writeMatroska(Matroska::Tag *tag, int stars) {
@@ -414,9 +255,8 @@ static void writeMatroska(Matroska::Tag *tag, int stars) {
     PropertyMap properties = tag->properties();
     properties.erase("RATING");
 
-    // Raw stars rather than the normalized 0-100 the Xiph/MP4 paths use: Matroska's spec leaves the
-    // RATING scale to the tagging application, and 0-5 is what mkvpropedit and ffmpeg pass through
-    // unchanged, so a value written here means the same thing when the file is opened elsewhere.
+    // Raw stars: the spec leaves the scale to the application, and 0-5 is what mkvpropedit and
+    // ffmpeg pass through unchanged.
     if (stars > 0)
         properties.insert("RATING", StringList(String(to_string(stars), String::UTF8)));
 
@@ -432,7 +272,7 @@ static int readASF(ASF::Tag *tag) {
     if (tag->contains("WM/SharedUserRating")) {
         ASF::AttributeList l = tag->attribute("WM/SharedUserRating");
         if (!l.isEmpty())
-            return starsFromAsf((int)l.front().toUInt()); // starsFromAsf already returns 0–5
+            return starsFromAsf((int)l.front().toUInt());
     }
 
     return -1;
@@ -450,10 +290,9 @@ static void writeASF(ASF::Tag *tag, int stars) {
     tag->setAttribute("WM/SharedUserRating", ASF::Attribute(asfFromStars(stars)));
 }
 
-// MARK: - File-pointer dispatch (called by TagFile and WaveFileC while their FileRef is open)
+// MARK: - File-pointer dispatch
 
-// Non-static so TagFile.mm and WaveFileC.mm can call these via forward declaration,
-// avoiding a second FileRef open. All format-specific logic stays in this file.
+// Non-static so TagFile, WaveFileC and TagLibBridge can call them on a file they already have open.
 
 int TagRatingReadFromFile(TagLib::File *f) {
     if (!f) return -1;
@@ -513,7 +352,7 @@ void TagRatingWriteToFile(TagLib::File *f, int stars) {
 @implementation TagRating
 
 + (int)read:(NSString *)path {
-    // false = skip audio properties parsing (not needed for rating I/O)
+    // No audio properties: a rating doesn't need them.
     FileRef fileRef(path.UTF8String, false);
     if (fileRef.isNull())
         return -1;
@@ -526,7 +365,7 @@ void TagRatingWriteToFile(TagLib::File *f, int stars) {
     if (stars > TagRatingMaxStars)
         stars = TagRatingMaxStars;
 
-    // false = skip audio properties parsing (not needed for rating I/O)
+    // No audio properties: a rating doesn't need them.
     FileRef fileRef(path.UTF8String, false);
     if (fileRef.isNull())
         return NO;
