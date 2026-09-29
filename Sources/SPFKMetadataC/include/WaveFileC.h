@@ -14,7 +14,8 @@ NS_ASSUME_NONNULL_BEGIN
 /// RIFF WAV file handler using TagLib for comprehensive WAV metadata I/O.
 ///
 /// Reads and writes INFO chunks, ID3 tags, BEXT broadcast extension data, iXML,
-/// embedded artwork (all via TagLib), and cue point markers (via AudioToolbox).
+/// embedded artwork and cue point markers, all via TagLib. Markers in RF64 and BW64 files
+/// go through AudioToolbox instead.
 @interface WaveFileC : NSObject
 
 /// Audio stream properties (sample rate, duration, etc.) populated after `load`.

@@ -5,7 +5,6 @@
 #include <string>
 #include <vector>
 
-#import <taglib/fileref.h>
 #import <taglib/privateframe.h>
 #import <taglib/textidentificationframe.h>
 #import <taglib/tpropertymap.h>
@@ -17,6 +16,7 @@
 #import "TagRating.h"
 #import "TagUtil.h"
 #import "WaveFileC.h"
+#import "WaveMarkerChunks.h"
 
 // Forward declarations — implementations live in TagRating.mm.
 int TagRatingReadFromFile(TagLib::File *f);
@@ -52,23 +52,18 @@ using namespace TagLib;
 }
 
 - (bool)load {
-    FileRef fileRef(_path.UTF8String);
+    WaveMarkerFile file(_path.UTF8String);
 
-    if (fileRef.isNull()) {
+    if (!file.isValid()) {
         return false;
     }
 
-    auto *waveFile = dynamic_cast<RIFF::WAV::File *>(fileRef.file());
-
-    if (!waveFile) {
-        // not a wave file
-        return false;
-    }
+    WaveMarkerFile *waveFile = &file;
 
     [_id3Dictionary removeAllObjects];
     [_infoDictionary removeAllObjects];
 
-    auto audioProperties = fileRef.audioProperties();
+    auto audioProperties = waveFile->audioProperties();
 
     if (audioProperties != nullptr) {
         _audioPropertiesC = [[TagAudioPropertiesC alloc] init];
@@ -84,7 +79,7 @@ using namespace TagLib;
     }
 
     NSURL *url = [NSURL fileURLWithPath:_path];
-    _markers = [AudioMarkerUtil read:url];
+    _markers = [WaveMarkerChunks isRIFFWave:url] ? WaveMarkers::read(*waveFile) : [AudioMarkerUtil read:url];
 
     if (waveFile->hasBEXTData() && !waveFile->BEXTData().isEmpty()) {
         ByteVector bext = waveFile->BEXTData();
@@ -127,20 +122,20 @@ using namespace TagLib;
 }
 
 - (bool)save {
-    bool markersSaved = [self saveExtras];
+    bool isRIFFWave = [WaveMarkerChunks isRIFFWave:[NSURL fileURLWithPath:_path]];
+    bool markersSaved = isRIFFWave ? true : [self saveExtras];
 
-    FileRef fileRef(_path.UTF8String);
+    WaveMarkerFile file(_path.UTF8String);
 
-    if (fileRef.isNull()) {
-        cout << "FileRef is nil" << endl;
+    if (!file.isValid()) {
+        cout << "Not a wave file" << endl;
         return false;
     }
 
-    auto *waveFile = dynamic_cast<RIFF::WAV::File *>(fileRef.file());
+    WaveMarkerFile *waveFile = &file;
 
-    if (!waveFile) {
-        cout << "Not a wave file" << endl;
-        return false;
+    if (isRIFFWave && _markersNeedsSave) {
+        markersSaved = WaveMarkers::write(*waveFile, _markers);
     }
 
     // write bext via TagLib chunk (no more temp file + audio copy)
@@ -200,8 +195,8 @@ using namespace TagLib;
     return tagsSaved && markersSaved;
 }
 
+/// Formats other than RIFF WAVE (RF64, BW64) write markers through Core Audio, before TagLib opens the file.
 - (bool)saveExtras {
-    // write markers (via AudioToolbox, separate from TagLib)
     if (_markersNeedsSave) {
         NSURL *url = [NSURL fileURLWithPath:_path];
         return [AudioMarkerUtil write:_markers to:url];

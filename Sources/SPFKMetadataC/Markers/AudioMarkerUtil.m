@@ -5,6 +5,7 @@
 
 #import "AudioMarker.h"
 #import "AudioMarkerUtil.h"
+#import "WaveMarkerChunks.h"
 
 @implementation AudioMarkerUtil
 
@@ -13,6 +14,10 @@
 /// Get all markers in this file and return an array of `AudioMarker`
 /// @param url URL to parse
 + (NSArray *)read:(NSURL *)url {
+    if ([WaveMarkerChunks isRIFFWave:url]) {
+        return [WaveMarkerChunks read:url];
+    }
+
     AudioFileID fileID;
     CFURLRef cfurl = CFBridgingRetain(url);
 
@@ -104,6 +109,10 @@
 /// @param url `URL` to set markers in
 /// @param markerArray `[AudioMarker]`
 + (BOOL)write:(NSArray *)markers to:(NSURL *)url {
+    if ([WaveMarkerChunks isRIFFWave:url]) {
+        return [WaveMarkerChunks write:markers to:url];
+    }
+
     AudioFileID fileID;
     CFURLRef cfurl = CFBridgingRetain(url);
 
@@ -170,6 +179,10 @@
 #pragma mark - REMOVE
 
 + (BOOL)remove:(NSURL *)url {
+    if ([WaveMarkerChunks isRIFFWave:url]) {
+        return [WaveMarkerChunks write:@[] to:url];
+    }
+
     AudioFileID fileID;
     CFURLRef cfurl = CFBridgingRetain(url);
 

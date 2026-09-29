@@ -2,10 +2,11 @@
 
 #import <Foundation/Foundation.h>
 
-/// Core Audio–based utility for reading, writing, and copying RIFF cue-point markers.
+/// Reads, writes, and copies WAV and AIFF markers.
 ///
-/// Uses the AudioToolbox `AudioFile` API to access the `kAudioFilePropertyMarkerList` property.
-/// All methods operate on file URLs and return `AudioMarker` objects.
+/// A RIFF WAVE file's `cue ` and `adtl` chunks are handled through TagLib, with names stored as
+/// UTF-8. Everything else goes through Core Audio's `kAudioFilePropertyMarkerList`, whose WAV
+/// names are Windows-1252 and so cannot hold most scripts.
 @interface AudioMarkerUtil : NSObject
 
 /// Reads all RIFF cue-point markers from the audio file.

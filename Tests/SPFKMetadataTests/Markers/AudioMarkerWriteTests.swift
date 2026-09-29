@@ -84,7 +84,7 @@ final class AudioMarkerWriteTests: BinTestCase {
         }
     }
 
-    /// A WAV whose codec Core Audio does not know still saves through TagLib, but not its markers.
+    /// A WAV whose codec TagLib does not know has no sample rate to position markers by.
     @Test func waveSaveReportsRefusedMarkerWrite() throws {
         let url = bin.appendingPathComponent("unknown-codec.wav")
         var data = try Data(contentsOf: TestBundleResources.shared.tabla_wav)
