@@ -14,6 +14,7 @@
 #import <taglib/xiphcomment.h>
 
 #import "StringUtil.h"
+#import "TagImageDecoding.h"
 #import "TagPicture.h"
 #import "TagPictureRef.h"
 
@@ -30,34 +31,6 @@ static const auto pictureTypeKey = String("pictureType");
 
 // MARK: - Static helpers
 
-/// +1 image, or NULL. CGImageSource first; the JPEG and PNG decoders accept some marginal input it
-/// rejects.
-static CGImageRef createImage(NSData *data) {
-    if (CGImageSourceRef source = CGImageSourceCreateWithData((__bridge CFDataRef)data, NULL)) {
-        CGImageRef image = CGImageSourceCreateImageAtIndex(source, 0, NULL);
-        CFRelease(source);
-
-        if (image)
-            return image;
-    }
-
-    if (CGDataProviderRef provider = CGDataProviderCreateWithCFData((__bridge CFDataRef)data)) {
-        CGImageRef image = CGImageCreateWithJPEGDataProvider(provider, NULL, true, kCGRenderingIntentDefault);
-        CFRelease(provider);
-
-        if (image)
-            return image;
-    }
-
-    if (CGDataProviderRef provider = CGDataProviderCreateWithCFData((__bridge CFDataRef)data)) {
-        CGImageRef image = CGImageCreateWithPNGDataProvider(provider, NULL, true, kCGRenderingIntentDefault);
-        CFRelease(provider);
-        return image;
-    }
-
-    return NULL;
-}
-
 static TagPictureRef *_Nullable buildPictureRef(const VariantMap &picture) {
     String pictureMimeType = picture.value(mimeTypeKey).value<String>();
     NSString *mimeType = StringUtil::utf8NSString(pictureMimeType);
@@ -72,7 +45,7 @@ static TagPictureRef *_Nullable buildPictureRef(const VariantMap &picture) {
     ByteVector pictureData = picture.value(dataKey).toByteVector();
     NSData *nsData = [[NSData alloc] initWithBytes:pictureData.data() length:pictureData.size()];
 
-    CGImageRef imageRef = createImage(nsData);
+    CGImageRef imageRef = TagCreateImage(nsData);
 
     if (!imageRef)
         return nil;

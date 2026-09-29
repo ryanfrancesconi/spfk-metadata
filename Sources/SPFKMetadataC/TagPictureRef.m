@@ -4,7 +4,37 @@
 #import <ImageIO/CGImageSource.h>
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 
+#import "TagImageDecoding.h"
 #import "TagPictureRef.h"
+
+CGImageRef TagCreateImage(NSData *data) {
+    CFDataRef cfData = (__bridge CFDataRef)data;
+    CGImageRef image = NULL;
+
+    CGImageSourceRef source = CGImageSourceCreateWithData(cfData, NULL);
+    if (source) {
+        image = CGImageSourceCreateImageAtIndex(source, 0, NULL);
+        CFRelease(source);
+    }
+
+    if (!image) {
+        CGDataProviderRef provider = CGDataProviderCreateWithCFData(cfData);
+        if (provider) {
+            image = CGImageCreateWithJPEGDataProvider(provider, NULL, true, kCGRenderingIntentDefault);
+            CFRelease(provider);
+        }
+    }
+
+    if (!image) {
+        CGDataProviderRef provider = CGDataProviderCreateWithCFData(cfData);
+        if (provider) {
+            image = CGImageCreateWithPNGDataProvider(provider, NULL, true, kCGRenderingIntentDefault);
+            CFRelease(provider);
+        }
+    }
+
+    return image;
+}
 
 @implementation TagPictureRef
 
@@ -21,9 +51,7 @@
                 pictureType:(NSString *)pictureType {
     self = [super init];
 
-    // Retain because caller retains its own reference.
-    // CGImageCreate returns +1 but when called from Swift,
-    // the caller's CGImage is still alive and owns its reference.
+    // The caller keeps its own reference.
     _cgImage = CGImageRetain(cgImage);
     _pictureDescription = pictureDescription;
     _utType = utType;
@@ -53,30 +81,7 @@
     if (!data)
         return nil;
 
-    // Generic path: handles JPEG, PNG, WebP, HEIC, TIFF, GIF, etc.
-    CGImageSourceRef source = CGImageSourceCreateWithData((__bridge CFDataRef)data, NULL);
-    if (source) {
-        _cgImage = CGImageSourceCreateImageAtIndex(source, 0, NULL);
-        CFRelease(source);
-    }
-
-    // JPEG fallback for marginal-but-decodable input that CGImageSource may reject.
-    if (!_cgImage) {
-        CGDataProviderRef provider = CGDataProviderCreateWithCFData((__bridge CFDataRef)data);
-        if (provider) {
-            _cgImage = CGImageCreateWithJPEGDataProvider(provider, NULL, true, kCGRenderingIntentDefault);
-            CFRelease(provider);
-        }
-    }
-
-    // PNG fallback for the same reason.
-    if (!_cgImage) {
-        CGDataProviderRef provider = CGDataProviderCreateWithCFData((__bridge CFDataRef)data);
-        if (provider) {
-            _cgImage = CGImageCreateWithPNGDataProvider(provider, NULL, true, kCGRenderingIntentDefault);
-            CFRelease(provider);
-        }
-    }
+    _cgImage = TagCreateImage(data);
 
     if (!_cgImage)
         return nil;
