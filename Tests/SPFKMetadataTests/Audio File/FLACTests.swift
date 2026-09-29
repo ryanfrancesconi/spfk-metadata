@@ -58,6 +58,26 @@ final class FlacFileCTests: BinTestCase {
         #expect(readBack.contains("Test Project"))
     }
 
+    /// Non-ASCII iXML survives repeated saves unchanged rather than being re-encoded on each one.
+    @Test func nonASCIIIXMLRoundTrips() async throws {
+        let tmpfile = try copyToBin(url: TestBundleResources.shared.tabla_flac)
+        let ixml = "<BWFXML><PROJECT>Café</PROJECT></BWFXML>"
+
+        let writer = FlacFileC(path: tmpfile.path)
+        #expect(writer.load())
+        writer.iXML = ixml
+        #expect(writer.save())
+
+        let first = FlacFileC(path: tmpfile.path)
+        #expect(first.load())
+        #expect(first.iXML == ixml)
+        #expect(first.save())
+
+        let second = FlacFileC(path: tmpfile.path)
+        #expect(second.load())
+        #expect(second.iXML == ixml)
+    }
+
     /// Setting iXML to nil after writing should remove the APPLICATION block.
     @Test func clearIXML() async throws {
         let tmpfile = try copyToBin(url: TestBundleResources.shared.tabla_flac)

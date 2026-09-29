@@ -88,7 +88,7 @@ using namespace TagLib;
         flacFile->setBEXTData(ByteVector());
     }
 
-    flacFile->setiXMLData(_iXML ? String(_iXML.UTF8String) : String());
+    flacFile->setiXMLData(_iXML ? String(_iXML.UTF8String, String::UTF8) : String());
 
     return flacFile->save();
 }
