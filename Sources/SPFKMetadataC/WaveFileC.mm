@@ -164,7 +164,8 @@ using namespace TagLib;
         waveFile->InfoTag()->setFieldText(tagKey, tagValue);
     }
 
-    TagRatingWriteToFile(waveFile, ratingStars);
+    if (!TagRatingWriteToFile(waveFile, ratingStars))
+        return false;
 
     bool tagsSaved = waveFile->save();
     return tagsSaved && markersSaved;

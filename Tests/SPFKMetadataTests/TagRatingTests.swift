@@ -207,4 +207,57 @@ final class TagRatingTests: BinTestCase {
     @Test func aiffFixtureRatingRead() throws {
         #expect(TagRating.read(TestBundleResources.shared.rated_80_aif.path) == 4)
     }
+
+    // MARK: - A container with no rating branch
+
+    /// A TrueAudio header TagLib opens as `TrueAudio::File`, which has no rating branch.
+    private func makeTrueAudioFile() throws -> URL {
+        var bytes = Data("TTA1".utf8)
+        func append<T: FixedWidthInteger>(_ value: T) {
+            withUnsafeBytes(of: value.littleEndian) { bytes.append(contentsOf: $0) }
+        }
+        append(UInt16(1)) // PCM
+        append(UInt16(1)) // channels
+        append(UInt16(16)) // bits per sample
+        append(UInt32(44100))
+        append(UInt32(0)) // sample frames
+        append(UInt32(0)) // header CRC
+        bytes.append(Data(count: 64))
+
+        let url = bin.appendingPathComponent("no-rating-branch.tta")
+        try bytes.write(to: url)
+        return url
+    }
+
+    @Test func ratingOnAContainerWithNoBranchFails() throws {
+        let url = try makeTrueAudioFile()
+
+        #expect(TagRating.write(4, toPath: url.path) == false)
+        #expect(TagRating.write(0, toPath: url.path))
+    }
+
+    @Test func tagSaveWithRatingOnAContainerWithNoBranchFails() throws {
+        let url = try makeTrueAudioFile()
+
+        let tagFile = TagFile(path: url.path)
+        tagFile.dictionary = ["TITLE": "Title", "RATING": "4"]
+        #expect(tagFile.save() == false)
+
+        tagFile.dictionary = ["TITLE": "Title"]
+        #expect(tagFile.save())
+    }
+
+    /// The copy reports the lost rating but still writes every other tag.
+    @Test func tagCopyToAContainerWithNoBranchKeepsTheOtherTags() throws {
+        let source = try copyToBin(url: TestBundleResources.shared.tabla_mp3)
+        let sourceFile = TagFile(path: source.path)
+        sourceFile.dictionary = ["TITLE": "Copied", "RATING": "4"]
+        #expect(sourceFile.save())
+
+        let destination = try makeTrueAudioFile()
+        let copied = TagLibBridge.copyTags(fromPath: source.path, toPath: destination.path)
+
+        #expect(copied == false)
+        #expect(TagLibBridge.getTitle(destination.path) == "Copied")
+    }
 }

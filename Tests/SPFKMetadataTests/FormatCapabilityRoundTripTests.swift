@@ -53,6 +53,21 @@ final class FormatCapabilityRoundTripTests: BinTestCase {
         #expect(reread.tagProperties[.title] == title)
     }
 
+    /// `RATING` bypasses the PropertyMap, so each listed container needs its own rating branch.
+    @Test(arguments: fixtures)
+    func ratingRoundTripsWhereListed(source: URL) async throws {
+        let url = try copy(source)
+        let fileType = try #require(AudioFileType(url: url))
+        guard fileType.supportsMetadata else { return }
+
+        var description = try await MetaAudioFileDescription(parsing: url)
+        description.tagProperties[.rating] = "4"
+        try description.save(dirtyFlags: [.metadata])
+
+        let reread = try await MetaAudioFileDescription(parsing: url)
+        #expect(reread.tagProperties[.rating] == "4", "\(fileType.rawValue)")
+    }
+
     @Test(arguments: fixtures)
     func markersRoundTripExactlyWhereListed(source: URL) async throws {
         let url = try copy(source)

@@ -195,11 +195,10 @@ namespace {
 
     output.file()->setProperties(tags);
 
-    if (ratingStars > 0) {
-        TagRatingWriteToFile(output.file(), ratingStars);
-    }
+    // The destination is already stripped, so its tags are saved even when the rating can't be.
+    bool ratingWritten = ratingStars <= 0 || TagRatingWriteToFile(output.file(), ratingStars);
 
-    return output.save();
+    return output.save() && ratingWritten;
 }
 
 @end

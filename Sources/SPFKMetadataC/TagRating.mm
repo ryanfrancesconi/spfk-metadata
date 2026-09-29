@@ -320,8 +320,7 @@ int TagRatingReadFromFile(TagLib::File *f) {
     return -1;
 }
 
-void TagRatingWriteToFile(TagLib::File *f, int stars) {
-    if (!f) return;
+bool TagRatingWriteToFile(TagLib::File *f, int stars) {
     if (auto *fp = dynamic_cast<MPEG::File *>(f))
         writeID3(fp->ID3v2Tag(true), stars);
     else if (auto *fp = dynamic_cast<RIFF::WAV::File *>(f))
@@ -344,6 +343,9 @@ void TagRatingWriteToFile(TagLib::File *f, int stars) {
         writeASF(fp->tag(), stars);
     else if (auto *fp = dynamic_cast<Matroska::File *>(f))
         writeMatroska(dynamic_cast<Matroska::Tag *>(fp->tag()), stars);
+    else
+        return stars <= 0;
+    return true;
 }
 
 int TagRatingStarsInDictionary(NSDictionary *dictionary) {
@@ -379,7 +381,8 @@ int TagRatingStarsInDictionary(NSDictionary *dictionary) {
     if (fileRef.isNull())
         return NO;
 
-    TagRatingWriteToFile(fileRef.file(), stars);
+    if (!TagRatingWriteToFile(fileRef.file(), stars))
+        return NO;
     return fileRef.save();
 }
 

@@ -126,7 +126,8 @@ using namespace TagLib;
     properties.removeEmpty();
     fileRef.setProperties(properties);
 
-    TagRatingWriteToFile(f, ratingStars);
+    if (!TagRatingWriteToFile(f, ratingStars))
+        return false;
 
     // A caller changing artwork does so through TagPicture after this returns.
     if (!existingPictures.isEmpty()) {
