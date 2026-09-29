@@ -27,6 +27,7 @@
 #import <taglib/xiphcomment.h>
 
 #import "TagRating.h"
+#import "TagRatingFile.h"
 #import "TagRatingScale.h"
 
 using namespace std;
@@ -292,8 +293,6 @@ static void writeASF(ASF::Tag *tag, int stars) {
 
 // MARK: - File-pointer dispatch
 
-// Non-static so TagFile, WaveFileC and TagLibBridge can call them on a file they already have open.
-
 int TagRatingReadFromFile(TagLib::File *f) {
     if (!f) return -1;
     if (auto *fp = dynamic_cast<MPEG::File *>(f))
@@ -345,6 +344,16 @@ void TagRatingWriteToFile(TagLib::File *f, int stars) {
         writeASF(fp->tag(), stars);
     else if (auto *fp = dynamic_cast<Matroska::File *>(f))
         writeMatroska(dynamic_cast<Matroska::Tag *>(fp->tag()), stars);
+}
+
+int TagRatingStarsInDictionary(NSDictionary *dictionary) {
+    NSString *value = [dictionary objectForKey:@"RATING"];
+
+    if (value == nil)
+        return 0;
+
+    int v = [value intValue];
+    return (v >= TagRatingMinStars && v <= TagRatingMaxStars) ? v : 0;
 }
 
 // MARK: - Public path-based interface

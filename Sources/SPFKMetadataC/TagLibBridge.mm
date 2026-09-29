@@ -33,11 +33,7 @@
 #import "TagLibBridge.h"
 #import "TagPictureRef.h"
 #import "TagRating.h"
-
-// Forward declarations — implementations live in TagRating.mm.
-// Called here while the FileRef is still open to avoid a second file open.
-int TagRatingReadFromFile(TagLib::File *f);
-void TagRatingWriteToFile(TagLib::File *f, int stars);
+#import "TagRatingFile.h"
 
 #import "StringUtil.h"
 #import "TagUtil.h"
@@ -154,7 +150,7 @@ namespace {
 }
 
 + (bool)removeAllTags:(NSString *)path {
-    // false = skip audio properties parsing (not needed for strip)
+    // No audio properties: stripping doesn't need them.
     FileRef fileRef(path.UTF8String, false);
 
     if (fileRef.isNull()) {
