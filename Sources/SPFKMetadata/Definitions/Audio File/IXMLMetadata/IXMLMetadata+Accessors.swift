@@ -12,15 +12,9 @@ extension IXMLMetadata {
         case .core:
             return coreValue(xmlTag: descriptor.xmlTag)
         case .user:
-            guard let fields = userFields,
-                  let entry = iXMLUserFieldMap.first(where: { $0.xmlName == descriptor.xmlTag })
-            else { return nil }
-            return fields[keyPath: entry.keyPath]
+            return Self.userValue(userFields, xmlTag: descriptor.xmlTag)
         case .aswg:
-            guard let fields = aswgFields,
-                  let entry = iXMLASWGFieldMap.first(where: { $0.xmlName == descriptor.xmlTag })
-            else { return nil }
-            return fields[keyPath: entry.keyPath]
+            return Self.aswgValue(aswgFields, xmlTag: descriptor.xmlTag)
         case .bext:
             return bextValue(xmlTag: descriptor.xmlTag)
         case .speed:
@@ -64,6 +58,16 @@ extension IXMLMetadata {
 // MARK: - Private section helpers
 
 extension IXMLMetadata {
+    private static func userValue(_ fields: IXMLUserFields?, xmlTag: String) -> String? {
+        guard let fields, let entry = iXMLUserFieldMap.first(where: { $0.xmlName == xmlTag }) else { return nil }
+        return fields[keyPath: entry.keyPath]
+    }
+
+    private static func aswgValue(_ fields: IXMLASWGFields?, xmlTag: String) -> String? {
+        guard let fields, let entry = iXMLASWGFieldMap.first(where: { $0.xmlName == xmlTag }) else { return nil }
+        return fields[keyPath: entry.keyPath]
+    }
+
     private func coreValue(xmlTag: String) -> String? {
         switch xmlTag {
         case "PROJECT":      return project
@@ -185,19 +189,10 @@ extension IXMLMetadata {
         var out: [String] = []
 
         for descriptor in descriptors {
-            var value: String?
-
-            switch descriptor.section {
-            case .user:
-                if let user, let entry = iXMLUserFieldMap.first(where: { $0.xmlName == descriptor.xmlTag }) {
-                    value = user[keyPath: entry.keyPath]
-                }
-            case .aswg:
-                if let aswg, let entry = iXMLASWGFieldMap.first(where: { $0.xmlName == descriptor.xmlTag }) {
-                    value = aswg[keyPath: entry.keyPath]
-                }
-            default:
-                value = self.value(for: descriptor)
+            let value: String? = switch descriptor.section {
+            case .user: Self.userValue(user, xmlTag: descriptor.xmlTag)
+            case .aswg: Self.aswgValue(aswg, xmlTag: descriptor.xmlTag)
+            default: self.value(for: descriptor)
             }
 
             if let trimmed = value?.trimmed, trimmed.isNotEmpty {
