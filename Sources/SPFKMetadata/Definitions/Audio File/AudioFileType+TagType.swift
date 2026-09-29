@@ -7,8 +7,7 @@ import SPFKMetadataC
 // swiftformat:disable consecutiveSpaces
 
 extension AudioFileType {
-    /// The corresponding `TagFileTypeDef` for this audio format, used to select the correct
-    /// TagLib parser. Returns `nil` for formats not supported by TagLib (e.g., `.caf`, `.w64`).
+    /// Nil for a format TagLib doesn't parse (`.caf`, `.w64`).
     public var tagType: TagFileTypeDef? {
         switch self {
         case .aac:  .aac
@@ -29,35 +28,19 @@ extension AudioFileType {
         }
     }
 
-    /// Detects the audio file type from a URL, first checking the path extension,
-    /// then falling back to header inspection via TagLib and CoreAudio if the extension is missing.
+    /// By extension; a file without one is sniffed.
     public init?(url: URL) {
         let ext = url.pathExtension.lowercased()
 
-        // when the file has no extension
-        guard ext != "" else {
-            if let value = AudioFileType(parsing: url) {
-                self = value
-                return
-            }
+        guard let value = ext.isEmpty ? AudioFileType(parsing: url) : AudioFileType(pathExtension: ext) else {
             return nil
         }
 
-        if let value = AudioFileType(pathExtension: ext) {
-            self = value
-            return
-        }
-
-        return nil
+        self = value
     }
 
-    /// Open the file and determine its format via CoreAudio. Note that `TagFile.detectType()` is
-    /// faster but only has the types that it supports.
-    ///
-    /// - Parameter url: URL to an audio file
-    /// - Returns: A `MetaAudioFileFormat` or nil
+    /// TagLib's header check first, as it is faster; Core Audio covers what TagLib doesn't know.
     private init?(parsing url: URL) {
-        // tag lib is faster than CoreAudio so run it first for primary types
         if let tagType = TagFileType.detect(url.path),
            let value = AudioFileType(tagType: tagType)
         {
@@ -65,7 +48,6 @@ extension AudioFileType {
             return
         }
 
-        // get possible extensions for this URL
         guard let extensions = try? AudioFileType.getExtensions(for: url) else { return nil }
 
         for ext in extensions {
@@ -78,7 +60,6 @@ extension AudioFileType {
         return nil
     }
 
-    /// Creates an `AudioFileType` from a TagLib file type definition.
     public init?(tagType: TagFileTypeDef) {
         for item in Self.allCases where item.tagType == tagType {
             self = item
