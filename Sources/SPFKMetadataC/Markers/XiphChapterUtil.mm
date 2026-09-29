@@ -20,8 +20,7 @@ using namespace TagLib;
 
 // MARK: - Helpers
 
-/// Returns the XiphComment for a file opened via FileRef, or nullptr if unsupported.
-/// For FLAC files, creates the XiphComment if `create` is true.
+/// Nullptr for a non-Xiph file. `create` applies to FLAC only.
 static Ogg::XiphComment *getXiphComment(TagLib::File *file, bool create = false) {
     if (auto *flac = dynamic_cast<FLAC::File *>(file)) {
         return flac->xiphComment(create);
@@ -38,7 +37,7 @@ static Ogg::XiphComment *getXiphComment(TagLib::File *file, bool create = false)
     return nullptr;
 }
 
-/// Formats a time interval as HH:MM:SS.mmm
+/// HH:MM:SS.mmm
 static string formatTimestamp(NSTimeInterval seconds) {
     int totalMs = static_cast<int>(round(seconds * 1000));
     int h = totalMs / 3600000;
@@ -62,29 +61,42 @@ static NSTimeInterval parseTimestamp(const string &ts) {
     return h * 3600.0 + m * 60.0 + s + ms / 1000.0;
 }
 
-/// Formats a chapter field key: CHAPTER000, CHAPTER001, etc.
-static String chapterKey(int index) {
-    char buf[16];
-    snprintf(buf, sizeof(buf), "CHAPTER%03d", index);
-    return String(buf);
-}
-
-/// Formats a chapter name field key: CHAPTER000NAME, CHAPTER001NAME, etc.
-static String chapterNameKey(int index) {
+/// CHAPTER000, or with a suffix CHAPTER000NAME, CHAPTER000END.
+static String chapterKey(int index, const char *suffix = "") {
     char buf[20];
-    snprintf(buf, sizeof(buf), "CHAPTER%03dNAME", index);
+    snprintf(buf, sizeof(buf), "CHAPTER%03d%s", index, suffix);
     return String(buf);
 }
 
-/// Formats a chapter end time field key: CHAPTER000END, CHAPTER001END, etc.
-static String chapterEndKey(int index) {
-    char buf[20];
-    snprintf(buf, sizeof(buf), "CHAPTER%03dEND", index);
-    return String(buf);
+/// The field's first value as a timestamp, or -1 when absent or malformed.
+static NSTimeInterval timestampField(const Ogg::FieldListMap &fields, const String &key) {
+    auto it = fields.find(key);
+
+    if (it == fields.end() || it->second.isEmpty()) {
+        return -1;
+    }
+
+    return parseTimestamp(it->second.front().to8Bit());
 }
 
-/// Removes all CHAPTER* fields from a XiphComment.
-/// We must collect keys first, then remove, to avoid mutating during iteration.
+/// Sorted indices of the CHAPTERnnn start-time keys.
+static vector<int> chapterIndices(const Ogg::FieldListMap &fields) {
+    vector<int> indices;
+
+    for (auto it = fields.begin(); it != fields.end(); ++it) {
+        string key = it->first.to8Bit();
+
+        if (key.length() == 10 && key.find("CHAPTER") == 0 && isdigit(key[7]) && isdigit(key[8]) &&
+            isdigit(key[9])) {
+            indices.push_back(stoi(key.substr(7, 3)));
+        }
+    }
+
+    sort(indices.begin(), indices.end());
+    return indices;
+}
+
+/// Removes every CHAPTER* field. Keys are collected first, since removal invalidates the iteration.
 static void removeAllChapterFields(Ogg::XiphComment *comment) {
     vector<String> keysToRemove;
 
@@ -121,84 +133,29 @@ static void removeAllChapterFields(Ogg::XiphComment *comment) {
     }
 
     const auto &fields = comment->fieldListMap();
-
-    // Collect chapter indices by scanning for CHAPTER\d{3} keys (not NAME keys)
-    vector<int> indices;
-
-    for (auto it = fields.begin(); it != fields.end(); ++it) {
-        string key = it->first.to8Bit();
-
-        // Match CHAPTER followed by exactly 3 digits (no suffix)
-        if (key.length() == 10 && key.find("CHAPTER") == 0) {
-            string numStr = key.substr(7, 3);
-
-            // Verify all digits
-            if (isdigit(numStr[0]) && isdigit(numStr[1]) && isdigit(numStr[2])) {
-                indices.push_back(stoi(numStr));
-            }
-        }
-    }
-
-    if (indices.empty()) {
-        return nil;
-    }
-
-    sort(indices.begin(), indices.end());
-
+    vector<int> indices = chapterIndices(fields);
     NSMutableArray *array = [[NSMutableArray alloc] init];
 
     for (size_t i = 0; i < indices.size(); i++) {
         int idx = indices[i];
-        String timeKey = chapterKey(idx);
-        String nameKey = chapterNameKey(idx);
-
-        // Parse timestamp
-        auto timeIt = fields.find(timeKey);
-
-        if (timeIt == fields.end() || timeIt->second.isEmpty()) {
-            continue;
-        }
-
-        string tsStr = timeIt->second.front().to8Bit();
-        NSTimeInterval startTime = parseTimestamp(tsStr);
+        NSTimeInterval startTime = timestampField(fields, chapterKey(idx));
 
         if (startTime < 0) {
             continue;
         }
 
-        // Get name (optional)
         NSString *name = @"";
-        auto nameIt = fields.find(nameKey);
+        auto nameIt = fields.find(chapterKey(idx, "NAME"));
 
         if (nameIt != fields.end() && !nameIt->second.isEmpty()) {
             name = @(nameIt->second.front().toCString(true));
         }
 
-        // Prefer explicit CHAPTER000END field (written for segment markers).
-        // Fall back to next chapter's start time, or 0 for the last chapter.
-        NSTimeInterval endTime = 0;
-        String endKey = chapterEndKey(idx);
-        auto endIt = fields.find(endKey);
-
-        if (endIt != fields.end() && !endIt->second.isEmpty()) {
-            NSTimeInterval explicitEnd = parseTimestamp(endIt->second.front().to8Bit());
-
-            if (explicitEnd > 0) {
-                endTime = explicitEnd;
-            }
-        }
+        // END is written only for regions; a point chapter ends where the next begins.
+        NSTimeInterval endTime = max(timestampField(fields, chapterKey(idx, "END")), 0.0);
 
         if (endTime == 0 && i + 1 < indices.size()) {
-            String nextTimeKey = chapterKey(indices[i + 1]);
-            auto nextIt = fields.find(nextTimeKey);
-
-            if (nextIt != fields.end() && !nextIt->second.isEmpty()) {
-                endTime = parseTimestamp(nextIt->second.front().to8Bit());
-
-                if (endTime < 0) {
-                    endTime = 0;
-                }
-            }
+            endTime = max(timestampField(fields, chapterKey(indices[i + 1])), 0.0);
         }
 
         ChapterMarker *marker = [[ChapterMarker alloc] initWithName:name startTime:startTime endTime:endTime];
@@ -221,28 +178,19 @@ static void removeAllChapterFields(Ogg::XiphComment *comment) {
         return false;
     }
 
-    // Remove existing chapter fields
     removeAllChapterFields(comment);
 
-    // Write new chapter fields
     int index = 0;
 
     for (ChapterMarker *marker in chapters) {
-        String timeKey = chapterKey(index);
-        String nameKey = chapterNameKey(index);
-
-        string timestamp = formatTimestamp(marker.startTime);
-        comment->addField(timeKey, String(timestamp));
+        comment->addField(chapterKey(index), String(formatTimestamp(marker.startTime)));
 
         if (marker.name.length > 0) {
-            comment->addField(nameKey, String(marker.name.UTF8String));
+            comment->addField(chapterKey(index, "NAME"), String(marker.name.UTF8String));
         }
 
-        // Write end time only for region markers (endTime differs from startTime).
         if (marker.endTime > marker.startTime) {
-            String endKey = chapterEndKey(index);
-            string endTimestamp = formatTimestamp(marker.endTime);
-            comment->addField(endKey, String(endTimestamp));
+            comment->addField(chapterKey(index, "END"), String(formatTimestamp(marker.endTime)));
         }
 
         index++;
