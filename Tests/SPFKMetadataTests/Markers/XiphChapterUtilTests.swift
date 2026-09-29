@@ -160,4 +160,22 @@ class XiphChapterUtilTests: BinTestCase {
         // CHAPTER000END is written, so last chapter endTime round-trips correctly
         #expect(abs(readBack[2].endTime - 4.0) < 0.002)
     }
+
+    /// With no END field a chapter ends where the next begins, and the last ends at 0.
+    @Test func pointChaptersEndAtTheNextStart() async throws {
+        let tmpfile = try copyToBin(url: TestBundleResources.shared.tabla_flac)
+
+        let markers: [ChapterMarker] = [
+            ChapterMarker(name: "", startTime: 0.5, endTime: 0.5),
+            ChapterMarker(name: "Ch2", startTime: 1.5, endTime: 1.5),
+        ]
+
+        #expect(XiphChapterUtil.write(markers, to: tmpfile.path))
+
+        let readBack = getChapters(in: tmpfile)
+
+        #expect(readBack.map(\.name) == ["", "Ch2"])
+        #expect(readBack.map(\.startTime) == [0.5, 1.5])
+        #expect(readBack.map(\.endTime) == [1.5, 0])
+    }
 }
