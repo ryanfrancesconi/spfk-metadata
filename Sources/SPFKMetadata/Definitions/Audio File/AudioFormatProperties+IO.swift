@@ -7,7 +7,6 @@ import SPFKMetadataBase
 import SPFKMetadataC
 
 extension AudioFormatProperties {
-    /// Creates format properties by reading from an `AVAudioFile`.
     public init(audioFile: AVAudioFile) {
         let bits = audioFile.fileFormat.bitsPerChannel
         self.init(
@@ -19,7 +18,6 @@ extension AudioFormatProperties {
         )
     }
 
-    /// Creates format properties from the C bridge struct returned by TagLib.
     public init(cObject: TagAudioPropertiesC) {
         self.init(
             channelCount: AVAudioChannelCount(cObject.channelCount),

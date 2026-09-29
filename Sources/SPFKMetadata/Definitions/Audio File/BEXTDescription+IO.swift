@@ -5,7 +5,7 @@ import SPFKMetadataBase
 import SPFKMetadataC
 
 extension BEXTDescription {
-    /// Reads the BEXT chunk from a WAV file via TagLib. Returns `nil` if the file has no BEXT data.
+    /// Nil when the WAV has no BEXT chunk or can't be opened.
     public init?(url: URL) {
         let waveFile = WaveFileC(path: url.path)
         guard waveFile.load(), let info = waveFile.bextDescriptionC else {
@@ -15,7 +15,7 @@ extension BEXTDescription {
         self = BEXTDescription(info: info)
     }
 
-    /// Creates a `BEXTDescription` from the C bridge object, populating version-appropriate fields.
+    /// UMID only from version 1, loudness only from version 2.
     public init(info: BEXTDescriptionC) {
         self.init()
 
@@ -45,8 +45,7 @@ extension BEXTDescription {
         }
     }
 
-    /// Converts to the C bridge representation for writing via TagLib.
-    /// The BWF version is automatically upgraded when v1 or v2 fields are present.
+    /// The version is raised, never lowered, to fit a UMID (1) or loudness (2).
     public var bextDescriptionC: BEXTDescriptionC {
         let info = BEXTDescriptionC()
 
@@ -56,7 +55,6 @@ extension BEXTDescription {
             }
         }
 
-        // Preserve the original version, only upgrade based on content
         info.version = version
 
         if let codingHistory {
@@ -124,7 +122,7 @@ extension BEXTDescription {
         return info
     }
 
-    /// Writes this BEXTDescription to file via TagLib.
+    /// WAV only; markers and artwork are left as they are.
     public static func write(bextDescription: BEXTDescription, to url: URL) throws {
         let waveFile = WaveFileC(path: url.path)
         guard waveFile.load() else {

@@ -6,8 +6,7 @@ import SPFKMetadataBase
 import SPFKMetadataC
 
 extension ImageDescription {
-    /// Converts to/from `TagPictureRef` for reading and writing embedded artwork via TagLib.
-    /// On get, selects JPEG or PNG UTType based on the image's alpha channel.
+    /// The getter keeps the image's own type, else PNG when it has alpha and JPEG when not.
     public var pictureRef: TagPictureRef? {
         get {
             guard let cgImage else {
