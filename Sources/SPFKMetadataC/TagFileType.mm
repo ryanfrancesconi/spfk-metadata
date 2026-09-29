@@ -74,6 +74,8 @@ TagFileTypeDef kTagFileTypeWebm = @"webm";
         value = kTagFileTypeM4a;
     } else if (RIFF::AIFF::File::isSupported(stream)) {
         value = kTagFileTypeAiff;
+    } else if (FLAC::File::isSupported(stream)) {
+        value = kTagFileTypeFlac;
     } else if (MPEG::File::isSupported(stream)) {
         value = kTagFileTypeMp3;
     } else if (Ogg::FLAC::File::isSupported(stream)) {

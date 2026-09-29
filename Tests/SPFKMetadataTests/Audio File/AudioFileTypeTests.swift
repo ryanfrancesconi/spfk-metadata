@@ -29,6 +29,16 @@ class AudioFileTypeTests: BinTestCase {
         #expect(type == .m4a)
     }
 
+    @Test func extensionlessNativeFLACIsDetectedByTagLib() throws {
+        deleteBinOnExit = true
+        let url = try copyToBin(url: TestBundleResources.shared.tabla_flac)
+        let target = url.deletingPathExtension()
+        try FileManager.default.moveItem(at: url, to: target)
+
+        #expect(TagFileType.detect(target.path) == .flac)
+        #expect(AudioFileType(url: target) == .flac)
+    }
+
     @Test func utType() throws {
         let formats = TestBundleResources.shared.formats
 
