@@ -42,7 +42,7 @@ Types marked with *(base)* are defined in [SPFKMetadataBase](https://github.com/
 ### Audio File Definitions
 
 - **AudioFormatProperties** *(base)* — Struct holding channel count, sample rate, bit depth, bit rate, and duration.
-- **AudioFormatProperties+IO** *(I/O)* — Initializer from `AVAudioFile`.
+- **AudioFormatProperties+IO** *(I/O)* — Initializers from `AVAudioFile` and from TagLib's `TagAudioPropertiesC`.
 - **AudioFileType+TagType** *(I/O)* — Bidirectional mapping between `AudioFileType` and `TagFileTypeDef`, with file extension, header inspection, and URL-based detection.
 - **BEXTDescription** *(base)* — Broadcast Wave Extension (BWF) chunk wrapper supporting v0/v1/v2 fields including originator, coding history, UMID, loudness values, and 64-bit time reference.
 - **BEXTDescription+IO** *(I/O)* — Read/write BEXT chunks via `WaveFileC` (TagLib). Conversion to/from the C bridge type `BEXTDescriptionC`.
@@ -55,24 +55,24 @@ Types marked with *(base)* are defined in [SPFKMetadataBase](https://github.com/
 
 ### iXML (BWFXML)
 
-Full structured support for the [iXML](http://www.ixml.info) (BWFXML) specification embedded in WAV and FLAC APPLICATION blocks. 56+ fields across 8 sections with round-trip XML fidelity.
+Structured support for the [iXML](http://www.ixml.info) (BWFXML) specification, in WAV chunks and FLAC APPLICATION blocks. `IXMLMetadata.xml` serializes the modeled fields and the raw USER, ASWG and STEINBERG containers; other elements in the source document are not carried through.
 
 - **IXMLMetadata** *(I/O)* — Core iXML document model covering production, speed, track list, loudness, BEXT mirror, history, user, ASWG, and location containers. Construct via `init(xml:)` to parse from an XML string, or `init(from:)` to build from a `MetaAudioFileDescription`. Generate XML via `.xml`.
 - **IXMLElement** *(I/O)* — Type-safe enum of iXML element names with an `AEXMLElement` subscript extension for safe child access.
-- **IXMLTagDescriptor** *(I/O)* — Field descriptor for UI editors: display name, section, XML tag, read-only status, and edit style (text/boolean/numeric/date). Registry of all 56+ fields queryable by section or identifier.
+- **IXMLTagDescriptor** *(I/O)* — Field descriptor for UI editors: display name, section, XML tag, read-only status, and edit style (text/boolean/numeric/date). Registry of every field, queryable by section or identifier.
 - **IXMLSection** *(I/O)* — Enum grouping iXML fields into UI sections: core, user, aswg, bext, speed, history, location, loudness.
 - **IXMLMetadata+Accessors** *(I/O)* — Descriptor-based read/write via `value(for:)` and `setValue(_:for:)`, enabling generic UI editors to access any iXML field without switch statements.
-- **IXMLUserFields** *(I/O)* — Structured model for the 37-field Soundminer USER container. Parsed from and serialized back to the USER XML element with round-trip preservation of unknown fields.
+- **IXMLUserFields** *(I/O)* — Structured model for the Soundminer USER container. Parsed from and serialized back to the USER XML element with round-trip preservation of unknown fields.
 - **UCSUserFields** *(I/O)* — UCS (Universal Category System) fields extracted from the USER element: CATEGORY, SUBCATEGORY, CATID. Auto-generates CATEGORYFULL on write.
-- **IXMLASWGFields** *(I/O)* — 14-field structured model for the ASWG (Audio Software Group) container per the ASWG iXML spec.
+- **IXMLASWGFields** *(I/O)* — Structured model for the ASWG (Audio Software Group) container per the ASWG iXML spec.
 
 ### Markers
 
 - **AudioMarkerDescription** *(base)* — Format-agnostic marker struct with name, start/end time, color, and markerID. Codable, Comparable (by time, then name).
 - **AudioMarkerDescriptionCollection** *(base)* — Ordered collection with insert, remove, update, sort, and automatic ID assignment.
-- **AudioMarkerDescription+IO** *(I/O)* — Creates markers from Core Audio RIFF cue points.
+- **AudioMarkerDescription+IO** *(I/O)* — Conversion to and from WAV/AIFF markers and chapters, with a JSON suffix on the name carrying end time and color where the format has no field for them.
 - **AudioMarkerDescriptionCollection+Parser** *(I/O)* — Factory initializer from URL with automatic file-type dispatch to the appropriate parser.
-- **ChapterParser** *(I/O)* — AVFoundation-based chapter parsing for M4A, MP4, FLAC, and OGG via `AVAsset` timed metadata.
+- **ChapterParser** *(I/O)* — Read-only AVFoundation chapter parsing, the fallback for the MP4 and Xiph families when TagLib finds none.
 
 ### SPFKMetadataC (ObjC++/C Bridge)
 
@@ -86,15 +86,15 @@ Low-level bridge layer exposing TagLib functionality to Swift through Objective-
 | **ID3File** | ID3v2-specific file access with frame-level read/write and XMP support |
 | **TagPicture** | Embedded artwork extraction and embedding via TagLib. Reads using `CGImageSource` (JPEG, PNG, WebP, HEIC, TIFF, GIF, etc.). Writes using `CGImageDestination`; formats that cannot be written (e.g. WebP) are automatically transcoded to JPEG before embedding. For FLAC, routes through `FileRef::setComplexProperties` to write native PICTURE blocks and migrates legacy XiphComment `METADATA_BLOCK_PICTURE` entries on write. |
 | **TagPictureRef** | CGImageRef container for artwork with UTType, managing Core Graphics reference counting across the Swift/ObjC boundary |
-| **WaveFileC** | RIFF WAV file operations via TagLib (INFO chunks, markers, BEXT) with single-load/single-save I/O |
-| **FlacFileC** | FLAC file operations via TagLib (Xiph tags, APPLICATION blocks for BEXT and iXML) |
+| **WaveFileC** | A WAV's INFO, ID3, BEXT, iXML, artwork and markers via TagLib, with single-load/single-save I/O |
+| **FlacFileC** | A FLAC's BEXT and iXML APPLICATION blocks via TagLib; tags go through `TagFile` |
 | **BEXTDescriptionC** | EBU Tech 3285 BEXT chunk binary serializer/deserializer with initWithData:/serializedData |
-| **AudioMarkerUtil** | RIFF audio marker (cue point) parsing for WAV and AIFF |
-| **MPEGChapterUtil** | ID3v2 CHAP frame parsing for MP3 chapter markers |
+| **AudioMarkerUtil** | WAV and AIFF markers: a RIFF WAVE's `cue `/`adtl` through TagLib, everything else through Core Audio |
+| **MPEGChapterUtil** | MP3 chapters as ID3v2 CHAP frames |
 | **XiphChapterUtil** | TagLib-based Vorbis comment chapter read/write for FLAC, OGG Vorbis, and OGG Opus |
-| **MP4ChapterUtil** | Nero-style MP4/M4A chapter marker read/write via `chpl` atom |
-| **ChapterMarker** | Chapter marker data object for AVFoundation chapter parsing |
-| **AudioMarker** | One RIFF cue point, as read off the file |
+| **MP4ChapterUtil** | MP4-family chapters: writes a QuickTime chapter track, reads it or else a Nero `chpl` atom |
+| **ChapterMarker** | A chapter as the MP3, MP4 and Xiph chapter utilities read and write it |
+| **AudioMarker** | One WAV or AIFF marker |
 | **TagAudioPropertiesC** | Channel count, sample rate, bit depth, bit rate and duration, read through TagLib |
 | **TagFileType** | The container types the bridge recognizes |
 
