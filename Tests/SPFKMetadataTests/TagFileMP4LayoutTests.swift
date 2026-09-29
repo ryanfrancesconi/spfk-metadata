@@ -11,9 +11,9 @@ import Testing
 
 /// An MP4 with `moov` ahead of `mdat` is written in place when the new tag fits the padding
 /// beside `ilst`. Anything that moves `mdat` costs a pass over the whole file -- a feature film is
-/// a gigabyte or more -- so the assertion is on how much was written, not on what the tags say:
-/// a save that removes the atom and re-inserts it lands `mdat` at the same offset with the same
-/// padding, and only the bytes it wrote to get there tell the two apart.
+/// a gigabyte or more -- so the assertion is on whether `mdat`'s blocks were written, not on what
+/// the tags say: a save that removes the atom and re-inserts it lands `mdat` at the same offset with
+/// the same padding, and only the blocks it rewrote to get there tell the two apart.
 @Suite(.tags(.file))
 final class TagFileMP4LayoutTests: BinTestCase {
     /// Appended to the fixture's `mdat`, so a save that moves it writes an unmistakable amount.
@@ -110,19 +110,33 @@ final class TagFileMP4LayoutTests: BinTestCase {
         try properties.save(to: url)
     }
 
-    /// Bytes this process has handed to `write(2)` so far.
-    private func logicalBytesWritten() throws -> UInt64 {
-        // The kernel fills the struct at the address it is handed; the `rusage_info_t *` in the
-        // signature is that address, not a pointer to be filled in.
-        var info = rusage_info_v4()
-        let status = withUnsafeMutablePointer(to: &info) { pointer in
-            pointer.withMemoryRebound(to: rusage_info_t?.self, capacity: 1) {
-                proc_pid_rusage(getpid(), RUSAGE_INFO_V4, $0)
-            }
-        }
-        try #require(status == 0)
+    /// Where the blocks of `mdat` sit on the device, sampled across its length.
+    ///
+    /// APFS overwrites a block no other file shares in place, so a rewrite only moves an address
+    /// when the file has been cloned first: call ``cloneAside(_:)`` before the save being measured.
+    private func mdatBlockAddresses(of url: URL) throws -> [Int64] {
+        let layout = try layout(of: url)
+        let fd = open(url.path, O_RDONLY)
+        try #require(fd >= 0)
+        defer { close(fd) }
 
-        return info.ri_logical_writes
+        // Skip the block holding mdat's header, which can share a block with the end of moov.
+        let first = layout.mdatOffset + 65536
+        let span = layout.mdatOffset + layout.mdatLength - first
+        let samples: UInt64 = 16
+
+        return try (0 ..< samples).map { index in
+            var query = log2phys()
+            query.l2p_contigbytes = 1
+            query.l2p_devoffset = off_t(first + span * index / samples)
+            try #require(fcntl(fd, F_LOG2PHYS_EXT, &query) == 0, "F_LOG2PHYS_EXT failed: errno \(errno)")
+            return query.l2p_devoffset
+        }
+    }
+
+    /// Clones `url` beside itself, so every block it holds is shared and a write to one relocates it.
+    private func cloneAside(_ url: URL) throws {
+        try FileManager.default.copyItem(at: url, to: url.appendingPathExtension("clone"))
     }
 
     /// A first save leaves TagLib's own padding after `ilst`; a second that grows the tag by less
@@ -135,9 +149,10 @@ final class TagFileMP4LayoutTests: BinTestCase {
         #expect(before.paddingLength > 200)
         #expect(before.mdatLength > UInt64(Self.inflation))
 
-        let writtenBefore = try logicalBytesWritten()
+        try cloneAside(url)
+        let blocksBefore = try mdatBlockAddresses(of: url)
         try save(title: "Tabla " + String(repeating: "x", count: 100), to: url)
-        let written = try logicalBytesWritten() - writtenBefore
+        let blocksAfter = try mdatBlockAddresses(of: url)
 
         let after = try layout(of: url)
         let growth = after.ilstLength - before.ilstLength
@@ -145,7 +160,7 @@ final class TagFileMP4LayoutTests: BinTestCase {
         #expect(growth > 0)
         #expect(after.paddingLength == before.paddingLength - growth)
         #expect(after.mdatOffset == before.mdatOffset)
-        #expect(written < after.mdatLength, "the save wrote \(written) bytes against an mdat of \(after.mdatLength)")
+        #expect(blocksAfter == blocksBefore, "the save rewrote mdat")
         #expect(try TagProperties(url: url).tag(for: .title)?.hasPrefix("Tabla x") == true)
     }
 
@@ -157,14 +172,32 @@ final class TagFileMP4LayoutTests: BinTestCase {
         try save(title: "Tabla", to: url)
         let before = try layout(of: url)
 
-        let writtenBefore = try logicalBytesWritten()
+        try cloneAside(url)
+        let blocksBefore = try mdatBlockAddresses(of: url)
         try TagProperties.removeAllTags(in: url)
-        let written = try logicalBytesWritten() - writtenBefore
+        let blocksAfter = try mdatBlockAddresses(of: url)
 
         let after = try layout(of: url)
 
         #expect(after.mdatOffset == before.mdatOffset)
-        #expect(written < after.mdatLength, "removing the tags wrote \(written) bytes against an mdat of \(after.mdatLength)")
+        #expect(blocksAfter == blocksBefore, "removing the tags rewrote mdat")
         #expect(try TagProperties(url: url).tag(for: .title) == nil)
+    }
+
+    /// A tag that outgrows the padding moves `mdat`, and the block addresses have to see it, or the
+    /// two tests above pass whatever the save does.
+    @Test func aTagLargerThanThePaddingRewritesMDAT() throws {
+        let url = try inflatedCopy()
+
+        try save(title: "Tabla", to: url)
+        let before = try layout(of: url)
+
+        try cloneAside(url)
+        let blocksBefore = try mdatBlockAddresses(of: url)
+        try save(title: String(repeating: "x", count: Int(before.paddingLength) * 4), to: url)
+        let blocksAfter = try mdatBlockAddresses(of: url)
+
+        #expect(try layout(of: url).mdatOffset > before.mdatOffset)
+        #expect(zip(blocksBefore, blocksAfter).allSatisfy { $0 != $1 }, "\(blocksBefore) -> \(blocksAfter)")
     }
 }
