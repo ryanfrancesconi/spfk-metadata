@@ -11,55 +11,43 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-/// RIFF WAV file handler using TagLib for comprehensive WAV metadata I/O.
-///
-/// Reads and writes INFO chunks, ID3 tags, BEXT broadcast extension data, iXML,
-/// embedded artwork and cue point markers, all via TagLib. Markers in RF64 and BW64 files
-/// go through AudioToolbox instead.
+/// A WAV's INFO, ID3, BEXT, iXML, artwork and markers through TagLib. Markers in RF64 and BW64 go
+/// through Core Audio instead.
 @interface WaveFileC : NSObject
 
-/// Audio stream properties (sample rate, duration, etc.) populated after `load`.
+/// Set by `load`.
 @property(nullable, nonatomic) TagAudioPropertiesC *audioPropertiesC;
 
-/// RIFF INFO chunk tags as key-value pairs (e.g., "INAM" = "Song Title").
+/// Keyed by INFO field ID ("INAM").
 @property(nonatomic) NSMutableDictionary *infoDictionary;
 
-/// ID3v2 tags embedded in the WAV file as key-value pairs (e.g., "TIT2" = "Song Title").
+/// Keyed by frame ID ("TIT2"), a TXXX by its description, plus `"RATING"`.
 @property(nonatomic) NSMutableDictionary *id3Dictionary;
 
-/// Broadcast Wave Extension (BEXT) chunk data, or `nil` if not present.
 @property(nullable, nonatomic) BEXTDescriptionC *bextDescriptionC;
 
-/// Raw iXML chunk string, or `nil` if not present.
 @property(nullable, nonatomic) NSString *iXML;
 
-/// Embedded artwork extracted via TagLib, or `nil` if not present.
 @property(nullable, nonatomic) TagPicture *tagPicture;
 
-/// Array of `AudioMarker` objects representing RIFF cue points.
+/// `AudioMarker`s.
 @property(nonatomic, strong, nonnull) NSArray *markers;
 
-/// Absolute path to the WAV file.
 @property(nonatomic, strong, nonnull) NSString *path;
 
-/// Set to `YES` to write markers on save. Default is `YES`.
+/// Default YES.
 @property(nonatomic) BOOL markersNeedsSave;
 
-/// Set to `YES` to write artwork on save. Default is `YES`.
+/// Default YES. With YES, a nil `tagPicture` removes the artwork.
 @property(nonatomic) BOOL imageNeedsSave;
 
 - (instancetype)init;
 
-/// Creates a `WaveFileC` for the WAV file at the given path.
-/// @param path Absolute path to the WAV file.
 - (instancetype)initWithPath:(nonnull NSString *)path;
 
-/// Opens the file and reads all chunks (INFO, ID3, BEXT, iXML, markers, artwork) into memory.
-/// @return `true` if the file was opened and parsed successfully.
 - (bool)load;
 
-/// Writes all current properties back to the WAV file. All chunks are rewritten together.
-/// @return `true` if the save succeeded.
+/// Rewrites every chunk; INFO fields absent from `infoDictionary` are removed.
 - (bool)save;
 
 @end

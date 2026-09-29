@@ -3,25 +3,21 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-/// Audio stream properties read from a file via TagLib.
-///
-/// Populated by `TagFile` after loading a file. Provides the basic audio format information
-/// (sample rate, duration, bit rate, channel count) without opening a full `AVAudioFile`.
+/// Stream properties as TagLib reads them, without an `AVAudioFile`.
 @interface TagAudioPropertiesC : NSObject
 
-/// Sample rate in Hz (e.g., 44100, 48000).
+/// Hz.
 @property(nonatomic) double sampleRate;
 
-/// Total duration of the audio file in seconds.
+/// Seconds, at millisecond resolution.
 @property(nonatomic) double duration;
 
-/// Bit rate in kilobits per second (e.g., 320 for 320 kbps MP3).
+/// kbps.
 @property(nonatomic) int bitRate;
 
-/// Number of audio channels (1 = mono, 2 = stereo, etc.).
 @property(nonatomic) int channelCount;
 
-/// Bits per sample (e.g., 16, 24, 32). Only meaningful for PCM formats like WAV/AIFF.
+/// Set only by `WaveFileC` and `FlacFileC`; 0 elsewhere.
 @property(nonatomic) int bitsPerSample;
 
 - (nonnull id)init;

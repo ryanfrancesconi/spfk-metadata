@@ -4,57 +4,38 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-/// Broadcast Wave Extension (BEXT) chunk representation (EBU Tech 3285).
-///
-/// Wraps BEXT fields as Objective-C properties. Used as the bridge type
-/// between the Swift `BEXTDescription` struct and the C/C++ layer.
+/// The BWF `bext` chunk (EBU Tech 3285), bridging `BEXTDescription` to the C++ layer.
 @interface BEXTDescriptionC : NSObject
 
-/// BWF Version 0, 1, or 2
+/// 0, 1 or 2. UMID needs 1, loudness 2.
 @property(nonatomic) short version;
 
-/// ASCII string (maximum 256 characters) containing a free description of the sequence.
-/// To help applications which display only a short description, it is recommended that a
-/// resume of the description is contained in the first 64 characters and the
-/// last 192 characters are used for details.
+/// Up to 256 ASCII characters; the spec suggests a summary in the first 64.
 @property(nonatomic) NSString *sequenceDescription;
 
-/// UMID (Unique Material Identifier) to standard SMPTE. (Note: Added in version 1.)
+/// SMPTE UMID, hex-encoded; 64 bytes on disk.
 @property(nonatomic) NSString *umid;
 
-/// A <CodingHistory> field is provided in the BWF format to allow the exchange of information on previous signal
-/// processing, IE: A=PCM,F=48000,W=16,M=stereo|mono,T=original
-///
-/// A=<ANALOGUE, PCM, MPEG1L1, MPEG1L2, MPEG1L3, MPEG2L1, MPEG2L2, MPEG2L3>
-/// F=<11000,22050,24000,32000,44100,48000>
-/// B=<any bit-rate allowed in MPEG 2 (ISO/IEC 13818-3)>
-/// W=<8, 12, 14, 16, 18, 20, 22, 24>
-/// M=<mono, stereo, dual-mono, joint-stereo>
-/// T=<a free ASCII-text string for in house use. This string should contain no commas (ASCII 2Chex).
-/// Examples of the contents: ID-No; codec type; A/D type>
-///
-/// see: https://tech.ebu.ch/docs/r/r098.pdf
+/// e.g. `A=PCM,F=48000,W=16,M=stereo,T=original`, per EBU R 98 (https://tech.ebu.ch/docs/r/r098.pdf).
 @property(nonatomic) NSString *codingHistory;
 
-/// Integrated Loudness Value of the file in LUFS. (Note: Added in version 2.)
+/// LUFS.
 @property(nonatomic) double loudnessIntegrated;
 
-/// Loudness Range of the file in LU. (Note: Added in version 2.)
+/// LU.
 @property(nonatomic) double loudnessRange;
 
-/// Maximum True Peak Value of the file in dBTP. (Note: Added in version 2.)
+/// dBTP.
 @property(nonatomic) float maxTruePeakLevel;
 
-/// Highest value of the Momentary Loudness Level of the file in LUFS. (Note: Added in version 2.)
+/// LUFS.
 @property(nonatomic) double maxMomentaryLoudness;
 
-/// Highest value of the Short-term Loudness Level of the file in LUFS. (Note: Added in version 2.)
+/// LUFS.
 @property(nonatomic) double maxShortTermLoudness;
 
-/// The name of the originator / producer of the audio file
 @property(nonatomic) NSString *originator;
 
-/// Unambiguous reference allocated by the originating organization
 @property(nonatomic) NSString *originatorReference;
 
 /// yyyy-mm-dd
@@ -63,32 +44,23 @@ NS_ASSUME_NONNULL_BEGIN
 /// hh:mm:ss
 @property(nonatomic) NSString *originationTime;
 
-/// Time reference in samples
-/// These fields shall contain the time-code of the sequence. It is a 64-bit value which contains the first sample count
-/// since midnight. First sample count since midnight, low word (UInt32)
+/// The first sample's count since midnight, as two 32-bit words.
 @property(nonatomic) uint32_t timeReferenceLow;
-
-/// Time reference in samples
-/// First sample count since midnight, high word (UInt32)
 @property(nonatomic) uint32_t timeReferenceHigh;
-
-/// Combined 64bit time value of low and high words
 @property(readonly) uint64_t timeReference;
 
-/// Convenience property in seconds
+/// 0 until `sampleRate` is set.
 @property(readonly) double timeReferenceInSeconds;
 
+/// Not part of the chunk; the reader copies it from the file.
 @property(nonatomic) double sampleRate;
 
 - (instancetype)init;
 
-/// Parses BEXT data from raw chunk bytes (from TagLib's ByteVector).
-/// @param data NSData containing the raw BEXT chunk bytes.
-/// @return `nil` if data is too short (< 602 bytes).
+/// Nil for fewer than 602 bytes, the fixed part of the chunk.
 - (nullable instancetype)initWithData:(nonnull NSData *)data;
 
-/// Serializes the BEXT properties to raw chunk bytes for writing via TagLib.
-/// @return NSData containing the serialized BEXT chunk (602 + coding_history bytes).
+/// 602 bytes plus the coding history. Non-ASCII text is written as zeros.
 - (nonnull NSData *)serializedData;
 
 @end

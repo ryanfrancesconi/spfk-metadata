@@ -9,26 +9,15 @@
 /// names are Windows-1252 and so cannot hold most scripts.
 @interface AudioMarkerUtil : NSObject
 
-/// Reads all RIFF cue-point markers from the audio file.
-/// @param url File URL to the audio file.
-/// @return An array of `AudioMarker` objects, or an empty array if no markers are present.
+/// Nil when there are none or the file can't be opened.
 + (NSArray *)read:(NSURL *)url;
 
-/// Replaces all markers in the audio file with the provided array.
-/// @param markers Array of `AudioMarker` objects to write.
-/// @param url File URL to the audio file.
-/// @return `YES` if the markers were written successfully.
+/// Replaces every marker. Positions use the file's sample rate, not each marker's.
 + (BOOL)write:(NSArray *)markers to:(NSURL *)url;
 
-/// Removes all RIFF cue-point markers from the audio file.
-/// @param url File URL to the audio file.
-/// @return `YES` if the markers were removed successfully.
 + (BOOL)remove:(NSURL *)url;
 
-/// Copies all markers from one audio file to another.
-/// @param url Source file URL to read markers from.
-/// @param destination Destination file URL to write markers to.
-/// @return `YES` if the copy succeeded.
+/// NO when the source has no markers.
 + (BOOL)copyMarkers:(NSURL *)url to:(NSURL *)destination;
 
 @end

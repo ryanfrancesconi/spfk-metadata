@@ -4,29 +4,17 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-/// TagLib-based utility for reading, writing, and removing Nero-style chapter markers (chpl atom)
-/// in MP4/M4A files.
-///
-/// Operates via TagLib's `MP4::File` integrated chapter API, which handles both Nero-style
-/// `chpl` atoms and QuickTime chapter tracks.
-/// Chapter data is represented as `ChapterMarker` objects with start time, end time, and name.
+/// MP4-family chapters: a QuickTime chapter track, or a Nero `chpl` atom when there is no track.
+/// Neither stores an end time, so a chapter ends where the next begins and the last at 0.
 @interface MP4ChapterUtil : NSObject
 
-/// Reads all Nero-style chapter markers from the MP4 file at the given path.
-/// @param path Absolute path to an MP4/M4A file.
-/// @return An array of `ChapterMarker` objects sorted by start time, or `nil` if the file
-///         cannot be opened or has no chapter markers.
+/// Nil when the file can't be opened or has no chapters.
 + (nullable NSArray *)read:(NSString *)path;
 
-/// Replaces all chapter markers in the MP4 file with the provided chapters.
-/// @param chapters Array of `ChapterMarker` objects to write.
-/// @param path Absolute path to an MP4/M4A file.
-/// @return `true` if the chapters were written successfully.
+/// Writes a QuickTime chapter track, replacing the existing one.
 + (bool)write:(NSArray *)chapters to:(NSString *)path;
 
-/// Removes all Nero-style chapter markers from the MP4 file.
-/// @param path Absolute path to an MP4/M4A file.
-/// @return `true` if the removal succeeded.
+/// Removes both the QuickTime track and the Nero atom.
 + (bool)remove:(NSString *)path;
 
 @end

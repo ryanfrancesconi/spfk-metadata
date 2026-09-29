@@ -7,27 +7,21 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-/// Low-level ID3v2 frame access via TagLib, exposing all frames (not just
-/// the standard properties returned by `TagFile`). Use this when you need
-/// frame-level control, XMP access, or user-defined (TXXX) frames.
+/// Every ID3v2 frame, not just the ones `TagFile`'s property map covers — PRIV (where XMP lives) and
+/// TXXX included.
 @interface ID3File : NSObject
 
-/// All ID3 frames as key-value pairs, keyed by frame ID (e.g., "TIT2", "TXXX").
+/// Keyed by frame ID ("TIT2"), a TXXX by its description.
 @property(nullable, nonatomic) NSMutableDictionary *dictionary;
 
-/// Absolute path to the audio file.
 @property(nonatomic, strong, nonnull) NSString *path;
 
-/// Creates an `ID3File` for the audio file at the given path.
-/// @param path Absolute path to the audio file.
 - (instancetype)initWithPath:(nonnull NSString *)path;
 
-/// Opens the file and reads all ID3 frames into `dictionary`.
-/// @return `true` if the file was opened successfully.
+/// False when there is no ID3v2 tag or it has no frames.
 - (bool)load;
 
-/// Writes the current `dictionary` contents back as ID3 frames.
-/// @return `true` if the save succeeded.
+/// Writes through `TagFile`.
 - (bool)save;
 
 @end

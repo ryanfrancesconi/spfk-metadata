@@ -4,31 +4,16 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-/// TagLib-based utility for reading, writing, and removing Vorbis comment chapter markers
-/// in FLAC, OGG Vorbis, and OGG Opus files.
-///
-/// Chapters are stored as XiphComment fields using the standard convention:
-/// `CHAPTER000=HH:MM:SS.mmm`, `CHAPTER000NAME=Chapter Title`.
-///
-/// Operates via TagLib's `FLAC::File`, `Vorbis::File`, and `Ogg::Opus::File` APIs.
-/// Chapter data is represented as `ChapterMarker` objects with start time, end time, and name.
+/// Chapters in a FLAC, Vorbis or Opus XiphComment: `CHAPTER000=HH:MM:SS.mmm`, `CHAPTER000NAME`, and
+/// for a region `CHAPTER000END`. Without an END, a chapter ends where the next begins.
 @interface XiphChapterUtil : NSObject
 
-/// Reads all Vorbis comment chapter markers from the file at the given path.
-/// @param path Absolute path to a FLAC, OGG Vorbis, or OGG Opus file.
-/// @return An array of `ChapterMarker` objects sorted by start time, or `nil` if the file
-///         cannot be opened or is not a supported format.
+/// In chapter-number order. Nil when the file can't be opened, isn't Xiph, or has no chapters.
 + (nullable NSArray *)read:(NSString *)path;
 
-/// Replaces all chapter markers in the file with the provided chapters.
-/// @param chapters Array of `ChapterMarker` objects to write.
-/// @param path Absolute path to a FLAC, OGG Vorbis, or OGG Opus file.
-/// @return `true` if the chapters were written successfully.
+/// Replaces every CHAPTER* field.
 + (bool)write:(NSArray *)chapters to:(NSString *)path;
 
-/// Removes all Vorbis comment chapter markers from the file.
-/// @param path Absolute path to a FLAC, OGG Vorbis, or OGG Opus file.
-/// @return `true` if the removal succeeded.
 + (bool)remove:(NSString *)path;
 
 @end

@@ -6,48 +6,29 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-/// Reads and writes embedded artwork (APIC frames) in audio files via TagLib.
-///
-/// Initialize with a file path to extract artwork, or use `write:path:` to embed artwork.
-/// Works with the `TagPictureRef` bridge type that holds a `CGImageRef`.
-///
-/// For callers that already have an open TagLib session (e.g., `WaveFileC`), use the
-/// tag-based class methods `readFromTag:` / `write:toTag:` to avoid a redundant file open.
+/// Embedded artwork through TagLib's PICTURE complex property, in any container that has one.
+/// A caller already holding the file open uses `readFromTag:`/`write:toTag:`.
 @interface TagPicture : NSObject
 
-/// The extracted or to-be-written artwork, wrapping a `CGImageRef` with UTType info.
 @property(nullable, nonatomic) TagPictureRef *pictureRef;
 
-/// Creates a `TagPicture` from an existing `TagPictureRef` for writing.
-/// @param pictureRef The artwork reference to embed.
 - (nullable instancetype)initWithPicture:(nonnull TagPictureRef *)pictureRef;
 
 // MARK: - Path-based (opens its own FileRef)
 
-/// Reads the first APIC (embedded picture) frame from the file at the given path.
-/// @param path Absolute path to the audio file.
-/// @return `nil` if no artwork is found.
+/// The first picture, or for a FLAC with none the XiphComment copy older versions wrote. Nil when
+/// there is none or it doesn't decode.
 - (nullable instancetype)initWithPath:(nonnull NSString *)path;
 
-/// Embeds or removes artwork in the audio file.
-/// Pass `nil` for `picture` to remove existing artwork.
-/// @param picture The artwork to embed, or `nil` to clear.
-/// @param path Absolute path to the audio file.
-/// @return `true` if the write succeeded.
+/// Nil removes the artwork. False only when the file can't be opened or the image can't be encoded.
 + (bool)write:(nullable TagPictureRef *)picture path:(nonnull NSString *)path;
 
 // MARK: - Tag-based (uses an existing TagLib session)
 
-/// Reads the first APIC frame from an already-open TagLib Tag.
-/// @param tag Opaque pointer to a `TagLib::Tag *`. Must not be NULL.
-/// @return `nil` if no artwork is found.
+/// `tag` is a non-NULL `TagLib::Tag *`.
 + (nullable TagPictureRef *)readFromTag:(nonnull void *)tag;
 
-/// Writes or clears artwork on an already-open TagLib Tag.
-/// Pass `nil` for `picture` to remove existing artwork.
-/// @param picture The artwork to embed, or `nil` to clear.
-/// @param tag Opaque pointer to a `TagLib::Tag *`. Must not be NULL.
-/// @return `true` if the write succeeded.
+/// `tag` is a non-NULL `TagLib::Tag *`; nil removes the artwork. Does not save.
 + (bool)write:(nullable TagPictureRef *)picture toTag:(nonnull void *)tag;
 
 @end
