@@ -115,6 +115,17 @@
 
     CFRelease(cfurl);
 
+    // Positions are in the file's frames, so the marker's own sampleRate is not used.
+    AudioStreamBasicDescription format;
+    UInt32 dataFormatSize = sizeof(format);
+
+    if (noErr != AudioFileGetProperty(fileID, kAudioFilePropertyDataFormat, &dataFormatSize, &format) ||
+        format.mSampleRate <= 0) {
+        AudioFileClose(fileID);
+        NSLog(@"AudioMarkerUtil: Failed to get kAudioFilePropertyDataFormat for %@", url);
+        return false;
+    }
+
     size_t inNumMarkers = (size_t)markers.count;
     UInt32 propertySize = (UInt32)NumAudioFileMarkersToNumBytes(inNumMarkers);
 
@@ -131,7 +142,7 @@
 
         AudioFileMarker afm = {};
         afm.mName = (__bridge CFStringRef)safm.name;
-        afm.mFramePosition = safm.time * safm.sampleRate;
+        afm.mFramePosition = safm.time * format.mSampleRate;
         afm.mMarkerID = i;
         afm.mType = safm.type;
         afm.mSMPTETime = safm.timecode;

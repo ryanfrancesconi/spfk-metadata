@@ -71,6 +71,19 @@ final class AudioMarkerWriteTests: BinTestCase {
         #expect(AudioMarkerUtil.write([marker], to: url) == false)
     }
 
+    /// Frame positions come from the file's own sample rate, whatever the marker carries.
+    @Test(arguments: [0.0, 22050.0])
+    func markerWritePositionUsesFileSampleRate(markerSampleRate: Double) throws {
+        for fixture in [TestBundleResources.shared.tabla_wav, TestBundleResources.shared.tabla_aif] {
+            let url = try copyToBin(url: fixture)
+            let marker = AudioMarker(name: "Marker", time: 1, sampleRate: markerSampleRate, markerID: 0)
+            #expect(AudioMarkerUtil.write([marker], to: url))
+
+            let read = try #require((AudioMarkerUtil.read(url) as? [AudioMarker])?.first)
+            #expect(abs(read.time - 1) < 0.001, "\(fixture.lastPathComponent)")
+        }
+    }
+
     private func roundTrip(url: URL, name: String? = nil) async throws -> AudioMarkerDescription {
         var description = try await MetaAudioFileDescription(parsing: url)
         description.markerCollection.update(markerDescriptions: [regionMarker(name: name ?? longName)])
