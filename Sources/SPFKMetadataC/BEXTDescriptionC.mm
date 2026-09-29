@@ -6,7 +6,7 @@
 #import "BEXTDescriptionC.h"
 #import "StringUtil.h"
 
-// EBU Tech 3285 BEXT chunk binary layout offsets
+// EBU Tech 3285 layout.
 static const NSUInteger kBEXTMinSize = 602;
 static const NSUInteger kBEXTDescriptionOffset = 0;
 static const NSUInteger kBEXTDescriptionSize = 256;
@@ -31,6 +31,20 @@ static const NSUInteger kBEXTMaxShortTermOffset = 420;
 static const NSUInteger kBEXTReservedOffset = 422;
 static const NSUInteger kBEXTReservedSize = 180;
 static const NSUInteger kBEXTCodingHistoryOffset = 602;
+
+/// Null-terminated when it fits; a value that is not ASCII is left as zeros.
+static void writeText(uint8_t *bytes, NSUInteger offset, NSString *value, NSUInteger size) {
+    if (const char *text = StringUtil::asciiCString(value)) {
+        StringUtil::strncpy_validate((char *)bytes + offset, text, size);
+    }
+}
+
+/// Date and time: a short value is padded with the character '0', never terminated.
+static void writeFixedText(uint8_t *bytes, NSUInteger offset, NSString *value, NSUInteger size) {
+    if (const char *text = StringUtil::asciiCString(value)) {
+        StringUtil::strncpy_pad0((char *)bytes + offset, text, size, false);
+    }
+}
 
 @implementation BEXTDescriptionC
 
@@ -114,44 +128,17 @@ static const NSUInteger kBEXTCodingHistoryOffset = 602;
     NSMutableData *buffer = [NSMutableData dataWithLength:totalSize];
     uint8_t *bytes = (uint8_t *)buffer.mutableBytes;
 
-    // description
-    const char *desc = StringUtil::asciiCString(_sequenceDescription);
-    if (desc) {
-        StringUtil::strncpy_validate((char *)bytes + kBEXTDescriptionOffset, desc, kBEXTDescriptionSize);
-    }
+    writeText(bytes, kBEXTDescriptionOffset, _sequenceDescription, kBEXTDescriptionSize);
+    writeText(bytes, kBEXTOriginatorOffset, _originator, kBEXTOriginatorSize);
+    writeText(bytes, kBEXTOriginatorRefOffset, _originatorReference, kBEXTOriginatorRefSize);
+    writeFixedText(bytes, kBEXTOriginDateOffset, _originationDate, kBEXTOriginDateSize);
+    writeFixedText(bytes, kBEXTOriginTimeOffset, _originationTime, kBEXTOriginTimeSize);
 
-    // originator
-    const char *orig = StringUtil::asciiCString(_originator);
-    if (orig) {
-        StringUtil::strncpy_validate((char *)bytes + kBEXTOriginatorOffset, orig, kBEXTOriginatorSize);
-    }
-
-    // originator reference
-    const char *origRef = StringUtil::asciiCString(_originatorReference);
-    if (origRef) {
-        StringUtil::strncpy_validate((char *)bytes + kBEXTOriginatorRefOffset, origRef, kBEXTOriginatorRefSize);
-    }
-
-    // origination date
-    const char *date = StringUtil::asciiCString(_originationDate);
-    if (date) {
-        StringUtil::strncpy_pad0((char *)bytes + kBEXTOriginDateOffset, date, kBEXTOriginDateSize, false);
-    }
-
-    // origination time
-    const char *time = StringUtil::asciiCString(_originationTime);
-    if (time) {
-        StringUtil::strncpy_pad0((char *)bytes + kBEXTOriginTimeOffset, time, kBEXTOriginTimeSize, false);
-    }
-
-    // time reference
     OSWriteLittleInt32(bytes, kBEXTTimeRefLowOffset, _timeReferenceLow);
     OSWriteLittleInt32(bytes, kBEXTTimeRefHighOffset, _timeReferenceHigh);
-
-    // version
     OSWriteLittleInt16(bytes, kBEXTVersionOffset, (uint16_t)_version);
 
-    // UMID — stored as raw bytes, property holds hex-encoded string
+    // Raw bytes on disk; the property holds them hex-encoded.
     if (_version >= 1 && _umid.length > 0) {
         const char *umidHex = StringUtil::asciiCString(_umid);
         if (umidHex) {
@@ -159,7 +146,6 @@ static const NSUInteger kBEXTCodingHistoryOffset = 602;
         }
     }
 
-    // loudness (version 2+)
     if (_version >= 2) {
         OSWriteLittleInt16(bytes, kBEXTLoudnessValueOffset, (uint16_t)(int16_t)(_loudnessIntegrated * 100));
         OSWriteLittleInt16(bytes, kBEXTLoudnessRangeOffset, (uint16_t)(int16_t)(_loudnessRange * 100));
@@ -168,7 +154,6 @@ static const NSUInteger kBEXTCodingHistoryOffset = 602;
         OSWriteLittleInt16(bytes, kBEXTMaxShortTermOffset, (uint16_t)(int16_t)(_maxShortTermLoudness * 100));
     }
 
-    // coding history
     if (codingHistoryCStr && codingHistoryLength > 0) {
         memcpy(bytes + kBEXTCodingHistoryOffset, codingHistoryCStr, codingHistoryLength);
     }
