@@ -179,4 +179,92 @@ class BEXTTests: BinTestCase {
 
         Log.debug(updated)
     }
+
+    // MARK: - Non-ASCII text
+
+    enum Container: String, CaseIterable, CustomTestStringConvertible {
+        case wav, flac
+        var testDescription: String { rawValue }
+    }
+
+    private func writeAndRead(_ desc: BEXTDescription, container: Container) throws -> BEXTDescription {
+        switch container {
+        case .wav:
+            let tmpfile = try copyToBin(url: TestBundleResources.shared.wav_bext_v1)
+            try BEXTDescription.write(bextDescription: desc, to: tmpfile)
+            return try #require(BEXTDescription(url: tmpfile))
+
+        case .flac:
+            let tmpfile = try copyToBin(url: TestBundleResources.shared.tabla_flac)
+            let writer = FlacFileC(path: tmpfile.path)
+            #expect(writer.load())
+            writer.bextDescriptionC = desc.bextDescriptionC
+            #expect(writer.save())
+
+            let reader = FlacFileC(path: tmpfile.path)
+            #expect(reader.load())
+            return BEXTDescription(info: try #require(reader.bextDescriptionC))
+        }
+    }
+
+    @Test(arguments: Container.allCases)
+    func nonASCIITextSurvivesWrite(container: Container) async throws {
+        deleteBinOnExit = true
+
+        var desc = BEXTDescription()
+        desc.sequenceDescription = "Café au lait, 東京"
+        desc.originator = "Chloé"
+        desc.originatorReference = "Réf 42"
+        desc.codingHistory = "A=PCM,T=Café"
+
+        let updated = try writeAndRead(desc, container: container)
+
+        #expect(updated.sequenceDescription == desc.sequenceDescription)
+        #expect(updated.originator == desc.originator)
+        #expect(updated.originatorReference == desc.originatorReference)
+        #expect(updated.codingHistory?.trimmed == desc.codingHistory)
+    }
+
+    /// 31 ASCII bytes plus a two-byte "é" overflows the 32-byte originator field.
+    @Test func overlongUTF8IsCutOnACharacterBoundary() throws {
+        let prefix = String(repeating: "a", count: 31)
+
+        let info = BEXTDescriptionC()
+        info.originator = prefix + "é"
+        info.originationTime = "0123456é"
+
+        let restored = try #require(BEXTDescriptionC(data: info.serializedData()))
+        #expect(restored.originator == prefix)
+        #expect(restored.originationTime == "01234560") // the dropped byte is padded like a short value
+    }
+
+    /// Plain-ASCII values serialize exactly as the EBU layout specifies.
+    @Test func asciiSerializationIsUnchanged() throws {
+        let info = BEXTDescriptionC()
+        info.sequenceDescription = "Hello"
+        info.originator = "ITRAIDA88396FG347125324098748726" // exactly 32, no terminator
+        info.originatorReference = "ITRAIDA88396FG347125324098748726_overflow"
+        info.originationDate = "1984:01:01"
+        info.originationTime = "01:02" // padded with '0'
+        info.codingHistory = "A=PCM\r\n"
+
+        var expected = Data(count: 602)
+        func put(_ string: String, at offset: Int) {
+            expected.replaceSubrange(offset ..< offset + string.utf8.count, with: Data(string.utf8))
+        }
+        put("Hello", at: 0)
+        put("ITRAIDA88396FG347125324098748726", at: 256)
+        put("ITRAIDA88396FG347125324098748726", at: 288)
+        put("1984:01:01", at: 320)
+        put("01:02000", at: 330)
+        expected.append(Data("A=PCM\r\n".utf8))
+
+        #expect(info.serializedData() == expected)
+    }
+
+    /// An unset date or time stays zeroed; only a set value is padded with '0'.
+    @Test func unsetDateAndTimeStayZeroed() throws {
+        let data = BEXTDescriptionC().serializedData()
+        #expect(data[320 ..< 338].allSatisfy { $0 == 0 })
+    }
 }

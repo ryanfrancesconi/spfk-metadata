@@ -32,18 +32,37 @@ static const NSUInteger kBEXTReservedOffset = 422;
 static const NSUInteger kBEXTReservedSize = 180;
 static const NSUInteger kBEXTCodingHistoryOffset = 602;
 
-/// Null-terminated when it fits; a value that is not ASCII is left as zeros.
-static void writeText(uint8_t *bytes, NSUInteger offset, NSString *value, NSUInteger size) {
-    if (const char *text = StringUtil::asciiCString(value)) {
-        StringUtil::strncpy_validate((char *)bytes + offset, text, size);
+/// UTF-8, cut to at most `maxBytes` without splitting a character. The spec says ASCII, which
+/// encodes identically; anything else is written as UTF-8 rather than dropped.
+static std::string encodedText(NSString *value, NSUInteger maxBytes) {
+    const char *text = StringUtil::utf8CString(value);
+    if (!text) {
+        return std::string();
     }
+
+    size_t length = strlen(text);
+    if (length > maxBytes) {
+        length = maxBytes;
+        while (length > 0 && ((uint8_t)text[length] & 0xC0) == 0x80) {
+            length--;
+        }
+    }
+    return std::string(text, length);
 }
 
-/// Date and time: a short value is padded with the character '0', never terminated.
+/// Null-terminated when it fits.
+static void writeText(uint8_t *bytes, NSUInteger offset, NSString *value, NSUInteger size) {
+    StringUtil::strncpy_validate((char *)bytes + offset, encodedText(value, size).c_str(), size);
+}
+
+/// Date and time: a short value is padded with the character '0', never terminated. Nil leaves the
+/// field zeroed.
 static void writeFixedText(uint8_t *bytes, NSUInteger offset, NSString *value, NSUInteger size) {
-    if (const char *text = StringUtil::asciiCString(value)) {
-        StringUtil::strncpy_pad0((char *)bytes + offset, text, size, false);
+    if (!value) {
+        return;
     }
+
+    StringUtil::strncpy_pad0((char *)bytes + offset, encodedText(value, size).c_str(), size, false);
 }
 
 @implementation BEXTDescriptionC
@@ -114,15 +133,8 @@ static void writeFixedText(uint8_t *bytes, NSUInteger offset, NSString *value, N
 }
 
 - (nonnull NSData *)serializedData {
-    NSUInteger codingHistoryLength = 0;
-    const char *codingHistoryCStr = NULL;
-
-    if (_codingHistory.length > 0) {
-        codingHistoryCStr = StringUtil::asciiCString(_codingHistory);
-        if (codingHistoryCStr) {
-            codingHistoryLength = strlen(codingHistoryCStr);
-        }
-    }
+    std::string codingHistory = encodedText(_codingHistory, NSUIntegerMax);
+    NSUInteger codingHistoryLength = codingHistory.size();
 
     NSUInteger totalSize = kBEXTMinSize + codingHistoryLength;
     NSMutableData *buffer = [NSMutableData dataWithLength:totalSize];
@@ -154,8 +166,8 @@ static void writeFixedText(uint8_t *bytes, NSUInteger offset, NSString *value, N
         OSWriteLittleInt16(bytes, kBEXTMaxShortTermOffset, (uint16_t)(int16_t)(_maxShortTermLoudness * 100));
     }
 
-    if (codingHistoryCStr && codingHistoryLength > 0) {
-        memcpy(bytes + kBEXTCodingHistoryOffset, codingHistoryCStr, codingHistoryLength);
+    if (codingHistoryLength > 0) {
+        memcpy(bytes + kBEXTCodingHistoryOffset, codingHistory.data(), codingHistoryLength);
     }
 
     return [buffer copy];
