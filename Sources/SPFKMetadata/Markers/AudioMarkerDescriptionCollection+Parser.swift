@@ -71,11 +71,6 @@ extension AudioMarkerDescriptionCollection {
             })
     }
 
-    /// Plain names, with no suffix.
-    public var chapterMarkers: [ChapterMarker] {
-        markerDescriptions.map(\.chapterMarker)
-    }
-
     /// For MP4: end time and color in each title's suffix.
     public var fileEncodedChapterMarkers: [ChapterMarker] {
         markerDescriptions.map(\.fileEncodedChapterMarker)

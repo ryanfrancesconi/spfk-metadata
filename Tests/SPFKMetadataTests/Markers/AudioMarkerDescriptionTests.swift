@@ -25,29 +25,29 @@ class AudioMarkerDescriptionCollectionTests: BinTestCase {
         #expect(startTimes == [0.0, 1.0, 2.0, 3.0, 4.0], "\(url.lastPathComponent)")
     }
 
-    // MARK: - chapterMarker reverse conversion
+    // MARK: - colorEncodedChapterMarker without a color
 
-    @Test func chapterMarkerConversion() {
+    @Test func colorEncodedChapterMarkerConversion() {
         let desc = AudioMarkerDescription(name: "Test", startTime: 1.5, endTime: 3.0)
-        let chapter = desc.chapterMarker
+        let chapter = desc.colorEncodedChapterMarker
 
         #expect(chapter.name == "Test")
         #expect(chapter.startTime == 1.5)
         #expect(chapter.endTime == 3.0)
     }
 
-    @Test func chapterMarkerConversionNilName() {
+    @Test func colorEncodedChapterMarkerConversionNilName() {
         let desc = AudioMarkerDescription(name: nil, startTime: 2.0, endTime: 4.0)
-        let chapter = desc.chapterMarker
+        let chapter = desc.colorEncodedChapterMarker
 
         #expect(chapter.name == "Marker")
         #expect(chapter.startTime == 2.0)
         #expect(chapter.endTime == 4.0)
     }
 
-    @Test func chapterMarkerConversionNilEndTime() {
+    @Test func colorEncodedChapterMarkerConversionNilEndTime() {
         let desc = AudioMarkerDescription(name: "Cue", startTime: 5.0)
-        let chapter = desc.chapterMarker
+        let chapter = desc.colorEncodedChapterMarker
 
         #expect(chapter.name == "Cue")
         #expect(chapter.startTime == 5.0)
@@ -55,14 +55,14 @@ class AudioMarkerDescriptionCollectionTests: BinTestCase {
         #expect(chapter.endTime == 5.0)
     }
 
-    @Test func chapterMarkersCollectionConversion() {
+    @Test func colorEncodedChapterMarkersCollectionConversion() {
         let collection = AudioMarkerDescriptionCollection(markerDescriptions: [
             AudioMarkerDescription(name: "A", startTime: 0, endTime: 1),
             AudioMarkerDescription(name: "B", startTime: 1, endTime: 2),
             AudioMarkerDescription(name: "C", startTime: 2, endTime: 3),
         ])
 
-        let chapters = collection.chapterMarkers
+        let chapters = collection.colorEncodedChapterMarkers
 
         #expect(chapters.count == 3)
         #expect(chapters.map(\.name) == ["A", "B", "C"])

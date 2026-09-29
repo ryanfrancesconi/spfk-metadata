@@ -58,11 +58,6 @@ extension AudioMarkerDescription {
         )
     }
 
-    /// The plain name, with no suffix.
-    public var chapterMarker: ChapterMarker {
-        ChapterMarker(name: name ?? "Marker", startTime: startTime, endTime: endTime ?? startTime)
-    }
-
     /// For MP3 and Xiph, which store the end time natively. Read back by `init(chapterMarker:)`.
     public var colorEncodedChapterMarker: ChapterMarker {
         ChapterMarker(name: colorEncodedName, startTime: startTime, endTime: endTime ?? startTime)
