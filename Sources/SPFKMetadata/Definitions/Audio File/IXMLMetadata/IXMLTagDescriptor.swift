@@ -31,11 +31,8 @@ public enum IXMLSection: String, Sendable, CaseIterable, Equatable {
         }
     }
 
-    /// Whether all fields in this section are read-only by policy.
-    ///
-    /// SPEED and LOUDNESS are auto-populated from audio format/analysis data.
-    /// BEXT is managed by the dedicated BEXT editor tab.
-    /// HISTORY is provenance data set by the recording device.
+    /// SPEED and LOUDNESS come from the format and analysis, BEXT has its own editor tab, and HISTORY
+    /// is the recorder's provenance.
     public var isSectionReadOnly: Bool {
         switch self {
         case .speed, .loudness, .bext, .history:
@@ -48,29 +45,22 @@ public enum IXMLSection: String, Sendable, CaseIterable, Equatable {
 
 // MARK: - IXMLTagDescriptor
 
-/// Describes a single field in the iXML (BWFXML) metadata schema.
-///
-/// Used by the iXML properties editor to render and edit structured iXML fields
-/// without coupling the UI layer to the underlying XML structure.
-/// Field values are accessed at runtime via ``IXMLMetadata/value(for:)`` and
+/// One iXML field as the editor presents it. Values go through ``IXMLMetadata/value(for:)`` and
 /// ``IXMLMetadata/setValue(_:for:)``.
 public struct IXMLTagDescriptor: Sendable, Equatable {
-    /// Display name shown in the editor's label column.
     public let displayName: String
 
-    /// The container section this field belongs to.
     public let section: IXMLSection
 
     /// The raw XML element name within its container (e.g. `"TRACKTITLE"`, `"songTitle"`).
     public let xmlTag: String
 
-    /// Whether this field is display-only. Overrides ``section`` `isSectionReadOnly`.
+    /// Also true whenever the section is read-only.
     public let isReadOnly: Bool
 
-    /// How the field value should be presented in the editor.
     public let editStyle: EditStyle
 
-    /// Whether the field should use a tall multi-line text area rather than a single-line field.
+    /// A tall text area rather than a single line.
     public let isMultiLine: Bool
 
     public enum EditStyle: Sendable, Equatable {
@@ -100,11 +90,8 @@ public struct IXMLTagDescriptor: Sendable, Equatable {
 // MARK: - Identifier
 
 extension IXMLTagDescriptor {
-    /// Unique string combining section and XML tag name.
-    ///
-    /// Used as the `NSUserInterfaceItemIdentifier.rawValue` for `PropertiesGroupView` rows
-    /// so that the editor can map a changed model back to its descriptor without name collisions
-    /// across sections (e.g. both USER and ASWG have a "category" field).
+    /// `"section.xmlTag"`, the editor's row identifier. The section keeps USER's and ASWG's
+    /// "category" apart.
     public var identifier: String {
         "\(section.rawValue).\(xmlTag)"
     }
@@ -166,11 +153,7 @@ extension IXMLTagDescriptor {
 // MARK: - Descriptor Registry
 
 extension IXMLTagDescriptor {
-    /// Canonical ordered list of all iXML fields, grouped by section.
-    ///
-    /// Defines display order for the iXML editor. Read-only fields are shown
-    /// without text entry controls. Sections with no data present at runtime
-    /// can be hidden by the UI.
+    /// Every field, in the editor's display order.
     public static let allDescriptors: [IXMLTagDescriptor] =
         coreDescriptors.sorted { $0.displayName < $1.displayName }
             + userDescriptors.sorted { $0.displayName < $1.displayName }

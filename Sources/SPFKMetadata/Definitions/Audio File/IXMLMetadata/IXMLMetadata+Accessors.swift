@@ -6,7 +6,6 @@ import SPFKBase
 // MARK: - Descriptor-based read/write
 
 extension IXMLMetadata {
-    /// Returns the current string value for the given descriptor, or `nil` if not set.
     public func value(for descriptor: IXMLTagDescriptor) -> String? {
         switch descriptor.section {
         case .core:
@@ -28,9 +27,7 @@ extension IXMLMetadata {
         }
     }
 
-    /// Sets the string value for the given descriptor.
-    ///
-    /// No-ops if the descriptor is read-only or the xmlTag is unrecognized.
+    /// No-op for a read-only descriptor or an unrecognized tag.
     public mutating func setValue(_ value: String?, for descriptor: IXMLTagDescriptor) {
         guard !descriptor.isReadOnly else { return }
 

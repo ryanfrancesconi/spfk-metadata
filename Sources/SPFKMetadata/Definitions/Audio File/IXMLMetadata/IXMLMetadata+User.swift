@@ -62,8 +62,7 @@ public struct IXMLUserFields: Sendable, Equatable {
 
 // MARK: - Field map
 
-/// Ordered mapping from `IXMLUserFields` key path to XML element name.
-/// Order defines the display order in editors.
+/// In the editors' display order.
 nonisolated(unsafe) let iXMLUserFieldMap: [(keyPath: WritableKeyPath<IXMLUserFields, String?>, xmlName: String)] = [
     (\.trackTitle, "TRACKTITLE"),
     (\.artist, "ARTIST"),
@@ -110,9 +109,7 @@ nonisolated(unsafe) let iXMLUserFieldMap: [(keyPath: WritableKeyPath<IXMLUserFie
 extension IXMLMetadata {
     // MARK: - USER Read
 
-    /// Parses all known USER fields from the raw ``userContent`` XML string.
-    ///
-    /// Returns `nil` if there is no user content or all fields are empty.
+    /// Parsed from ``userContent`` on every access. Nil when there is none or every field is empty.
     public var userFields: IXMLUserFields? {
         guard let userContent, let doc = try? AEXMLDocument(xml: userContent) else { return nil }
         let root = doc.root
@@ -125,9 +122,7 @@ extension IXMLMetadata {
 
     // MARK: - USER Write
 
-    /// Merges the given fields into ``userContent``, preserving all other vendor elements.
-    ///
-    /// If ``userContent`` is nil, a minimal USER element is created.
+    /// Merges into ``userContent``, creating it if needed; other vendors' elements are kept.
     public mutating func setUserFields(_ fields: IXMLUserFields) {
         let doc: AEXMLDocument
         if let existing = userContent, let parsed = try? AEXMLDocument(xml: existing) {

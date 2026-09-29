@@ -3,12 +3,11 @@
 import Foundation
 
 extension IXMLMetadata {
-    /// A single track entry from the iXML TRACK_LIST container.
+    /// A TRACK_LIST entry.
     public struct Track: Equatable, Sendable {
         /// 1-based channel index in the file.
         public var channelIndex: String?
 
-        /// Interleave index for multi-channel files.
         public var interleaveIndex: String?
 
         /// Track name (e.g., "Boom", "Lav 1").

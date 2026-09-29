@@ -7,14 +7,11 @@ import SPFKBase
 import SPFKMetadataBase
 
 extension IXMLMetadata {
-    /// Generates an iXML string from the current properties.
-    ///
-    /// Only non-nil properties are included in the output.
+    /// The modeled properties as iXML; nil and empty values are omitted.
     public var xml: String {
         let doc = AEXMLDocument()
         let root = doc.addChild(name: IXMLElement.bwfxml.rawValue)
 
-        // Top-level elements
         addIfPresent(to: root, .ixmlVersion, version)
         addIfPresent(to: root, .project, project)
         addIfPresent(to: root, .scene, scene)
@@ -27,7 +24,6 @@ extension IXMLMetadata {
         addIfPresent(to: root, .circled, circled)
         addIfPresent(to: root, .wildTrack, wildTrack)
 
-        // SPEED container
         if hasSpeedContent {
             let speed = root.addChild(name: IXMLElement.speed.rawValue)
             addIfPresent(to: speed, .masterSpeed, masterSpeed)
@@ -42,7 +38,6 @@ extension IXMLMetadata {
             addIfPresent(to: speed, .timestampSampleRate, timestampSampleRate)
         }
 
-        // TRACK_LIST container
         if let tracks, tracks.isNotEmpty {
             let trackList = root.addChild(name: IXMLElement.trackList.rawValue)
             trackList.addChild(name: IXMLElement.trackCount.rawValue, value: "\(tracks.count)")
@@ -56,7 +51,6 @@ extension IXMLMetadata {
             }
         }
 
-        // LOUDNESS container
         if let loudness = loudnessDescription, loudness.isValid {
             let loudnessElement = root.addChild(name: IXMLElement.loudness.rawValue)
 
@@ -67,7 +61,6 @@ extension IXMLMetadata {
             addIfPresent(to: loudnessElement, .maxShortTerm, loudness.maxShortTermLoudness)
         }
 
-        // BEXT container
         if hasBextContent {
             let bext = root.addChild(name: IXMLElement.bext.rawValue)
             addIfPresent(to: bext, .bextVersion, bextVersion)
@@ -82,7 +75,6 @@ extension IXMLMetadata {
             addIfPresent(to: bext, .bextUMID, bextUMID)
         }
 
-        // HISTORY container
         if hasHistoryContent {
             let history = root.addChild(name: IXMLElement.history.rawValue)
             addIfPresent(to: history, .originalFilename, originalFilename)
@@ -90,22 +82,18 @@ extension IXMLMetadata {
             addIfPresent(to: history, .parentUID, parentUID)
         }
 
-        // USER container — write raw content back if present
         if let userContent, let userDoc = try? AEXMLDocument(xml: userContent) {
             root.addChild(userDoc.root)
         }
 
-        // STEINBERG container — write raw content back if present
         if let steinbergContent, let steinbergDoc = try? AEXMLDocument(xml: steinbergContent) {
             root.addChild(steinbergDoc.root)
         }
 
-        // ASWG container — write raw content back if present
         if let aswgContent, let aswgDoc = try? AEXMLDocument(xml: aswgContent) {
             root.addChild(aswgDoc.root)
         }
 
-        // LOCATION container
         if hasLocationContent {
             let loc = root.addChild(name: IXMLElement.location.rawValue)
             addIfPresent(to: loc, .locationGPS, locationGPS)

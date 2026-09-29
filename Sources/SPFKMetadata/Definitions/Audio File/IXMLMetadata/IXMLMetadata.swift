@@ -6,28 +6,14 @@ import SPFKAudioBase
 import SPFKBase
 import SPFKMetadataBase
 
-/// A structured representation of iXML (BWFXML) chunk metadata for WAV files.
-///
-/// Supports both parsing existing iXML content and creating new iXML documents
-/// from structured properties. Follows the iXML specification at
-/// http://www.gallery.co.uk/ixml/
-///
-/// The iXML chunk is used by professional audio applications (Pro Tools, Sound Devices,
-/// Steinberg, etc.) to store extended production metadata inside WAV files.
-///
-/// **Parse:** Use ``init(xml:)`` to create from an XML string.
-///
-/// **Create:** Set properties directly and call ``xml`` to generate the XML string.
-///
-/// All properties are optional. Unknown elements in parsed XML are preserved in the
-/// underlying document for round-trip fidelity.
+/// iXML (BWFXML) chunk metadata, per http://www.gallery.co.uk/ixml/. Parse with ``init(xml:)``;
+/// ``xml`` serializes the modeled properties.
 public struct IXMLMetadata: Equatable, Sendable {
     public static func == (lhs: IXMLMetadata, rhs: IXMLMetadata) -> Bool {
         lhs.xml == rhs.xml
     }
 
-    /// The underlying AEXML document. Preserved for round-trip fidelity of
-    /// elements not explicitly modeled as properties.
+    /// The document parsed from. ``xml`` does not read it.
     public private(set) var document: AEXMLDocument
 
     // MARK: - Top-Level Properties
@@ -35,16 +21,12 @@ public struct IXMLMetadata: Equatable, Sendable {
     /// iXML specification version (e.g., "1.52").
     public var version: String?
 
-    /// Production project name.
     public var project: String?
 
-    /// Scene identifier.
     public var scene: String?
 
-    /// Take number or identifier.
     public var take: String?
 
-    /// Tape/reel identifier.
     public var tape: String?
 
     /// Unique family identifier (groups related files from the same recording).
@@ -53,7 +35,6 @@ public struct IXMLMetadata: Equatable, Sendable {
     /// Family name (human-readable group name).
     public var familyName: String?
 
-    /// Unique file identifier.
     public var fileUID: String?
 
     /// Free-form note or comment about the recording.
@@ -70,7 +51,6 @@ public struct IXMLMetadata: Equatable, Sendable {
     /// Master speed (e.g., "23.976" for film).
     public var masterSpeed: String?
 
-    /// Current playback speed.
     public var currentSpeed: String?
 
     /// Timecode rate (e.g., "24", "25", "2997ND", "2997DF", "30").
@@ -85,7 +65,6 @@ public struct IXMLMetadata: Equatable, Sendable {
     /// Audio bit depth (e.g., "24").
     public var audioBitDepth: String?
 
-    /// Digitizer sample rate in Hz.
     public var digitizerSampleRate: String?
 
     /// Timestamp high word (samples since midnight).
@@ -94,22 +73,19 @@ public struct IXMLMetadata: Equatable, Sendable {
     /// Timestamp low word (samples since midnight).
     public var timestampSamplesSinceMidnightLo: String?
 
-    /// Timestamp sample rate.
     public var timestampSampleRate: String?
 
     // MARK: - TRACK_LIST Container
 
-    /// Parsed track entries from the TRACK_LIST container.
     public var tracks: [Track]?
 
     // MARK: - LOUDNESS Container
 
-    /// Loudness metrics parsed from or to be written to the LOUDNESS container.
     public var loudnessDescription: LoudnessDescription?
 
     // MARK: - BEXT Container
 
-    /// BEXT fields mirrored in the iXML BEXT container.
+    /// The BEXT chunk's fields, as mirrored in iXML.
     public var bextVersion: String?
     public var bextDescriptionText: String?
     public var bextOriginator: String?
@@ -123,65 +99,48 @@ public struct IXMLMetadata: Equatable, Sendable {
 
     // MARK: - HISTORY Container
 
-    /// Original filename from the HISTORY container.
     public var originalFilename: String?
 
-    /// Parent filename from the HISTORY container.
     public var parentFilename: String?
 
-    /// Parent file UID from the HISTORY container.
     public var parentUID: String?
 
     // MARK: - USER Container
 
-    /// Raw XML content of the USER container, preserved as a string.
-    /// Parsed fields are available via ``userFields``. UCS fields via ``ucsFields``.
+    /// The container's raw XML; ``userFields`` and ``ucsFields`` parse it.
     public var userContent: String?
 
     // MARK: - ASWG Container
 
-    /// Raw XML content of the ASWG container, preserved as a string.
-    /// Parsed fields are available via ``aswgFields``.
+    /// The container's raw XML; ``aswgFields`` parses it.
     public var aswgContent: String?
 
     // MARK: - STEINBERG Container
 
-    /// Raw XML content of the STEINBERG container, preserved as a string.
     public var steinbergContent: String?
 
     // MARK: - LOCATION Container
 
-    /// GPS coordinates string from the LOCATION container.
     public var locationGPS: String?
 
-    /// Altitude string from the LOCATION container.
     public var locationAltitude: String?
 
-    /// Time string from the LOCATION container.
     public var locationTime: String?
 
     // MARK: - Initialization
 
-    /// Creates an empty `IXMLMetadata` with a default BWFXML document shell.
     public init() {
         document = AEXMLDocument()
         document.addChild(name: IXMLElement.bwfxml.rawValue)
     }
 
-    /// Creates an `IXMLMetadata` by parsing an XML string.
-    ///
-    /// - Parameter xml: A valid iXML string (typically from a WAV file's iXML chunk).
-    /// - Throws: If the string is not well-formed XML.
+    /// Throws when the string is not well-formed XML.
     public init(xml: String) throws {
         let doc = try AEXMLDocument(xml: xml)
         self.init(document: doc)
     }
 
-    /// All initializers resolve here.
-    ///
-    /// Creates an `IXMLMetadata` by parsing an `AEXMLDocument`.
-    ///
-    /// - Parameter doc: An `AEXMLDocument` with a `<BWFXML>` root element.
+    /// All initializers resolve here. Expects a `<BWFXML>` root.
     public init(document doc: AEXMLDocument) {
         document = doc
 
@@ -190,7 +149,6 @@ public struct IXMLMetadata: Equatable, Sendable {
             return
         }
 
-        // Top-level elements
         version = root[.ixmlVersion]?.value
         project = root[.project]?.value
         scene = root[.scene]?.value
@@ -203,7 +161,6 @@ public struct IXMLMetadata: Equatable, Sendable {
         circled = root[.circled]?.value
         wildTrack = root[.wildTrack]?.value
 
-        // SPEED container
         if let speed = root[.speed] {
             masterSpeed = speed[.masterSpeed]?.value
             currentSpeed = speed[.currentSpeed]?.value
@@ -217,17 +174,14 @@ public struct IXMLMetadata: Equatable, Sendable {
             timestampSampleRate = speed[.timestampSampleRate]?.value
         }
 
-        // TRACK_LIST container
         if let trackList = root[.trackList] {
             tracks = parseTracks(trackList: trackList)
         }
 
-        // LOUDNESS container
         if let loudness = root[.loudness] {
             loudnessDescription = parseLoudness(element: loudness)
         }
 
-        // BEXT container
         if let bext = root[.bext] {
             bextVersion = bext[.bextVersion]?.value
             bextDescriptionText = bext[.bextDescription]?.value
@@ -241,29 +195,24 @@ public struct IXMLMetadata: Equatable, Sendable {
             bextUMID = bext[.bextUMID]?.value
         }
 
-        // HISTORY container
         if let history = root[.history] {
             originalFilename = history[.originalFilename]?.value
             parentFilename = history[.parentFilename]?.value
             parentUID = history[.parentUID]?.value
         }
 
-        // USER container — preserve raw content
         if let user = root[.user], user.children.isNotEmpty {
             userContent = user.xml
         }
 
-        // ASWG container — preserve raw content
         if let aswg = root[.aswg], aswg.children.isNotEmpty {
             aswgContent = aswg.xml
         }
 
-        // STEINBERG container — preserve raw content
         if let steinberg = root[.steinberg], steinberg.children.isNotEmpty {
             steinbergContent = steinberg.xml
         }
 
-        // LOCATION container
         if let location = root[.location] {
             locationGPS = location[.locationGPS]?.value
             locationAltitude = location[.locationAltitude]?.value
@@ -275,8 +224,7 @@ public struct IXMLMetadata: Equatable, Sendable {
 // MARK: - Private Helpers
 
 extension IXMLMetadata {
-    /// AEXML's `doc.root` returns the first child, but if the root IS BWFXML
-    /// we need to handle both cases.
+    /// `doc.root` is the first child; this covers a document whose root is BWFXML itself.
     private func nonErrorRoot(_ doc: AEXMLDocument) -> AEXMLElement? {
         let root = doc.root
         guard root.error == nil, root.name == IXMLElement.bwfxml.rawValue else {

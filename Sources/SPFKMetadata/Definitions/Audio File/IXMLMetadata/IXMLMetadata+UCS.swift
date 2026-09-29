@@ -32,9 +32,7 @@ public struct UCSUserFields: Sendable, Equatable {
 extension IXMLMetadata {
     // MARK: - UCS Read
 
-    /// Parses UCS fields from the raw ``userContent`` XML string.
-    ///
-    /// Returns `nil` if there is no user content or no UCS fields are present.
+    /// Nil when there is no user content or it holds no UCS field.
     public var ucsFields: UCSUserFields? {
         guard let userContent, let doc = try? AEXMLDocument(xml: userContent) else { return nil }
 
@@ -50,11 +48,8 @@ extension IXMLMetadata {
 
     // MARK: - UCS Write
 
-    /// Merges UCS fields into the ``userContent`` XML, preserving all other vendor elements.
-    ///
-    /// If `userContent` is nil, a minimal USER element is created containing only the UCS fields.
+    /// Merges into ``userContent``, creating it if needed; other vendors' elements are kept.
     public mutating func setUCSFields(_ ucs: UCSUserFields) {
-        // Parse existing content, or start fresh
         let doc: AEXMLDocument
         if let existing = userContent, let parsed = try? AEXMLDocument(xml: existing) {
             doc = parsed
@@ -65,7 +60,6 @@ extension IXMLMetadata {
 
         let root = doc.root
 
-        // Set or replace each UCS element, leaving all other children untouched
         setElement(in: root, name: "CATEGORY", value: ucs.category)
         setElement(in: root, name: "SUBCATEGORY", value: ucs.subCategory)
         setElement(in: root, name: "CATID", value: ucs.catID)

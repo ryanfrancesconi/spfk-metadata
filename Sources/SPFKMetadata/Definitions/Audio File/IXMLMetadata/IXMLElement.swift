@@ -3,12 +3,7 @@
 @preconcurrency import AEXML
 import Foundation
 
-/// Element names used in the iXML (BWFXML) chunk specification.
-///
-/// Each case maps to the uppercase XML element name as it appears in the iXML spec.
-/// Use the `AEXMLElement` subscript extension for type-safe element access.
-///
-/// Reference: http://www.gallery.co.uk/ixml/
+/// iXML element names (http://www.gallery.co.uk/ixml/), read through the `AEXMLElement` subscript below.
 public enum IXMLElement: String, Sendable {
     // MARK: - Root
 

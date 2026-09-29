@@ -7,12 +7,7 @@ import SPFKBase
 import SPFKMetadataBase
 
 extension IXMLMetadata {
-    /// Creates an iXML document populated from the given metadata description.
-    ///
-    /// Maps available properties from the audio format, BEXT description, tags,
-    /// and loudness data into the corresponding iXML elements.
-    ///
-    /// - Parameter description: The metadata to populate from.
+    /// Fills SPEED, TRACK_LIST, BEXT, LOUDNESS and HISTORY from the file's format, tags and BEXT.
     public init(from description: MetaAudioFileDescription) {
         self.init()
 
@@ -20,7 +15,6 @@ extension IXMLMetadata {
         project = description.tag(for: .album)
         note = description.tag(for: .comment)
 
-        // SPEED from audio format
         if let format = description.audioFormat {
             fileSampleRate = "\(Int(format.sampleRate))"
 
@@ -35,7 +29,6 @@ extension IXMLMetadata {
             }
         }
 
-        // BEXT container from BEXTDescription
         if let bext = description.bextDescription {
             bextVersion = "\(bext.version)"
             bextDescriptionText = bext.sequenceDescription
@@ -54,14 +47,13 @@ extension IXMLMetadata {
             bextCodingHistory = bext.codingHistory
             bextUMID = bext.umid
 
-            // LOUDNESS from BEXT v2
+            // BEXT v2 carries loudness.
             let loudness = bext.loudnessDescription.validated()
             if loudness.isValid {
                 loudnessDescription = loudness
             }
         }
 
-        // Original filename from URL
         originalFilename = description.url.lastPathComponent
     }
 }

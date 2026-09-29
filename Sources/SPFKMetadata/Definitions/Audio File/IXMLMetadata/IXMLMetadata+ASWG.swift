@@ -3,13 +3,8 @@
 import Foundation
 @preconcurrency import AEXML
 
-/// Structured fields from the iXML `<ASWG>` container.
-///
-/// The Audio Services Working Group (ASWG) container appears as a top-level sibling
-/// of `<USER>` in the BWFXML root. Unlike other iXML containers, its child element
-/// names use lowercase camelCase rather than UPPERCASE_UNDERSCORE.
-///
-/// Spec: https://www.aswg.audio/
+/// The iXML `<ASWG>` container (https://www.aswg.audio/). Unlike the rest of iXML, its element names
+/// are camelCase.
 public struct IXMLASWGFields: Sendable, Equatable {
     public var songTitle: String?
     public var composer: String?
@@ -60,9 +55,7 @@ nonisolated(unsafe) let iXMLASWGFieldMap: [(keyPath: WritableKeyPath<IXMLASWGFie
 extension IXMLMetadata {
     // MARK: - ASWG Read
 
-    /// Parses ASWG fields from the raw ``aswgContent`` XML string.
-    ///
-    /// Returns `nil` if there is no ASWG content or all fields are empty.
+    /// Parsed from ``aswgContent`` on every access. Nil when there is none or every field is empty.
     public var aswgFields: IXMLASWGFields? {
         guard let aswgContent, let doc = try? AEXMLDocument(xml: aswgContent) else { return nil }
         let root = doc.root
@@ -75,9 +68,7 @@ extension IXMLMetadata {
 
     // MARK: - ASWG Write
 
-    /// Merges the given fields into ``aswgContent``, preserving all other ASWG elements.
-    ///
-    /// If ``aswgContent`` is nil, a minimal ASWG element is created.
+    /// Merges into ``aswgContent``, creating it if needed; unmodeled ASWG elements are kept.
     public mutating func setASWGFields(_ fields: IXMLASWGFields) {
         let doc: AEXMLDocument
         if let existing = aswgContent, let parsed = try? AEXMLDocument(xml: existing) {
