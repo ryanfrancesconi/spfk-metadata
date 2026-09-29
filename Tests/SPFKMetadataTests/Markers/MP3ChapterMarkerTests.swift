@@ -144,6 +144,33 @@ class MP3ChapterMarkerTests: BinTestCase {
         #expect(getChapters(in: tmpfile).first?.name == title)
     }
 
+    /// A chapter with no TIT2 is named by its element ID: UTF-8 from most writers, Latin-1 from some.
+    @Test(arguments: [
+        (Data("日本語".utf8), "日本語"),
+        (Data("Café".utf8), "Café"),
+        ("Café".data(using: .isoLatin1) ?? Data(), "Café"),
+    ])
+    func nonASCIIElementIDNamesUntitledChapter(elementID: Data, expected: String) async throws {
+        let tmpfile = try copyToBin(url: TestBundleResources.shared.tabla_mp3)
+        let chap = ID3v24TagBuilder.chap(elementID: elementID, startMs: 0, endMs: 1000, embedded: [])
+        try ID3v24TagBuilder.replaceTag(in: tmpfile, with: [chap])
+
+        #expect(getChapters(in: tmpfile).first?.name == expected)
+    }
+
+    @Test func nonASCIIElementIDIsWrittenAsUTF8() async throws {
+        let tmpfile = try copyToBin(url: TestBundleResources.shared.tabla_mp3)
+        let name = "日本語 Café"
+
+        #expect(MPEGChapterUtil.write([ChapterMarker(name: name, startTime: 0, endTime: 1)], to: tmpfile.path))
+
+        // The frame header is the ID, a 4-byte size and 2 flag bytes; the element ID opens the body.
+        let bytes = try Data(contentsOf: tmpfile)
+        let chapID = try #require(bytes.range(of: Data("CHAP".utf8)))
+        let body = bytes[(chapID.upperBound + 6)...]
+        #expect(body.starts(with: Data(name.utf8) + Data([0])))
+    }
+
     @Test func endTimeRoundTrip() async throws {
         let tmpfile = try copyToBin(url: TestBundleResources.shared.mp3_id3)
         #expect(MPEGChapterUtil.remove(tmpfile.path))

@@ -36,6 +36,17 @@ static NSString *chapterTitle(const ID3v2::TextIdentificationFrame *frame) {
     return @(text.toCString(true));
 }
 
+/// UTF-8 when the bytes are valid UTF-8, Latin-1 otherwise.
+static NSString *elementIDName(const ByteVector &elementID) {
+    NSString *utf8 = [[NSString alloc] initWithBytes:elementID.data()
+                                              length:elementID.size()
+                                            encoding:NSUTF8StringEncoding];
+    if (utf8)
+        return utf8;
+
+    return @(String(elementID, String::Latin1).toCString(true));
+}
+
 @implementation MPEGChapterUtil
 
 /// ID3v2 CHAP frames only.
@@ -62,7 +73,7 @@ static NSString *chapterTitle(const ID3v2::TextIdentificationFrame *frame) {
         NSTimeInterval endTime = NSTimeInterval(frame->endTime()) / 1000;
 
         // The element ID stands in until an embedded TIT2 names the chapter.
-        NSString *chapterName = @(String(frame->elementID()).toCString(true));
+        NSString *chapterName = elementIDName(frame->elementID());
 
         for (auto it = frame->embeddedFrameList().begin(); it != frame->embeddedFrameList().end(); ++it) {
             auto tit2Frame = dynamic_cast<const ID3v2::TextIdentificationFrame *>(*it);
@@ -106,8 +117,7 @@ static NSString *chapterTitle(const ID3v2::TextIdentificationFrame *frame) {
         chapter->setEndTime(object.endTime * 1000);
 
         const char *cname = object.name.UTF8String;
-        String string = String(cname);
-        chapter->setElementID(string.data(String::Type::UTF8));
+        chapter->setElementID(String(cname, String::UTF8).data(String::UTF8));
 
         // Rendered as UTF-16 instead if the tag is ever written as ID3v2.3.
         ID3v2::TextIdentificationFrame *titleFrame = new ID3v2::TextIdentificationFrame("TIT2", String::UTF8);

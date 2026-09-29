@@ -49,7 +49,12 @@ enum ID3v24TagBuilder {
 
     /// Start and end offsets are written as `0xFFFFFFFF` (unused).
     static func chap(elementID: String, startMs: UInt32, endMs: UInt32, embedded: [Data]) -> Data {
-        var body = Data(elementID.utf8) + Data([0])
+        chap(elementID: Data(elementID.utf8), startMs: startMs, endMs: endMs, embedded: embedded)
+    }
+
+    /// `elementID` is written as given, then a NUL.
+    static func chap(elementID: Data, startMs: UInt32, endMs: UInt32, embedded: [Data]) -> Data {
+        var body = elementID + Data([0])
         body += bigEndian(startMs) + bigEndian(endMs)
         body += bigEndian(.max) + bigEndian(.max)
         body += embedded.reduce(Data(), +)
