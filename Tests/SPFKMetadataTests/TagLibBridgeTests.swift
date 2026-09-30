@@ -35,8 +35,6 @@ class TagLibBridgeTests: BinTestCase {
 
         let dict = try #require(TagLibBridge.getProperties(tmpfile.path))
 
-        Log.debug(dict)
-
         #expect(dict.count == 0)
     }
 

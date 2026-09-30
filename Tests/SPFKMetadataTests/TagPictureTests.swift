@@ -71,8 +71,6 @@ class TagPictureTests: BinTestCase {
         let filename = "\(type) - \(desc).\(exportType.preferredFilenameExtension ?? "jpeg")"
         let url = bin.appendingPathComponent(filename, conformingTo: exportType)
         try cgImage.export(utType: exportType, to: url)
-
-        Log.debug(tagPicture.cgImage)
     }
 
     @Test func getPictureFail() async throws {
@@ -322,8 +320,6 @@ class TagPictureTests: BinTestCase {
         #expect(pictureRef.utType == .jpeg)
 
         let tmpfile = try copyToBin(url: url)
-
-        Log.debug(tmpfile.path)
 
         let result = TagPicture.write(pictureRef, path: tmpfile.path)
         #expect(result)

@@ -23,8 +23,6 @@ class AudioFileTypeTests: BinTestCase {
         let target = url.deletingPathExtension()
         try FileManager.default.moveItem(at: url, to: target)
 
-        Log.debug(target)
-
         let type = AudioFileType(url: target)
         #expect(type == .m4a)
     }
@@ -46,13 +44,9 @@ class AudioFileTypeTests: BinTestCase {
             AudioFileType(url: $0)
         }
 
-        Log.debug(audioFileTypes)
-
         #expect(audioFileTypes.count == formats.count)
 
         let utTypes = audioFileTypes.compactMap { $0.utType }
         #expect(audioFileTypes.count == utTypes.count)
-
-        Log.debug(utTypes)
     }
 }

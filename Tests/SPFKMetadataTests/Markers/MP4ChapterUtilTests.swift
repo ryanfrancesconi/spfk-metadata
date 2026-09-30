@@ -13,7 +13,6 @@ import Testing
 class MP4ChapterUtilTests: BinTestCase {
     func getChapters(in url: URL) -> [ChapterMarker] {
         let chapters = MP4ChapterUtil.read(url.path) as? [ChapterMarker] ?? []
-        Log.debug(chapters.map { ($0.name ?? "nil") + " @ \($0.startTime)" })
         return chapters
     }
 
@@ -33,14 +32,12 @@ class MP4ChapterUtilTests: BinTestCase {
         #expect(MP4ChapterUtil.write(markers, to: tmpfile.path))
 
         let sizeAfter = try FileManager.default.attributesOfItem(atPath: tmpfile.path)[.size] as? Int ?? 0
-        Log.debug("File size: before=\(sizeBefore) after=\(sizeAfter) delta=\(sizeAfter - sizeBefore)")
 
         // File size may shrink if the test file already had a larger chapter track.
         // Just verify the file was modified (size changed).
         #expect(sizeAfter != sizeBefore, "File size should change after writing chapters")
 
         let readBack = getChapters(in: tmpfile)
-        Log.debug("readBack count: \(readBack.count)")
 
         #expect(readBack.count == 3)
         #expect(readBack.map { $0.name } == ["Intro", "Verse", "Outro"])

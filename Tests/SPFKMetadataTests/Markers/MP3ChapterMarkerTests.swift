@@ -13,7 +13,6 @@ import Testing
 class MP3ChapterMarkerTests: BinTestCase {
     func getChapters(in url: URL) -> [ChapterMarker] {
         let chapters = MPEGChapterUtil.read(url.path) as? [ChapterMarker] ?? []
-        Log.debug(chapters.map { ($0.name ?? "nil") + " @ \($0.startTime)" })
         return chapters
     }
 

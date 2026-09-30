@@ -188,11 +188,7 @@ final class IXMLMetadataTests: BinTestCase {
         #expect(file.load())
 
         let ixmlString = try #require(file.iXML)
-        let metadata = try IXMLMetadata(xml: ixmlString)
-
-        // The ixml_chunk test file should have at least a version
-        Log.debug("Parsed iXML version:", metadata.version ?? "nil")
-        Log.debug("Parsed iXML project:", metadata.project ?? "nil")
+        _ = try IXMLMetadata(xml: ixmlString)
     }
 
     // MARK: - Create

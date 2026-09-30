@@ -12,7 +12,6 @@ import Testing
 class ChapterMarkerTests: BinTestCase {
     func getChapters(in url: URL) async throws -> [ChapterMarker] {
         let chapters = try await ChapterParser.parse(url: url)
-        Log.debug(chapters.map { ($0.name ?? "nil") + " @ \($0.startTime)" })
         return chapters
     }
 

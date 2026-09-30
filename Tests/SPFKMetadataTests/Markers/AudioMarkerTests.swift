@@ -13,7 +13,6 @@ class AudioMarkerTests: BinTestCase {
     @Test func parseMarkers() async throws {
         let markers = AudioMarkerUtil.read(TestBundleResources.shared.wav_bext_v2) as? [AudioMarker] ?? []
 
-        Log.debug(markers.map { ($0.name ?? "nil") + " @ \($0.time) \($0.timecode)" })
         #expect(markers.count == 3)
     }
 
@@ -38,7 +37,6 @@ class AudioMarkerTests: BinTestCase {
         let times = editedMarkers.map { $0.time }
 
         #expect(editedMarkers.count == 2)
-        Log.debug(editedMarkers.map { ($0.name ?? "nil") + " @ \($0.time)" })
 
         #expect(names == ["New 1", "New 2"])
         #expect(times == [2, 4])
@@ -50,7 +48,6 @@ class AudioMarkerTests: BinTestCase {
         #expect(AudioMarkerUtil.remove(tmpfile))
 
         let editedMarkers = AudioMarkerUtil.read(tmpfile) as? [AudioMarker] ?? []
-        Log.debug(editedMarkers.map { ($0.name ?? "nil") + " @ \($0.time)" })
         #expect(editedMarkers.count == 0)
     }
 

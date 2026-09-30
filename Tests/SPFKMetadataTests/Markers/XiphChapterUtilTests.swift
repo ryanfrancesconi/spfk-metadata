@@ -13,7 +13,6 @@ import Testing
 class XiphChapterUtilTests: BinTestCase {
     func getChapters(in url: URL) -> [ChapterMarker] {
         let chapters = XiphChapterUtil.read(url.path) as? [ChapterMarker] ?? []
-        Log.debug(chapters.map { ($0.name ?? "nil") + " @ \($0.startTime)" })
         return chapters
     }
 

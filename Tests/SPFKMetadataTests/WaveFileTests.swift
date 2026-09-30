@@ -17,9 +17,6 @@ class WaveFileTests: BinTestCase {
         #expect(file.bextDescriptionC != nil)
         #expect(file.bextDescription != nil)
 
-        let dictionary = file.infoDictionary
-        Log.debug(dictionary)
-
         #expect(file[info: .product] == "This Is Spinal Tap")
         #expect(file[info: .artist] == "Spinal Tap")
         #expect(
@@ -94,9 +91,6 @@ class WaveFileTests: BinTestCase {
         let newFile = WaveFileC(path: tmpfile.path)
         #expect(newFile.load())
 
-        let newDict = newFile.infoDictionary
-        Log.debug(newDict)
-
         #expect(newFile[info: .bpm] == "667")
         #expect(newFile[info: .numColors] == "256")
     }
@@ -127,16 +121,6 @@ class WaveFileTests: BinTestCase {
         let file = WaveFileC(path: url.path)
         file.load()
 
-        func dump(_ file: WaveFileC) {
-            Log.debug("iXML:", file.iXML)
-            Log.debug("infoDictionary:", file.infoDictionary)
-            Log.debug("id3Dictionary:", file.id3Dictionary)
-            Log.debug("bextDescription?.sequenceDescription:", file.bextDescriptionC?.sequenceDescription)
-            Log.debug("markers:", file.markers.count, "marker(s)")
-        }
-
-        dump(file)
-
         file[info: .title] = "an info title"
         file[info: .lightness] = "Lightness"
         file[info: .numColors] = "256"
@@ -163,7 +147,5 @@ class WaveFileTests: BinTestCase {
 
         let updated = WaveFileC(path: url.path)
         updated.load()
-
-        dump(updated)
     }
 }

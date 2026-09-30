@@ -13,13 +13,10 @@ class BEXTTests: BinTestCase {
     @Test func initBEXTDescriptionC() async throws {
         let waveFile = WaveFileC(path: TestBundleResources.shared.tabla_wav.path)
         #expect(waveFile.load())
-
-        Log.debug(waveFile.bextDescriptionC?.maxTruePeakLevel)
     }
 
     @Test func parseBEXT_v1() async throws {
         let desc = try #require(BEXTDescription(url: TestBundleResources.shared.wav_bext_v1))
-        Log.debug(desc)
 
         // <bext:version>1</bext:version>
         #expect(desc.version == 1)
@@ -51,7 +48,6 @@ class BEXTTests: BinTestCase {
         let url = TestBundleResources.shared.wav_bext_v2b
 
         let desc = try #require(BEXTDescription(url: url))
-        Log.debug(desc)
 
         #expect(desc.version == 2)
         #expect(
@@ -175,9 +171,7 @@ class BEXTTests: BinTestCase {
         try BEXTDescription.write(bextDescription: desc1, to: tmpfile)
         try BEXTDescription.write(bextDescription: desc2, to: tmpfile)
 
-        let updated = try #require(BEXTDescription(url: tmpfile))
-
-        Log.debug(updated)
+        _ = try #require(BEXTDescription(url: tmpfile))
     }
 
     // MARK: - Non-ASCII text

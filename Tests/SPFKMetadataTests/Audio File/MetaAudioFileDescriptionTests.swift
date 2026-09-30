@@ -41,12 +41,8 @@ class MetaAudioFileDescriptionTests: BinTestCase {
 
     @Test func printFormats() async throws {
         for url in TestBundleResources.shared.formats {
-            let maf = try await MetaAudioFileDescription(parsing: url)
-
-            Log.debug(maf.fileType, maf.audioFormat?.formatDescription)
-
-            let estimatedDataRate = try await AVAudioFile(forReading: url).estimatedDataRate()
-            Log.debug(estimatedDataRate)
+            _ = try await MetaAudioFileDescription(parsing: url)
+            _ = try await AVAudioFile(forReading: url).estimatedDataRate()
         }
     }
 
@@ -54,9 +50,7 @@ class MetaAudioFileDescriptionTests: BinTestCase {
         let url = TestBundleResources.shared.cowbell_bext_wav
         let maf = try await MetaAudioFileDescription(parsing: url)
 
-        let bext = try #require(maf.bextDescription)
-
-        Log.debug(bext)
+        _ = try #require(maf.bextDescription)
     }
 }
 

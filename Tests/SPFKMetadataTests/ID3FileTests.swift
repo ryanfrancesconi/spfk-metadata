@@ -19,10 +19,7 @@ class ID3FileTests: BinTestCase {
         #expect(file.load())
 
         // xmp
-        let xmlString = try #require(file[id3: .private])
-
-        let value = (try? AEXMLDocument(xml: xmlString).xml) ?? xmlString
-        Log.debug(value)
+        _ = try #require(file[id3: .private])
     }
 
     @Test func parse() async throws {

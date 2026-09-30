@@ -13,16 +13,13 @@ import Testing
 class TagPropertiesTests: BinTestCase {
     @available(macOS 12, iOS 16, *)
     @Test func benchmarkTagLib() async throws {
-        let tagLibElapsed = try ContinuousClock().measure {
+        _ = try ContinuousClock().measure {
             _ = try TagProperties(url: TestBundleResources.shared.mp3_id3)
         }
 
-        let avElapsed = try await ContinuousClock().measure {
+        _ = try await ContinuousClock().measure {
             _ = try await TagPropertiesAV(url: TestBundleResources.shared.mp3_id3)
         }
-
-        Log.debug("TagLib took", tagLibElapsed)
-        Log.debug("AV took", avElapsed)
     }
 
     @Test func parseID3MP3() async throws {
@@ -41,8 +38,6 @@ class TagPropertiesTests: BinTestCase {
     }
 
     @Test func parseID3Wave() async throws {
-        Log.debug(TestBundleResources.shared.wav_bext_v2.path)
-
         let properties = try TagProperties(url: TestBundleResources.shared.wav_bext_v2)
         verify(properties: properties.data)
     }
@@ -82,7 +77,6 @@ class TagPropertiesTests: BinTestCase {
     func readFormats(url: URL) async throws {
         let source = try TagProperties(url: TestBundleResources.shared.mp3_id3)
 
-        Log.debug("Parsing", url.lastPathComponent)
         let props = try TagProperties(url: url)
 
         // These fixtures carry `mp3_id3`'s tags with the comment's line breaks already dropped.
@@ -108,7 +102,6 @@ class TagPropertiesTests: BinTestCase {
                 copyProps.tags = source.tags
                 try copyProps.save(to: copy)
                 try copyProps.load(url: copy)
-                Log.debug(copy.lastPathComponent, copyProps.description)
 
                 #expect(copyProps.tags == source.tags)
 
@@ -130,8 +123,6 @@ class TagPropertiesTests: BinTestCase {
                 var copyProps = try TagProperties(url: copy)
                 try copyProps.removeAllAndSave(to: copy)
                 try copyProps.load(url: copy)
-
-                Log.debug(copy.lastPathComponent, copyProps.description)
 
                 #expect(copyProps.tags == [:])
 
@@ -176,7 +167,6 @@ class TagPropertiesTests: BinTestCase {
 
         // Use raw TagLib dictionary to check ITUNSMPB regardless of which bucket it routes to
         let before = TagLibBridge.getProperties(tmpfile.path) as? [String: String] ?? [:]
-        Log.debug("raw properties before:", before)
         #expect(before["ITUNSMPB"] != nil)
 
         // Save with empty tags
@@ -186,7 +176,6 @@ class TagPropertiesTests: BinTestCase {
 
         // ITUNSMPB must be gone from the raw dictionary
         let after = TagLibBridge.getProperties(tmpfile.path) as? [String: String] ?? [:]
-        Log.debug("raw properties after:", after)
         #expect(after["ITUNSMPB"] == nil)
         #expect(after["TITLE"] == "Test")
     }
@@ -247,13 +236,10 @@ class TagPropertiesTests: BinTestCase {
 
         TagLibBridge.setProperties(tmpfile.path, dictionary: dict)
 
-        let newFile = try TagProperties(url: tmpfile)
-        Log.debug(newFile.customTags)
+        _ = try TagProperties(url: tmpfile)
 
         let id3File = ID3File(path: tmpfile.path)
         id3File.load()
-
-        Log.debug(id3File.dictionary)
     }
 
     @Test func copyTagsBetweenFiles() async throws {
@@ -284,8 +270,6 @@ class TagPropertiesTests: BinTestCase {
 
 extension TagPropertiesTests {
     private func verify(properties: TagPropertiesContainerModel) {
-        Log.debug(properties.description)
-
         #expect(properties.contains(key: .album))
         #expect(properties.contains(key: .albumArtist))
         #expect(properties.contains(key: .remixer))
