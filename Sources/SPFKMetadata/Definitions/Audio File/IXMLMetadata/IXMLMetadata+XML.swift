@@ -75,7 +75,7 @@ extension IXMLMetadata {
 
     /// A private copy of ``document`` and its BWFXML element; a fresh document when it has none.
     private func editableCopy() -> (AEXMLDocument, AEXMLElement) {
-        if let copy = try? AEXMLDocument(xml: document.xml),
+        if let copy = try? Self.document(xml: document.xml),
            let root = copy.root[.bwfxml] ?? nonErrorRoot(copy)
         {
             return (copy, root)
@@ -160,7 +160,7 @@ extension IXMLMetadata {
             return
         }
 
-        guard let parsed = try? AEXMLDocument(xml: content) else { return }
+        guard let parsed = try? Self.document(xml: content) else { return }
         replace(key, in: root, with: parsed.root)
     }
 

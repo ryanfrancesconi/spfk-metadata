@@ -112,7 +112,7 @@ extension IXMLMetadata {
 
     /// Parsed from ``userContent`` on every access. Nil when there is none or every field is empty.
     public var userFields: IXMLUserFields? {
-        guard let userContent, let doc = try? AEXMLDocument(xml: userContent) else { return nil }
+        guard let userContent, let doc = try? Self.document(xml: userContent) else { return nil }
         let root = doc.root
         var fields = IXMLUserFields()
         for (keyPath, name) in iXMLUserFieldMap {
@@ -129,7 +129,7 @@ extension IXMLMetadata {
         let doc: AEXMLDocument
         if let existing = userContent {
             do {
-                doc = try AEXMLDocument(xml: existing)
+                doc = try Self.document(xml: existing)
             } catch {
                 Log.error("USER content does not parse, fields not written:", error)
                 return

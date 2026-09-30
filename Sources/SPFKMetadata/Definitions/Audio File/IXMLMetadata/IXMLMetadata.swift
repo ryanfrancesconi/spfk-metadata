@@ -136,8 +136,16 @@ public struct IXMLMetadata: Equatable, Sendable {
 
     /// Throws when the string is not well-formed XML.
     public init(xml: String) throws {
-        let doc = try AEXMLDocument(xml: xml)
+        let doc = try Self.document(xml: xml)
         self.init(document: doc)
+    }
+
+    /// Parses without trimming, so every value keeps its text as read -- line breaks and edge
+    /// spaces included -- through an edit of any other field.
+    static func document(xml: String) throws -> AEXMLDocument {
+        var options = AEXMLOptions()
+        options.parserSettings.shouldTrimWhitespace = false
+        return try AEXMLDocument(xml: xml, options: options)
     }
 
     /// All initializers resolve here. Expects a `<BWFXML>` root.

@@ -58,7 +58,7 @@ extension IXMLMetadata {
 
     /// Parsed from ``aswgContent`` on every access. Nil when there is none or every field is empty.
     public var aswgFields: IXMLASWGFields? {
-        guard let aswgContent, let doc = try? AEXMLDocument(xml: aswgContent) else { return nil }
+        guard let aswgContent, let doc = try? Self.document(xml: aswgContent) else { return nil }
         let root = doc.root
         var fields = IXMLASWGFields()
         for (keyPath, name) in iXMLASWGFieldMap {
@@ -75,7 +75,7 @@ extension IXMLMetadata {
         let doc: AEXMLDocument
         if let existing = aswgContent {
             do {
-                doc = try AEXMLDocument(xml: existing)
+                doc = try Self.document(xml: existing)
             } catch {
                 Log.error("ASWG content does not parse, fields not written:", error)
                 return
