@@ -9,11 +9,8 @@ import Testing
 
 @testable import SPFKMetadata
 
-/// Markers set on a `.mov` used to be discarded in silence: `saveMarkers()` sent the type to a
-/// `default` that logged and returned, so the save reported success and cleared the dirty flag
-/// while writing nothing, and the matching reader threw "unsupported file type". Both were an
-/// oversight from when this workflow only ever saw audio containers — a QuickTime chapter track
-/// is `.mov`'s native marker format and TagLib writes it happily.
+/// Markers set on a `.mov` are written as a QuickTime chapter track, `.mov`'s native marker
+/// format, and read back through the same path.
 ///
 /// These go through `MetaAudioFileDescription.save` and `AudioMarkerDescriptionCollection(url:)`
 /// rather than the underlying utility, because the utility was never the broken part — the

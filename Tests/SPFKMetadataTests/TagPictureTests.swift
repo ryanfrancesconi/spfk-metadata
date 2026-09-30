@@ -131,8 +131,8 @@ class TagPictureTests: BinTestCase {
     // MARK: - FLAC native PICTURE block round-trip
 
     @Test func flacNativePictureBlockRoundtrip() async throws {
-        // Synthesized 2026-05-20: artwork written via FileRef::setComplexProperties
-        // (new path-based code), which stores a native FLAC PICTURE block.
+        // Synthesized 2026-05-20: artwork written via FileRef::setComplexProperties, which
+        // stores a native FLAC PICTURE block.
         deleteBinOnExit = true
 
         let source = TestBundleResources.shared.tabla_flac
@@ -160,7 +160,7 @@ class TagPictureTests: BinTestCase {
     // MARK: - Legacy XiphComment FLAC migration
 
     @Test func flacLegacyXiphCommentMigration() async throws {
-        // Fixture generated 2026-05-20 with make_legacy_flac.py: tabla.flac base
+        // Fixture generated 2026-05-20: tabla.flac base
         // with sharksandwich.jpg embedded as a METADATA_BLOCK_PICTURE Vorbis
         // comment entry; no native FLAC PICTURE block is present.
         deleteBinOnExit = true
