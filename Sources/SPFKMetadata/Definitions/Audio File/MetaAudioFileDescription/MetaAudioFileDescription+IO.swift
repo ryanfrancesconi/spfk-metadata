@@ -241,8 +241,12 @@ extension MetaAudioFileDescription {
             }
         }
 
+        // A standard tag wins over a custom one spelled the same.
+        let standardKeys = Set(tagProperties.tags.keys.map(\.taglibKey))
+
         for item in tagProperties.customTags {
             let uppercaseKey = item.key.uppercased()
+            guard !standardKeys.contains(uppercaseKey) else { continue }
 
             waveFile.id3Dictionary[uppercaseKey] = item.value
 
