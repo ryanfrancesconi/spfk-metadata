@@ -332,9 +332,5 @@ class TagPictureTests: BinTestCase {
         let outputPicture = try #require(TagPicture(path: tmpfile.path)?.pictureRef)
         #expect(outputPicture.cgImage.width == pictureRef.cgImage.width)
         #expect(outputPicture.cgImage.height == pictureRef.cgImage.height)
-
-        // not all formats support text description? mp4 / m4a
-        // #expect(outputPicture.pictureDescription == "Shit Sandwich", "\(tmpfile.lastPathComponent)")
-        // #expect(outputPicture.pictureType == "Back Cover", "\(tmpfile.lastPathComponent)")
     }
 }
