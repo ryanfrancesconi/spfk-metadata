@@ -32,9 +32,12 @@ class TagPropertiesTests: BinTestCase {
 
     @Test func parseID3MP3_AV() async throws {
         let properties = try await TagPropertiesAV(url: TestBundleResources.shared.mp3_id3)
-        // verify(properties: properties)
+        let reference = try TagProperties(url: TestBundleResources.shared.mp3_id3)
 
-        Log.debug(properties.data)
+        for key in [TagKey.title, .artist, .album] {
+            #expect(reference.tags[key]?.isEmpty == false, "\(key)")
+            #expect(properties.data.tags[key] == reference.tags[key], "\(key)")
+        }
     }
 
     @Test func parseID3Wave() async throws {
