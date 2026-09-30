@@ -84,7 +84,11 @@ class TagPropertiesTests: BinTestCase {
 
         Log.debug("Parsing", url.lastPathComponent)
         let props = try TagProperties(url: url)
-        #expect(props.tags == source.tags)
+
+        // These fixtures carry `mp3_id3`'s tags with the comment's line breaks already dropped.
+        var expected = source.tags
+        expected[.comment] = expected[.comment]?.replacingOccurrences(of: "\n", with: "")
+        #expect(props.tags == expected)
     }
 
     @Test func writeFormats() async throws {
