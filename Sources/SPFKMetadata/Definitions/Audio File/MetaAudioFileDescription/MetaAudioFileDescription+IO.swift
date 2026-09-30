@@ -70,42 +70,10 @@ extension MetaAudioFileDescription {
             tagProperties.audioProperties = format
         }
 
-        if let xml = waveFile.iXML {
-            iXMLMetadata = (try? AEXMLDocument(xml: xml).xml) ?? xml
-        }
-
-        bextDescription = waveFile.bextDescription?.validated()
+        readEmbeddedMetadata(from: waveFile)
 
         if let audioMarkers = waveFile.markers as? [AudioMarker], audioMarkers.isNotEmpty {
             markerCollection = AudioMarkerDescriptionCollection(audioMarkers: audioMarkers)
-        }
-
-        if let dict = waveFile.infoDictionary as? [String: String] {
-            for item in dict {
-                guard let key = InfoFrameKey(value: item.key) else { continue }
-
-                tagProperties.data.set(infoFrame: key, value: item.value)
-            }
-        }
-
-        if let dict = waveFile.id3Dictionary as? [String: String] {
-            for item in dict {
-                guard let key = ID3FrameKey(value: item.key) else {
-                    tagProperties.data.set(taglibKey: item.key, value: item.value)
-                    continue
-                }
-
-                switch key {
-                case .picture:
-                    continue
-                case .rating:
-                    continue // raw POPM; the rating arrives as the RATING key WaveFileC injects
-                case .userDefined:
-                    break
-                default:
-                    tagProperties.data.set(id3Frame: key, value: item.value)
-                }
-            }
         }
 
         imageDescription.pictureRef = waveFile.tagPicture?.pictureRef
@@ -121,18 +89,7 @@ extension MetaAudioFileDescription {
             audioFormat?.update(bitsPerChannel: Int(props.bitsPerSample))
         }
 
-        if let xml = flacFile.iXML {
-            iXMLMetadata = (try? AEXMLDocument(xml: xml).xml) ?? xml
-        }
-
-        if let bext = flacFile.bextDescription?.validated() {
-            bextDescription = bext
-        } else if let xml = flacFile.iXML,
-                  let ixml = try? IXMLMetadata(xml: xml),
-                  let bext = BEXTDescription(ixmlMetadata: ixml)
-        {
-            bextDescription = bext.validated()
-        }
+        readEmbeddedMetadata(from: flacFile)
     }
 
     private mutating func load() async throws {
