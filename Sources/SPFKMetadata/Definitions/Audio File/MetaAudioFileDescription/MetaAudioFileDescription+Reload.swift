@@ -51,7 +51,7 @@ extension MetaAudioFileDescription {
     /// iXML, BEXT, and the INFO and ID3 tags. Adds to `tagProperties` rather than replacing it.
     mutating func readEmbeddedMetadata(from waveFile: WaveFileC) {
         if let xml = waveFile.iXML {
-            iXMLMetadata = (try? AEXMLDocument(xml: xml).xml) ?? xml
+            iXMLMetadata = normalizedIXML(xml)
         }
 
         bextDescription = waveFile.bextDescription?.validated()
@@ -89,7 +89,7 @@ extension MetaAudioFileDescription {
     /// Sequoia writes it.
     mutating func readEmbeddedMetadata(from flacFile: FlacFileC) {
         if let xml = flacFile.iXML {
-            iXMLMetadata = (try? AEXMLDocument(xml: xml).xml) ?? xml
+            iXMLMetadata = normalizedIXML(xml)
         }
 
         if let bext = flacFile.bextDescription?.validated() {
@@ -99,6 +99,20 @@ extension MetaAudioFileDescription {
                   let bext = BEXTDescription(ixmlMetadata: ixml)
         {
             bextDescription = bext.validated()
+        }
+    }
+
+    /// Re-serialized for consistent formatting, keeping each value's text exactly. A chunk that
+    /// won't parse is kept as read.
+    private func normalizedIXML(_ xml: String) -> String {
+        var options = AEXMLOptions()
+        options.parserSettings.shouldTrimWhitespace = false
+
+        do {
+            return try AEXMLDocument(xml: xml, options: options).xml
+        } catch {
+            Log.error("Unparseable iXML in \(url.lastPathComponent), kept as read: \(error)")
+            return xml
         }
     }
 }
