@@ -11,10 +11,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property(nonatomic) CGImageRef cgImage;
 
-/// e.g. "Front Cover".
 @property(nonatomic, strong, nullable) NSString *pictureDescription;
 
-/// The ID3 APIC type name, e.g. "Cover (front)".
+/// TagLib's picture type name, e.g. "Front Cover" or "Back Cover". ID3v2 and FLAC write a name
+/// TagLib does not know as type 0, "Other".
 @property(nonatomic, strong, nullable) NSString *pictureType;
 
 @property(nonatomic, strong, nonnull) UTType *utType;

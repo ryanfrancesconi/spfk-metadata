@@ -6,7 +6,11 @@ import SPFKMetadataBase
 import SPFKMetadataC
 
 extension ImageDescription {
-    /// The getter keeps the image's own type, else PNG when it has alpha and JPEG when not.
+    /// TagLib's name for picture type 3.
+    private static let frontCoverPictureType = "Front Cover"
+
+    /// The getter keeps the image's own file type, else PNG when it has alpha and JPEG when not, and
+    /// always describes the front cover: the setter keeps no picture type.
     public var pictureRef: TagPictureRef? {
         get {
             guard let cgImage else {
@@ -28,7 +32,7 @@ extension ImageDescription {
                 image: cgImage,
                 utType: utType,
                 pictureDescription: description ?? "",
-                pictureType: ""
+                pictureType: Self.frontCoverPictureType
             )
 
             return pictureRef
