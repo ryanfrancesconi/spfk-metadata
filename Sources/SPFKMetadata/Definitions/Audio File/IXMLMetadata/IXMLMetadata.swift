@@ -259,12 +259,17 @@ extension IXMLMetadata {
         return result.isEmpty ? nil : result
     }
 
-    private func parseLoudness(element: AEXMLElement) -> LoudnessDescription? {
-        let integrated = element[.loudnessValue]?.value.flatMap { Float64($0) }
-        let range = element[.loudnessRange]?.value.flatMap { Float64($0) }
-        let truePeak = element[.maxTruePeakLevel]?.value.flatMap { Float32($0) }
-        let momentary = element[.maxMomentary]?.value.flatMap { Float64($0) }
-        let shortTerm = element[.maxShortTerm]?.value.flatMap { Float64($0) }
+    /// Values are stored untrimmed, so a number is parsed from the trimmed text.
+    static func number<T: LosslessStringConvertible>(_ value: String?) -> T? {
+        value.flatMap { T($0.trimmingCharacters(in: .whitespacesAndNewlines)) }
+    }
+
+    func parseLoudness(element: AEXMLElement) -> LoudnessDescription? {
+        let integrated: Float64? = Self.number(element[.loudnessValue]?.value)
+        let range: Float64? = Self.number(element[.loudnessRange]?.value)
+        let truePeak: Float32? = Self.number(element[.maxTruePeakLevel]?.value)
+        let momentary: Float64? = Self.number(element[.maxMomentary]?.value)
+        let shortTerm: Float64? = Self.number(element[.maxShortTerm]?.value)
 
         let desc = LoudnessDescription(
             loudnessIntegrated: integrated,

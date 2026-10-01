@@ -18,7 +18,7 @@ extension BEXTDescription {
 
         self.init()
 
-        if let versionString = ixmlMetadata.bextVersion, let v = Int16(versionString) {
+        if let v: Int16 = IXMLMetadata.number(ixmlMetadata.bextVersion) {
             version = v
         }
 
@@ -30,11 +30,11 @@ extension BEXTDescription {
         codingHistory = ixmlMetadata.bextCodingHistory
         umid = ixmlMetadata.bextUMID
 
-        if let lowString = ixmlMetadata.bextTimeReferenceLow, let low = UInt64(lowString) {
+        if let low: UInt64 = IXMLMetadata.number(ixmlMetadata.bextTimeReferenceLow) {
             timeReferenceLow = low
         }
 
-        if let highString = ixmlMetadata.bextTimeReferenceHigh, let high = UInt64(highString) {
+        if let high: UInt64 = IXMLMetadata.number(ixmlMetadata.bextTimeReferenceHigh) {
             timeReferenceHigh = high
         }
     }

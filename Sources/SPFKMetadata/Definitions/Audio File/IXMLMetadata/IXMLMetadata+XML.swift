@@ -8,7 +8,9 @@ import SPFKMetadataBase
 
 extension IXMLMetadata {
     /// ``document`` with the modeled properties applied: nil and empty values remove their element,
-    /// and elements the type does not model are kept in place.
+    /// and elements the type does not model are kept in place. LOUDNESS is kept as read unless
+    /// ``loudnessDescription`` changed; a changed one is rebuilt from the model, to two decimal
+    /// places and without the element's unmodeled children.
     public var xml: String {
         let (doc, root) = editableCopy()
 
@@ -39,7 +41,10 @@ extension IXMLMetadata {
 
         updateTrackList(in: root)
 
-        replace(.loudness, in: root, with: loudnessElement())
+        let readLoudness = root[.loudness].flatMap { parseLoudness(element: $0) }
+        if readLoudness != loudnessDescription {
+            replace(.loudness, in: root, with: loudnessElement())
+        }
 
         update(container: .bext, in: root) { bext in
             set(bext, .bextVersion, bextVersion)
