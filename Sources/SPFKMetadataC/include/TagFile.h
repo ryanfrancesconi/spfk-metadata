@@ -31,7 +31,8 @@ NS_ASSUME_NONNULL_BEGIN
 /// False when the file can't be opened or has no tag.
 - (bool)load;
 
-/// Replaces every tag with `dictionary`; artwork is kept.
+/// Replaces every tag with `dictionary`. Artwork is kept, and so is every ID3v2 frame of an MP3 that
+/// has no property key: chapters, the table of contents, other applications' `PRIV` and `GEOB`.
 - (bool)save;
 
 @end

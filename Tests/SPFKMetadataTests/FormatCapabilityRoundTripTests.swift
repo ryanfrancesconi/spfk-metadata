@@ -94,6 +94,40 @@ final class FormatCapabilityRoundTripTests: BinTestCase {
         #expect(abs((markers.first?.startTime ?? -1) - marker.startTime) < 0.01)
     }
 
+    static let markerWriteFixtures: [URL] = TestBundleResources.shared.oneFilePerContainer.filter {
+        AudioFileType(url: $0)?.supportsMarkerWrite == true
+    }
+
+    /// A tags-only save from the same description keeps the markers a marker save just wrote.
+    @Test(arguments: markerWriteFixtures)
+    func markersSurviveATagsOnlySave(source: URL) async throws {
+        let url = try copy(source)
+        let fileType = try #require(AudioFileType(url: url))
+        let written = [
+            AudioMarkerDescription(name: "First", startTime: 0.1),
+            AudioMarkerDescription(name: "Second", startTime: 0.3),
+        ]
+
+        var description = try await MetaAudioFileDescription(parsing: url)
+        description.markerCollection = AudioMarkerDescriptionCollection(markerDescriptions: written)
+        try description.save(dirtyFlags: [.markers])
+
+        description.tagProperties[.title] = "Tags Only"
+        try description.save(dirtyFlags: [.metadata])
+
+        let reread = try await MetaAudioFileDescription(parsing: url)
+        let markers = reread.markerCollection.markerDescriptions
+
+        #expect(reread.tagProperties[.title] == "Tags Only", "\(fileType.rawValue)")
+
+        withKnownIssue("A Xiph tags-only save writes back the chapter fields read at parse") {
+            #expect(markers.map(\.name) == written.map(\.name), "\(fileType.rawValue)")
+            #expect(markers.map { ($0.startTime * 10).rounded() } == [1, 3], "\(fileType.rawValue)")
+        } when: {
+            [.flac, .ogg, .opus].contains(fileType)
+        }
+    }
+
     #if os(macOS)
     /// Tags and artwork an untaggable file refuses still leave the Finder tags written.
     @Test func finderTagsAreWrittenBeforeTheRefusal() async throws {

@@ -111,23 +111,14 @@ using namespace TagLib;
     // Kept out of the PropertyMap, where it would become a TXXX:RATING frame.
     int ratingStars = TagRatingStarsInDictionary(_dictionary);
 
-    // clearTags() strips artwork too, and this method writes text only.
+    // Clearing removes artwork in most formats, and this method writes text only.
     auto existingPictures = fileRef.complexProperties(String("PICTURE"));
 
     File *f = fileRef.file();
     auto *mpegFile = dynamic_cast<MPEG::File *>(f);
 
-    // The XMP packet has no PropertyMap key, so clearing the tag would delete it.
-    ByteVector xmpPacket;
-    if (_xmpNeedsSave) {
-        if (_xmpPacket.length > 0) xmpPacket = ByteVector(_xmpPacket.UTF8String);
-    } else if (mpegFile && mpegFile->hasID3v2Tag()) {
-        auto packets = TagUtil::xmpPrivateFrameData(mpegFile->ID3v2Tag());
-        if (!packets.empty()) xmpPacket = packets.front();
-    }
-
     // Cleared before writing, so anything absent from the new dictionary is removed.
-    TagUtil::clearTags(fileRef);
+    TagUtil::clearTagsForSave(fileRef);
 
     PropertyMap properties = PropertyMap();
 
@@ -146,7 +137,9 @@ using namespace TagLib;
     if (!TagRatingWriteToFile(f, ratingStars))
         return false;
 
-    if (mpegFile && !xmpPacket.isEmpty()) {
+    // The clear keeps the stored packet's `PRIV` frame, so it changes only when asked.
+    if (mpegFile && _xmpNeedsSave) {
+        ByteVector xmpPacket = _xmpPacket.length > 0 ? ByteVector(_xmpPacket.UTF8String) : ByteVector();
         TagUtil::setXMPPrivateFrame(mpegFile->ID3v2Tag(true), xmpPacket);
     }
 

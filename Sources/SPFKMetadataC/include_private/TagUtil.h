@@ -7,6 +7,7 @@
 #import <iostream>
 
 #import <taglib/aifffile.h>
+#import <taglib/apetag.h>
 #import <taglib/fileref.h>
 #import <taglib/flacfile.h>
 #import <taglib/mp4file.h>
@@ -85,6 +86,19 @@ static void clearTags(FileRef &fileRef) {
     } else {
         fileRef.setProperties(PropertyMap());
     }
+}
+
+/// Clears the mapped properties ahead of a tag save. An MP3 is cleared in memory, keeping every
+/// ID3v2 frame the PropertyMap can't express (`CHAP`, `CTOC`, `APIC`, `GEOB`, `PRIV`, …) and an APE
+/// tag's binary items; any other format is cleared by `clearTags`.
+static void clearTagsForSave(FileRef &fileRef) {
+    if (auto *fp = dynamic_cast<MPEG::File *>(fileRef.file())) {
+        fp->setProperties(PropertyMap()); // ID3v2 and ID3v1
+        if (APE::Tag *ape = fp->APETag()) ape->setProperties(PropertyMap());
+        return;
+    }
+
+    clearTags(fileRef);
 }
 
 static NSMutableDictionary *convertToDictionary(ID3v2::FrameList frameList) {

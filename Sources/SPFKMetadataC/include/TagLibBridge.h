@@ -12,7 +12,7 @@ NS_ASSUME_NONNULL_BEGIN
 /// Keyed by TagLib property name, with `"RATING"` added. Nil when the file can't be opened.
 + (nullable NSMutableDictionary *)getProperties:(NSString *)path;
 
-/// Replaces every tag with the dictionary; artwork is kept.
+/// Replaces every tag with the dictionary, keeping what `TagFile.save` keeps.
 + (bool)setProperties:(NSString *)path dictionary:(NSDictionary *)dictionary;
 
 + (nullable NSString *)getTitle:(NSString *)path;

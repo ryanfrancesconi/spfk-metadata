@@ -41,8 +41,8 @@ extension TagProperties {
         try difference(from: TagProperties(url: url))
     }
 
-    /// Replaces every tag in the file; artwork is kept, and an MP3's stored XMP packet is kept
-    /// unless `storedXMPPacket` says otherwise.
+    /// Replaces every tag in the file. Artwork is kept, and so is every ID3v2 frame of an MP3 that has
+    /// no property key (chapters included); its stored XMP packet changes only as `storedXMPPacket` says.
     public func save(to url: URL, storedXMPPacket: StoredXMPPacketWrite = .keep) throws {
         let tagFile = TagFile(path: url.path)
         tagFile.dictionary = tagLibPropertyMap
