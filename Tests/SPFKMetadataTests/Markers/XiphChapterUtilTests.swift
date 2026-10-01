@@ -89,6 +89,24 @@ class XiphChapterUtilTests: BinTestCase {
         #expect(getChapters(in: tmpfile).count == 0)
     }
 
+    // MARK: - Encoding
+
+    @Test(arguments: [TestBundleResources.shared.tabla_flac, TestBundleResources.shared.tabla_ogg])
+    func nonASCIIChapterNameRoundTrips(source: URL) async throws {
+        let tmpfile = try copyToBin(url: source)
+        let name = "Café 日本"
+
+        #expect(XiphChapterUtil.write([ChapterMarker(name: name, startTime: 1, endTime: 2)], to: tmpfile.path))
+        #expect(getChapters(in: tmpfile).map(\.name) == [name])
+
+        for _ in 0 ..< 2 {
+            var description = try await MetaAudioFileDescription(parsing: tmpfile)
+            try description.save(dirtyFlags: [.markers])
+        }
+
+        #expect(getChapters(in: tmpfile).map(\.name) == [name])
+    }
+
     // MARK: - Timestamp precision
 
     @Test func timestampPrecision() async throws {

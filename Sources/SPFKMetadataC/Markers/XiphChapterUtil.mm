@@ -186,7 +186,7 @@ static void removeAllChapterFields(Ogg::XiphComment *comment) {
         comment->addField(chapterKey(index), String(formatTimestamp(marker.startTime)));
 
         if (marker.name.length > 0) {
-            comment->addField(chapterKey(index, "NAME"), String(marker.name.UTF8String));
+            comment->addField(chapterKey(index, "NAME"), String(marker.name.UTF8String, String::UTF8));
         }
 
         if (marker.endTime > marker.startTime) {
