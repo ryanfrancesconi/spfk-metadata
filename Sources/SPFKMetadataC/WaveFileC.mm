@@ -94,7 +94,7 @@ using namespace TagLib;
     if (waveFile->hasID3v2Tag()) {
         ID3v2::Tag *tag = waveFile->ID3v2Tag();
         ID3v2::FrameList frameList = tag->frameList();
-        _id3Dictionary = TagUtil::convertToDictionary(frameList);
+        _id3Dictionary = TagUtil::convertToDictionary(frameList, true);
     }
 
     TagPictureRef *pictureRef = [TagPicture readFromTag:waveFile->tag()];

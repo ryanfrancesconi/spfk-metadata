@@ -21,7 +21,8 @@ NS_ASSUME_NONNULL_BEGIN
 /// Keyed by INFO field ID ("INAM").
 @property(nonatomic) NSMutableDictionary *infoDictionary;
 
-/// Keyed by frame ID ("TIT2"), a TXXX by its description, plus `"RATING"`.
+/// Keyed by frame ID ("TIT2"), a TXXX by its description, plus `"RATING"`. Text frames only;
+/// `save` leaves binary frames (`PRIV`, `UFID`, `GEOB`, `CHAP`, …) in the file as they are.
 @property(nonatomic) NSMutableDictionary *id3Dictionary;
 
 @property(nullable, nonatomic) BEXTDescriptionC *bextDescriptionC;

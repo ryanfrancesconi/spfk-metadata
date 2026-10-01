@@ -118,7 +118,16 @@ static void clearTagsForSave(FileRef &fileRef) {
     clearTags(fileRef);
 }
 
-static NSMutableDictionary *convertToDictionary(ID3v2::FrameList frameList) {
+/// A TXXX, a frame with a property key, or a text frame TagLib keys outside that table. Every
+/// other frame is binary, and `setProperties` keeps it as it is.
+static bool isTextFrame(const ByteVector &frameID) {
+    return frameID == "TXXX" || frameID == "USLT" || frameID == "WXXX" || frameID == "TIPL" ||
+           frameID == "TMCL" || !ID3v2::Frame::frameIDToKey(frameID).isEmpty();
+}
+
+/// Keyed by frame ID, a TXXX by its description, `PRIV` holding its raw data. `textOnly` keeps
+/// only what `isTextFrame` accepts, for a dictionary that goes back through `convertToPropertyMap`.
+static NSMutableDictionary *convertToDictionary(ID3v2::FrameList frameList, bool textOnly = false) {
     NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
 
     if (frameList.isEmpty()) {
@@ -129,6 +138,7 @@ static NSMutableDictionary *convertToDictionary(ID3v2::FrameList frameList) {
         ByteVector frameID = (*it)->frameID();
 
         if (frameID == "POPM") continue; // read by TagRating
+        if (textOnly && !isTextFrame(frameID)) continue;
 
         String value = (*it)->toString();
 

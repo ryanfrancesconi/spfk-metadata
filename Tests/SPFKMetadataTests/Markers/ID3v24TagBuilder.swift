@@ -1,6 +1,7 @@
 // Copyright Ryan Francesconi. All Rights Reserved. Revision History at https://github.com/ryanfrancesconi/spfk-metadata
 
 import Foundation
+import SPFKTesting
 
 /// Hand-built ID3v2.4 frames, for tag layouts no fixture or writer on this machine produces.
 enum ID3v24TagBuilder {
@@ -99,5 +100,30 @@ enum ID3v24TagBuilder {
         let newHeader = Data("ID3".utf8) + Data([4, 0, 0]) + syncsafe(tagBody.count)
 
         try (newHeader + tagBody + audio).write(to: url)
+    }
+
+    /// Replaces a WAV's `ID3 ` and `id3 ` chunks with one `ID3 ` chunk holding a v2.4 tag of `frames`.
+    static func replaceWAVTag(in url: URL, with frames: [Data]) throws {
+        let file = try Data(contentsOf: url)
+        var rebuilt = Data(file.prefix(12))
+        var offset = 12
+
+        while offset + 8 <= file.count {
+            let id = String(decoding: file[offset ..< offset + 4], as: UTF8.self)
+            let size = file[offset + 4 ..< offset + 8].reversed().reduce(0) { $0 << 8 | Int($1) }
+            let end = min(offset + 8 + size + (size & 1), file.count)
+
+            if id != "ID3 ", id != "id3 " {
+                rebuilt.append(file[offset ..< end])
+            }
+            offset = end
+        }
+
+        rebuilt.replaceSubrange(4 ..< 8, with: withUnsafeBytes(of: UInt32(rebuilt.count - 8).littleEndian) { Data($0) })
+        try rebuilt.write(to: url)
+
+        let tagBody = frames.reduce(Data(), +)
+        let tag = Data("ID3".utf8) + Data([4, 0, 0]) + syncsafe(tagBody.count) + tagBody
+        try IFFChunks.append(id: "ID3 ", payload: tag, to: url, bigEndian: false)
     }
 }
