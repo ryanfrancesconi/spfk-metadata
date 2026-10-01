@@ -37,6 +37,7 @@
 
 #import "StringUtil.h"
 #import "TagUtil.h"
+#import "WaveMarkerChunks.h"
 
 using namespace std;
 using namespace TagLib;
@@ -199,6 +200,32 @@ namespace {
     bool ratingWritten = ratingStars <= 0 || TagRatingWriteToFile(output.file(), ratingStars);
 
     return output.save() && ratingWritten;
+}
+
++ (nullable NSString *)storedXMPPacket:(NSString *)path {
+    ByteVector packet;
+
+    {
+        FileRef fileRef(path.UTF8String, false);
+        if (fileRef.isNull()) return nil;
+
+        if (auto *mpegFile = dynamic_cast<MPEG::File *>(fileRef.file())) {
+            auto packets = mpegFile->hasID3v2Tag() ? TagUtil::xmpPrivateFrameData(mpegFile->ID3v2Tag()) : vector<ByteVector>();
+            if (packets.empty()) return nil;
+            packet = packets.front();
+        } else if (!dynamic_cast<RIFF::WAV::File *>(fileRef.file())) {
+            return nil;
+        }
+    }
+
+    if (packet.isEmpty()) {
+        WaveMarkerFile waveFile(path.UTF8String, false);
+        if (!waveFile.isValid()) return nil;
+        packet = waveFile.xmpData();
+        if (packet.isEmpty()) return nil;
+    }
+
+    return [[NSString alloc] initWithBytes:packet.data() length:packet.size() encoding:NSUTF8StringEncoding];
 }
 
 @end

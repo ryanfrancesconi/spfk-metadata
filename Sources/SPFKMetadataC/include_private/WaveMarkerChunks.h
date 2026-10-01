@@ -30,7 +30,8 @@ NS_ASSUME_NONNULL_END
 
 #import <taglib/wavfile.h>
 
-/// A WAV file with access to its `cue ` chunk and `LIST`/`adtl` list, which TagLib does not expose.
+/// A WAV file with access to its `cue ` chunk, `LIST`/`adtl` list and `_PMX` XMP chunk, which
+/// TagLib does not expose.
 class WaveMarkerFile : public TagLib::RIFF::WAV::File {
 public:
     using TagLib::RIFF::WAV::File::File;
@@ -43,6 +44,12 @@ public:
 
     /// Writes immediately. An empty argument removes that chunk.
     void replaceMarkerChunks(const TagLib::ByteVector &cue, const TagLib::ByteVector &adtl);
+
+    /// The `_PMX` chunk's XMP packet. Empty when there is none.
+    TagLib::ByteVector xmpData();
+
+    /// Writes immediately. An empty argument removes the chunk.
+    void setXMPData(const TagLib::ByteVector &packet);
 };
 
 namespace WaveMarkers {

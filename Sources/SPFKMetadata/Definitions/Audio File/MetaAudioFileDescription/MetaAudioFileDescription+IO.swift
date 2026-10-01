@@ -118,14 +118,22 @@ extension MetaAudioFileDescription {
 
 extension MetaAudioFileDescription {
     /// Writes what `dirtyFlags` names, then the Finder tags and modification date. `.xmp` is
-    /// written elsewhere.
+    /// written elsewhere; `storedXMPPacket` replaces or removes the packet a WAV or MP3 stores,
+    /// in the same TagLib save.
     ///
     /// Throws ``UnstorableMetadataError`` for flags the container has no writer for, after
     /// writing everything else.
-    public mutating func save(dirtyFlags: Set<MetadataDirtyFlag> = [.metadata]) throws {
+    public mutating func save(
+        dirtyFlags: Set<MetadataDirtyFlag> = [.metadata],
+        storedXMPPacket: StoredXMPPacketWrite = .keep
+    ) throws {
         // First, so a locked file fails with one error rather than a partial save; TagLib
         // reports the lock only as `false`.
         try url.requireWritable()
+
+        if storedXMPPacket != .keep, !(fileType.map(StoredXMPPacketWrite.fileTypes.contains) ?? false) {
+            throw NSError(description: "A .\(url.pathExtension) file stores no XMP packet of its own")
+        }
 
         let unstorable = unstorableFlags(in: dirtyFlags)
         let writable = dirtyFlags.subtracting(unstorable)
@@ -139,15 +147,15 @@ extension MetaAudioFileDescription {
         let markersNeedsSave = writable.contains(.markers)
 
         // A container rewrite costs the whole file (20-30 s at 4 GB); a Finder tag change shouldn't pay it.
-        if writable.contains(.metadata) || imageNeedsSave || markersNeedsSave {
+        if writable.contains(.metadata) || imageNeedsSave || markersNeedsSave || storedXMPPacket != .keep {
             if fileType == .wav {
-                try saveWave(imageNeedsSave: imageNeedsSave, markersNeedsSave: markersNeedsSave)
+                try saveWave(imageNeedsSave: imageNeedsSave, markersNeedsSave: markersNeedsSave, storedXMPPacket: storedXMPPacket)
             } else {
                 if fileType == .flac {
                     try saveFLAC()
                 }
 
-                try saveOther(imageNeedsSave: imageNeedsSave, markersNeedsSave: markersNeedsSave)
+                try saveOther(imageNeedsSave: imageNeedsSave, markersNeedsSave: markersNeedsSave, storedXMPPacket: storedXMPPacket)
             }
         }
 
@@ -181,9 +189,9 @@ extension MetaAudioFileDescription {
         }
     }
 
-    private mutating func saveOther(imageNeedsSave: Bool, markersNeedsSave: Bool) throws {
+    private mutating func saveOther(imageNeedsSave: Bool, markersNeedsSave: Bool, storedXMPPacket: StoredXMPPacketWrite) throws {
         // Keeps the existing artwork; an artwork change is applied below.
-        try tagProperties.save(to: url)
+        try tagProperties.save(to: url, storedXMPPacket: storedXMPPacket)
 
         if imageNeedsSave {
             if let pictureRef = imageDescription.pictureRef {
@@ -214,8 +222,9 @@ extension MetaAudioFileDescription {
     }
 
     /// Tags and chunks are always written; markers and artwork only when flagged.
-    private mutating func saveWave(imageNeedsSave: Bool, markersNeedsSave: Bool) throws {
+    private mutating func saveWave(imageNeedsSave: Bool, markersNeedsSave: Bool, storedXMPPacket: StoredXMPPacketWrite) throws {
         let waveFile = WaveFileC(path: url.path)
+        storedXMPPacket.apply { waveFile.xmpNeedsSave = true; waveFile.xmpPacket = $0 }
 
         waveFile.bextDescription = bextDescription
         waveFile.iXML = iXMLMetadata

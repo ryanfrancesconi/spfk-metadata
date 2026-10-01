@@ -24,6 +24,38 @@ using namespace TagLib;
 using namespace std;
 
 namespace TagUtil {
+/// The data of each ID3v2 `PRIV` frame owned by `XMP`, which holds the file's XMP packet.
+static vector<ByteVector> xmpPrivateFrameData(ID3v2::Tag *tag) {
+    vector<ByteVector> packets;
+    if (!tag) return packets;
+
+    for (auto *frame : tag->frameList("PRIV")) {
+        auto *privateFrame = dynamic_cast<ID3v2::PrivateFrame *>(frame);
+        if (privateFrame && privateFrame->owner() == "XMP") {
+            packets.push_back(privateFrame->data());
+        }
+    }
+
+    return packets;
+}
+
+/// Replaces the `XMP`-owned `PRIV` frames with one holding `packet`, or with none when it is empty.
+static void setXMPPrivateFrame(ID3v2::Tag *tag, const ByteVector &packet) {
+    for (auto *frame : tag->frameList("PRIV")) {
+        auto *privateFrame = dynamic_cast<ID3v2::PrivateFrame *>(frame);
+        if (privateFrame && privateFrame->owner() == "XMP") {
+            tag->removeFrame(privateFrame);
+        }
+    }
+
+    if (packet.isEmpty()) return;
+
+    auto *privateFrame = new ID3v2::PrivateFrame();
+    privateFrame->setOwner("XMP");
+    privateFrame->setData(packet);
+    tag->addFrame(privateFrame);
+}
+
 /// Empties every tag, so the save writes only what the caller sets; `setProperties` alone leaves
 /// format-specific storage (iTunes freeform atoms) behind.
 ///

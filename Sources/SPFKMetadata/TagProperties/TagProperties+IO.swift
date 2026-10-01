@@ -41,10 +41,12 @@ extension TagProperties {
         try difference(from: TagProperties(url: url))
     }
 
-    /// Replaces every tag in the file; artwork is kept.
-    public func save(to url: URL) throws {
+    /// Replaces every tag in the file; artwork is kept, and an MP3's stored XMP packet is kept
+    /// unless `storedXMPPacket` says otherwise.
+    public func save(to url: URL, storedXMPPacket: StoredXMPPacketWrite = .keep) throws {
         let tagFile = TagFile(path: url.path)
         tagFile.dictionary = tagLibPropertyMap
+        storedXMPPacket.apply { tagFile.xmpNeedsSave = true; tagFile.xmpPacket = $0 }
 
         guard tagFile.save() else {
             throw NSError(description: "Failed to update tags in \(url.path)")

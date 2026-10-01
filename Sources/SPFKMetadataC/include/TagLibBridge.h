@@ -30,6 +30,10 @@ NS_ASSUME_NONNULL_BEGIN
 /// the source has no tags.
 + (bool)copyTagsFromPath:(NSString *)path toPath:(NSString *)toPath;
 
+/// The XMP packet a WAV's `_PMX` chunk or an MP3's ID3v2 `PRIV` frame holds, as stored: no native
+/// metadata is merged in. Nil when there is none, or for any other format.
++ (nullable NSString *)storedXMPPacket:(NSString *)path;
+
 @end
 
 NS_ASSUME_NONNULL_END

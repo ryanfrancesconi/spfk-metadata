@@ -41,6 +41,13 @@ NS_ASSUME_NONNULL_BEGIN
 /// Default YES. With YES, a nil `tagPicture` removes the artwork.
 @property(nonatomic) BOOL imageNeedsSave;
 
+/// The `_PMX` chunk's XMP packet. Set by `load`.
+@property(nullable, nonatomic) NSString *xmpPacket;
+
+/// Default NO, which keeps the stored packet. With YES, `save` replaces it with `xmpPacket`,
+/// removing the chunk when nil.
+@property(nonatomic) BOOL xmpNeedsSave;
+
 - (instancetype)init;
 
 - (instancetype)initWithPath:(nonnull NSString *)path;

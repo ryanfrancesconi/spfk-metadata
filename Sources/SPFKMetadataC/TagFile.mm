@@ -6,11 +6,9 @@
 #import <taglib/aifffile.h>
 #import <taglib/fileref.h>
 #import <taglib/flacfile.h>
-#import <taglib/id3v2tag.h>
 #import <taglib/mp4file.h>
 #import <taglib/mpegfile.h>
 #import <taglib/opusfile.h>
-#import <taglib/privateframe.h>
 #import <taglib/rifffile.h>
 #import <taglib/tpropertymap.h>
 #import <taglib/vorbisfile.h>
@@ -85,6 +83,13 @@ using namespace TagLib;
         }
     }
 
+    if (auto *mpegFile = dynamic_cast<MPEG::File *>(fileRef.file()); mpegFile && mpegFile->hasID3v2Tag()) {
+        auto packets = TagUtil::xmpPrivateFrameData(mpegFile->ID3v2Tag());
+        _xmpPacket = packets.empty() ? nil : [[NSString alloc] initWithBytes:packets.front().data()
+                                                                       length:packets.front().size()
+                                                                     encoding:NSUTF8StringEncoding];
+    }
+
     // Outside the PropertyMap; see TagRatingFile.h.
     int ratingStars = TagRatingReadFromFile(fileRef.file());
     if (ratingStars >= 1) {
@@ -113,14 +118,12 @@ using namespace TagLib;
     auto *mpegFile = dynamic_cast<MPEG::File *>(f);
 
     // The XMP packet has no PropertyMap key, so clearing the tag would delete it.
-    vector<ByteVector> xmpPackets;
-    if (mpegFile && mpegFile->hasID3v2Tag()) {
-        for (auto *frame : mpegFile->ID3v2Tag()->frameList("PRIV")) {
-            auto *privateFrame = dynamic_cast<ID3v2::PrivateFrame *>(frame);
-            if (privateFrame && privateFrame->owner() == "XMP") {
-                xmpPackets.push_back(privateFrame->data());
-            }
-        }
+    ByteVector xmpPacket;
+    if (_xmpNeedsSave) {
+        if (_xmpPacket.length > 0) xmpPacket = ByteVector(_xmpPacket.UTF8String);
+    } else if (mpegFile && mpegFile->hasID3v2Tag()) {
+        auto packets = TagUtil::xmpPrivateFrameData(mpegFile->ID3v2Tag());
+        if (!packets.empty()) xmpPacket = packets.front();
     }
 
     // Cleared before writing, so anything absent from the new dictionary is removed.
@@ -143,11 +146,8 @@ using namespace TagLib;
     if (!TagRatingWriteToFile(f, ratingStars))
         return false;
 
-    for (const auto &packet : xmpPackets) {
-        auto *privateFrame = new ID3v2::PrivateFrame();
-        privateFrame->setOwner("XMP");
-        privateFrame->setData(packet);
-        mpegFile->ID3v2Tag(true)->addFrame(privateFrame);
+    if (mpegFile && !xmpPacket.isEmpty()) {
+        TagUtil::setXMPPrivateFrame(mpegFile->ID3v2Tag(true), xmpPacket);
     }
 
     // A caller changing artwork does so through TagPicture after this returns.

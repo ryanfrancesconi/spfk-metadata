@@ -117,6 +117,24 @@ void WaveMarkerFile::replaceMarkerChunks(const ByteVector &cue, const ByteVector
     }
 }
 
+ByteVector WaveMarkerFile::xmpData() {
+    for (unsigned int i = 0; i < chunkCount(); i++) {
+        if (chunkName(i) == "_PMX") {
+            return chunkData(i);
+        }
+    }
+
+    return ByteVector();
+}
+
+void WaveMarkerFile::setXMPData(const ByteVector &packet) {
+    if (packet.isEmpty()) {
+        removeChunk("_PMX");
+    } else {
+        setChunkData("_PMX", packet);
+    }
+}
+
 namespace WaveMarkers {
 NSArray *read(WaveMarkerFile &file) {
     const ByteVector cue = file.cueData();

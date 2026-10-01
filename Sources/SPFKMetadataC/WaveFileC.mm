@@ -83,6 +83,9 @@ using namespace TagLib;
                                          encoding:NSUTF8StringEncoding];
     }
 
+    ByteVector xmp = waveFile->xmpData();
+    _xmpPacket = xmp.isEmpty() ? nil : [[NSString alloc] initWithBytes:xmp.data() length:xmp.size() encoding:NSUTF8StringEncoding];
+
     if (waveFile->hasInfoTag()) {
         auto infoMap = waveFile->InfoTag()->fieldListMap();
         _infoDictionary = TagUtil::convertToDictionary(infoMap);
@@ -130,6 +133,10 @@ using namespace TagLib;
         waveFile->setBEXTData(ByteVector((const char *)bextData.bytes, (unsigned int)bextData.length));
     } else {
         waveFile->setBEXTData(ByteVector());
+    }
+
+    if (_xmpNeedsSave) {
+        waveFile->setXMPData(_xmpPacket.length > 0 ? ByteVector(_xmpPacket.UTF8String) : ByteVector());
     }
 
     // An empty String removes the chunk.
