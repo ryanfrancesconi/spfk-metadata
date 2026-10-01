@@ -77,25 +77,36 @@ static bool isChapterField(const String &key) {
     return key.upper().startsWith("CHAPTER");
 }
 
-/// Empties every tag, so the save writes only what the caller sets; `setProperties` alone leaves
-/// format-specific storage (iTunes freeform atoms) behind.
+/// Removes `ilst` items in memory: all of them, or with `keepingUnmapped` only those with a property
+/// key, leaving `stik`, `rtng`, store IDs, other applications' freeform atoms, `covr` and `rate`.
+/// `setProperties` alone misses an iTunes freeform atom whose name is not upper case (`iTunSMPB`):
+/// its key reads back upper-cased and names a different atom.
 ///
-/// MP4 is cleared in memory, never stripped: `strip()` removes `meta` at once and the save reinserts
-/// it, two passes over `mdat` (measured 2026-09-08: 33.7 MB written for a 16.8 MB `mdat` on a
-/// 100-byte title edit). Vorbis, Opus and AIFF have no strip; only their mapped properties clear.
+/// Never stripped: `strip()` removes `meta` at once and the save reinserts it, two passes over
+/// `mdat` (measured 2026-09-08: 33.7 MB written for a 16.8 MB `mdat` on a 100-byte title edit).
+static void clearMP4Items(MP4::Tag *tag, bool keepingUnmapped) {
+    if (!tag) return;
+
+    const StringList unmapped = keepingUnmapped ? tag->properties().unsupportedData() : StringList();
+    StringList keys;
+    for (const auto &[key, item] : tag->itemMap()) {
+        if (!unmapped.contains(key)) keys.append(key);
+    }
+    for (const auto &key : std::as_const(keys))
+        tag->removeItem(key);
+}
+
+/// Empties every tag, so the save writes only what the caller sets; `setProperties` alone leaves
+/// format-specific storage (iTunes freeform atoms) behind. Every MP4 item goes, cleared in memory
+/// as `clearMP4Items` describes. Vorbis, Opus and AIFF have no strip; only their mapped properties
+/// clear.
 static void clearTags(FileRef &fileRef) {
     File *f = fileRef.file();
 
     if (auto *fp = dynamic_cast<RIFF::WAV::File *>(f)) {
         fp->strip();
     } else if (auto *fp = dynamic_cast<MP4::File *>(f)) {
-        if (MP4::Tag *tag = fp->tag()) {
-            StringList keys;
-            for (const auto &[key, item] : tag->itemMap())
-                keys.append(key);
-            for (const auto &key : std::as_const(keys))
-                tag->removeItem(key);
-        }
+        clearMP4Items(fp->tag(), false);
     } else if (auto *fp = dynamic_cast<MPEG::File *>(f)) {
         fp->strip();
     } else if (auto *fp = dynamic_cast<FLAC::File *>(f)) {
@@ -107,11 +118,17 @@ static void clearTags(FileRef &fileRef) {
 
 /// Clears the mapped properties ahead of a tag save. An MP3 is cleared in memory, keeping every
 /// ID3v2 frame the PropertyMap can't express (`CHAP`, `CTOC`, `APIC`, `GEOB`, `PRIV`, …) and an APE
-/// tag's binary items; any other format is cleared by `clearTags`.
+/// tag's binary items. An MP4 keeps every item without a property key; the rating writer replaces
+/// `rate` itself. Any other format is cleared by `clearTags`.
 static void clearTagsForSave(FileRef &fileRef) {
     if (auto *fp = dynamic_cast<MPEG::File *>(fileRef.file())) {
         fp->setProperties(PropertyMap()); // ID3v2 and ID3v1
         if (APE::Tag *ape = fp->APETag()) ape->setProperties(PropertyMap());
+        return;
+    }
+
+    if (auto *fp = dynamic_cast<MP4::File *>(fileRef.file())) {
+        clearMP4Items(fp->tag(), true);
         return;
     }
 
