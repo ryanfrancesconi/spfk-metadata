@@ -312,7 +312,7 @@ class TagPictureTests: BinTestCase {
         let pictureRef = try #require(
             TagPictureRef(
                 url: imageURL,
-                pictureDescription: "Shit Sandwich",
+                pictureDescription: "Shark Sandwich",
                 pictureType: "Back Cover"
             )
         )
