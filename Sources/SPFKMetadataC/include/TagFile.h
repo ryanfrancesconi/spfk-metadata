@@ -14,7 +14,8 @@ NS_ASSUME_NONNULL_BEGIN
 /// Set by `load`.
 @property(nullable, nonatomic) TagAudioPropertiesC *audioProperties;
 
-/// `"RATING"` is carried here like any key but stored in each format's own rating frame.
+/// `"RATING"` is carried here like any key but stored in each format's own rating frame. A FLAC,
+/// Vorbis or Opus file's chapter fields are left out: they are markers, read by `XiphChapterUtil`.
 @property(nullable, nonatomic) NSDictionary *dictionary;
 
 @property(nonatomic, strong, nonnull) NSString *path;
@@ -31,8 +32,9 @@ NS_ASSUME_NONNULL_BEGIN
 /// False when the file can't be opened or has no tag.
 - (bool)load;
 
-/// Replaces every tag with `dictionary`. Artwork is kept, and so is every ID3v2 frame of an MP3 that
-/// has no property key: chapters, the table of contents, other applications' `PRIV` and `GEOB`.
+/// Replaces every tag with `dictionary`. Artwork is kept, and so are the chapters: every ID3v2 frame
+/// of an MP3 that has no property key (`CHAP`, `CTOC`, other applications' `PRIV` and `GEOB`), and
+/// a Xiph comment's chapter fields, which a chapter key in `dictionary` does not replace.
 - (bool)save;
 
 @end

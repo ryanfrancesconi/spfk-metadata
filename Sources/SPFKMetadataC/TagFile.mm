@@ -60,8 +60,12 @@ using namespace TagLib;
     }
 
     PropertyMap properties = tag->properties();
+    const bool hasXiphComment = TagUtil::xiphComment(fileRef.file()) != nullptr;
 
     for (const auto &property : properties) {
+        // Read as markers, by XiphChapterUtil.
+        if (hasXiphComment && TagUtil::isChapterField(property.first)) continue;
+
         const char *ckey = property.first.toCString(true);
         String cval = property.second.toString();
 
@@ -117,6 +121,15 @@ using namespace TagLib;
     File *f = fileRef.file();
     auto *mpegFile = dynamic_cast<MPEG::File *>(f);
 
+    // Chapter fields are the markers' to write, so they stay as they are on disk.
+    Ogg::FieldListMap chapterFields;
+    const bool hasXiphComment = TagUtil::xiphComment(f) != nullptr;
+    if (hasXiphComment) {
+        for (const auto &[key, values] : TagUtil::xiphComment(f)->fieldListMap()) {
+            if (TagUtil::isChapterField(key)) chapterFields.insert(key, values);
+        }
+    }
+
     // Cleared before writing, so anything absent from the new dictionary is removed.
     TagUtil::clearTagsForSave(fileRef);
 
@@ -127,12 +140,19 @@ using namespace TagLib;
             continue;
         NSString *value = [_dictionary objectForKey:key];
         String tagKey = String(key.UTF8String, String::UTF8);
+        if (hasXiphComment && TagUtil::isChapterField(tagKey))
+            continue;
         StringList tagValue = StringList(String(value.UTF8String, String::UTF8));
         properties.insert(tagKey, tagValue);
     }
 
     properties.removeEmpty();
     fileRef.setProperties(properties);
+
+    // After `setProperties`, which removes every field absent from `properties`.
+    for (const auto &[key, values] : chapterFields) {
+        for (const auto &value : values) TagUtil::xiphComment(f, true)->addField(key, value, false);
+    }
 
     if (!TagRatingWriteToFile(f, ratingStars))
         return false;

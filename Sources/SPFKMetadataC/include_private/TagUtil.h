@@ -12,8 +12,11 @@
 #import <taglib/flacfile.h>
 #import <taglib/mp4file.h>
 #import <taglib/mpegfile.h>
+#import <taglib/opusfile.h>
 #import <taglib/rifffile.h>
+#import <taglib/vorbisfile.h>
 #import <taglib/wavfile.h>
+#import <taglib/xiphcomment.h>
 
 #import <taglib/id3v2frame.h>
 #import <taglib/id3v2tag.h>
@@ -58,6 +61,20 @@ static void setXMPPrivateFrame(ID3v2::Tag *tag, const ByteVector &packet) {
     privateFrame->setOwner("XMP");
     privateFrame->setData(packet);
     tag->addFrame(privateFrame);
+}
+
+/// The Xiph comment of a FLAC, Vorbis or Opus file; nullptr for any other. `create` applies to FLAC only.
+static Ogg::XiphComment *xiphComment(File *file, bool create = false) {
+    if (auto *flac = dynamic_cast<FLAC::File *>(file)) return flac->xiphComment(create);
+    if (auto *vorbis = dynamic_cast<Ogg::Vorbis::File *>(file)) return vorbis->tag();
+    if (auto *opus = dynamic_cast<Ogg::Opus::File *>(file)) return opus->tag();
+    return nullptr;
+}
+
+/// A Xiph comment field holding chapters (`CHAPTER000`, `CHAPTER000NAME`, …). They are markers,
+/// written by `XiphChapterUtil`; the tag path neither reads, writes nor copies them.
+static bool isChapterField(const String &key) {
+    return key.upper().startsWith("CHAPTER");
 }
 
 /// Empties every tag, so the save writes only what the caller sets; `setProperties` alone leaves

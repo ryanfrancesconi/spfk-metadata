@@ -41,8 +41,8 @@ extension TagProperties {
         try difference(from: TagProperties(url: url))
     }
 
-    /// Replaces every tag in the file. Artwork is kept, and so is every ID3v2 frame of an MP3 that has
-    /// no property key (chapters included); its stored XMP packet changes only as `storedXMPPacket` says.
+    /// Replaces every tag in the file. Artwork and chapters are kept, and so is every other ID3v2 frame
+    /// of an MP3 with no property key; its stored XMP packet changes only as `storedXMPPacket` says.
     public func save(to url: URL, storedXMPPacket: StoredXMPPacketWrite = .keep) throws {
         let tagFile = TagFile(path: url.path)
         tagFile.dictionary = tagLibPropertyMap
@@ -59,7 +59,8 @@ extension TagProperties {
         try Self.removeAllTags(in: url)
     }
 
-    /// Replaces the destination's tags with the source's, rating included.
+    /// Replaces the destination's tags with the source's, rating included. Chapters are markers and
+    /// are not copied.
     public static func copyTags(from source: URL, to destination: URL) throws {
         guard TagLibBridge.copyTags(fromPath: source.path, toPath: destination.path) else {
             throw NSError(description: "Failed to copy tags from \(source.path) to \(destination.path)")

@@ -119,13 +119,8 @@ final class FormatCapabilityRoundTripTests: BinTestCase {
         let markers = reread.markerCollection.markerDescriptions
 
         #expect(reread.tagProperties[.title] == "Tags Only", "\(fileType.rawValue)")
-
-        withKnownIssue("A Xiph tags-only save writes back the chapter fields read at parse") {
-            #expect(markers.map(\.name) == written.map(\.name), "\(fileType.rawValue)")
-            #expect(markers.map { ($0.startTime * 10).rounded() } == [1, 3], "\(fileType.rawValue)")
-        } when: {
-            [.flac, .ogg, .opus].contains(fileType)
-        }
+        #expect(markers.map(\.name) == written.map(\.name), "\(fileType.rawValue)")
+        #expect(markers.map { ($0.startTime * 10).rounded() } == [1, 3], "\(fileType.rawValue)")
     }
 
     #if os(macOS)

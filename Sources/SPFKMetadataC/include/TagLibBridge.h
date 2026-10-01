@@ -9,7 +9,8 @@ NS_ASSUME_NONNULL_BEGIN
 /// Path-based TagLib operations; each call opens the file itself.
 @interface TagLibBridge : NSObject
 
-/// Keyed by TagLib property name, with `"RATING"` added. Nil when the file can't be opened.
+/// Keyed by TagLib property name, with `"RATING"` added and Xiph chapter fields left out. Nil when
+/// the file can't be opened.
 + (nullable NSMutableDictionary *)getProperties:(NSString *)path;
 
 /// Replaces every tag with the dictionary, keeping what `TagFile.save` keeps.
@@ -26,8 +27,8 @@ NS_ASSUME_NONNULL_BEGIN
 /// Vorbis, Opus and AIFF keep anything outside their mapped properties.
 + (bool)removeAllTags:(NSString *)path;
 
-/// Replaces the destination's tags with the source's, rating included. True, touching nothing, when
-/// the source has no tags.
+/// Replaces the destination's tags with the source's, rating included and Xiph chapter fields left
+/// out. True, touching nothing, when the source has no tags.
 + (bool)copyTagsFromPath:(NSString *)path toPath:(NSString *)toPath;
 
 /// The XMP packet a WAV's `_PMX` chunk or an MP3's ID3v2 `PRIV` frame holds, as stored: no native

@@ -13,29 +13,13 @@
 #import <taglib/xiphcomment.h>
 
 #import "ChapterMarker.h"
+#import "TagUtil.h"
 #import "XiphChapterUtil.h"
 
 using namespace std;
 using namespace TagLib;
 
 // MARK: - Helpers
-
-/// Nullptr for a non-Xiph file. `create` applies to FLAC only.
-static Ogg::XiphComment *getXiphComment(TagLib::File *file, bool create = false) {
-    if (auto *flac = dynamic_cast<FLAC::File *>(file)) {
-        return flac->xiphComment(create);
-    }
-
-    if (auto *vorbis = dynamic_cast<Ogg::Vorbis::File *>(file)) {
-        return vorbis->tag();
-    }
-
-    if (auto *opus = dynamic_cast<Ogg::Opus::File *>(file)) {
-        return opus->tag();
-    }
-
-    return nullptr;
-}
 
 /// HH:MM:SS.mmm
 static string formatTimestamp(NSTimeInterval seconds) {
@@ -96,16 +80,14 @@ static vector<int> chapterIndices(const Ogg::FieldListMap &fields) {
     return indices;
 }
 
-/// Removes every CHAPTER* field. Keys are collected first, since removal invalidates the iteration.
+/// Removes every chapter field. Keys are collected first, since removal invalidates the iteration.
 static void removeAllChapterFields(Ogg::XiphComment *comment) {
     vector<String> keysToRemove;
 
     const auto &fields = comment->fieldListMap();
 
     for (auto it = fields.begin(); it != fields.end(); ++it) {
-        string key = it->first.to8Bit();
-
-        if (key.find("CHAPTER") == 0) {
+        if (TagUtil::isChapterField(it->first)) {
             keysToRemove.push_back(it->first);
         }
     }
@@ -126,7 +108,7 @@ static void removeAllChapterFields(Ogg::XiphComment *comment) {
         return nil;
     }
 
-    Ogg::XiphComment *comment = getXiphComment(fileRef.file());
+    Ogg::XiphComment *comment = TagUtil::xiphComment(fileRef.file());
 
     if (!comment) {
         return nil;
@@ -172,7 +154,7 @@ static void removeAllChapterFields(Ogg::XiphComment *comment) {
         return false;
     }
 
-    Ogg::XiphComment *comment = getXiphComment(fileRef.file(), /* create */ true);
+    Ogg::XiphComment *comment = TagUtil::xiphComment(fileRef.file(), /* create */ true);
 
     if (!comment) {
         return false;
@@ -206,7 +188,7 @@ static void removeAllChapterFields(Ogg::XiphComment *comment) {
         return false;
     }
 
-    Ogg::XiphComment *comment = getXiphComment(fileRef.file());
+    Ogg::XiphComment *comment = TagUtil::xiphComment(fileRef.file());
 
     if (!comment) {
         return false;

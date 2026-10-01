@@ -174,6 +174,15 @@ namespace {
 
     PropertyMap tags = input.file()->properties();
 
+    // Chapter fields are markers; the caller's marker step carries them.
+    if (TagUtil::xiphComment(input.file())) {
+        StringList chapterKeys;
+        for (const auto &[key, _] : tags) {
+            if (TagUtil::isChapterField(key)) chapterKeys.append(key);
+        }
+        for (const auto &key : std::as_const(chapterKeys)) tags.erase(key);
+    }
+
     // The rating is absent from the PropertyMap — each container stores it differently
     // (ID3 POPM, the MP4 `rate` atom, Xiph RATING) — so it needs carrying separately.
     int ratingStars = TagRatingReadFromFile(input.file());
