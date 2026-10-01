@@ -26,6 +26,7 @@ Types marked with *(base)* are defined in [SPFKMetadataBase](https://github.com/
 
 - **MetaAudioFileDescription** *(base)* — Top-level Codable struct aggregating tag properties, audio format info, BEXT data, iXML, markers, and embedded artwork.
 - **MetaAudioFileDescription+IO** *(I/O)* — Parsing initializer and `save()` method with format-specific dispatch (WAV via WaveFileC, FLAC via FlacFileC, other formats via TagLib/AVFoundation).
+- **StoredXMPPacketWrite** *(I/O)* — Keeps, replaces or removes the XMP packet a WAV's `_PMX` chunk or an MP3's ID3v2 `PRIV` frame (owner `XMP`) stores, in the same TagLib save as the native chunks, or alone when no other flag is set. The bytes are written as given; nothing here parses XMP. A tag save keeps the stored packet. [SPFKMetadataXMP](https://github.com/ryanfrancesconi/spfk-metadata-xmp) composes it into XMP edits.
 
 ### Tag Properties
 
@@ -80,13 +81,13 @@ Low-level bridge layer exposing TagLib functionality to Swift through Objective-
 
 | Class | Description |
 |---|---|
-| **TagLibBridge** | Core TagLib operations: read/write tag properties, strip tags, copy metadata between files |
+| **TagLibBridge** | Core TagLib operations: read/write tag properties, strip tags, copy metadata between files, read and write the stored WAV/MP3 XMP packet |
 | **TagRating** | Reads and writes 5-star ratings (0–5, where 0 = unrated) across all supported container formats. Integrated into the tag dictionary pipeline: `TagFile` and `WaveFileC` call `TagRatingReadFromFile`/`TagRatingWriteToFile` while their `FileRef` is already open, injecting rating as the `"RATING"` dictionary key. In Swift it surfaces as `TagKey.rating` in `TagProperties`/`MetaAudioFileDescription`. A standalone `+read:`/`+write:toPath:` interface is also available for isolated access. Format conventions: ID3v2 (MP3/WAV/AIFF) → POPM Popularimeter (WMP canonical bytes); Xiph (FLAC/OGG) → `RATING` integer field + `FMPS_RATING` float field; MP4 (M4A) → `rate` atom + `----:com.apple.iTunes:RATING` freeform; APE → `RATING` integer; ASF (WMA) → `WM/SharedUserRating`; Matroska (MKV/MKA/WebM) → an ordinary `RATING` SimpleTag. **`RATING` does not travel through TagLib's PropertyMap** — every container stores it differently, so `TagFile::save` pulls it out and dispatches per format. A container with no branch here reads back correctly (its PropertyMap already carries the value) while a non-zero rating fails the save, so enabling a new container means adding one. |
 | **TagFile** | File handle wrapper for TagLib with format-specific tag access |
 | **ID3File** | Reads every ID3v2 frame, PRIV (XMP) and TXXX included, keyed by frame ID; read-only |
 | **TagPicture** | Embedded artwork extraction and embedding via TagLib. Reads using `CGImageSource` (JPEG, PNG, WebP, HEIC, TIFF, GIF, etc.). Writes using `CGImageDestination`; formats that cannot be written (e.g. WebP) are automatically transcoded to JPEG before embedding. For FLAC, routes through `FileRef::setComplexProperties` to write native PICTURE blocks and migrates legacy XiphComment `METADATA_BLOCK_PICTURE` entries on write. |
 | **TagPictureRef** | CGImageRef container for artwork with UTType, managing Core Graphics reference counting across the Swift/ObjC boundary |
-| **WaveFileC** | A WAV's INFO, ID3, BEXT, iXML, artwork and markers via TagLib, with single-load/single-save I/O |
+| **WaveFileC** | A WAV's INFO, ID3, BEXT, iXML, `_PMX` XMP packet, artwork and markers via TagLib, with single-load/single-save I/O |
 | **FlacFileC** | A FLAC's BEXT and iXML APPLICATION blocks via TagLib; tags go through `TagFile` |
 | **BEXTDescriptionC** | EBU Tech 3285 BEXT chunk binary serializer/deserializer with initWithData:/serializedData |
 | **AudioMarkerUtil** | WAV and AIFF markers: a RIFF WAVE's `cue `/`adtl` through TagLib, everything else through Core Audio |
