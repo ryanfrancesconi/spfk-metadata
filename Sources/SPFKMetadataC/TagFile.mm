@@ -6,9 +6,11 @@
 #import <taglib/aifffile.h>
 #import <taglib/fileref.h>
 #import <taglib/flacfile.h>
+#import <taglib/id3v2tag.h>
 #import <taglib/mp4file.h>
 #import <taglib/mpegfile.h>
 #import <taglib/opusfile.h>
+#import <taglib/privateframe.h>
 #import <taglib/rifffile.h>
 #import <taglib/tpropertymap.h>
 #import <taglib/vorbisfile.h>
@@ -107,10 +109,22 @@ using namespace TagLib;
     // clearTags() strips artwork too, and this method writes text only.
     auto existingPictures = fileRef.complexProperties(String("PICTURE"));
 
+    File *f = fileRef.file();
+    auto *mpegFile = dynamic_cast<MPEG::File *>(f);
+
+    // The XMP packet has no PropertyMap key, so clearing the tag would delete it.
+    vector<ByteVector> xmpPackets;
+    if (mpegFile && mpegFile->hasID3v2Tag()) {
+        for (auto *frame : mpegFile->ID3v2Tag()->frameList("PRIV")) {
+            auto *privateFrame = dynamic_cast<ID3v2::PrivateFrame *>(frame);
+            if (privateFrame && privateFrame->owner() == "XMP") {
+                xmpPackets.push_back(privateFrame->data());
+            }
+        }
+    }
+
     // Cleared before writing, so anything absent from the new dictionary is removed.
     TagUtil::clearTags(fileRef);
-
-    File *f = fileRef.file();
 
     PropertyMap properties = PropertyMap();
 
@@ -128,6 +142,13 @@ using namespace TagLib;
 
     if (!TagRatingWriteToFile(f, ratingStars))
         return false;
+
+    for (const auto &packet : xmpPackets) {
+        auto *privateFrame = new ID3v2::PrivateFrame();
+        privateFrame->setOwner("XMP");
+        privateFrame->setData(packet);
+        mpegFile->ID3v2Tag(true)->addFrame(privateFrame);
+    }
 
     // A caller changing artwork does so through TagPicture after this returns.
     if (!existingPictures.isEmpty()) {
