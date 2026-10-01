@@ -67,7 +67,12 @@ static NSString *elementIDName(const ByteVector &elementID) {
     NSMutableArray *array = [[NSMutableArray alloc] init];
 
     for (auto it = chapterList.begin(); it != chapterList.end(); ++it) {
+        // A compressed or encrypted CHAP is listed as an UnknownFrame TagLib could not decode.
         ID3v2::ChapterFrame *frame = dynamic_cast<ID3v2::ChapterFrame *>(*it);
+
+        if (!frame) {
+            continue;
+        }
 
         NSTimeInterval startTime = NSTimeInterval(frame->startTime()) / 1000;
         NSTimeInterval endTime = NSTimeInterval(frame->endTime()) / 1000;

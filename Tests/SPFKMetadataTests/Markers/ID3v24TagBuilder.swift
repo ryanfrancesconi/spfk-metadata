@@ -21,9 +21,12 @@ enum ID3v24TagBuilder {
         withUnsafeBytes(of: value.bigEndian) { Data($0) }
     }
 
-    /// 4-byte ID, syncsafe size, two zero flag bytes, then `body`.
-    static func frame(id: String, body: Data) -> Data {
-        Data(id.utf8) + syncsafe(body.count) + Data([0, 0]) + body
+    /// 4-byte ID, syncsafe size, a zero status flag byte, `formatFlags`, then `body`.
+    ///
+    /// `formatFlags` bits: `0x08` compression, `0x04` encryption, `0x01` data length indicator.
+    /// Neither flag transforms `body`; the caller supplies whatever the flags announce.
+    static func frame(id: String, body: Data, formatFlags: UInt8 = 0) -> Data {
+        Data(id.utf8) + syncsafe(body.count) + Data([0, formatFlags]) + body
     }
 
     /// `TIT2` marked Latin-1 but holding `text`'s UTF-8 bytes.
@@ -54,11 +57,28 @@ enum ID3v24TagBuilder {
 
     /// `elementID` is written as given, then a NUL.
     static func chap(elementID: Data, startMs: UInt32, endMs: UInt32, embedded: [Data]) -> Data {
+        frame(id: "CHAP", body: chapBody(elementID: elementID, startMs: startMs, endMs: endMs, embedded: embedded))
+    }
+
+    static func chapBody(elementID: Data, startMs: UInt32, endMs: UInt32, embedded: [Data]) -> Data {
         var body = elementID + Data([0])
         body += bigEndian(startMs) + bigEndian(endMs)
         body += bigEndian(.max) + bigEndian(.max)
         body += embedded.reduce(Data(), +)
-        return frame(id: "CHAP", body: body)
+        return body
+    }
+
+    /// A `CHAP` flagged compressed, with a data length indicator ahead of `chapBody`'s bytes left
+    /// uncompressed: TagLib built without zlib stops at the flag.
+    static func compressedChap(elementID: String, startMs: UInt32, endMs: UInt32) -> Data {
+        let body = chapBody(elementID: Data(elementID.utf8), startMs: startMs, endMs: endMs, embedded: [])
+        return frame(id: "CHAP", body: syncsafe(body.count) + body, formatFlags: 0x09)
+    }
+
+    /// A `CHAP` flagged encrypted, its body an encryption method byte ahead of `chapBody`'s bytes.
+    static func encryptedChap(elementID: String, startMs: UInt32, endMs: UInt32) -> Data {
+        let body = chapBody(elementID: Data(elementID.utf8), startMs: startMs, endMs: endMs, embedded: [])
+        return frame(id: "CHAP", body: Data([0x80]) + body, formatFlags: 0x04)
     }
 
     /// Replaces the file's leading ID3v2 tag with a v2.4 tag holding `frames`.

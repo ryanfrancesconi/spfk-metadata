@@ -116,6 +116,27 @@ class MP3ChapterMarkerTests: BinTestCase {
         #expect(chapters.first?.startTime == 1.5)
     }
 
+    /// A `CHAP` frame TagLib cannot decode is skipped; the chapters beside it still read.
+    @Test(arguments: [
+        ID3v24TagBuilder.compressedChap(elementID: "packed", startMs: 0, endMs: 1000),
+        ID3v24TagBuilder.encryptedChap(elementID: "sealed", startMs: 0, endMs: 1000),
+    ])
+    func undecodableChapterFrameIsSkipped(undecodable: Data) async throws {
+        let tmpfile = try copyToBin(url: TestBundleResources.shared.tabla_mp3)
+        let readable = ID3v24TagBuilder.chap(
+            elementID: "ch1",
+            startMs: 1000,
+            endMs: 2000,
+            embedded: [ID3v24TagBuilder.tit2("Readable")]
+        )
+        try ID3v24TagBuilder.replaceTag(in: tmpfile, with: [undecodable, readable])
+
+        let chapters = getChapters(in: tmpfile)
+
+        #expect(chapters.map(\.name) == ["Readable"])
+        #expect(chapters.map(\.startTime) == [1])
+    }
+
     /// Each title is how some writer stores it: another tool's UTF-16, genuine Latin-1, and the
     /// UTF-8 bytes in a Latin-1 frame this package wrote before titles were written as UTF-8.
     @Test(arguments: [
