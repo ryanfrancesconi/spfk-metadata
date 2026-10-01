@@ -41,7 +41,10 @@ static vector<ByteVector> xmpPrivateFrameData(ID3v2::Tag *tag) {
 
 /// Replaces the `XMP`-owned `PRIV` frames with one holding `packet`, or with none when it is empty.
 static void setXMPPrivateFrame(ID3v2::Tag *tag, const ByteVector &packet) {
-    for (auto *frame : tag->frameList("PRIV")) {
+    // A copy: `frameList` returns the tag's own list, which `removeFrame` mutates.
+    const ID3v2::FrameList frames = tag->frameList("PRIV");
+
+    for (auto *frame : frames) {
         auto *privateFrame = dynamic_cast<ID3v2::PrivateFrame *>(frame);
         if (privateFrame && privateFrame->owner() == "XMP") {
             tag->removeFrame(privateFrame);

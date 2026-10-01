@@ -2,6 +2,7 @@
 
 import Foundation
 import SPFKAudioBase
+import SPFKBase
 import SPFKMetadataC
 
 /// What a native save does with the XMP packet a WAV's `_PMX` chunk or an MP3's ID3v2 `PRIV`
@@ -18,6 +19,19 @@ public enum StoredXMPPacketWrite: Sendable, Hashable {
     /// merged in. `nil` when there is none, or for a format outside ``fileTypes``.
     public static func storedPacket(in url: URL) -> String? {
         TagLibBridge.storedXMPPacket(url.path)
+    }
+
+    /// Writes the packet alone, leaving every native chunk as it is on disk. Nothing for ``keep``.
+    func write(to url: URL) throws {
+        var packet: String?
+        var needsWrite = false
+        apply { packet = $0; needsWrite = true }
+
+        guard needsWrite else { return }
+
+        guard TagLibBridge.setStoredXMPPacket(packet, path: url.path) else {
+            throw NSError(description: "Failed to write the XMP packet to \(url.path)")
+        }
     }
 
     /// Calls `body` with the packet to store, `nil` to remove it; not at all for ``keep``.

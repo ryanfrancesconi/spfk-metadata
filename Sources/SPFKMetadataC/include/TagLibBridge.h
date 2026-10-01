@@ -34,6 +34,10 @@ NS_ASSUME_NONNULL_BEGIN
 /// metadata is merged in. Nil when there is none, or for any other format.
 + (nullable NSString *)storedXMPPacket:(NSString *)path;
 
+/// Replaces that packet, removing it when `packet` is nil, and writes nothing else. False for any
+/// other format.
++ (bool)setStoredXMPPacket:(nullable NSString *)packet path:(NSString *)path;
+
 @end
 
 NS_ASSUME_NONNULL_END

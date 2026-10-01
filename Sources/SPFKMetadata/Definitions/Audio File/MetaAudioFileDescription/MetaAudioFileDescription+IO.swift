@@ -147,7 +147,11 @@ extension MetaAudioFileDescription {
         let markersNeedsSave = writable.contains(.markers)
 
         // A container rewrite costs the whole file (20-30 s at 4 GB); a Finder tag change shouldn't pay it.
-        if writable.contains(.metadata) || imageNeedsSave || markersNeedsSave || storedXMPPacket != .keep {
+        let containerNeedsSave = writable.contains(.metadata) || imageNeedsSave || markersNeedsSave
+
+        if !containerNeedsSave {
+            try storedXMPPacket.write(to: url)
+        } else {
             if fileType == .wav {
                 try saveWave(imageNeedsSave: imageNeedsSave, markersNeedsSave: markersNeedsSave, storedXMPPacket: storedXMPPacket)
             } else {

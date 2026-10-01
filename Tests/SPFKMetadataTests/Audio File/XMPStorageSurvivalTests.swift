@@ -99,6 +99,21 @@ final class StoredXMPPacketWriteTests: BinTestCase {
         #expect(try ID3v2Frames.xmpPacket(in: url) == nil)
     }
 
+    /// With no container flag only the packet is written, so an unflagged tag change stays unsaved.
+    @Test(arguments: [TestBundleResources.shared.cowbell_bext_wav, TestBundleResources.shared.tabla_mp3])
+    func aPacketOnlySaveWritesNoTags(fixture: URL) async throws {
+        let url = try copyToBin(url: fixture)
+
+        var description = try await MetaAudioFileDescription(parsing: url)
+        let title = description.tagProperties.tags[.title]
+        description.set(tag: .title, value: "Unflagged")
+        try description.save(dirtyFlags: [.xmp], storedXMPPacket: .replace(packet))
+
+        let saved = try await MetaAudioFileDescription(parsing: url)
+        #expect(saved.tagProperties.tags[.title] == title)
+        #expect(StoredXMPPacketWrite.storedPacket(in: url) == packet)
+    }
+
     @Test func aFormatWithoutAStoredPacketIsRefusedUntouched() async throws {
         let url = try copyToBin(url: TestBundleResources.shared.tabla_aif)
         let before = try Data(contentsOf: url)

@@ -228,4 +228,31 @@ namespace {
     return [[NSString alloc] initWithBytes:packet.data() length:packet.size() encoding:NSUTF8StringEncoding];
 }
 
++ (bool)setStoredXMPPacket:(nullable NSString *)packet path:(NSString *)path {
+    const ByteVector data = packet.length > 0 ? ByteVector(packet.UTF8String) : ByteVector();
+    bool isWave = false;
+
+    {
+        FileRef fileRef(path.UTF8String, false);
+        if (fileRef.isNull()) return false;
+
+        if (auto *mpegFile = dynamic_cast<MPEG::File *>(fileRef.file())) {
+            if (data.isEmpty() && !mpegFile->hasID3v2Tag()) return true;
+
+            TagUtil::setXMPPrivateFrame(mpegFile->ID3v2Tag(true), data);
+            return mpegFile->save();
+        }
+
+        isWave = dynamic_cast<RIFF::WAV::File *>(fileRef.file()) != nullptr;
+    }
+
+    if (!isWave) return false;
+
+    WaveMarkerFile waveFile(path.UTF8String, false);
+    if (!waveFile.isValid() || waveFile.readOnly()) return false;
+
+    waveFile.setXMPData(data);
+    return true;
+}
+
 @end
