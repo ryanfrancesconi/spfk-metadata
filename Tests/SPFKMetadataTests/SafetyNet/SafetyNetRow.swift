@@ -1,0 +1,215 @@
+// Copyright Ryan Francesconi. All Rights Reserved. Revision History at https://github.com/ryanfrancesconi/spfk-metadata
+
+import Foundation
+import SPFKAudioBase
+import SPFKMetadataBase
+import SPFKMetadataC
+import SPFKTesting
+import Testing
+
+@testable import SPFKMetadata
+
+#if os(macOS)
+    import SPFKFileSystem
+#endif
+
+/// A component the app owns and writes. Everything else in the file is foreign.
+enum SafetyNetComponent: String, CaseIterable, Hashable, Sendable {
+    case tags, rating, artwork, markers, bext, iXML, packet, finderTags
+}
+
+/// Data another app put in the file, and how the fixture plants it after the setup save.
+struct SafetyNetForeignItem: Sendable {
+    let item: SafetyNetItem
+    let inject: @Sendable (URL) throws -> Void
+
+    /// An xattr no writer of ours knows about. Lost by any save that replaces the file.
+    static let unrelatedXattr = SafetyNetForeignItem(item: .xattr(name: "com.example.safetynet")) { url in
+        try FileXattrs.set("com.example.safetynet", value: Data([0x53, 0x4E, 0x00, 0xFF, 0x01]), on: url)
+    }
+}
+
+/// One format row of the safety net: a base fixture, the components the setup save writes into
+/// it, and the foreign items planted afterwards.
+struct SafetyNetRow: Sendable, Hashable, CustomTestStringConvertible {
+    let name: String
+    let fileType: AudioFileType
+    let fixture: URL
+    let components: Set<SafetyNetComponent>
+    let foreignItems: [SafetyNetForeignItem]
+
+    var testDescription: String { name }
+
+    static func == (lhs: Self, rhs: Self) -> Bool { lhs.name == rhs.name }
+    func hash(into hasher: inout Hasher) { hasher.combine(name) }
+
+    func holds(_ component: SafetyNetComponent) -> Bool {
+        components.contains(component)
+    }
+}
+
+// MARK: - Rows
+
+extension SafetyNetRow {
+    private static let common: Set<SafetyNetComponent> = {
+        var result: Set<SafetyNetComponent> = [.tags, .rating, .artwork, .markers]
+        #if os(macOS)
+            result.insert(.finderTags)
+        #endif
+        return result
+    }()
+
+    static let mp3 = SafetyNetRow(
+        name: "mp3", fileType: .mp3, fixture: TestBundleResources.shared.tabla_mp3,
+        components: common.union([.packet]), foreignItems: [.unrelatedXattr]
+    )
+
+    static let wav = SafetyNetRow(
+        name: "wav", fileType: .wav, fixture: TestBundleResources.shared.tabla_wav,
+        components: common.union([.bext, .iXML, .packet]), foreignItems: [.unrelatedXattr]
+    )
+
+    static let flac = SafetyNetRow(
+        name: "flac", fileType: .flac, fixture: TestBundleResources.shared.tabla_flac,
+        components: common.union([.bext, .iXML]), foreignItems: [.unrelatedXattr]
+    )
+
+    static let m4a = SafetyNetRow(
+        name: "m4a", fileType: .m4a, fixture: TestBundleResources.shared.tabla_m4a,
+        components: common, foreignItems: [.unrelatedXattr]
+    )
+
+    static let m4b = SafetyNetRow(
+        name: "m4b", fileType: .m4b, fixture: TestBundleResources.shared.sine_m4b,
+        components: common, foreignItems: [.unrelatedXattr]
+    )
+
+    /// The formats ShadowTag users edit.
+    static let slice: [SafetyNetRow] = [mp3, wav, flac, m4a, m4b]
+}
+
+// MARK: - Setup values
+
+/// What the setup save writes. A save kind's edit changes one of these, so each must differ from
+/// the kind's own value.
+enum SafetyNetSetup {
+    static let title = "Safety Net"
+    static let rating = "4"
+    static let customTagKey = "SAFETYNET"
+    static let customTagValue = "Setup"
+    static let markers = [
+        AudioMarkerDescription(name: "Setup One", startTime: 0.1),
+        AudioMarkerDescription(name: "Setup Two", startTime: 0.3),
+    ]
+    static let bextSequenceDescription = "Safety Net BEXT"
+    static let bextOriginator = "SafetyNet"
+    static let iXMLProject = "Safety Net Project"
+    static let iXML = """
+    <?xml version="1.0" encoding="UTF-8"?>
+    <BWFXML><IXML_VERSION>1.61</IXML_VERSION><PROJECT>\(iXMLProject)</PROJECT><NOTE>Setup</NOTE></BWFXML>
+    """
+    static let packet = xmpPacket(title: "Setup")
+    static let finderTag = "Safety Net"
+
+    static func xmpPacket(title: String) -> String {
+        """
+        <?xpacket begin="" id="W5M0MpCehiHzreSzNTczkc9d"?>\
+        <x:xmpmeta xmlns:x="adobe:ns:meta/"><rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\
+        <rdf:Description rdf:about="" xmlns:dc="http://purl.org/dc/elements/1.1/">\
+        <dc:title><rdf:Alt><rdf:li xml:lang="x-default">\(title)</rdf:li></rdf:Alt></dc:title>\
+        </rdf:Description></rdf:RDF></x:xmpmeta><?xpacket end="w"?>
+        """
+    }
+
+    static func picture(_ url: URL) throws -> TagPictureRef {
+        try #require(TagPictureRef(url: url, pictureDescription: "", pictureType: ""))
+    }
+}
+
+// MARK: - Fixture
+
+extension SafetyNetRow {
+    /// Copies the base fixture into `bin`, writes every owned component through
+    /// `MetaAudioFileDescription.save`, then plants the foreign items byte-level, so no writer of
+    /// ours touches them during setup.
+    func prepare(in bin: URL) async throws -> URL {
+        let url = bin.appendingPathComponent("\(name)-\(fixture.lastPathComponent)")
+        try FileManager.default.copyItem(at: fixture, to: url)
+
+        var description = try await MetaAudioFileDescription(parsing: url)
+        var flags: Set<MetadataDirtyFlag> = [.metadata]
+
+        description.tagProperties[.title] = SafetyNetSetup.title
+        description.tagProperties.data.set(customTag: SafetyNetSetup.customTagKey, value: SafetyNetSetup.customTagValue)
+        description.tagProperties[.rating] = SafetyNetSetup.rating
+
+        if holds(.artwork) {
+            description.imageDescription.pictureRef = try SafetyNetSetup.picture(TestBundleResources.shared.sharksandwich)
+            flags.insert(.image)
+        }
+
+        if holds(.markers) {
+            description.markerCollection = AudioMarkerDescriptionCollection(markerDescriptions: SafetyNetSetup.markers)
+            flags.insert(.markers)
+        }
+
+        if holds(.bext) {
+            var bext = BEXTDescription()
+            bext.sequenceDescription = SafetyNetSetup.bextSequenceDescription
+            bext.originator = SafetyNetSetup.bextOriginator
+            description.bextDescription = bext
+        }
+
+        if holds(.iXML) {
+            description.iXMLMetadata = SafetyNetSetup.iXML
+        }
+
+        #if os(macOS)
+            if holds(.finderTags) {
+                description.urlProperties.finderTags = FinderTagGroup(tags: [FinderTagDescription(label: SafetyNetSetup.finderTag)])
+                flags.insert(.finderTags)
+            }
+        #endif
+
+        try description.save(dirtyFlags: flags, storedXMPPacket: holds(.packet) ? .replace(SafetyNetSetup.packet) : .keep)
+
+        try await requireSetupWritten(to: url)
+
+        for foreign in foreignItems {
+            try foreign.inject(url)
+        }
+
+        return url
+    }
+
+    /// The setup save, checked through our own reader. This guards the fixture, not the save under
+    /// test: a component the setup failed to write would let every later cell pass vacuously.
+    private func requireSetupWritten(to url: URL) async throws {
+        let reread = try await MetaAudioFileDescription(parsing: url)
+        let context = Comment(rawValue: "\(name) setup save")
+
+        try #require(reread.tagProperties[.title] == SafetyNetSetup.title, context)
+        try #require(reread.tagProperties.data.customTag(for: SafetyNetSetup.customTagKey) == SafetyNetSetup.customTagValue, context)
+        try #require(reread.tagProperties[.rating] == SafetyNetSetup.rating, context)
+
+        if holds(.artwork) {
+            try #require(reread.imageDescription.cgImage != nil, context)
+        }
+
+        if holds(.markers) {
+            try #require(reread.markerCollection.markerDescriptions.map(\.name) == SafetyNetSetup.markers.map(\.name), context)
+        }
+
+        if holds(.bext) {
+            try #require(reread.bextDescription?.sequenceDescription == SafetyNetSetup.bextSequenceDescription, context)
+        }
+
+        if holds(.iXML) {
+            try #require(reread.iXMLMetadata?.contains(SafetyNetSetup.iXMLProject) == true, context)
+        }
+
+        if holds(.packet) {
+            try #require(StoredXMPPacketWrite.storedPacket(in: url) == SafetyNetSetup.packet, context)
+        }
+    }
+}
