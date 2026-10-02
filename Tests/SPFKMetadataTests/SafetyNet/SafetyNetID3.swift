@@ -8,7 +8,7 @@ import SPFKTesting
 /// applications' frames and the tag's layout, which no save of ours may change.
 enum SafetyNetID3Item: String, CaseIterable, Hashable, Sendable, CustomStringConvertible {
     // Owned
-    case title, customTag, otherText, rating, frontCover, frontCoverPixels, frontCoverPath, chapters, tableOfContents, xmpPacket
+    case title, customTag, otherText, frameIDUserText, duplicateUserText, infoUserText, rating, frontCover, frontCoverPixels, frontCoverPath, chapters, tableOfContents, xmpPacket
 
     // Foreign
     case otherPopularimeter, playCount, userText, privateFrame, generalObject, uniqueFileID
@@ -22,6 +22,9 @@ enum SafetyNetID3Item: String, CaseIterable, Hashable, Sendable, CustomStringCon
         case .title: "TIT2"
         case .customTag: "TXXX:\(SafetyNetSetup.customTagKey)"
         case .otherText: "other text frames"
+        case .frameIDUserText: "TXXX named after a frame ID"
+        case .duplicateUserText: "TXXX descriptions used twice"
+        case .infoUserText: "TXXX holding an INFO-only item"
         case .rating: "POPM(\(SafetyNetID3Foreign.ratingEmail))"
         case .frontCover: "APIC(front cover)"
         case .frontCoverPixels: "APIC(front cover) pixel size"
@@ -47,17 +50,21 @@ enum SafetyNetID3Item: String, CaseIterable, Hashable, Sendable, CustomStringCon
     }
 
     static let ownedItems: [SafetyNetComponent: [SafetyNetItem]] = [
-        .tags: [.id3(.title), .id3(.customTag), .id3(.otherText)],
+        .tags: [.id3(.title), .id3(.customTag), .id3(.otherText), .id3(.frameIDUserText), .id3(.duplicateUserText), .id3(.infoUserText)],
         .rating: [.id3(.rating)],
         .artwork: [.id3(.frontCover), .id3(.frontCoverPixels), .id3(.frontCoverPath)],
         .markers: [.id3(.chapters), .id3(.tableOfContents)],
         .packet: [.id3(.xmpPacket)],
     ]
 
-    static let foreignItems: [SafetyNetForeignItem] = [
+    /// Other applications' frames, wherever the tag sits.
+    static let foreignFrames: [SafetyNetID3Item] = [
         .otherPopularimeter, .playCount, .userText, .privateFrame, .generalObject, .uniqueFileID,
-        .lyrics, .userURL, .comments, .artist, .involvedPeople, .otherPictures, .majorVersion, .id3v1,
-    ].map { SafetyNetForeignItem(item: .id3($0)) }
+        .lyrics, .userURL, .comments, .artist, .involvedPeople, .otherPictures,
+    ]
+
+    /// An MP3's foreign frames and the layout of its leading tag.
+    static let foreignItems: [SafetyNetForeignItem] = (foreignFrames + [.majorVersion, .id3v1]).map { SafetyNetForeignItem(item: .id3($0)) }
 }
 
 // MARK: - Reading
@@ -108,6 +115,20 @@ extension SafetyNetID3Item {
 
         case .otherText:
             return try text(Self.otherTextLines(in: tag, userTexts: userTexts))
+
+        // The next three read "none" rather than nothing when absent: the precondition is the
+        // absence, and a cell requires every item to be read before the save.
+        case .frameIDUserText:
+            let copies = userTexts.filter { Self.frameIDDescriptions.contains($0.description.uppercased()) }
+            return .text(copies.isEmpty ? ["none"] : copies.map { "\($0.description): \($0.values.joined(separator: " | "))" }.sorted())
+
+        case .duplicateUserText:
+            let counts = Dictionary(grouping: userTexts, by: { $0.description.uppercased() }).filter { $0.value.count > 1 }
+            return .text(counts.isEmpty ? ["none"] : counts.map { "\($0.key) ×\($0.value.count)" }.sorted())
+
+        case .infoUserText:
+            let copies = userTexts.filter { SafetyNetID3Foreign.infoOnlyUserTextDescriptions.contains($0.description.uppercased()) }
+            return .text(copies.isEmpty ? ["none"] : copies.map { "\($0.description): \($0.values.joined(separator: " | "))" }.sorted())
 
         case .rating:
             return text(popularimeters.filter { $0.email == SafetyNetID3Foreign.ratingEmail }.map(Self.line))
@@ -172,7 +193,11 @@ extension SafetyNetID3Item {
         }
     }
 
-    /// Every text frame no other item reads, under its v2.4 ID, as `ID: values`.
+    /// `TXXX` descriptions that name a frame whose text the WAV writer can't map to a property.
+    static let frameIDDescriptions: Set<String> = ["USLT", "WXXX", "TIPL", "TMCL", "IPLS"]
+
+    /// Every text frame no other item reads, under its v2.4 ID, as `ID: values`; a repeated line
+    /// once, since ``duplicateUserText`` counts repeats.
     private static func otherTextLines(in tag: ID3v2Frames.Tag, userTexts: [ID3v2Frames.UserText]) throws -> [String] {
         let readElsewhere: Set<String> = ["TIT2", "TPE1", "TIPL", "IPLS", "TXXX"]
         let v24ID = ["TYER": "TDRC", "TORY": "TDOR"]
@@ -182,10 +207,12 @@ extension SafetyNetID3Item {
         }
 
         let owned = [SafetyNetSetup.customTagKey, SafetyNetID3Foreign.userTextDescription]
+        let readElsewhereTXXX = frameIDDescriptions.union(SafetyNetID3Foreign.infoOnlyUserTextDescriptions)
         let others = userTexts.filter { text in !owned.contains { $0.caseInsensitiveCompare(text.description) == .orderedSame } }
+            .filter { !readElsewhereTXXX.contains($0.description.uppercased()) }
             .map { "TXXX:\($0.description): \($0.values.joined(separator: " | "))" }
 
-        return (frames + others).sorted()
+        return Array(Set(frames + others)).sorted()
     }
 
     private static func line(_ popularimeter: ID3v2Frames.Popularimeter) -> String {

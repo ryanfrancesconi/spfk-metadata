@@ -48,6 +48,7 @@ extension SafetyNetItem {
         case .finderTags: .value(.text([SafetyNetEdit.finderTag]))
         case .wholeFile, .xattr: .unchanged
         case let .id3(item): try item.written(by: kind, after: after)
+        case let .riff(item): try item.written(by: kind, after: after)
         }
     }
 }
@@ -112,8 +113,17 @@ enum SafetyNetCell {
             #expect(size == (kind == .k6 ? nil : try SafetyNetEdit.artworkPixelSize()), "\(context) artwork")
         }
 
+        if written.contains(.bext) {
+            #expect(reread.bextDescription?.sequenceDescription == SafetyNetEdit.bextSequenceDescription, "\(context) BEXT")
+        }
+
+        if written.contains(.iXML) {
+            #expect(reread.iXMLMetadata?.contains(SafetyNetEdit.iXMLProject) == true, "\(context) iXML")
+        }
+
         if written.contains(.markers) {
-            #expect(reread.markerCollection.markerDescriptions.map(\.name) == SafetyNetEdit.markers.map(\.name), "\(context) markers")
+            let expected = kind == .k8 ? [] : SafetyNetEdit.markers.map(\.name)
+            #expect(reread.markerCollection.markerDescriptions.map(\.name) == expected, "\(context) markers")
         }
 
         if written.contains(.packet) {

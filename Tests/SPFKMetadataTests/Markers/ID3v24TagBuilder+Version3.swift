@@ -170,7 +170,12 @@ extension ID3v24TagBuilder {
             file.removeLast(128)
         }
 
+        try (version3Tag(frames: frames) + file).write(to: url)
+    }
+
+    /// An ID3v2.3 tag of `frames` with no padding.
+    static func version3Tag(frames: [Data]) -> Data {
         let tagBody = frames.reduce(Data(), +)
-        try (Data("ID3".utf8) + Data([3, 0, 0]) + syncsafe(tagBody.count) + tagBody + file).write(to: url)
+        return Data("ID3".utf8) + Data([3, 0, 0]) + syncsafe(tagBody.count) + tagBody
     }
 }

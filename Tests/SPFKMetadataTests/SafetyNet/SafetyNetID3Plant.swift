@@ -15,6 +15,9 @@ enum SafetyNetID3Foreign {
     static let artist = ["David St. Hubbins", "Nigel Tufnel"]
     static let involvedPeople = ["PRODUCER", "Ian Faith"]
 
+    /// The custom-tag names the reader gives INFO items that have no tag key (`IPLT`).
+    static let infoOnlyUserTextDescriptions: Set<String> = ["NUMCOLORS"]
+
     static func frames() throws -> [Data] {
         typealias Builder = ID3v24TagBuilder
 
@@ -48,18 +51,21 @@ enum SafetyNetID3Plant {
     }
 
     /// Re-renders the setup save's tag as ID3v2.3 with no ID3v1 tag, so a save that changes the
-    /// layout is seen; replaces the setup's `TPE1` with a two-valued one and its `CTOC` with one
-    /// listing the chapters actually present; then adds the foreign frames.
+    /// layout is seen, and plants the foreign frames in it.
     static func plant(in url: URL) throws {
         guard let tag = try ID3v2Frames.tag(in: url) else { throw PlantError.noTag(url) }
+        try ID3v24TagBuilder.replaceTagWithVersion3(in: url, frames: plantedFrames(from: tag.frames, majorVersion: tag.majorVersion))
+    }
 
-        let kept = tag.frames.filter { $0.id != "TPE1" && $0.id != "CTOC" }
-        let chapterIDs = try tag.frames("CHAP").map { try ID3v2Frames.Chapter($0.body, majorVersion: tag.majorVersion).elementID }
+    /// `frames` as v2.3 frames with the setup's `TPE1` replaced by a two-valued one and its `CTOC`
+    /// by one listing the chapters actually present, followed by the foreign frames.
+    static func plantedFrames(from frames: [ID3v2Frames.Frame], majorVersion: UInt8) throws -> [Data] {
+        let kept = frames.filter { $0.id != "TPE1" && $0.id != "CTOC" }
+        let chapterIDs = try frames.filter { $0.id == "CHAP" }.map { try ID3v2Frames.Chapter($0.body, majorVersion: majorVersion).elementID }
+        let tableOfContents = chapterIDs.isEmpty ? [] : [ID3v24TagBuilder.version3TableOfContents(elementID: "toc", flags: 0x03, children: chapterIDs)]
 
-        let frames = try kept.map { try ID3v24TagBuilder.version3Frame(rendering: $0, from: tag.majorVersion) }
-            + [ID3v24TagBuilder.version3TableOfContents(elementID: "toc", flags: 0x03, children: chapterIDs)]
+        return try kept.map { try ID3v24TagBuilder.version3Frame(rendering: $0, from: majorVersion) }
+            + tableOfContents
             + SafetyNetID3Foreign.frames()
-
-        try ID3v24TagBuilder.replaceTagWithVersion3(in: url, frames: frames)
     }
 }

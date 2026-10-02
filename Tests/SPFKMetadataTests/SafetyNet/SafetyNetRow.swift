@@ -90,7 +90,15 @@ extension SafetyNetRow {
 
     static let wav = SafetyNetRow(
         name: "wav", fileType: .wav, fixture: TestBundleResources.shared.tabla_wav,
-        components: common.union([.bext, .iXML, .packet]), foreignItems: [.unrelatedXattr]
+        components: common.union([.bext, .iXML, .packet]), foreignItems: SafetyNetRIFFItem.foreignItems + [.unrelatedXattr],
+        ownedItems: SafetyNetRIFFItem.ownedItems, plant: { try SafetyNetRIFFPlant.plant(in: $0) }
+    )
+
+    /// The wav row with only an undated `bext` checked: a second fixture for one item.
+    static let wavUndatedBEXT = SafetyNetRow(
+        name: "wav-undated-bext", fileType: .wav, fixture: TestBundleResources.shared.tabla_wav,
+        components: common.union([.bext, .iXML, .packet]), foreignItems: [],
+        ownedItems: [.bext: [.riff(.bextDateTime)]], plant: { try SafetyNetRIFFPlant.plantUndatedBroadcastExtension(in: $0) }
     )
 
     static let flac = SafetyNetRow(

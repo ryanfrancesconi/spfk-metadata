@@ -13,8 +13,10 @@ enum SafetyNetItem: Hashable, Sendable, CustomStringConvertible {
     case finderTags
     /// One extended attribute's bytes.
     case xattr(name: String)
-    /// Something in a leading ID3v2 tag.
+    /// Something in an ID3v2 tag: a leading one, or a WAV's `ID3 ` chunk.
     case id3(SafetyNetID3Item)
+    /// Something in a WAV's RIFF chunks.
+    case riff(SafetyNetRIFFItem)
 
     var description: String {
         switch self {
@@ -22,6 +24,7 @@ enum SafetyNetItem: Hashable, Sendable, CustomStringConvertible {
         case .finderTags: "Finder tags"
         case let .xattr(name): "xattr \(name)"
         case let .id3(item): "ID3 \(item)"
+        case let .riff(item): "RIFF \(item)"
         }
     }
 }
@@ -66,14 +69,25 @@ enum SafetyNetValue: Equatable, Sendable, CustomStringConvertible {
 struct SafetyNetSnapshot {
     private(set) var values: [SafetyNetItem: SafetyNetValue] = [:]
 
-    /// The leading ID3v2 tag, when an item asked for it.
+    /// The ID3v2 tag, when an item asked for it: a RIFF file's `ID3 ` chunk, else the leading tag.
     private(set) var id3Tag: ID3v2Frames.Tag?
+
+    /// A RIFF file's chunks.
+    private(set) var riff: RIFFChunks?
 
     init(of url: URL, items: [SafetyNetItem]) throws {
         let data = try Data(contentsOf: url)
 
+        if data.starts(with: Data("RIFF".utf8)) {
+            riff = try RIFFChunks(data)
+        }
+
         if items.contains(where: { if case .id3 = $0 { true } else { false } }) {
-            id3Tag = try ID3v2Frames.tag(in: data)
+            if let riff {
+                id3Tag = try riff.chunks.first { $0.id == "ID3 " || $0.id == "id3 " }.flatMap { try ID3v2Frames.tag(in: $0.payload) }
+            } else {
+                id3Tag = try ID3v2Frames.tag(in: data)
+            }
         }
 
         for item in items {
@@ -105,6 +119,9 @@ struct SafetyNetSnapshot {
 
         case let .id3(id3Item):
             try id3Item.read(from: id3Tag, file: data, url: url)
+
+        case let .riff(riffItem):
+            try riffItem.read(from: riff)
         }
     }
 }

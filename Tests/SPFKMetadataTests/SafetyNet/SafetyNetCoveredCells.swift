@@ -18,6 +18,11 @@ enum SafetyNetCoveredCells {
         Entry(row: "mp3", kinds: [.k17], item: .id3(.xmpPacket), coveringTest: "StoredXMPPacketWriteTests.anMP3SaveRemovesThePacket"),
         Entry(row: "mp3", kinds: [.k1], item: .id3(.privateFrame), coveringTest: "MP3TagSavePreservationTests.otherApplicationsFramesSurviveATitleSave"),
         Entry(row: "mp3", kinds: [.k1], item: .id3(.generalObject), coveringTest: "MP3TagSavePreservationTests.otherApplicationsFramesSurviveATitleSave"),
+        Entry(row: "wav", kinds: [.k1], item: .riff(.xmpPacket), coveringTest: "XMPStorageSurvivalTests.aWaveTagSaveKeepsThePMXChunk"),
+        Entry(row: "wav", kinds: [.k15], item: .riff(.xmpPacket), coveringTest: "StoredXMPPacketWriteTests.aWaveSaveStoresTheReplacementPacket"),
+        Entry(row: "wav", kinds: [.k17], item: .riff(.xmpPacket), coveringTest: "StoredXMPPacketWriteTests.aWaveSaveRemovesThePacket"),
+        Entry(row: "wav", kinds: [.k1], item: .id3(.privateFrame), coveringTest: "WaveID3UnmappedFrameTests.tagSaveKeepsUnmappedFramesAsTheyAre"),
+        Entry(row: "wav", kinds: [.k1], item: .id3(.uniqueFileID), coveringTest: "WaveID3UnmappedFrameTests.tagSaveKeepsUnmappedFramesAsTheyAre"),
     ]
 
     /// The test that already covers this cell, or nil when the net checks it.
