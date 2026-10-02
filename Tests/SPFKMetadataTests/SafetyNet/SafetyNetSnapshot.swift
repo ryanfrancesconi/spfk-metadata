@@ -1,5 +1,6 @@
 // Copyright Ryan Francesconi. All Rights Reserved. Revision History at https://github.com/ryanfrancesconi/spfk-metadata
 
+import AVFoundation
 import CryptoKit
 import Foundation
 import SPFKTesting
@@ -19,6 +20,11 @@ enum SafetyNetItem: Hashable, Sendable, CustomStringConvertible {
     case riff(SafetyNetRIFFItem)
     /// Something in a FLAC's metadata blocks.
     case flac(SafetyNetFLACItem)
+    /// Something in an MP4's atoms, or its chapters as AVFoundation reads them.
+    case mp4(SafetyNetMP4Item)
+    /// What our own reader shows for a component after the save; checked beside the independent
+    /// readers, never read into a snapshot.
+    case ourReader(SafetyNetComponent)
 
     var description: String {
         switch self {
@@ -28,6 +34,8 @@ enum SafetyNetItem: Hashable, Sendable, CustomStringConvertible {
         case let .id3(item): "ID3 \(item)"
         case let .riff(item): "RIFF \(item)"
         case let .flac(item): "FLAC \(item)"
+        case let .mp4(item): "MP4 \(item)"
+        case let .ourReader(component): "our reader's \(component.rawValue)"
         }
     }
 }
@@ -81,13 +89,28 @@ struct SafetyNetSnapshot {
     /// A FLAC file's metadata blocks.
     private(set) var flac: FLACBlocks?
 
-    init(of url: URL, items: [SafetyNetItem]) throws {
+    /// An MP4 file's atoms.
+    private(set) var mp4: MP4Atoms?
+
+    /// An MP4's chapters as AVFoundation lists them, when an item asked for them.
+    private(set) var mp4Chapters: [String]?
+
+    /// An MP4's duration in seconds as AVFoundation reads it, when its chapters were read.
+    private(set) var mp4Duration: Double?
+
+    init(of url: URL, items: [SafetyNetItem]) async throws {
         let data = try Data(contentsOf: url)
 
         if data.starts(with: Data("RIFF".utf8)) {
             riff = try RIFFChunks(data)
         } else if FLACBlocks.isFLAC(data) {
             flac = try FLACBlocks(data)
+        } else if data.count >= 8, data.subdata(in: 4 ..< 8) == Data("ftyp".utf8) {
+            mp4 = try MP4Atoms(data)
+        }
+
+        if mp4 != nil, items.contains(.mp4(.chapters)) {
+            (mp4Chapters, mp4Duration) = try await Self.chapters(of: url)
         }
 
         if items.contains(where: { if case .id3 = $0 { true } else { false } }) {
@@ -133,7 +156,36 @@ struct SafetyNetSnapshot {
 
         case let .flac(flacItem):
             try flacItem.read(from: flac)
+
+        case let .mp4(mp4Item):
+            try mp4Item.read(from: mp4, chapters: mp4Chapters)
+
+        case .ourReader:
+            nil
         }
+    }
+}
+
+// MARK: - AVFoundation
+
+extension SafetyNetSnapshot {
+    /// The QuickTime chapter track through AVFoundation, which shares no code with TagLib.
+    private static func chapters(of url: URL) async throws -> ([String], Double) {
+        let asset = AVURLAsset(url: url)
+        let duration = try await asset.load(.duration).seconds
+        let groups = try await asset.loadChapterMetadataGroups(bestMatchingPreferredLanguages: ["und"])
+        var lines: [String] = []
+
+        for group in groups {
+            var titles: [String] = []
+            for item in group.items {
+                guard item.commonKey == .commonKeyTitle else { continue }
+                titles.append(try await item.load(.stringValue) ?? "")
+            }
+            lines.append(SafetyNetMP4Item.chapterLine(start: group.timeRange.start.seconds, title: titles.joined(separator: " | ")))
+        }
+
+        return (lines, duration)
     }
 }
 

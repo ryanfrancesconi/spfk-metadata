@@ -46,10 +46,11 @@ extension SafetyNetItem {
     func written(by kind: SaveKind, after: SafetyNetSnapshot) throws -> SafetyNetWrite {
         switch self {
         case .finderTags: .value(.text([SafetyNetEdit.finderTag]))
-        case .wholeFile, .xattr: .unchanged
+        case .wholeFile, .xattr, .ourReader: .unchanged
         case let .id3(item): try item.written(by: kind, after: after)
         case let .riff(item): try item.written(by: kind, after: after)
         case let .flac(item): try item.written(by: kind, after: after)
+        case let .mp4(item): try item.written(by: kind, after: after)
         }
     }
 }
@@ -67,13 +68,13 @@ enum SafetyNetCell {
             items.insert(.wholeFile, at: 0)
         }
 
-        let before = try SafetyNetSnapshot(of: url, items: items)
+        let before = try await SafetyNetSnapshot(of: url, items: items)
         try before.requirePresent(items, row: row)
 
         var description = try await MetaAudioFileDescription(parsing: url)
         try kind.run(on: &description, row: row)
 
-        let after = try SafetyNetSnapshot(of: url, items: items)
+        let after = try await SafetyNetSnapshot(of: url, items: items)
 
         for item in items where SafetyNetCoveredCells.coveringTest(row: row, kind: kind, item: item) == nil {
             let isWritten = row.component(of: item).map(kind.written.contains) ?? false
@@ -124,7 +125,11 @@ enum SafetyNetCell {
 
         if written.contains(.markers) {
             let expected = kind == .k8 ? [] : SafetyNetEdit.markers.map(\.name)
-            #expect(reread.markerCollection.markerDescriptions.map(\.name) == expected, "\(context) markers")
+            let actual = reread.markerCollection.markerDescriptions.map(\.name)
+            SafetyNetKnownIssues.expect(
+                actual == expected, "\(context) markers: expected \(expected), got \(actual)",
+                row: row, kind: kind, item: .ourReader(.markers), sourceLocation: #_sourceLocation
+            )
         }
 
         if written.contains(.packet) {

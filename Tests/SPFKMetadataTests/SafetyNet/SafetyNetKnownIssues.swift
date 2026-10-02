@@ -16,7 +16,7 @@ struct SafetyNetKnownIssue: Sendable {
 /// that starts passing records `knownIssueNotRecorded` and turns the suite red until its entry is
 /// removed.
 enum SafetyNetKnownIssues {
-    static let table: [SafetyNetKnownIssue] = id3 + wave + flac
+    static let table: [SafetyNetKnownIssue] = id3 + wave + flac + mp4
 
     /// Every MP3 save that writes the container.
     private static let mp3ContainerKinds: Set<SaveKind> = [.k0, .k1, .k2, .k5, .k6, .k7, .s1, .s2, .k15, .k16, .k17]
@@ -167,6 +167,40 @@ enum SafetyNetKnownIssues {
         SafetyNetKnownIssue(
             rows: ["flac-ixml-only-bext"], kinds: [.k1, .k2, .k5], item: .flac(.blockSet),
             text: "A FLAC save writes a bext block for a BEXT held only in iXML's <BEXT>: expected no bext block, found one (F39)"
+        ),
+    ]
+
+    /// Every M4A and M4B save kind in the net: each runs the tag save first.
+    private static let mp4Kinds: Set<SaveKind> = [.k0, .k1, .k2, .k5, .k6, .k7, .k8, .s1, .s2]
+
+    private static let mp4: [SafetyNetKnownIssue] = [
+        SafetyNetKnownIssue(
+            rows: ["m4a", "m4b"], kinds: mp4Kinds, item: .mp4(.multiValuedText),
+            text: "An MP4 save flattens a multi-valued text item: expected ©ART twice, found one value joined with a space (F15)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["m4a", "m4b"], kinds: mp4Kinds, item: .mp4(.unknownFreeform),
+            text: "An MP4 save upper-cases another app's iTunes freeform name: expected \"SafetyNet Foreign\", found \"SAFETYNET FOREIGN\" (F40)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["m4a", "m4b"], kinds: mp4Kinds, item: .mp4(.gaplessInfo),
+            text: "An MP4 save renames the gapless-playback atom: expected iTunSMPB, found ITUNSMPB (F40)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["m4a", "m4b"], kinds: [.k0, .k5, .k6, .s2], item: .mp4(.otherCovers),
+            text: "An MP4 artwork save deletes the file's other covr images: expected the second image, found none (F26)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["m4a", "m4b"], kinds: [.k0], item: .mp4(.frontCover),
+            text: "An MP4 save flagged for artwork re-encodes an unchanged cover: expected the same image bytes, found new ones (F30)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["m4a", "m4b"], kinds: [.k7, .s1], item: .mp4(.chapters),
+            text: "An MP4 marker save whose first marker starts after zero adds an untitled chapter at zero that other players list: expected the written chapters only, found an extra one at 0.000 (F41)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["m4a", "m4b"], kinds: [.k8], item: .ourReader(.markers),
+            text: "Removing every MP4 marker leaves the Nero chpl chapters, which the app then reads back as markers: expected none, found the chpl's five (F42)"
         ),
     ]
 

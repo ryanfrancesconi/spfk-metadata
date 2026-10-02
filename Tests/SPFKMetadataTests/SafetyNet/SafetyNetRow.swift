@@ -115,14 +115,18 @@ extension SafetyNetRow {
         plant: { try SafetyNetFLACPlant.plantIXMLOnlyBroadcastExtension(in: $0) }
     )
 
+    /// `stik` 1, music.
     static let m4a = SafetyNetRow(
         name: "m4a", fileType: .m4a, fixture: TestBundleResources.shared.tabla_m4a,
-        components: common, foreignItems: [.unrelatedXattr]
+        components: common, foreignItems: SafetyNetMP4Item.foreignItems + [.unrelatedXattr],
+        ownedItems: SafetyNetMP4Item.ownedItems, plant: { try SafetyNetMP4Plant.plant(in: $0, mediaKind: 1) }
     )
 
+    /// `stik` 2, which makes Apple Books and Music treat the file as an audiobook.
     static let m4b = SafetyNetRow(
         name: "m4b", fileType: .m4b, fixture: TestBundleResources.shared.sine_m4b,
-        components: common, foreignItems: [.unrelatedXattr]
+        components: common, foreignItems: SafetyNetMP4Item.foreignItems + [.unrelatedXattr],
+        ownedItems: SafetyNetMP4Item.ownedItems, plant: { try SafetyNetMP4Plant.plant(in: $0, mediaKind: 2) }
     )
 
     /// The formats ShadowTag users edit.
