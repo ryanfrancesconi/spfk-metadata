@@ -17,6 +17,8 @@ enum SafetyNetItem: Hashable, Sendable, CustomStringConvertible {
     case id3(SafetyNetID3Item)
     /// Something in a WAV's RIFF chunks.
     case riff(SafetyNetRIFFItem)
+    /// Something in a FLAC's metadata blocks.
+    case flac(SafetyNetFLACItem)
 
     var description: String {
         switch self {
@@ -25,6 +27,7 @@ enum SafetyNetItem: Hashable, Sendable, CustomStringConvertible {
         case let .xattr(name): "xattr \(name)"
         case let .id3(item): "ID3 \(item)"
         case let .riff(item): "RIFF \(item)"
+        case let .flac(item): "FLAC \(item)"
         }
     }
 }
@@ -75,11 +78,16 @@ struct SafetyNetSnapshot {
     /// A RIFF file's chunks.
     private(set) var riff: RIFFChunks?
 
+    /// A FLAC file's metadata blocks.
+    private(set) var flac: FLACBlocks?
+
     init(of url: URL, items: [SafetyNetItem]) throws {
         let data = try Data(contentsOf: url)
 
         if data.starts(with: Data("RIFF".utf8)) {
             riff = try RIFFChunks(data)
+        } else if FLACBlocks.isFLAC(data) {
+            flac = try FLACBlocks(data)
         }
 
         if items.contains(where: { if case .id3 = $0 { true } else { false } }) {
@@ -122,6 +130,9 @@ struct SafetyNetSnapshot {
 
         case let .riff(riffItem):
             try riffItem.read(from: riff)
+
+        case let .flac(flacItem):
+            try flacItem.read(from: flac)
         }
     }
 }

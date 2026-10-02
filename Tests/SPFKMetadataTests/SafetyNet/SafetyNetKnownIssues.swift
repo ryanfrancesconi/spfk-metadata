@@ -16,7 +16,7 @@ struct SafetyNetKnownIssue: Sendable {
 /// that starts passing records `knownIssueNotRecorded` and turns the suite red until its entry is
 /// removed.
 enum SafetyNetKnownIssues {
-    static let table: [SafetyNetKnownIssue] = id3 + wave
+    static let table: [SafetyNetKnownIssue] = id3 + wave + flac
 
     /// Every MP3 save that writes the container.
     private static let mp3ContainerKinds: Set<SaveKind> = [.k0, .k1, .k2, .k5, .k6, .k7, .s1, .s2, .k15, .k16, .k17]
@@ -133,6 +133,44 @@ enum SafetyNetKnownIssues {
         SafetyNetKnownIssue(
             rows: ["wav-undated-bext"], kinds: wavTagKinds, item: .riff(.bextDateTime),
             text: "A WAV tag save fills an empty BEXT origination date and time with '0' characters: expected 18 NUL bytes, found \"000000000000000000\" (F36)"
+        ),
+    ]
+
+    /// Every FLAC save that writes the container: each runs the iXML/BEXT write and the tag save.
+    private static let flacContainerKinds: Set<SaveKind> = [.k0, .k1, .k2, .k3, .k4, .k5, .k6, .k7, .k8, .s1, .s2]
+
+    private static let flac: [SafetyNetKnownIssue] = [
+        SafetyNetKnownIssue(
+            rows: ["flac"], kinds: flacContainerKinds, item: .flac(.multiValuedField),
+            text: "A FLAC save flattens a repeated Vorbis field: expected ENCODER twice, found one value joined with a space (F15)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["flac"], kinds: flacContainerKinds.subtracting([.k4]), item: .flac(.iXML),
+            text: "A FLAC save re-serializes iXML, dropping comments and turning CDATA into escaped text: expected the comment and CDATA nodes, found neither (F13)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["flac"], kinds: [.k4], item: .flac(.iXML),
+            text: "A FLAC iXML edit re-serializes the rest of the document, dropping comments and turning CDATA into escaped text: expected the edit beside the comment and CDATA nodes, found neither (F13)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["flac"], kinds: [.k0, .k5, .k6, .s2], item: .flac(.otherPictures),
+            text: "A FLAC artwork save deletes the file's other pictures: expected the back cover, found none (F26)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["flac"], kinds: [.k0], item: .flac(.frontCover),
+            text: "A FLAC save flagged for artwork writes the file's first picture back as the front cover: expected the front cover unchanged, found the back cover's image and description (F37)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["flac"], kinds: [.k0], item: .flac(.frontCoverPixels),
+            text: "A FLAC save flagged for artwork writes the file's first picture back as the front cover: expected the front cover's pixel size, found the back cover's (F37)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["flac"], kinds: [.k0], item: .flac(.chapters),
+            text: "A FLAC marker save of unchanged markers turns point chapters into regions: expected no CHAPTERnnnEND, found one ending at the next chapter (F38)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["flac-ixml-only-bext"], kinds: [.k1, .k2, .k5], item: .flac(.blockSet),
+            text: "A FLAC save writes a bext block for a BEXT held only in iXML's <BEXT>: expected no bext block, found one (F39)"
         ),
     ]
 

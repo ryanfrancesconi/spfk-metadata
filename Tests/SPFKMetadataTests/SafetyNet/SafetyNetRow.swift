@@ -103,7 +103,16 @@ extension SafetyNetRow {
 
     static let flac = SafetyNetRow(
         name: "flac", fileType: .flac, fixture: TestBundleResources.shared.tabla_flac,
-        components: common.union([.bext, .iXML]), foreignItems: [.unrelatedXattr]
+        components: common.union([.bext, .iXML]), foreignItems: SafetyNetFLACItem.foreignItems + [.unrelatedXattr],
+        ownedItems: SafetyNetFLACItem.ownedItems, plant: { try SafetyNetFLACPlant.plant(in: $0) }
+    )
+
+    /// A FLAC whose BEXT is held only by iXML's `<BEXT>`, with only its block set checked: a
+    /// second fixture for one item.
+    static let flacIXMLOnlyBEXT = SafetyNetRow(
+        name: "flac-ixml-only-bext", fileType: .flac, fixture: TestBundleResources.shared.flac_bext_ixml_external,
+        components: common, foreignItems: [SafetyNetForeignItem(item: .flac(.blockSet))],
+        plant: { try SafetyNetFLACPlant.plantIXMLOnlyBroadcastExtension(in: $0) }
     )
 
     static let m4a = SafetyNetRow(
