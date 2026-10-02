@@ -18,6 +18,7 @@
 #import <taglib/wavfile.h>
 #import <taglib/xiphcomment.h>
 
+#import <taglib/commentsframe.h>
 #import <taglib/id3v2frame.h>
 #import <taglib/id3v2tag.h>
 #import <taglib/privateframe.h>
@@ -143,7 +144,9 @@ static bool isTextFrame(const ByteVector &frameID) {
 }
 
 /// Keyed by frame ID, a TXXX by its description, `PRIV` holding its raw data. `textOnly` keeps
-/// only what `isTextFrame` accepts, for a dictionary that goes back through `convertToPropertyMap`.
+/// only what `isTextFrame` accepts, for a dictionary that goes back through `convertToPropertyMap`,
+/// and keys a `COMM` as its PropertyMap key: an undescribed one as `COMM`, a described one as
+/// `COMMENT:<DESCRIPTION>`. The first frame for a key wins, as `PropertyMap[key].front()` does.
 static NSMutableDictionary *convertToDictionary(ID3v2::FrameList frameList, bool textOnly = false) {
     NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
 
@@ -170,6 +173,17 @@ static NSMutableDictionary *convertToDictionary(ID3v2::FrameList frameList, bool
             frameID = txxxFrame->description().data(String::UTF8);
             value = txxxFrame->fieldList().back();
 
+        } else if (textOnly && frameID == "COMM") {
+            auto *commentsFrame = dynamic_cast<ID3v2::CommentsFrame *>(*it);
+
+            if (!commentsFrame) {
+                continue;
+            }
+
+            const String key = commentsFrame->asProperties().begin()->first;
+            frameID = key == "COMMENT" ? ByteVector("COMM") : key.data(String::UTF8);
+            value = commentsFrame->text();
+
         } else if (frameID == "PRIV") {
             auto *privFrame = dynamic_cast<ID3v2::PrivateFrame *>(*it);
 
@@ -184,6 +198,8 @@ static NSMutableDictionary *convertToDictionary(ID3v2::FrameList frameList, bool
         const unsigned int length = frameID.size();
 
         NSString *nsKey = [[NSString alloc] initWithBytes:bytes length:length encoding:NSUTF8StringEncoding];
+
+        if (textOnly && dict[nsKey] != nil && (*it)->frameID() == "COMM") continue;
 
         NSString *nsValue = [[NSString alloc] initWithCString:value.toCString(true) encoding:NSUTF8StringEncoding];
 

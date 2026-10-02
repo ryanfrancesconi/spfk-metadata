@@ -100,11 +100,7 @@ enum SafetyNetKnownIssues {
         ),
         SafetyNetKnownIssue(
             rows: ["wav"], kinds: wavTagKinds, item: .id3(.comments),
-            text: "A WAV tag save keeps only the last COMM frame, losing the file's own comment: expected 3 frames, found the last one (F32)"
-        ),
-        SafetyNetKnownIssue(
-            rows: ["wav"], kinds: wavTagKinds, item: .riff(.infoComment),
-            text: "A WAV tag save replaces INFO ICMT with the last COMM frame's text: expected the file's comment, found another app's (F32)"
+            text: "A WAV tag save drops a second undescribed COMM in another language: expected the \"fra\" frame kept beside the file's comment, found it removed (F15)"
         ),
         SafetyNetKnownIssue(
             rows: ["wav"], kinds: wavTagKinds, item: .id3(.duplicateUserText),
