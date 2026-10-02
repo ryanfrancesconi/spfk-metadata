@@ -68,10 +68,6 @@ enum SafetyNetKnownIssues {
             rows: ["mp3"], kinds: [.k0], item: .id3(.frontCover),
             text: "An MP3 save flagged for artwork re-encodes an unchanged front cover: expected the same image bytes, found new ones (F30)"
         ),
-        SafetyNetKnownIssue(
-            rows: ["mp3"], kinds: [.k5, .s2], item: .id3(.frontCoverPath),
-            text: "Artwork saved to an MP3 carries the file's own path as its picture description: expected no path, found the file's path (F31)"
-        ),
     ]
 
     static func issue(row: SafetyNetRow, kind: SaveKind, item: SafetyNetItem) -> SafetyNetKnownIssue? {

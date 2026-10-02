@@ -198,7 +198,7 @@ extension MetaAudioFileDescription {
         try tagProperties.save(to: url, storedXMPPacket: storedXMPPacket)
 
         if imageNeedsSave {
-            if let pictureRef = imageDescription.pictureRef {
+            if let pictureRef = pictureRefToWrite {
                 try save(pictureRef: pictureRef)
             } else {
                 try removePicture()
@@ -208,6 +208,18 @@ extension MetaAudioFileDescription {
         if markersNeedsSave {
             try saveMarkers()
         }
+    }
+
+    /// `imageDescription.pictureRef`, minus the file's own path: a parse without artwork leaves it
+    /// in `description` for display, and it must not be written into the file.
+    private var pictureRefToWrite: TagPictureRef? {
+        guard let pictureRef = imageDescription.pictureRef else { return nil }
+
+        if pictureRef.pictureDescription == url.path {
+            pictureRef.pictureDescription = ""
+        }
+
+        return pictureRef
     }
 
     /// Embeds artwork through TagLib.
@@ -238,7 +250,7 @@ extension MetaAudioFileDescription {
         waveFile.imageNeedsSave = imageNeedsSave
 
         // Passed even when not flagged, or a tags-only save drops the artwork.
-        if let pictureRef = imageDescription.pictureRef {
+        if let pictureRef = pictureRefToWrite {
             waveFile.tagPicture = TagPicture(picture: pictureRef)
         }
 
