@@ -24,6 +24,16 @@ struct SafetyNetForeignItem: Sendable {
     let inject: @Sendable (URL) throws -> Void
 
     /// An xattr no writer of ours knows about. Lost by any save that replaces the file.
+    /// An item the row's ``SafetyNetRow/plant`` step puts in place.
+    init(item: SafetyNetItem) {
+        self.init(item: item) { _ in }
+    }
+
+    init(item: SafetyNetItem, inject: @escaping @Sendable (URL) throws -> Void) {
+        self.item = item
+        self.inject = inject
+    }
+
     static let unrelatedXattr = SafetyNetForeignItem(item: .xattr(name: "com.example.safetynet")) { url in
         try FileXattrs.set("com.example.safetynet", value: Data([0x53, 0x4E, 0x00, 0xFF, 0x01]), on: url)
     }
@@ -37,6 +47,10 @@ struct SafetyNetRow: Sendable, Hashable, CustomTestStringConvertible {
     let fixture: URL
     let components: Set<SafetyNetComponent>
     let foreignItems: [SafetyNetForeignItem]
+    /// The container's own items for each component, beyond ``SafetyNetComponent/items``.
+    var ownedItems: [SafetyNetComponent: [SafetyNetItem]] = [:]
+    /// Plants a container family's foreign items in one pass, before each item's own injection.
+    var plant: (@Sendable (URL) throws -> Void)?
 
     var testDescription: String { name }
 
@@ -45,6 +59,15 @@ struct SafetyNetRow: Sendable, Hashable, CustomTestStringConvertible {
 
     func holds(_ component: SafetyNetComponent) -> Bool {
         components.contains(component)
+    }
+
+    func items(for component: SafetyNetComponent) -> [SafetyNetItem] {
+        component.items + (ownedItems[component] ?? [])
+    }
+
+    /// The owned component an item belongs to; nil for a foreign item or the whole file.
+    func component(of item: SafetyNetItem) -> SafetyNetComponent? {
+        components.first { items(for: $0).contains(item) }
     }
 }
 
@@ -61,7 +84,8 @@ extension SafetyNetRow {
 
     static let mp3 = SafetyNetRow(
         name: "mp3", fileType: .mp3, fixture: TestBundleResources.shared.tabla_mp3,
-        components: common.union([.packet]), foreignItems: [.unrelatedXattr]
+        components: common.union([.packet]), foreignItems: SafetyNetID3Item.foreignItems + [.unrelatedXattr],
+        ownedItems: SafetyNetID3Item.ownedItems, plant: { try SafetyNetID3Plant.plant(in: $0) }
     )
 
     static let wav = SafetyNetRow(
@@ -174,6 +198,8 @@ extension SafetyNetRow {
         try description.save(dirtyFlags: flags, storedXMPPacket: holds(.packet) ? .replace(SafetyNetSetup.packet) : .keep)
 
         try await requireSetupWritten(to: url)
+
+        try plant?(url)
 
         for foreign in foreignItems {
             try foreign.inject(url)

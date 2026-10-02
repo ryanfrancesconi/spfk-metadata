@@ -1,6 +1,7 @@
 // Copyright Ryan Francesconi. All Rights Reserved. Revision History at https://github.com/ryanfrancesconi/spfk-metadata
 
 import Foundation
+import ImageIO
 import SPFKMetadataBase
 import SPFKTesting
 import Testing
@@ -186,4 +187,28 @@ enum SafetyNetEdit {
     ]
     static let packet = SafetyNetSetup.xmpPacket(title: "Edited")
     static let finderTag = "Safety Net Edited"
+
+    /// Windows Media Player's `POPM` byte for ``rating``'s two stars.
+    static let popmRating: UInt8 = 64
+
+    /// The pixel size of the artwork ``SaveKind/k5`` writes, as ImageIO reads the source file.
+    static func artworkPixelSize() throws -> String {
+        try SafetyNetImage.pixelSize(of: Data(contentsOf: TestBundleResources.shared.songbird))
+    }
+}
+
+/// Image facts read through ImageIO, which shares no code with the writers under test.
+enum SafetyNetImage {
+    struct UndecodableImage: Error {}
+
+    /// `"<width>x<height>"`.
+    static func pixelSize(of data: Data) throws -> String {
+        guard let source = CGImageSourceCreateWithData(data as CFData, nil),
+              let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
+              let width = properties[kCGImagePropertyPixelWidth] as? Int,
+              let height = properties[kCGImagePropertyPixelHeight] as? Int
+        else { throw UndecodableImage() }
+
+        return "\(width)x\(height)"
+    }
 }

@@ -13,12 +13,15 @@ enum SafetyNetItem: Hashable, Sendable, CustomStringConvertible {
     case finderTags
     /// One extended attribute's bytes.
     case xattr(name: String)
+    /// Something in a leading ID3v2 tag.
+    case id3(SafetyNetID3Item)
 
     var description: String {
         switch self {
         case .wholeFile: "whole file"
         case .finderTags: "Finder tags"
         case let .xattr(name): "xattr \(name)"
+        case let .id3(item): "ID3 \(item)"
         }
     }
 }
@@ -63,9 +66,18 @@ enum SafetyNetValue: Equatable, Sendable, CustomStringConvertible {
 struct SafetyNetSnapshot {
     private(set) var values: [SafetyNetItem: SafetyNetValue] = [:]
 
+    /// The leading ID3v2 tag, when an item asked for it.
+    private(set) var id3Tag: ID3v2Frames.Tag?
+
     init(of url: URL, items: [SafetyNetItem]) throws {
+        let data = try Data(contentsOf: url)
+
+        if items.contains(where: { if case .id3 = $0 { true } else { false } }) {
+            id3Tag = try ID3v2Frames.tag(in: data)
+        }
+
         for item in items {
-            values[item] = try Self.read(item, from: url)
+            values[item] = try read(item, from: url, data: data)
         }
     }
 
@@ -80,16 +92,19 @@ struct SafetyNetSnapshot {
         }
     }
 
-    private static func read(_ item: SafetyNetItem, from url: URL) throws -> SafetyNetValue? {
+    private func read(_ item: SafetyNetItem, from url: URL, data: Data) throws -> SafetyNetValue? {
         switch item {
         case .wholeFile:
-            try .bytes(Data(contentsOf: url))
+            .bytes(data)
 
         case .finderTags:
             try FileXattrs.userTags(of: url).map(SafetyNetValue.text)
 
         case let .xattr(name):
             try FileXattrs.value(name, of: url).map(SafetyNetValue.bytes)
+
+        case let .id3(id3Item):
+            try id3Item.read(from: id3Tag, file: data, url: url)
         }
     }
 }
@@ -116,14 +131,14 @@ extension SafetyNetSnapshot {
 
     /// (a): the item holds what the save wrote.
     static func expectWritten(
-        _ item: SafetyNetItem, _ expected: SafetyNetValue, after: SafetyNetSnapshot,
+        _ item: SafetyNetItem, _ expected: SafetyNetValue?, after: SafetyNetSnapshot,
         row: SafetyNetRow, kind: SaveKind, sourceLocation: SourceLocation = #_sourceLocation
     ) {
         let actual = after[item]
 
         SafetyNetKnownIssues.expect(
             actual == expected,
-            "\(row.name) \(kind.rawValue) written \(item): expected \(expected), got \(describe(actual))",
+            "\(row.name) \(kind.rawValue) written \(item): expected \(describe(expected)), got \(describe(actual))",
             row: row, kind: kind, item: item, sourceLocation: sourceLocation
         )
     }

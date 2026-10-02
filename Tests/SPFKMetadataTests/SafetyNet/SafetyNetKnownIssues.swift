@@ -16,7 +16,63 @@ struct SafetyNetKnownIssue: Sendable {
 /// that starts passing records `knownIssueNotRecorded` and turns the suite red until its entry is
 /// removed.
 enum SafetyNetKnownIssues {
-    static let table: [SafetyNetKnownIssue] = []
+    static let table: [SafetyNetKnownIssue] = id3
+
+    /// Every MP3 save that writes the container.
+    private static let mp3ContainerKinds: Set<SaveKind> = [.k0, .k1, .k2, .k5, .k6, .k7, .s1, .s2, .k15, .k16, .k17]
+    /// Every MP3 save that writes the tag; a packet-only save (K15, K17) rewrites only the `PRIV`.
+    private static let mp3TagKinds: Set<SaveKind> = [.k0, .k1, .k2, .k5, .k6, .k7, .s1, .s2, .k16]
+
+    private static let id3: [SafetyNetKnownIssue] = [
+        SafetyNetKnownIssue(
+            rows: ["mp3"], kinds: mp3ContainerKinds, item: .id3(.majorVersion),
+            text: "An MP3 save re-renders an ID3v2.3 tag as ID3v2.4: expected 2.3, found 2.4 (F7)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["mp3"], kinds: mp3ContainerKinds, item: .id3(.id3v1),
+            text: "An MP3 save adds an ID3v1 tag the file did not have: expected none, found one (F7)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["mp3"], kinds: mp3TagKinds, item: .id3(.otherPopularimeter),
+            text: "An MP3 tag save deletes other players' POPM frames: expected 1, found 0 (F8)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["mp3"], kinds: mp3TagKinds, item: .id3(.artist),
+            text: "An MP3 tag save flattens a multi-valued TPE1: expected two values, found one joined with a space (F15)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["mp3"], kinds: mp3TagKinds, item: .id3(.userText),
+            text: "An MP3 tag save upper-cases other apps' TXXX descriptions: expected \"SafetyNet Foreign\", found \"SAFETYNET FOREIGN\" (F29)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["mp3"], kinds: mp3TagKinds, item: .id3(.lyrics),
+            text: "An MP3 tag save rewrites other apps' USLT frames: expected language \"eng\" and description \"Safety Net\", found \"XXX\" and \"SAFETY NET\" (F29)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["mp3"], kinds: mp3TagKinds, item: .id3(.userURL),
+            text: "An MP3 tag save upper-cases other apps' WXXX descriptions: expected \"Safety Net Link\", found \"SAFETY NET LINK\" (F29)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["mp3"], kinds: mp3TagKinds, item: .id3(.comments),
+            text: "An MP3 tag save merges a second-language COMM into the first and rewrites a described one: expected 3 frames with languages \"eng\" and \"fra\" kept, found 2, one joined with a space and one \"XXX | SAFETY NET NOTE\" (F15, F29)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["mp3"], kinds: [.k0, .k5, .k6, .s2], item: .id3(.otherPictures),
+            text: "An MP3 artwork save deletes the file's other pictures: expected the back cover, found none (F26)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["mp3"], kinds: [.k7, .s1], item: .id3(.tableOfContents),
+            text: "An MP3 marker save leaves CTOC listing the old chapters: expected the new CHAP element IDs, found the previous ones (F10)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["mp3"], kinds: [.k0], item: .id3(.frontCover),
+            text: "An MP3 save flagged for artwork re-encodes an unchanged front cover: expected the same image bytes, found new ones (F30)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["mp3"], kinds: [.k5, .s2], item: .id3(.frontCoverPath),
+            text: "Artwork saved to an MP3 carries the file's own path as its picture description: expected no path, found the file's path (F31)"
+        ),
+    ]
 
     static func issue(row: SafetyNetRow, kind: SaveKind, item: SafetyNetItem) -> SafetyNetKnownIssue? {
         table.first { $0.rows.contains(row.name) && $0.kinds.contains(kind) && $0.item == item }
