@@ -158,11 +158,7 @@ enum SafetyNetKnownIssues {
         ),
         SafetyNetKnownIssue(
             rows: ["flac"], kinds: [.k0], item: .flac(.frontCover),
-            text: "A FLAC save flagged for artwork writes the file's first picture back as the front cover: expected the front cover unchanged, found the back cover's image and description (F37)"
-        ),
-        SafetyNetKnownIssue(
-            rows: ["flac"], kinds: [.k0], item: .flac(.frontCoverPixels),
-            text: "A FLAC save flagged for artwork writes the file's first picture back as the front cover: expected the front cover's pixel size, found the back cover's (F37)"
+            text: "A FLAC save flagged for artwork re-encodes an unchanged front cover: expected the same image bytes, found new ones (F30)"
         ),
         SafetyNetKnownIssue(
             rows: ["flac"], kinds: [.k0], item: .flac(.chapters),

@@ -28,6 +28,7 @@ static const auto dataKey = String("data");
 static const auto mimeTypeKey = String("mimeType");
 static const auto descriptionKey = String("description");
 static const auto pictureTypeKey = String("pictureType");
+static const auto frontCoverType = String("Front Cover");
 
 // MARK: - Static helpers
 
@@ -72,6 +73,15 @@ static TagPictureRef *_Nullable buildPictureRef(const VariantMap &picture) {
     CGImageRelease(imageRef);
 
     return pictureRef;
+}
+
+/// The front cover, else the first picture. MP4 `covr` carries no picture type, so it takes the first.
+static const VariantMap &artworkPicture(const List<VariantMap> &pictures) {
+    for (const auto &picture : pictures) {
+        if (picture.value(pictureTypeKey).value<String>() == frontCoverType)
+            return picture;
+    }
+    return pictures.front();
 }
 
 /// Nil when ImageIO cannot write the type.
@@ -162,7 +172,7 @@ static void clearLegacyFlacXiphCommentPictures(FileRef &fileRef) {
     if (pictures.isEmpty())
         return nil;
 
-    return buildPictureRef(pictures.front());
+    return buildPictureRef(artworkPicture(pictures));
 }
 
 + (bool)write:(nullable TagPictureRef *)picture toTag:(nonnull void *)opaqueTag {
@@ -196,7 +206,7 @@ static void clearLegacyFlacXiphCommentPictures(FileRef &fileRef) {
     if (pictures.isEmpty())
         return nil;
 
-    TagPictureRef *ref = buildPictureRef(pictures.front());
+    TagPictureRef *ref = buildPictureRef(artworkPicture(pictures));
     if (!ref)
         return nil;
 
