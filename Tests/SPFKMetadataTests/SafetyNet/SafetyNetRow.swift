@@ -186,6 +186,28 @@ extension SafetyNetRow {
         ownedItems: SafetyNetMP4Item.ownedItems, plant: { try SafetyNetMP4Plant.plant(in: $0, mediaKind: 2) }
     )
 
+    static let mp4 = SafetyNetRow(
+        name: "mp4", fileType: .mp4, fixture: TestBundleResources.shared.tabla_mp4,
+        components: common, foreignItems: SafetyNetMP4Item.foreignItems + [.unrelatedXattr],
+        ownedItems: SafetyNetMP4Item.ownedItems, plant: { try SafetyNetMP4Plant.plant(in: $0, mediaKind: 1) }
+    )
+
+    /// `stik` 6, music video.
+    static let m4v = SafetyNetRow(
+        name: "m4v", fileType: .m4v, fixture: TestBundleResources.shared.sine_m4v,
+        components: common, foreignItems: SafetyNetMP4Item.foreignItems + [.unrelatedXattr],
+        ownedItems: SafetyNetMP4Item.ownedItems, plant: { try SafetyNetMP4Plant.plant(in: $0, mediaKind: 6) }
+    )
+
+    /// Classic QuickTime `udta` text atoms in the base fixture, and no `ilst` of its own, so there
+    /// are no other items to keep.
+    static let mov = SafetyNetRow(
+        name: "mov", fileType: .mov, fixture: TestBundleResources.shared.qtmeta_mov,
+        components: common, foreignItems: SafetyNetMP4Item.quickTimeForeignItems + [.unrelatedXattr],
+        ownedItems: SafetyNetMP4Item.ownedItems.mapValues { $0.filter { $0 != .mp4(.otherItems) } },
+        plant: { try SafetyNetMP4Plant.plant(in: $0, mediaKind: 6, quickTime: true) }
+    )
+
     /// The formats ShadowTag users edit.
     static let slice: [SafetyNetRow] = [mp3, wav, flac, m4a, m4b]
 }

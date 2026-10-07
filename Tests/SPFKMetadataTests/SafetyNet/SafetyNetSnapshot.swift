@@ -208,7 +208,9 @@ extension SafetyNetSnapshot {
     private static func chapters(of url: URL) async throws -> ([String], Double) {
         let asset = AVURLAsset(url: url)
         let duration = try await asset.load(.duration).seconds
-        let groups = try await asset.loadChapterMetadataGroups(bestMatchingPreferredLanguages: ["und"])
+        // Whatever the file declares: a request naming no declared language lists no groups.
+        let languages = try await asset.load(.availableChapterLocales).map(\.identifier) + ["und"]
+        let groups = try await asset.loadChapterMetadataGroups(bestMatchingPreferredLanguages: languages)
         var lines: [String] = []
 
         for group in groups {

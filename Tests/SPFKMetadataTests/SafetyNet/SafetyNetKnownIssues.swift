@@ -199,20 +199,20 @@ enum SafetyNetKnownIssues {
         ),
     ]
 
-    /// Every M4A and M4B save kind in the net: each runs the tag save first.
+    /// Every MP4-family save kind in the net: each runs the tag save first.
     private static let mp4Kinds: Set<SaveKind> = [.k0, .k1, .k2, .k5, .k6, .k7, .k8, .s1, .s2]
 
     private static let mp4: [SafetyNetKnownIssue] = [
         SafetyNetKnownIssue(
-            rows: ["m4a", "m4b"], kinds: mp4Kinds, item: .mp4(.multiValuedText),
+            rows: ["m4a", "m4b", "mp4", "m4v", "mov"], kinds: mp4Kinds, item: .mp4(.multiValuedText),
             text: "An MP4 save flattens a multi-valued text item: expected ©ART twice, found one value joined with a space (F15)"
         ),
         SafetyNetKnownIssue(
-            rows: ["m4a", "m4b"], kinds: mp4Kinds, item: .mp4(.unknownFreeform),
+            rows: ["m4a", "m4b", "mp4", "m4v", "mov"], kinds: mp4Kinds, item: .mp4(.unknownFreeform),
             text: "An MP4 save upper-cases another app's iTunes freeform name: expected \"SafetyNet Foreign\", found \"SAFETYNET FOREIGN\" (F40)"
         ),
         SafetyNetKnownIssue(
-            rows: ["m4a", "m4b"], kinds: mp4Kinds, item: .mp4(.gaplessInfo),
+            rows: ["m4a", "m4b", "mp4", "m4v", "mov"], kinds: mp4Kinds, item: .mp4(.gaplessInfo),
             text: "An MP4 save renames the gapless-playback atom: expected iTunSMPB, found ITUNSMPB (F40)"
         ),
         SafetyNetKnownIssue(
@@ -220,11 +220,11 @@ enum SafetyNetKnownIssues {
             text: "An MP4 save renames the gapless-playback atom, so AVFoundation stops trimming to its sample count: expected 9152 decoded frames, found the untrimmed length (F40)"
         ),
         SafetyNetKnownIssue(
-            rows: ["m4a", "m4b"], kinds: [.k0], item: .mp4(.frontCover),
+            rows: ["m4a", "m4b", "mp4", "m4v", "mov"], kinds: [.k0], item: .mp4(.frontCover),
             text: "An MP4 save flagged for artwork re-encodes an unchanged cover: expected the same image bytes, found new ones (F30)"
         ),
         SafetyNetKnownIssue(
-            rows: ["m4a", "m4b"], kinds: [.k7, .s1], item: .mp4(.chapters),
+            rows: ["m4a", "m4b", "mp4", "m4v", "mov"], kinds: [.k7, .s1], item: .mp4(.chapters),
             text: "An MP4 marker save whose first marker starts after zero adds an untitled chapter at zero that other players list: expected the written chapters only, found an extra one at 0.000 (F41)"
         ),
     ]

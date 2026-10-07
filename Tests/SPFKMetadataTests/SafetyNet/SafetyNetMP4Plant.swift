@@ -24,15 +24,16 @@ enum SafetyNetMP4Foreign {
 }
 
 /// Plants the MP4 family's foreign items after the setup save. Everything inside `moov` takes its
-/// room from a `free` atom there, so `moov` keeps its size and no chunk offset moves; the XMP
-/// `uuid` is appended at the end of the file.
+/// room from a `free` atom there; without room, `moov` grows and every chunk offset past it moves
+/// with it. The XMP `uuid` is appended at the end of the file.
 enum SafetyNetMP4Plant {
     enum PlantError: Error {
         case missing(String)
-        case noRoom(needed: Int, free: Int)
     }
 
-    static func plant(in url: URL, mediaKind: UInt8) throws {
+    /// A QuickTime movie gets its XMP in `udta/XMP_` rather than a top-level `uuid`, and an
+    /// `mdta`-keyed `moov/meta` beside `udta`.
+    static func plant(in url: URL, mediaKind: UInt8, quickTime: Bool = false) throws {
         let gapless = try copiedAtom(["moov", "udta", "meta", "ilst"], from: TestBundleResources.shared.ituns_mpb_m4a) {
             $0.type == "----" && $0.child("name")?.payload.dropFirst(4) == Data("iTunSMPB".utf8)
         }
@@ -58,13 +59,35 @@ enum SafetyNetMP4Plant {
             }
 
             try moov.edit(["udta"]) { $0.children += [copyright, chapters] }
+
+            if quickTime {
+                try moov.edit(["udta"]) { $0.children.append(MP4MoovEditor.Node(type: "XMP_", lead: Data(SafetyNetSetup.xmpPacket(title: "Foreign").utf8))) }
+                moov.children.append(metadataKeys())
+            }
         }
+
+        guard !quickTime else { return }
 
         let packet = Data(SafetyNetSetup.xmpPacket(title: "Foreign").utf8)
         let handle = try FileHandle(forWritingTo: url)
         defer { try? handle.close() }
         try handle.seekToEnd()
         try handle.write(contentsOf: MP4MoovEditor.Node(type: "uuid", lead: SafetyNetMP4Foreign.xmpUUID + packet).bytes)
+    }
+
+    /// A QuickTime `meta` (a plain container, not a full box) holding one UTF-8 item named by its
+    /// `mdta` key.
+    private static func metadataKeys() -> MP4MoovEditor.Node {
+        let key = Data("com.example.safetynet.note".utf8)
+        let handler = Data(count: 8) + Data("mdta".utf8) + Data(count: 12) + Data([0])
+        let keys = Data(count: 4) + MP4MoovEditor.be32(1) + MP4MoovEditor.be32(UInt32(8 + key.count)) + Data("mdta".utf8) + key
+        let item = MP4MoovEditor.Node(type: "\u{0}\u{0}\u{0}\u{1}", children: [.data(type: 1, value: Data("Kept in mdta metadata".utf8))])
+
+        return MP4MoovEditor.Node(type: "meta", children: [
+            MP4MoovEditor.Node(type: "hdlr", lead: handler),
+            MP4MoovEditor.Node(type: "keys", lead: keys),
+            MP4MoovEditor.Node(type: "ilst", children: [item]),
+        ])
     }
 
     /// An atom from another fixture, byte for byte.
@@ -95,7 +118,8 @@ enum SafetyNetMP4Plant {
     }
 }
 
-/// Rewrites `moov` as a tree, then resizes a `free` atom inside it so `moov` keeps its size.
+/// Rewrites `moov` as a tree, then resizes a `free` atom inside it so `moov` keeps its size, or
+/// shifts the chunk offsets that point past a `moov` that grew.
 enum MP4MoovEditor {
     /// An atom: the bytes before its children (all of them for a leaf; a full box's version and
     /// flags for `meta`), its children, and any bytes after them.
@@ -150,25 +174,55 @@ enum MP4MoovEditor {
             return children.reduce(header + lead) { $0 + $1.bytes } + trail
         }
 
+        /// Adds `delta` to every `stco` and `co64` entry past `offset`.
+        mutating func shiftChunkOffsets(after offset: Int, by delta: Int) {
+            if type == "stco" || type == "co64" {
+                let width = type == "co64" ? 8 : 4
+                let count = Int(MP4MoovEditor.uint(lead, at: 4, width: 4))
+
+                for index in 0 ..< count {
+                    let position = 8 + index * width
+                    guard position + width <= lead.count else { break }
+
+                    let value = MP4MoovEditor.uint(lead, at: position, width: width)
+                    guard value > offset else { continue }
+                    lead.replaceSubrange(position ..< position + width, with: MP4MoovEditor.be(value + UInt64(delta), width: width))
+                }
+            }
+
+            for index in children.indices {
+                children[index].shiftChunkOffsets(after: offset, by: delta)
+            }
+        }
+
         mutating func edit(_ path: [String], _ change: (inout Node) throws -> Void) throws {
             guard let first = path.first else { return try change(&self) }
             guard let index = children.firstIndex(where: { $0.type == first }) else { throw SafetyNetMP4Plant.PlantError.missing(first) }
             try children[index].edit(Array(path.dropFirst()), change)
         }
 
-        /// Resizes the first `free` atom in the tree by `delta` bytes; false when there is none.
-        mutating func resizeFree(by delta: Int) throws -> Bool {
+        /// Resizes the first `free` atom in the tree by `delta` bytes; false when there is none or
+        /// it is too small.
+        mutating func resizeFree(by delta: Int) -> Bool {
             if type == "free" {
-                guard lead.count + delta >= 0 else { throw SafetyNetMP4Plant.PlantError.noRoom(needed: -delta, free: lead.count) }
+                guard lead.count + delta >= 0 else { return false }
                 lead = Data(count: lead.count + delta)
                 return true
             }
 
             for index in children.indices {
-                if try children[index].resizeFree(by: delta) { return true }
+                if children[index].resizeFree(by: delta) { return true }
             }
             return false
         }
+    }
+
+    static func uint(_ data: Data, at offset: Int, width: Int) -> UInt64 {
+        data.dropFirst(offset).prefix(width).reduce(0) { $0 << 8 | UInt64($1) }
+    }
+
+    static func be(_ value: UInt64, width: Int) -> Data {
+        Data((0 ..< width).reversed().map { UInt8(truncatingIfNeeded: value >> (8 * UInt64($0))) })
     }
 
     static func be32(_ value: UInt32) -> Data {
@@ -182,8 +236,9 @@ enum MP4MoovEditor {
         var moov = Node(moovBox)
         try edit(&moov)
 
-        guard try moov.resizeFree(by: moovBox.size - moov.size) else { throw SafetyNetMP4Plant.PlantError.missing("free in moov") }
-        guard moov.size == moovBox.size else { throw SafetyNetMP4Plant.PlantError.noRoom(needed: moov.size - moovBox.size, free: 0) }
+        if !moov.resizeFree(by: moovBox.size - moov.size) {
+            moov.shiftChunkOffsets(after: moovBox.offset, by: moov.size - moovBox.size)
+        }
 
         var result = data
         result.replaceSubrange(moovBox.offset ..< moovBox.offset + moovBox.size, with: moov.bytes)

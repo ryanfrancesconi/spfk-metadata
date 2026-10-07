@@ -13,6 +13,9 @@ enum SafetyNetMP4Item: String, CaseIterable, Hashable, Sendable, CustomStringCon
     // Foreign
     case unknownFreeform, otherMeanFreeform, gaplessInfo, mediaKind, contentRating, multiValuedText
     case otherCovers, neroChapters, userDataCopyright, xmpUUID
+    /// QuickTime only: the classic `udta` text atoms (`©nam`, `©ART`, …), `udta/XMP_`, and a
+    /// `moov/meta` whose items are named in an `mdta` key table.
+    case quickTimeText, xmpUserData, metadataKeys
 
     var description: String {
         switch self {
@@ -25,6 +28,9 @@ enum SafetyNetMP4Item: String, CaseIterable, Hashable, Sendable, CustomStringCon
         case .neroChapters: "moov/udta/chpl"
         case .userDataCopyright: "moov/udta/cprt"
         case .xmpUUID: "top-level uuid XMP"
+        case .quickTimeText: "moov/udta ©-text atoms"
+        case .xmpUserData: "moov/udta/XMP_"
+        case .metadataKeys: "moov/meta (mdta keys)"
         default: key ?? rawValue
         }
     }
@@ -58,6 +64,11 @@ enum SafetyNetMP4Item: String, CaseIterable, Hashable, Sendable, CustomStringCon
         .unknownFreeform, .otherMeanFreeform, .gaplessInfo, .mediaKind, .contentRating, .multiValuedText,
         .otherCovers, .neroChapters, .userDataCopyright, .xmpUUID,
     ].map { SafetyNetForeignItem(item: .mp4($0)) }
+
+    /// A QuickTime movie's: XMP in `udta` rather than a top-level `uuid`, plus its own text atoms
+    /// and `mdta` metadata.
+    static let quickTimeForeignItems: [SafetyNetForeignItem] =
+        foreignItems.filter { $0.item != .mp4(.xmpUUID) } + [.quickTimeText, .xmpUserData, .metadataKeys].map { SafetyNetForeignItem(item: .mp4($0)) }
 }
 
 // MARK: - Reading
@@ -103,6 +114,16 @@ extension SafetyNetMP4Item {
 
         case .userDataCopyright:
             return atoms.box(["moov", "udta", "cprt"]).map { .bytes($0.bytes) }
+
+        case .quickTimeText:
+            let atoms = atoms.box(["moov", "udta"])?.children.filter { $0.type.hasPrefix("©") } ?? []
+            return atoms.isEmpty ? nil : .bytes(atoms.map(\.bytes).reduce(Data(), +))
+
+        case .xmpUserData:
+            return atoms.box(["moov", "udta", "XMP_"]).map { .bytes($0.bytes) }
+
+        case .metadataKeys:
+            return atoms.box(["moov", "meta"]).map { .bytes($0.bytes) }
 
         case .xmpUUID:
             let boxes = atoms.boxes("uuid").filter { $0.payload.starts(with: SafetyNetMP4Foreign.xmpUUID) }
