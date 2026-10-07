@@ -13,9 +13,7 @@ import Testing
 /// A missing golden is written and the test fails; delete a golden to re-record it. MXF is left
 /// out: it parses only after a process-wide registration another suite makes, so its golden would
 /// depend on test order (`MetaAudioFileDescriptionMXFTests` covers it).
-/// Serialized: parsing many video files at once exhausts the cooperative thread pool inside
-/// `AVAsset.startTimecode(at:)`, whose sample read blocks the thread it runs on.
-@Suite(.serialized, .tags(.file))
+@Suite(.tags(.file))
 struct ParseGoldenTests {
     static let goldenDirectory = URL(fileURLWithPath: #filePath)
         .deletingLastPathComponent().deletingLastPathComponent().appendingPathComponent("ParseGolden")
