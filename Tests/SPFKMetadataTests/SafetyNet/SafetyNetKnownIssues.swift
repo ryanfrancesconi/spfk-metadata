@@ -174,10 +174,6 @@ enum SafetyNetKnownIssues {
             rows: ["m4a", "m4b"], kinds: [.k7, .s1], item: .mp4(.chapters),
             text: "An MP4 marker save whose first marker starts after zero adds an untitled chapter at zero that other players list: expected the written chapters only, found an extra one at 0.000 (F41)"
         ),
-        SafetyNetKnownIssue(
-            rows: ["m4a", "m4b"], kinds: [.k8], item: .ourReader(.markers),
-            text: "Removing every MP4 marker leaves the Nero chpl chapters, which the app then reads back as markers: expected none, found the chpl's five (F42)"
-        ),
     ]
 
     static func issue(row: SafetyNetRow, kind: SaveKind, item: SafetyNetItem) -> SafetyNetKnownIssue? {

@@ -84,7 +84,10 @@ static NSTimeInterval chapterTimeToSeconds(long long chapterTime) {
         return false;
     }
 
+    // A Nero list left beside the new track would disagree with it, and the reader falls back to it
+    // when the track is empty.
     file.setQtChapters(chapterList);
+    file.setNeroChapters(MP4::ChapterList());
     return file.save();
 }
 

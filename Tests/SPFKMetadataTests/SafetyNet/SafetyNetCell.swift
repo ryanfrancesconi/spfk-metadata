@@ -57,11 +57,16 @@ extension SafetyNetItem {
 
 extension SafetyNetItem {
     /// Removing artwork clears every picture, the other apps' included, so nothing else is shown in
-    /// its place. Every other unowned item stays as it was.
-    func unownedWrite(by kind: SaveKind) -> SafetyNetWrite {
+    /// its place; an MP4 marker save removes the Nero `chpl`, which would disagree with the new
+    /// chapters and be read back when they are empty. Every other unowned item stays as it was.
+    func unownedWrite(by kind: SaveKind, row: SafetyNetRow) -> SafetyNetWrite {
         switch (self, kind) {
-        case (.id3(.otherPictures), .k6), (.flac(.otherPictures), .k6), (.mp4(.otherCovers), .k6): .value(nil)
-        default: .unchanged
+        case (.id3(.otherPictures), .k6), (.flac(.otherPictures), .k6), (.mp4(.otherCovers), .k6):
+            .value(nil)
+        case (.mp4(.neroChapters), _) where kind.steps(for: row).contains { $0.flags.contains(.markers) }:
+            .value(nil)
+        default:
+            .unchanged
         }
     }
 }
@@ -92,7 +97,7 @@ enum SafetyNetCell {
         for item in items where SafetyNetCoveredCells.coveringTest(row: row, kind: kind, item: item) == nil {
             let isWritten = row.component(of: item).map(kind.written.contains) ?? false
 
-            switch isWritten ? try item.written(by: kind, after: after) : item.unownedWrite(by: kind) {
+            switch isWritten ? try item.written(by: kind, after: after) : item.unownedWrite(by: kind, row: row) {
             case .unchanged:
                 SafetyNetSnapshot.expectUnchanged(item, before: before, after: after, row: row, kind: kind)
             case let .value(value):
