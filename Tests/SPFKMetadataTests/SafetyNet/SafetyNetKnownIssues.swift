@@ -16,7 +16,7 @@ struct SafetyNetKnownIssue: Sendable {
 /// that starts passing records `knownIssueNotRecorded` and turns the suite red until its entry is
 /// removed.
 enum SafetyNetKnownIssues {
-    static let table: [SafetyNetKnownIssue] = id3 + wave + aiff + flac + ogg + mp4 + matroska
+    static let table: [SafetyNetKnownIssue] = id3 + wave + aiff + flac + ogg + mp4 + matroska + entryPoints
 
     /// Every MP3 save that writes the container; AAC's are the subset without markers or a packet.
     private static let mp3ContainerKinds: Set<SaveKind> = [.k0, .k1, .k2, .k5, .k6, .k7, .s1, .s2, .k15, .k16, .k17]

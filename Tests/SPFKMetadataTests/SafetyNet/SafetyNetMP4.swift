@@ -164,13 +164,13 @@ extension SafetyNetMP4Item {
             return .value(.text(SafetyNetMP4Foreign.ratingLines))
 
         case .frontCover:
-            return kind == .k6 ? .value(nil) : .unpredictable
+            return kind.removesArtwork ? .value(nil) : .unpredictable
 
         case .frontCoverPixels:
-            return kind == .k6 ? .value(nil) : try .value(.text([SafetyNetEdit.artworkPixelSize()]))
+            return kind.removesArtwork ? .value(nil) : try .value(.text([SafetyNetEdit.artworkPixelSize()]))
 
         case .chapters:
-            guard kind != .k8 else { return .value(nil) }
+            guard !kind.removesMarkers else { return .value(nil) }
 
             // AVFoundation lists no chapter that starts past the end of the asset.
             let duration = after.mp4Duration ?? .infinity

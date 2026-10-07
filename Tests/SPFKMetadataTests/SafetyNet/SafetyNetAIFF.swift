@@ -75,7 +75,7 @@ extension SafetyNetAIFFItem {
     func written(by kind: SaveKind, after: SafetyNetSnapshot) throws -> SafetyNetWrite {
         switch self {
         case .markers:
-            guard kind != .k8 else { return .value(nil) }
+            guard !kind.removesMarkers else { return .value(nil) }
             let sampleRate = try #require(after.aiff?.sampleRate)
             return .value(.text(SafetyNetEdit.markers.map {
                 SafetyNetRIFFItem.markerLine(frame: UInt32(($0.startTime * sampleRate).rounded()), name: $0.name)

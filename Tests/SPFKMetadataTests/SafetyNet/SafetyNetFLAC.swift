@@ -238,13 +238,13 @@ extension SafetyNetFLACItem {
             return .value(.text(SafetyNetFLACForeign.ratingFields))
 
         case .frontCover:
-            return kind == .k6 ? .value(nil) : .unpredictable
+            return kind.removesArtwork ? .value(nil) : .unpredictable
 
         case .frontCoverPixels:
-            return kind == .k6 ? .value(nil) : try .value(.text([SafetyNetEdit.artworkPixelSize()]))
+            return kind.removesArtwork ? .value(nil) : try .value(.text([SafetyNetEdit.artworkPixelSize()]))
 
         case .chapters:
-            guard kind != .k8 else { return .value(nil) }
+            guard !kind.removesMarkers else { return .value(nil) }
             return .value(.text(SafetyNetEdit.markers.map { marker in
                 let end = marker.endTime.flatMap { $0 > marker.startTime ? Self.timestamp($0) : nil }
                 return Self.chapterLine(start: Self.timestamp(marker.startTime), end: end, name: marker.name)

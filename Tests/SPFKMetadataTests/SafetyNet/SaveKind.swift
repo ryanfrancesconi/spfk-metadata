@@ -31,6 +31,25 @@ enum SaveKind: String, CaseIterable, Hashable, Sendable, CustomTestStringConvert
     case k17 = "K17"
     case s1 = "S1"
     case s2 = "S2"
+    // The lower writers other callers use, each called as its consumer calls it.
+    /// `TagProperties(url:)` then `save(to:)`, unedited (TorchTag).
+    case e1 = "E1"
+    /// As E1 with the title edited.
+    case e2 = "E2"
+    /// `TagPicture.write(_:path:)` with a picture (conversion, ShadowTag's import).
+    case e3 = "E3"
+    /// `TagPicture.write(nil, path:)` (conversion).
+    case e4 = "E4"
+    /// The marker utility conversion's `writeMarkers` dispatches to.
+    case e5 = "E5"
+    /// `WaveFileC` load, `bextDescriptionC`, save, as `MetadataPaster` does.
+    case e6 = "E6"
+    /// `WaveFileC` load, `iXML`, save, as `MetadataPaster` does.
+    case e7 = "E7"
+    /// `FlacFileC` load, `bextDescription`, save, as `MetadataPaster` does.
+    case e8 = "E8"
+    /// `FlacFileC` load, `iXML`, save, as `MetadataPaster` does.
+    case e9 = "E9"
 
     var testDescription: String { rawValue }
 
@@ -44,13 +63,13 @@ enum SaveKind: String, CaseIterable, Hashable, Sendable, CustomTestStringConvert
     /// The components the kind changes. Every other component the row holds must be unchanged.
     var written: Set<SafetyNetComponent> {
         switch self {
-        case .k0, .k14: []
-        case .k1: [.tags]
+        case .k0, .k14, .e1: []
+        case .k1, .e2: [.tags]
         case .k2: [.rating]
-        case .k3: [.bext]
-        case .k4: [.iXML]
-        case .k5, .k6: [.artwork]
-        case .k7, .k8: [.markers]
+        case .k3, .e6, .e8: [.bext]
+        case .k4, .e7, .e9: [.iXML]
+        case .k5, .k6, .e3, .e4: [.artwork]
+        case .k7, .k8, .e5: [.markers]
         case .k13: [.finderTags]
         case .k15, .k17: [.packet]
         case .k16: [.packet, .tags]
@@ -68,11 +87,28 @@ enum SaveKind: String, CaseIterable, Hashable, Sendable, CustomTestStringConvert
         }
     }
 
+    /// Whether the kind leaves the file without artwork.
+    var removesArtwork: Bool {
+        self == .k6 || self == .e4
+    }
+
+    /// Whether the kind leaves the file without markers.
+    var removesMarkers: Bool {
+        self == .k8
+    }
+
+    /// Whether the kind runs a marker write, with or without an edit.
+    func writesMarkers(for row: SafetyNetRow) -> Bool {
+        self == .e5 || steps(for: row).contains { $0.flags.contains(.markers) }
+    }
+
     func applies(to row: SafetyNetRow) -> Bool {
         switch self {
         case .k3: row.holds(.bext)
         case .k4: row.holds(.iXML)
-        case .k7, .k8, .s1: row.holds(.markers)
+        case .e6, .e7: row.holds(.bext) && row.fileType == .wav
+        case .e8, .e9: row.holds(.bext) && row.fileType == .flac
+        case .k7, .k8, .s1, .e5: row.holds(.markers)
         case .k13: row.holds(.finderTags)
         case .k15, .k16, .k17: row.holds(.packet)
         default: true
@@ -143,11 +179,17 @@ enum SaveKind: String, CaseIterable, Hashable, Sendable, CustomTestStringConvert
 
         case .s2:
             return [Self.replaceArtwork, Self.editTitle]
+
+        case .e1, .e2, .e3, .e4, .e5, .e6, .e7, .e8, .e9:
+            return []
         }
     }
 
-    /// Runs every step on one description, in order.
+    /// Runs every step on one description, in order; an entry-point kind writes the file the
+    /// description was parsed from instead.
     func run(on description: inout MetaAudioFileDescription, row: SafetyNetRow) throws {
+        if try runEntryPoint(on: description, row: row) { return }
+
         for step in steps(for: row) {
             try step.edit(&description)
             try description.save(dirtyFlags: step.flags, storedXMPPacket: step.packet)

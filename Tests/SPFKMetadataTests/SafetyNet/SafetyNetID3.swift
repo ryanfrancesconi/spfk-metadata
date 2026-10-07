@@ -248,13 +248,13 @@ extension SafetyNetID3Item {
             return .value(.text(["rating \(SafetyNetEdit.popmRating), counter 0"]))
 
         case .frontCover:
-            return kind == .k6 ? .value(nil) : .unpredictable
+            return kind.removesArtwork ? .value(nil) : .unpredictable
 
         case .frontCoverPixels:
-            return kind == .k6 ? .value(nil) : try .value(.text([SafetyNetEdit.artworkPixelSize()]))
+            return kind.removesArtwork ? .value(nil) : try .value(.text([SafetyNetEdit.artworkPixelSize()]))
 
         case .frontCoverPath:
-            return .value(kind == .k6 ? nil : .text(["names no path"]))
+            return .value(kind.removesArtwork ? nil : .text(["names no path"]))
 
         case .chapters:
             let markers = SafetyNetEdit.markers

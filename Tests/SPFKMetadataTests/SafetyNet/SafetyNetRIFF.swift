@@ -177,7 +177,7 @@ extension SafetyNetRIFFItem {
             return .value(.text([SafetyNetEdit.rating]))
 
         case .markers:
-            guard kind != .k8 else { return .value(nil) }
+            guard !kind.removesMarkers else { return .value(nil) }
             let sampleRate = try Double(#require(after.riff?.sampleRate))
             return .value(.text(SafetyNetEdit.markers.map {
                 Self.markerLine(frame: UInt32(($0.startTime * sampleRate).rounded()), name: $0.name)

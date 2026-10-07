@@ -137,10 +137,10 @@ extension SafetyNetMatroskaItem {
             return .value(.text(["RATING=\(SafetyNetEdit.rating)"]))
 
         case .frontCover:
-            return kind == .k6 ? .value(nil) : .unpredictable
+            return kind.removesArtwork ? .value(nil) : .unpredictable
 
         case .frontCoverPixels:
-            return kind == .k6 ? .value(nil) : try .value(.text([SafetyNetEdit.artworkPixelSize()]))
+            return kind.removesArtwork ? .value(nil) : try .value(.text([SafetyNetEdit.artworkPixelSize()]))
 
         default:
             return .unchanged

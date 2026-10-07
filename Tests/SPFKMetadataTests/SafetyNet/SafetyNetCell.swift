@@ -64,9 +64,9 @@ extension SafetyNetItem {
     /// chapters and be read back when they are empty. Every other unowned item stays as it was.
     func unownedWrite(by kind: SaveKind, row: SafetyNetRow) -> SafetyNetWrite {
         switch (self, kind) {
-        case (.id3(.otherPictures), .k6), (.flac(.otherPictures), .k6), (.ogg(.otherPictures), .k6), (.mp4(.otherCovers), .k6):
-            .value(nil)
-        case (.mp4(.neroChapters), _) where kind.steps(for: row).contains { $0.flags.contains(.markers) }:
+        case (.id3(.otherPictures), _), (.flac(.otherPictures), _), (.ogg(.otherPictures), _), (.mp4(.otherCovers), _):
+            kind.removesArtwork ? .value(nil) : .unchanged
+        case (.mp4(.neroChapters), _) where kind.writesMarkers(for: row):
             .value(nil)
         default:
             .unchanged
@@ -133,7 +133,7 @@ enum SafetyNetCell {
 
         if written.contains(.artwork) {
             let size = reread.imageDescription.cgImage.map { "\($0.width)x\($0.height)" }
-            #expect(size == (kind == .k6 ? nil : try SafetyNetEdit.artworkPixelSize()), "\(context) artwork")
+            #expect(size == (kind.removesArtwork ? nil : try SafetyNetEdit.artworkPixelSize()), "\(context) artwork")
         }
 
         if written.contains(.bext) {
@@ -145,7 +145,7 @@ enum SafetyNetCell {
         }
 
         if written.contains(.markers) {
-            let expected = kind == .k8 ? [] : SafetyNetEdit.markers.map(\.name)
+            let expected = kind.removesMarkers ? [] : SafetyNetEdit.markers.map(\.name)
             let actual = reread.markerCollection.markerDescriptions.map(\.name)
             SafetyNetKnownIssues.expect(
                 actual == expected, "\(context) markers: expected \(expected), got \(actual)",
