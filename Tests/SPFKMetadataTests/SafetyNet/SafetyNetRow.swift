@@ -90,6 +90,15 @@ extension SafetyNetRow {
         ownedItems: SafetyNetID3Item.ownedItems, plant: { try SafetyNetID3Plant.plant(in: $0) }
     )
 
+    /// ADTS, which TagLib opens as an MPEG file. The base fixture has no tag of its own, so there
+    /// are no other text frames to keep; it holds no markers.
+    static let aac = SafetyNetRow(
+        name: "aac", fileType: .aac, fixture: TestBundleResources.shared.tabla_aac,
+        components: common.subtracting([.markers]), foreignItems: SafetyNetID3Item.foreignItems + [.unrelatedXattr],
+        ownedItems: SafetyNetID3Item.ownedItems.filter { $0.key != .markers && $0.key != .packet }.mapValues { $0.filter { $0 != .id3(.otherText) } },
+        plant: { try SafetyNetID3Plant.plant(in: $0) }
+    )
+
     static let wav = SafetyNetRow(
         name: "wav", fileType: .wav, fixture: TestBundleResources.shared.tabla_wav,
         components: common.union([.bext, .iXML, .packet]), foreignItems: SafetyNetRIFFItem.foreignItems + [.unrelatedXattr],
@@ -133,6 +142,20 @@ extension SafetyNetRow {
         name: "flac-ixml-only-bext", fileType: .flac, fixture: TestBundleResources.shared.flac_bext_ixml_external,
         components: common, foreignItems: [SafetyNetForeignItem(item: .flac(.blockSet))],
         plant: { try SafetyNetFLACPlant.plantIXMLOnlyBroadcastExtension(in: $0) }
+    )
+
+    static let aiff = SafetyNetRow(
+        name: "aiff", fileType: .aiff, fixture: TestBundleResources.shared.tabla_aif,
+        components: common, foreignItems: SafetyNetAIFFItem.foreignItems + [.unrelatedXattr],
+        ownedItems: SafetyNetAIFFItem.ownedItems, plant: { try SafetyNetAIFFPlant.plant(in: $0) }
+    )
+
+    /// The base fixture has no tag of its own, so there are no other text frames to keep.
+    static let aifc = SafetyNetRow(
+        name: "aifc", fileType: .aifc, fixture: TestBundleResources.shared.sine_aifc,
+        components: common, foreignItems: SafetyNetAIFFItem.foreignItems + [.unrelatedXattr],
+        ownedItems: SafetyNetAIFFItem.ownedItems.mapValues { $0.filter { $0 != .id3(.otherText) } },
+        plant: { try SafetyNetAIFFPlant.plant(in: $0) }
     )
 
     /// `stik` 1, music.

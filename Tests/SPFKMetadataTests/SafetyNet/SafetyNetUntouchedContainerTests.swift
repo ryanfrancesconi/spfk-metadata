@@ -9,7 +9,7 @@ import Testing
 /// every byte of the file as it was, and the file itself in place.
 @Suite(.tags(.file, .metadataSafetyNet))
 final class SafetyNetUntouchedContainerTests: BinTestCase {
-    static let cases = SafetyNetCase.cases(rows: SafetyNetRow.slice + [.rf64], kinds: [.k13, .k14])
+    static let cases = SafetyNetCase.cases(rows: SafetyNetRow.slice + [.rf64, .aiff, .aifc, .aac], kinds: [.k13, .k14])
 
     @Test(arguments: cases)
     func theFileIsByteIdentical(_ testCase: SafetyNetCase) async throws {

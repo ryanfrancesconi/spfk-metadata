@@ -16,44 +16,44 @@ struct SafetyNetKnownIssue: Sendable {
 /// that starts passing records `knownIssueNotRecorded` and turns the suite red until its entry is
 /// removed.
 enum SafetyNetKnownIssues {
-    static let table: [SafetyNetKnownIssue] = id3 + wave + flac + mp4
+    static let table: [SafetyNetKnownIssue] = id3 + wave + aiff + flac + mp4
 
-    /// Every MP3 save that writes the container.
+    /// Every MP3 save that writes the container; AAC's are the subset without markers or a packet.
     private static let mp3ContainerKinds: Set<SaveKind> = [.k0, .k1, .k2, .k5, .k6, .k7, .s1, .s2, .k15, .k16, .k17]
     /// Every MP3 save that writes the tag; a packet-only save (K15, K17) rewrites only the `PRIV`.
     private static let mp3TagKinds: Set<SaveKind> = [.k0, .k1, .k2, .k5, .k6, .k7, .s1, .s2, .k16]
 
     private static let id3: [SafetyNetKnownIssue] = [
         SafetyNetKnownIssue(
-            rows: ["mp3"], kinds: mp3ContainerKinds, item: .id3(.majorVersion),
+            rows: ["mp3", "aac"], kinds: mp3ContainerKinds, item: .id3(.majorVersion),
             text: "An MP3 save re-renders an ID3v2.3 tag as ID3v2.4: expected 2.3, found 2.4 (F7)"
         ),
         SafetyNetKnownIssue(
-            rows: ["mp3"], kinds: mp3ContainerKinds, item: .id3(.id3v1),
+            rows: ["mp3", "aac"], kinds: mp3ContainerKinds, item: .id3(.id3v1),
             text: "An MP3 save adds an ID3v1 tag the file did not have: expected none, found one (F7)"
         ),
         SafetyNetKnownIssue(
-            rows: ["mp3"], kinds: mp3TagKinds, item: .id3(.artist),
+            rows: ["mp3", "aac"], kinds: mp3TagKinds, item: .id3(.artist),
             text: "An MP3 tag save flattens a multi-valued TPE1: expected two values, found one joined with a space (F15)"
         ),
         SafetyNetKnownIssue(
-            rows: ["mp3"], kinds: mp3TagKinds, item: .id3(.userText),
+            rows: ["mp3", "aac"], kinds: mp3TagKinds, item: .id3(.userText),
             text: "An MP3 tag save upper-cases other apps' TXXX descriptions: expected \"SafetyNet Foreign\", found \"SAFETYNET FOREIGN\" (F29)"
         ),
         SafetyNetKnownIssue(
-            rows: ["mp3"], kinds: mp3TagKinds, item: .id3(.lyrics),
+            rows: ["mp3", "aac"], kinds: mp3TagKinds, item: .id3(.lyrics),
             text: "An MP3 tag save rewrites other apps' USLT frames: expected language \"eng\" and description \"Safety Net\", found \"XXX\" and \"SAFETY NET\" (F29)"
         ),
         SafetyNetKnownIssue(
-            rows: ["mp3"], kinds: mp3TagKinds, item: .id3(.userURL),
+            rows: ["mp3", "aac"], kinds: mp3TagKinds, item: .id3(.userURL),
             text: "An MP3 tag save upper-cases other apps' WXXX descriptions: expected \"Safety Net Link\", found \"SAFETY NET LINK\" (F29)"
         ),
         SafetyNetKnownIssue(
-            rows: ["mp3"], kinds: mp3TagKinds, item: .id3(.comments),
+            rows: ["mp3", "aac"], kinds: mp3TagKinds, item: .id3(.comments),
             text: "An MP3 tag save merges a second-language COMM into the first and rewrites a described one: expected 3 frames with languages \"eng\" and \"fra\" kept, found 2, one joined with a space and one \"XXX | SAFETY NET NOTE\" (F15, F29)"
         ),
         SafetyNetKnownIssue(
-            rows: ["mp3"], kinds: [.k0], item: .id3(.frontCover),
+            rows: ["mp3", "aac"], kinds: [.k0], item: .id3(.frontCover),
             text: "An MP3 save flagged for artwork re-encodes an unchanged front cover: expected the same image bytes, found new ones (F30)"
         ),
     ]
@@ -118,6 +118,36 @@ enum SafetyNetKnownIssues {
         SafetyNetKnownIssue(
             rows: ["rf64"], kinds: [.k0, .k7, .s1], item: .riff(.otherAssociatedData),
             text: "An RF64 marker save drops other apps' adtl note and ltxt chunks: expected both, found none (F35)"
+        ),
+    ]
+
+    /// Every AIFF save kind in the net: each runs the tag save first.
+    private static let aiffKinds: Set<SaveKind> = [.k0, .k1, .k2, .k5, .k6, .k7, .k8, .s1, .s2]
+
+    private static let aiff: [SafetyNetKnownIssue] = [
+        SafetyNetKnownIssue(
+            rows: ["aiff", "aifc"], kinds: aiffKinds, item: .id3(.artist),
+            text: "An AIFF save flattens a multi-valued TPE1: expected two values, found one joined with a space (F15)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["aiff", "aifc"], kinds: aiffKinds, item: .id3(.userText),
+            text: "An AIFF save upper-cases other apps' TXXX descriptions: expected \"SafetyNet Foreign\", found \"SAFETYNET FOREIGN\" (F29)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["aiff", "aifc"], kinds: aiffKinds, item: .id3(.lyrics),
+            text: "An AIFF save rewrites other apps' USLT frames: expected language \"eng\" and description \"Safety Net\", found \"XXX\" and \"SAFETY NET\" (F29)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["aiff", "aifc"], kinds: aiffKinds, item: .id3(.userURL),
+            text: "An AIFF save upper-cases other apps' WXXX descriptions: expected \"Safety Net Link\", found \"SAFETY NET LINK\" (F29)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["aiff", "aifc"], kinds: aiffKinds, item: .id3(.comments),
+            text: "An AIFF save merges a second-language COMM into the first and rewrites a described one: expected the \"eng\" and \"fra\" frames kept, found them merged and upper-cased (F15, F29)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["aiff", "aifc"], kinds: [.k0], item: .id3(.frontCover),
+            text: "An AIFF save flagged for artwork re-encodes an unchanged front cover: expected the same image bytes, found new ones (F30)"
         ),
     ]
 

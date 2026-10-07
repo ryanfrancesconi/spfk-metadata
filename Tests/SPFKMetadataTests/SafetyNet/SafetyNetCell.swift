@@ -49,6 +49,7 @@ extension SafetyNetItem {
         case .wholeFile, .audio, .xattr, .ourReader: .unchanged
         case let .id3(item): try item.written(by: kind, after: after)
         case let .riff(item): try item.written(by: kind, after: after)
+        case let .aiff(item): try item.written(by: kind, after: after)
         case let .flac(item): try item.written(by: kind, after: after)
         case let .mp4(item): try item.written(by: kind, after: after)
         }

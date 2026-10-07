@@ -20,6 +20,8 @@ enum SafetyNetItem: Hashable, Sendable, CustomStringConvertible {
     case id3(SafetyNetID3Item)
     /// Something in a WAV's RIFF chunks.
     case riff(SafetyNetRIFFItem)
+    /// Something in an AIFF's chunks.
+    case aiff(SafetyNetAIFFItem)
     /// Something in a FLAC's metadata blocks.
     case flac(SafetyNetFLACItem)
     /// Something in an MP4's atoms, or its chapters as AVFoundation reads them.
@@ -36,6 +38,7 @@ enum SafetyNetItem: Hashable, Sendable, CustomStringConvertible {
         case let .xattr(name): "xattr \(name)"
         case let .id3(item): "ID3 \(item)"
         case let .riff(item): "RIFF \(item)"
+        case let .aiff(item): "AIFF \(item)"
         case let .flac(item): "FLAC \(item)"
         case let .mp4(item): "MP4 \(item)"
         case let .ourReader(component): "our reader's \(component.rawValue)"
@@ -89,6 +92,9 @@ struct SafetyNetSnapshot {
     /// A RIFF file's chunks.
     private(set) var riff: RIFFChunks?
 
+    /// An AIFF or AIFF-C file's chunks.
+    private(set) var aiff: AIFFChunks?
+
     /// A FLAC file's metadata blocks.
     private(set) var flac: FLACBlocks?
 
@@ -109,6 +115,8 @@ struct SafetyNetSnapshot {
 
         if ["RIFF", "RF64", "BW64"].contains(where: { data.starts(with: Data($0.utf8)) }) {
             riff = try RIFFChunks(data)
+        } else if data.starts(with: Data("FORM".utf8)) {
+            aiff = try AIFFChunks(data)
         } else if FLACBlocks.isFLAC(data) {
             flac = try FLACBlocks(data)
         } else if data.count >= 8, data.subdata(in: 4 ..< 8) == Data("ftyp".utf8) {
@@ -124,8 +132,8 @@ struct SafetyNetSnapshot {
         }
 
         if items.contains(where: { if case .id3 = $0 { true } else { false } }) {
-            if let riff {
-                id3Tag = try riff.chunks.first { $0.id == "ID3 " || $0.id == "id3 " }.flatMap { try ID3v2Frames.tag(in: $0.payload) }
+            if let chunks = riff?.chunks ?? aiff?.chunks {
+                id3Tag = try chunks.first { $0.id == "ID3 " || $0.id == "id3 " }.flatMap { try ID3v2Frames.tag(in: $0.payload) }
             } else {
                 id3Tag = try ID3v2Frames.tag(in: data)
             }
@@ -166,6 +174,9 @@ struct SafetyNetSnapshot {
 
         case let .riff(riffItem):
             try riffItem.read(from: riff, file: data)
+
+        case let .aiff(aiffItem):
+            try aiffItem.read(from: aiff)
 
         case let .flac(flacItem):
             try flacItem.read(from: flac)

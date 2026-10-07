@@ -5,13 +5,13 @@ import SPFKBase
 import SPFKTesting
 import Testing
 
-/// Every save the app makes to an MP3 or ADTS AAC writes what it edits and leaves the rest of the ID3v2 tag —
-/// the app's other components, other applications' frames, and the tag's version — as it was.
+/// Every save the app makes to an AIFF writes what it edits and leaves the rest — the app's other
+/// components, other applications' ID3 frames, text, comments and application chunks — as it was.
 @Suite(.tags(.file, .metadataSafetyNet))
-final class SafetyNetID3Tests: BinTestCase {
+final class SafetyNetAIFFTests: BinTestCase {
     static let cases = SafetyNetCase.cases(
-        rows: [SafetyNetRow.mp3, SafetyNetRow.aac],
-        kinds: [.k0, .k1, .k2, .k5, .k6, .k7, .s1, .s2, .k15, .k16, .k17]
+        rows: [SafetyNetRow.aiff, SafetyNetRow.aifc],
+        kinds: [.k0, .k1, .k2, .k5, .k6, .k7, .k8, .s1, .s2]
     )
 
     @Test(arguments: cases)
