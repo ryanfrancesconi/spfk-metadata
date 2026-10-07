@@ -287,7 +287,8 @@ extension MetaAudioFileDescription {
 
     /// Keep the cases in step with `AudioFileType.markerWriteTypes` and
     /// `AudioMarkerDescriptionCollection.init(url:fileType:)`, or markers are written that can't be
-    /// read back. Runs last, so throwing costs only the markers.
+    /// read back. Runs last, so throwing costs only the markers. `EmbeddedMarkers` is the other
+    /// marker dispatch; it differs on WAV, which this writes through `saveWave()`.
     private func saveMarkers() throws {
         let path = url.path
         let success: Bool
