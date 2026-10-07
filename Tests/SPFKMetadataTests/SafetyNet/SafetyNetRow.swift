@@ -51,6 +51,8 @@ struct SafetyNetRow: Sendable, Hashable, CustomTestStringConvertible {
     var ownedItems: [SafetyNetComponent: [SafetyNetItem]] = [:]
     /// Plants a container family's foreign items in one pass, before each item's own injection.
     var plant: (@Sendable (URL) throws -> Void)?
+    /// Changes the copied base fixture before the setup save, such as into another container form.
+    var convert: (@Sendable (URL) throws -> Void)?
 
     var testDescription: String { name }
 
@@ -92,6 +94,16 @@ extension SafetyNetRow {
         name: "wav", fileType: .wav, fixture: TestBundleResources.shared.tabla_wav,
         components: common.union([.bext, .iXML, .packet]), foreignItems: SafetyNetRIFFItem.foreignItems + [.unrelatedXattr],
         ownedItems: SafetyNetRIFFItem.ownedItems, plant: { try SafetyNetRIFFPlant.plant(in: $0) }
+    )
+
+    /// The wav row as RF64, whose markers go through Core Audio rather than TagLib, plus its
+    /// long-form header.
+    static let rf64 = SafetyNetRow(
+        name: "rf64", fileType: .wav, fixture: TestBundleResources.shared.tabla_wav,
+        components: common.union([.bext, .iXML, .packet]),
+        foreignItems: SafetyNetRIFFItem.foreignItems + [SafetyNetForeignItem(item: .riff(.longForm)), .unrelatedXattr],
+        ownedItems: SafetyNetRIFFItem.ownedItems, plant: { try SafetyNetRIFFPlant.plant(in: $0) },
+        convert: { try RIFFChunkBuilder.convertToLongForm($0) }
     )
 
     /// The wav row with only an undated `bext` checked: a second fixture for one item.
@@ -188,6 +200,7 @@ extension SafetyNetRow {
     func prepare(in bin: URL) async throws -> URL {
         let url = bin.appendingPathComponent("\(name)-\(fixture.lastPathComponent)")
         try FileManager.default.copyItem(at: fixture, to: url)
+        try convert?(url)
 
         var description = try await MetaAudioFileDescription(parsing: url)
         var flags: Set<MetadataDirtyFlag> = [.metadata]

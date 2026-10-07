@@ -13,6 +13,10 @@ enum SafetyNetRIFFItem: Hashable, Sendable, CustomStringConvertible {
     case unknownInfo, otherAssociatedData
     /// Where the `data` chunk starts. A save that moves it has rewritten the whole audio in place.
     case dataOffset
+    /// An RF64 file's long-form header: the magic, the sentinel in both 32-bit sizes, and `ds64`
+    /// sizes that match the file. A real size where a sentinel belongs makes other readers ignore
+    /// `ds64` and believe it.
+    case longForm
     /// A whole top-level chunk no writer of ours knows, compared byte for byte.
     case chunk(String)
 
@@ -31,6 +35,7 @@ enum SafetyNetRIFFItem: Hashable, Sendable, CustomStringConvertible {
         case .unknownInfo: "INFO \(SafetyNetRIFFForeign.unknownInfoID)"
         case .otherAssociatedData: "adtl note/ltxt"
         case .dataOffset: "data chunk offset"
+        case .longForm: "long-form header"
         case let .chunk(id): "chunk \(id)"
         }
     }
@@ -64,7 +69,7 @@ extension SafetyNetRIFFItem {
     /// where INFO holds one, so it is not compared.
     private static let infoReadElsewhere: Set<String> = ["INAM", "IRTD", "ICMT", "IART", SafetyNetRIFFForeign.unknownInfoID]
 
-    func read(from riff: RIFFChunks?) throws -> SafetyNetValue? {
+    func read(from riff: RIFFChunks?, file: Data) throws -> SafetyNetValue? {
         guard let riff else { return nil }
 
         func text(_ lines: [String]) -> SafetyNetValue? {
@@ -98,9 +103,10 @@ extension SafetyNetRIFFItem {
             })
 
         case .dataOffset:
-            guard let index = riff.chunks.firstIndex(where: { $0.id == "data" }) else { return nil }
-            let offset = riff.chunks[..<index].reduce(12) { $0 + 8 + $1.payload.count + $1.payload.count % 2 }
-            return .text(["\(offset)"])
+            return Self.dataOffset(in: riff).map { .text(["\($0)"]) }
+
+        case .longForm:
+            return Self.longFormHeader(of: riff, file: file)
 
         case .otherAssociatedData:
             let chunks = try riff.associatedData().filter { $0.id != "labl" }
@@ -124,6 +130,34 @@ extension SafetyNetRIFFItem {
         case let .chunk(id):
             return riff.first(id).map { .bytes($0.payload) }
         }
+    }
+
+    private static func dataOffset(in riff: RIFFChunks) -> Int? {
+        guard let index = riff.chunks.firstIndex(where: { $0.id == "data" }) else { return nil }
+        return riff.chunks[..<index].reduce(12) { $0 + 8 + $1.payload.count + $1.payload.count % 2 }
+    }
+
+    /// Each fact as a line that reads the same before and after any save that keeps the form, so
+    /// sizes are stated as matching or not rather than as numbers.
+    private static func longFormHeader(of riff: RIFFChunks, file: Data) -> SafetyNetValue {
+        func storedSize(at offset: Int) -> String {
+            let value = file.dropFirst(offset).prefix(4).reversed().reduce(UInt32(0)) { $0 << 8 | UInt32($1) }
+            return value == RIFFChunks.longFormSizeSentinel ? "sentinel" : String(format: "0x%08x", value)
+        }
+
+        var lines = ["magic \(riff.form)", "size field \(storedSize(at: 4))", "first chunk \(riff.chunks.first?.id ?? "none")"]
+
+        if let offset = dataOffset(in: riff) {
+            lines.append("data size field \(storedSize(at: offset + 4))")
+        }
+
+        if let sizes = riff.longFormSizes {
+            let dataSize = riff.first("data")?.payload.count ?? 0
+            lines.append(sizes.riffSize == UInt64(file.count - 8) ? "ds64 riffSize matches" : "ds64 riffSize \(sizes.riffSize), file \(file.count - 8)")
+            lines.append(sizes.dataSize == UInt64(dataSize) ? "ds64 dataSize matches" : "ds64 dataSize \(sizes.dataSize), data \(dataSize)")
+        }
+
+        return .text(lines)
     }
 
     static func markerLine(frame: UInt32, name: String?) -> String {

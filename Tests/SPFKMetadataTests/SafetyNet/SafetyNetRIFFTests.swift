@@ -10,7 +10,7 @@ import Testing
 @Suite(.tags(.file, .metadataSafetyNet))
 final class SafetyNetRIFFTests: BinTestCase {
     static let cases = SafetyNetCase.cases(
-        rows: [SafetyNetRow.wav, SafetyNetRow.wavUndatedBEXT, SafetyNetRow.wavRecorder],
+        rows: [SafetyNetRow.wav, SafetyNetRow.wavUndatedBEXT, SafetyNetRow.wavRecorder, SafetyNetRow.rf64],
         kinds: [.k0, .k1, .k2, .k3, .k4, .k5, .k6, .k7, .k8, .s1, .s2, .k15, .k16, .k17]
     )
 

@@ -107,7 +107,7 @@ struct SafetyNetSnapshot {
     init(of url: URL, items: [SafetyNetItem]) async throws {
         let data = try Data(contentsOf: url)
 
-        if data.starts(with: Data("RIFF".utf8)) {
+        if ["RIFF", "RF64", "BW64"].contains(where: { data.starts(with: Data($0.utf8)) }) {
             riff = try RIFFChunks(data)
         } else if FLACBlocks.isFLAC(data) {
             flac = try FLACBlocks(data)
@@ -165,7 +165,7 @@ struct SafetyNetSnapshot {
             try id3Item.read(from: id3Tag, file: data, url: url)
 
         case let .riff(riffItem):
-            try riffItem.read(from: riff)
+            try riffItem.read(from: riff, file: data)
 
         case let .flac(flacItem):
             try flacItem.read(from: flac)
