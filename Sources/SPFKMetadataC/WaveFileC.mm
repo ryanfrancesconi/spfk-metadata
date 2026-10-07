@@ -6,6 +6,7 @@
 #include <vector>
 
 #import <taglib/privateframe.h>
+#import <taglib/tfilestream.h>
 #import <taglib/textidentificationframe.h>
 #import <taglib/tpropertymap.h>
 #import <taglib/wavfile.h>
@@ -115,7 +116,11 @@ using namespace TagLib;
     bool isRIFFWave = [WaveMarkerChunks isRIFFWave:[NSURL fileURLWithPath:_path]];
     bool markersSaved = isRIFFWave ? true : [self saveExtras];
 
-    WaveMarkerFile file(_path.UTF8String);
+    // Declared first so it outlives the file, which does not own it. A chunk resized ahead of
+    // `data` moves the whole audio through the move buffer, a seek, read, seek and write per block.
+    FileStream stream(_path.UTF8String);
+    stream.setMoveBufferSize(1 << 20);
+    WaveMarkerFile file(&stream);
 
     if (!file.isValid()) {
         cout << "Not a wave file" << endl;
