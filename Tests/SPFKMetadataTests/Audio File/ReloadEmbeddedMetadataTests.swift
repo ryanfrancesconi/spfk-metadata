@@ -36,6 +36,62 @@ final class ReloadEmbeddedMetadataTests: BinTestCase {
         #expect(description.audioFormat == audioFormat)
     }
 
+    @Test func aFLACReloadReadsTagsBEXTAndIXMLWrittenElsewhere() async throws {
+        deleteBinOnExit = true
+        let url = try copyToBin(url: TestBundleResources.shared.tabla_flac)
+
+        var description = try await MetaAudioFileDescription(parsing: url)
+        let markers = description.markerCollection
+        let audioFormat = description.audioFormat
+        try #require(description.bextDescription == nil)
+
+        var writer = try await MetaAudioFileDescription(parsing: url)
+        writer.set(tag: .title, value: "Reloaded Title")
+        var bext = BEXTDescription()
+        bext.sequenceDescription = "Reloaded description"
+        bext.originator = "Reload"
+        writer.bextDescription = bext
+        var ixml = IXMLMetadata()
+        ixml.scene = "Reloaded Scene"
+        writer.iXMLMetadata = ixml.xml
+        try writer.save(dirtyFlags: [.metadata])
+
+        try description.reloadEmbeddedMetadata()
+
+        #expect(description.tag(for: .title) == "Reloaded Title")
+        #expect(description.bextDescription?.sequenceDescription == "Reloaded description")
+        #expect(try IXMLMetadata(xml: try #require(description.iXMLMetadata)).scene == "Reloaded Scene")
+        #expect(description.markerCollection == markers)
+        #expect(description.audioFormat == audioFormat)
+    }
+
+    /// A reload clears what the file no longer holds rather than keeping the previous value.
+    @Test func aFLACReloadDropsBEXTAndIXMLRemovedElsewhere() async throws {
+        deleteBinOnExit = true
+        let url = try copyToBin(url: TestBundleResources.shared.tabla_flac)
+
+        var writer = try await MetaAudioFileDescription(parsing: url)
+        var bext = BEXTDescription()
+        bext.sequenceDescription = "To be removed"
+        writer.bextDescription = bext
+        var ixml = IXMLMetadata()
+        ixml.scene = "To be removed"
+        writer.iXMLMetadata = ixml.xml
+        try writer.save(dirtyFlags: [.metadata])
+
+        var description = try await MetaAudioFileDescription(parsing: url)
+        try #require(description.bextDescription != nil)
+
+        writer.bextDescription = nil
+        writer.iXMLMetadata = nil
+        try writer.save(dirtyFlags: [.metadata])
+
+        try description.reloadEmbeddedMetadata()
+
+        #expect(description.bextDescription == nil)
+        #expect(description.iXMLMetadata == nil)
+    }
+
     @Test func aTagRemovedElsewhereIsGoneAfterAReload() async throws {
         deleteBinOnExit = true
         let url = try copyToBin(url: TestBundleResources.shared.tabla_mp3)
