@@ -20,13 +20,15 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/ryanfrancesconi/spfk-taglib", from: "1.5.0"),
         .package(url: "https://github.com/ryanfrancesconi/spfk-audio-base", from: "1.6.1"),
+        .package(url: "https://github.com/ryanfrancesconi/spfk-base", from: "1.2.2"),
         .package(url: "https://github.com/ryanfrancesconi/spfk-filesystem", from: "1.2.2"),
         .package(url: "https://github.com/ryanfrancesconi/spfk-image", from: "0.1.0"),
         .package(url: "https://github.com/ryanfrancesconi/spfk-matroska", from: "1.0.0"),
-        .package(url: "https://github.com/ryanfrancesconi/spfk-metadata-base", from: "1.5.0"),
+        .package(url: "https://github.com/ryanfrancesconi/spfk-metadata-base", from: "1.19.0"),
         .package(url: "https://github.com/ryanfrancesconi/spfk-testing", from: "1.1.0"),
         .package(url: "https://github.com/ryanfrancesconi/spfk-utils", from: "1.6.1"),
         .package(url: "https://github.com/ryanfrancesconi/spfk-video", from: "1.1.0"),
+        .package(url: "https://github.com/tadija/AEXML", from: "4.6.0"),
     ],
     targets: [
         .target(
@@ -34,11 +36,13 @@ let package = Package(
             dependencies: [
                 .targetItem(name: "SPFKMetadataC", condition: nil),
                 .product(name: "SPFKAudioBase", package: "spfk-audio-base"),
+                .product(name: "SPFKBase", package: "spfk-base"),
                 .product(name: "SPFKFileSystem", package: "spfk-filesystem"),
                 .product(name: "SPFKMatroska", package: "spfk-matroska"),
                 .product(name: "SPFKMetadataBase", package: "spfk-metadata-base"),
                 .product(name: "SPFKUtils", package: "spfk-utils"),
                 .product(name: "SPFKVideo", package: "spfk-video"),
+                .product(name: "AEXML", package: "AEXML"),
             ]
         ),
         .target(
