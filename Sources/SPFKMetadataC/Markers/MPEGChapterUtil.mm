@@ -8,6 +8,7 @@
 #import <taglib/fileref.h>
 #import <taglib/mp4file.h>
 #import <taglib/mpegfile.h>
+#import <taglib/tableofcontentsframe.h>
 #import <taglib/tag.h>
 #import <taglib/textidentificationframe.h>
 #import <taglib/tpropertymap.h>
@@ -112,23 +113,37 @@ static NSString *elementIDName(const ByteVector &elementID) {
         return false;
     }
 
+    // The table of contents lists element IDs, so it is rebuilt with the chapters it indexes.
     mpegFile->ID3v2Tag()->removeFrames("CHAP");
+    mpegFile->ID3v2Tag()->removeFrames("CTOC");
 
     ID3v2::Header header;
+    ByteVectorList elementIDs;
 
     for (ChapterMarker *object in chapters) {
         ID3v2::ChapterFrame *chapter = new ID3v2::ChapterFrame(&header, "CHAP");
         chapter->setStartTime(object.startTime * 1000);
         chapter->setEndTime(object.endTime * 1000);
 
-        const char *cname = object.name.UTF8String;
-        chapter->setElementID(String(cname, String::UTF8).data(String::UTF8));
+        // Numbered, so two chapters with one name still have distinct IDs; the name is the TIT2.
+        const ByteVector elementID = String("chp" + to_string(elementIDs.size()), String::Latin1).data(String::Latin1);
+        chapter->setElementID(elementID);
+        elementIDs.append(elementID);
+
+        const char *cname = object.name ? object.name.UTF8String : "";
 
         // Rendered as UTF-16 instead if the tag is ever written as ID3v2.3.
         ID3v2::TextIdentificationFrame *titleFrame = new ID3v2::TextIdentificationFrame("TIT2", String::UTF8);
         titleFrame->setText(String(cname, String::UTF8));
         chapter->addEmbeddedFrame(titleFrame);
         mpegFile->ID3v2Tag()->addFrame(chapter);
+    }
+
+    if (!elementIDs.isEmpty()) {
+        auto *tableOfContents = new ID3v2::TableOfContentsFrame(ByteVector("toc"), elementIDs);
+        tableOfContents->setIsTopLevel(true);
+        tableOfContents->setIsOrdered(true);
+        mpegFile->ID3v2Tag()->addFrame(tableOfContents);
     }
 
     return mpegFile->save();

@@ -53,10 +53,6 @@ enum SafetyNetKnownIssues {
             text: "An MP3 tag save merges a second-language COMM into the first and rewrites a described one: expected 3 frames with languages \"eng\" and \"fra\" kept, found 2, one joined with a space and one \"XXX | SAFETY NET NOTE\" (F15, F29)"
         ),
         SafetyNetKnownIssue(
-            rows: ["mp3"], kinds: [.k7, .s1], item: .id3(.tableOfContents),
-            text: "An MP3 marker save leaves CTOC listing the old chapters: expected the new CHAP element IDs, found the previous ones (F10)"
-        ),
-        SafetyNetKnownIssue(
             rows: ["mp3"], kinds: [.k0], item: .id3(.frontCover),
             text: "An MP3 save flagged for artwork re-encodes an unchanged front cover: expected the same image bytes, found new ones (F30)"
         ),

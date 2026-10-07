@@ -178,17 +178,37 @@ class MP3ChapterMarkerTests: BinTestCase {
         #expect(getChapters(in: tmpfile).first?.name == expected)
     }
 
-    @Test func nonASCIIElementIDIsWrittenAsUTF8() async throws {
+    /// Element IDs are numbered, so chapters sharing a name stay distinct, and the one table of
+    /// contents lists them in order; the name, non-ASCII included, is each chapter's TIT2.
+    @Test func chaptersSharingANameGetDistinctIDsListedInTheTableOfContents() async throws {
         let tmpfile = try copyToBin(url: TestBundleResources.shared.tabla_mp3)
         let name = "日本語 Café"
 
-        #expect(MPEGChapterUtil.write([ChapterMarker(name: name, startTime: 0, endTime: 1)], to: tmpfile.path))
+        #expect(MPEGChapterUtil.write([
+            ChapterMarker(name: name, startTime: 0, endTime: 1),
+            ChapterMarker(name: name, startTime: 1, endTime: 2),
+        ], to: tmpfile.path))
 
-        // The frame header is the ID, a 4-byte size and 2 flag bytes; the element ID opens the body.
-        let bytes = try Data(contentsOf: tmpfile)
-        let chapID = try #require(bytes.range(of: Data("CHAP".utf8)))
-        let body = bytes[(chapID.upperBound + 6)...]
-        #expect(body.starts(with: Data(name.utf8) + Data([0])))
+        let tag = try #require(try ID3v2Frames.tag(in: tmpfile))
+        let chapters = try tag.frames("CHAP").map { try ID3v2Frames.Chapter($0.body, majorVersion: tag.majorVersion) }
+        let tables = try tag.frames("CTOC").map { try ID3v2Frames.TableOfContents($0.body, majorVersion: tag.majorVersion) }
+
+        #expect(chapters.map(\.elementID) == ["chp0", "chp1"])
+        #expect(tables.count == 1)
+        #expect(tables.first?.children == ["chp0", "chp1"])
+        #expect(tables.first?.isTopLevel == true)
+        #expect(tables.first?.isOrdered == true)
+        #expect(getChapters(in: tmpfile).map(\.name) == [name, name])
+    }
+
+    @Test func removingEveryChapterRemovesTheTableOfContents() async throws {
+        let tmpfile = try copyToBin(url: TestBundleResources.shared.tabla_mp3)
+        #expect(MPEGChapterUtil.write([ChapterMarker(name: "One", startTime: 0, endTime: 1)], to: tmpfile.path))
+        #expect(MPEGChapterUtil.write([], to: tmpfile.path))
+
+        let tag = try ID3v2Frames.tag(in: tmpfile)
+        #expect(tag?.frames("CTOC").isEmpty ?? true)
+        #expect(tag?.frames("CHAP").isEmpty ?? true)
     }
 
     @Test func endTimeRoundTrip() async throws {
