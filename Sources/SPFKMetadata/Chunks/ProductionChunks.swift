@@ -1,0 +1,140 @@
+// Copyright Ryan Francesconi. All Rights Reserved. Revision History at https://github.com/ryanfrancesconi/spfk-metadata
+
+import Foundation
+import SPFKAudioBase
+import SPFKMetadataBase
+import SPFKMetadataC
+
+/// The BEXT and iXML chunks of WAV and FLAC files, read and written apart from the tags.
+///
+/// A write is not chunk-only: saving a WAV also rewrites its ID3 and INFO tags and rating as read.
+public enum ProductionChunks {}
+
+// MARK: - BEXT
+
+extension ProductionChunks {
+    /// Nil when the file has none, can't be opened, or is not WAV or FLAC.
+    public static func readBEXT(from url: URL, fileType: AudioFileType) -> BEXTDescription? {
+        switch fileType {
+        case .wav:
+            let file = WaveFileC(path: url.path)
+            guard file.load(), let info = file.bextDescriptionC else { return nil }
+            return BEXTDescription(info: info)
+
+        case .flac:
+            let file = FlacFileC(path: url.path)
+            guard file.load() else { return nil }
+            return file.bextDescription
+
+        default:
+            return nil
+        }
+    }
+
+    public static func writeBEXT(_ bext: BEXTDescription, to url: URL, fileType: AudioFileType) throws {
+        switch fileType {
+        case .wav:
+            let file = WaveFileC(path: url.path)
+            guard file.load() else { throw MetadataError.writeFailed(.bext, url) }
+
+            file.bextDescriptionC = bext.bextDescriptionC
+            file.markersNeedsSave = false
+            file.imageNeedsSave = false
+
+            guard file.save() else { throw MetadataError.writeFailed(.bext, url) }
+
+        case .flac:
+            let file = FlacFileC(path: url.path)
+            guard file.load() else { throw MetadataError.writeFailed(.bext, url) }
+
+            file.bextDescription = bext
+
+            guard file.save() else { throw MetadataError.writeFailed(.bext, url) }
+
+        default:
+            throw MetadataError.unsupportedFormat(fileType, .bext)
+        }
+    }
+}
+
+// MARK: - iXML
+
+extension ProductionChunks {
+    /// The chunk's text as stored. Nil when the file has none, can't be opened, or is not WAV or FLAC.
+    public static func readIXML(from url: URL, fileType: AudioFileType) -> String? {
+        switch fileType {
+        case .wav:
+            let file = WaveFileC(path: url.path)
+            guard file.load() else { return nil }
+            return file.iXML
+
+        case .flac:
+            let file = FlacFileC(path: url.path)
+            guard file.load() else { return nil }
+            return file.iXML
+
+        default:
+            return nil
+        }
+    }
+
+    public static func writeIXML(_ xml: String, to url: URL, fileType: AudioFileType) throws {
+        switch fileType {
+        case .wav:
+            let file = WaveFileC(path: url.path)
+            guard file.load() else { throw MetadataError.writeFailed(.ixml, url) }
+
+            file.iXML = xml
+            file.markersNeedsSave = false
+            file.imageNeedsSave = false
+
+            guard file.save() else { throw MetadataError.writeFailed(.ixml, url) }
+
+        case .flac:
+            let file = FlacFileC(path: url.path)
+            guard file.load() else { throw MetadataError.writeFailed(.ixml, url) }
+
+            file.iXML = xml
+
+            guard file.save() else { throw MetadataError.writeFailed(.ixml, url) }
+
+        default:
+            throw MetadataError.unsupportedFormat(fileType, .ixml)
+        }
+    }
+}
+
+// MARK: - Both
+
+extension ProductionChunks {
+    /// Removes BEXT and iXML in one save; a file with neither is left unwritten. Throws
+    /// `removeFailed(.bext, url)` for either chunk.
+    public static func removeAll(from url: URL, fileType: AudioFileType) throws {
+        switch fileType {
+        case .wav:
+            let file = WaveFileC(path: url.path)
+            guard file.load() else { throw MetadataError.removeFailed(.bext, url) }
+            guard file.bextDescriptionC != nil || file.iXML != nil else { return }
+
+            file.bextDescriptionC = nil
+            file.iXML = nil
+            file.markersNeedsSave = false
+            file.imageNeedsSave = false
+
+            guard file.save() else { throw MetadataError.removeFailed(.bext, url) }
+
+        case .flac:
+            let file = FlacFileC(path: url.path)
+            guard file.load() else { throw MetadataError.removeFailed(.bext, url) }
+            guard file.bextDescriptionC != nil || file.iXML != nil else { return }
+
+            file.bextDescriptionC = nil
+            file.iXML = nil
+
+            guard file.save() else { throw MetadataError.removeFailed(.bext, url) }
+
+        default:
+            throw MetadataError.unsupportedFormat(fileType, .bext)
+        }
+    }
+}
