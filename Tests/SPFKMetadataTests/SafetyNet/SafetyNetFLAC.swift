@@ -200,7 +200,7 @@ extension SafetyNetFLACItem {
         return String(format: "%02d:%02d:%02d.%03d", milliseconds / 3_600_000, milliseconds / 60000 % 60, milliseconds / 1000 % 60, milliseconds % 1000)
     }
 
-    private static func line(_ picture: FLACBlocks.Picture) -> String {
+    static func line(_ picture: FLACBlocks.Picture) -> String {
         "type \(picture.pictureType), \(picture.mimeType), \"\(picture.description)\", sha256 \(digest(picture.data))…"
     }
 
@@ -218,7 +218,7 @@ extension SafetyNetFLACItem {
         }
     }
 
-    private static func digest(_ data: Data) -> String {
+    static func digest(_ data: Data) -> String {
         SHA256.hash(data: data).prefix(8).map { String(format: "%02x", $0) }.joined()
     }
 }

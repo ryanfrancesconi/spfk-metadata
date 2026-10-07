@@ -5,7 +5,7 @@ import Foundation
 import SPFKTesting
 
 extension SafetyNetSnapshot {
-    /// The audio, found without `spfk-metadata`: a WAV's `data` payload, an AIFF's `SSND`, a FLAC's frames after the
+    /// The audio, found without `spfk-metadata`: a WAV's `data` payload, an AIFF's `SSND`, an Ogg file's audio pages, a FLAC's frames after the
     /// metadata blocks, an MP3's frames between its ID3v2 and ID3v1 tags, and an MP4's audio decoded
     /// to PCM — its `mdat` also holds the chapter track's text, which a marker save rewrites. Nil for
     /// a container none of these recognize.
@@ -16,6 +16,14 @@ extension SafetyNetSnapshot {
 
         if let aiff {
             return aiff.first("SSND")?.payload
+        }
+
+        if let ogg {
+            // Each audio page's granule, lacing and body: the packets and where they end, without
+            // the sequence numbers and checksums a longer header legitimately changes.
+            return ogg.audioPages.reduce(into: Data()) { data, page in
+                data += withUnsafeBytes(of: page.granulePosition.littleEndian) { Data($0) } + Data(page.lacingValues) + page.body
+            }
         }
 
         if let flac {

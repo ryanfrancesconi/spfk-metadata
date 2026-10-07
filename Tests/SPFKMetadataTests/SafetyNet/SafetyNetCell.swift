@@ -50,6 +50,7 @@ extension SafetyNetItem {
         case let .id3(item): try item.written(by: kind, after: after)
         case let .riff(item): try item.written(by: kind, after: after)
         case let .aiff(item): try item.written(by: kind, after: after)
+        case let .ogg(item): try item.written(by: kind, after: after)
         case let .flac(item): try item.written(by: kind, after: after)
         case let .mp4(item): try item.written(by: kind, after: after)
         }
@@ -62,7 +63,7 @@ extension SafetyNetItem {
     /// chapters and be read back when they are empty. Every other unowned item stays as it was.
     func unownedWrite(by kind: SaveKind, row: SafetyNetRow) -> SafetyNetWrite {
         switch (self, kind) {
-        case (.id3(.otherPictures), .k6), (.flac(.otherPictures), .k6), (.mp4(.otherCovers), .k6):
+        case (.id3(.otherPictures), .k6), (.flac(.otherPictures), .k6), (.ogg(.otherPictures), .k6), (.mp4(.otherCovers), .k6):
             .value(nil)
         case (.mp4(.neroChapters), _) where kind.steps(for: row).contains { $0.flags.contains(.markers) }:
             .value(nil)

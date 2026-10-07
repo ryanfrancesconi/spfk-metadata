@@ -22,6 +22,8 @@ enum SafetyNetItem: Hashable, Sendable, CustomStringConvertible {
     case riff(SafetyNetRIFFItem)
     /// Something in an AIFF's chunks.
     case aiff(SafetyNetAIFFItem)
+    /// Something in an Ogg Vorbis or Opus file's comment header.
+    case ogg(SafetyNetOggItem)
     /// Something in a FLAC's metadata blocks.
     case flac(SafetyNetFLACItem)
     /// Something in an MP4's atoms, or its chapters as AVFoundation reads them.
@@ -39,6 +41,7 @@ enum SafetyNetItem: Hashable, Sendable, CustomStringConvertible {
         case let .id3(item): "ID3 \(item)"
         case let .riff(item): "RIFF \(item)"
         case let .aiff(item): "AIFF \(item)"
+        case let .ogg(item): "Ogg \(item)"
         case let .flac(item): "FLAC \(item)"
         case let .mp4(item): "MP4 \(item)"
         case let .ourReader(component): "our reader's \(component.rawValue)"
@@ -95,6 +98,9 @@ struct SafetyNetSnapshot {
     /// An AIFF or AIFF-C file's chunks.
     private(set) var aiff: AIFFChunks?
 
+    /// An Ogg file's pages and packets.
+    private(set) var ogg: OggPackets?
+
     /// A FLAC file's metadata blocks.
     private(set) var flac: FLACBlocks?
 
@@ -117,6 +123,8 @@ struct SafetyNetSnapshot {
             riff = try RIFFChunks(data)
         } else if data.starts(with: Data("FORM".utf8)) {
             aiff = try AIFFChunks(data)
+        } else if data.starts(with: Data("OggS".utf8)) {
+            ogg = try OggPackets(data)
         } else if FLACBlocks.isFLAC(data) {
             flac = try FLACBlocks(data)
         } else if data.count >= 8, data.subdata(in: 4 ..< 8) == Data("ftyp".utf8) {
@@ -177,6 +185,9 @@ struct SafetyNetSnapshot {
 
         case let .aiff(aiffItem):
             try aiffItem.read(from: aiff)
+
+        case let .ogg(oggItem):
+            try oggItem.read(from: ogg)
 
         case let .flac(flacItem):
             try flacItem.read(from: flac)

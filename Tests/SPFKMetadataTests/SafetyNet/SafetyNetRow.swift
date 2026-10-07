@@ -158,6 +158,20 @@ extension SafetyNetRow {
         plant: { try SafetyNetAIFFPlant.plant(in: $0) }
     )
 
+    static let ogg = SafetyNetRow(
+        name: "ogg", fileType: .ogg, fixture: TestBundleResources.shared.tabla_ogg,
+        components: common, foreignItems: SafetyNetOggItem.foreignItems + [.unrelatedXattr],
+        ownedItems: SafetyNetOggItem.ownedItems, plant: { try SafetyNetOggPlant.plant(in: $0, base: TestBundleResources.shared.tabla_ogg) }
+    )
+
+    /// The base fixture's only field is its encoder, so there are no other fields to keep.
+    static let opus = SafetyNetRow(
+        name: "opus", fileType: .opus, fixture: TestBundleResources.shared.sine_opus,
+        components: common, foreignItems: SafetyNetOggItem.foreignItems + [.unrelatedXattr],
+        ownedItems: SafetyNetOggItem.ownedItems.mapValues { $0.filter { $0 != .ogg(.otherFields) } },
+        plant: { try SafetyNetOggPlant.plant(in: $0, base: TestBundleResources.shared.sine_opus) }
+    )
+
     /// `stik` 1, music.
     static let m4a = SafetyNetRow(
         name: "m4a", fileType: .m4a, fixture: TestBundleResources.shared.tabla_m4a,

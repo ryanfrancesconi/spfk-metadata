@@ -16,7 +16,7 @@ struct SafetyNetKnownIssue: Sendable {
 /// that starts passing records `knownIssueNotRecorded` and turns the suite red until its entry is
 /// removed.
 enum SafetyNetKnownIssues {
-    static let table: [SafetyNetKnownIssue] = id3 + wave + aiff + flac + mp4
+    static let table: [SafetyNetKnownIssue] = id3 + wave + aiff + flac + ogg + mp4
 
     /// Every MP3 save that writes the container; AAC's are the subset without markers or a packet.
     private static let mp3ContainerKinds: Set<SaveKind> = [.k0, .k1, .k2, .k5, .k6, .k7, .s1, .s2, .k15, .k16, .k17]
@@ -178,6 +178,24 @@ enum SafetyNetKnownIssues {
         SafetyNetKnownIssue(
             rows: ["flac-ixml-only-bext"], kinds: [.k1, .k2, .k5], item: .flac(.blockSet),
             text: "A FLAC save writes a bext block for a BEXT held only in iXML's <BEXT>: expected no bext block, found one (F39)"
+        ),
+    ]
+
+    /// Every Ogg Vorbis and Opus save kind in the net: each runs the tag save first.
+    private static let oggKinds: Set<SaveKind> = [.k0, .k1, .k2, .k5, .k6, .k7, .k8, .s1, .s2]
+
+    private static let ogg: [SafetyNetKnownIssue] = [
+        SafetyNetKnownIssue(
+            rows: ["ogg", "opus"], kinds: oggKinds, item: .ogg(.multiValuedField),
+            text: "An Ogg save flattens a repeated comment field: expected ENCODER twice, found one value joined with a space (F15)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["ogg", "opus"], kinds: [.k0], item: .ogg(.frontCover),
+            text: "An Ogg save flagged for artwork re-encodes an unchanged front cover: expected the same image bytes, found new ones (F30)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["ogg", "opus"], kinds: [.k0], item: .ogg(.chapters),
+            text: "An Ogg marker save of unchanged markers turns point chapters into regions: expected no CHAPTERnnnEND, found one ending at the next chapter (F38)"
         ),
     ]
 
