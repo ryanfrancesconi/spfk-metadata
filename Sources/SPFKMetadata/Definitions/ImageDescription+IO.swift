@@ -6,6 +6,16 @@ import SPFKMetadataBase
 import SPFKMetadataC
 
 extension ImageDescription {
+    /// `description` is the picture's when it has one, else nil.
+    public init(embeddedArtwork: EmbeddedArtwork) {
+        self.init()
+        cgImage = embeddedArtwork.cgImage
+
+        if embeddedArtwork.pictureDescription != "" {
+            description = embeddedArtwork.pictureDescription
+        }
+    }
+
     /// TagLib's name for picture type 3.
     private static let frontCoverPictureType = "Front Cover"
 

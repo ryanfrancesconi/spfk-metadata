@@ -51,6 +51,11 @@ enum ID3v24TagBuilder {
         frame(id: "WXXX", body: Data([0]) + Data(description.utf8) + Data([0]) + Data(url.utf8))
     }
 
+    /// `APIC` with Latin-1 encoding and picture type 3 (front cover); `data` is written as given.
+    static func apic(mimeType: String, description: String = "", data: Data) -> Data {
+        frame(id: "APIC", body: Data([0]) + Data(mimeType.utf8) + Data([0, 3]) + Data(description.utf8) + Data([0]) + data)
+    }
+
     /// Start and end offsets are written as `0xFFFFFFFF` (unused).
     static func chap(elementID: String, startMs: UInt32, endMs: UInt32, embedded: [Data]) -> Data {
         chap(elementID: Data(elementID.utf8), startMs: startMs, endMs: endMs, embedded: embedded)

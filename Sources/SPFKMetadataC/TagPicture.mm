@@ -222,25 +222,36 @@ static void clearLegacyFlacXiphCommentPictures(FileRef &fileRef) {
 // MARK: - Path-based (opens its own FileRef)
 
 - (nullable instancetype)initWithPath:(nonnull NSString *)path {
-    FileRef fileRef(path.UTF8String);
-    if (fileRef.isNull())
-        return nil;
-
-    auto pictures = fileRef.complexProperties(pictureKey);
-
-    if (pictures.isEmpty())
-        pictures = flacXiphCommentPictureFallback(fileRef);
-
-    if (pictures.isEmpty())
-        return nil;
-
-    TagPictureRef *ref = buildPictureRef(artworkPicture(pictures));
+    TagPictureReadResult result;
+    TagPictureRef *ref = [TagPicture readPath:path result:&result];
     if (!ref)
         return nil;
 
     self = [super init];
     _pictureRef = ref;
     return self;
+}
+
++ (nullable TagPictureRef *)readPath:(nonnull NSString *)path result:(nonnull TagPictureReadResult *)result {
+    FileRef fileRef(path.UTF8String);
+    if (fileRef.isNull()) {
+        *result = TagPictureReadResultOpenFailed;
+        return nil;
+    }
+
+    auto pictures = fileRef.complexProperties(pictureKey);
+
+    if (pictures.isEmpty())
+        pictures = flacXiphCommentPictureFallback(fileRef);
+
+    if (pictures.isEmpty()) {
+        *result = TagPictureReadResultNone;
+        return nil;
+    }
+
+    TagPictureRef *ref = buildPictureRef(artworkPicture(pictures));
+    *result = ref ? TagPictureReadResultFound : TagPictureReadResultDecodeFailed;
+    return ref;
 }
 
 + (bool)write:(nullable TagPictureRef *)picture path:(nonnull NSString *)path {

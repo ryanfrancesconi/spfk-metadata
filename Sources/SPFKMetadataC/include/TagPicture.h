@@ -6,6 +6,14 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+/// Why `readPath:result:` returned what it did.
+typedef NS_ENUM(NSInteger, TagPictureReadResult) {
+    TagPictureReadResultFound = 0,
+    TagPictureReadResultNone,
+    TagPictureReadResultOpenFailed,
+    TagPictureReadResultDecodeFailed,
+};
+
 /// Embedded artwork through TagLib's PICTURE complex property, in any container that has one.
 /// A caller already holding the file open uses `readFromTag:`/`write:toTag:`.
 @interface TagPicture : NSObject
@@ -19,6 +27,9 @@ NS_ASSUME_NONNULL_BEGIN
 /// The first picture, or for a FLAC with none the XiphComment copy older versions wrote. Nil when
 /// there is none or it doesn't decode.
 - (nullable instancetype)initWithPath:(nonnull NSString *)path;
+
+/// The picture `initWithPath:` reads; nil unless `result` is `TagPictureReadResultFound`.
++ (nullable TagPictureRef *)readPath:(nonnull NSString *)path result:(nonnull TagPictureReadResult *)result;
 
 /// Nil removes the artwork. False only when the file can't be opened or the image can't be encoded.
 + (bool)write:(nullable TagPictureRef *)picture path:(nonnull NSString *)path;
