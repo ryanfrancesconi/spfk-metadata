@@ -208,6 +208,27 @@ extension SafetyNetRow {
         plant: { try SafetyNetMP4Plant.plant(in: $0, mediaKind: 6, quickTime: true) }
     )
 
+    private static let matroskaComponents = common.subtracting([.markers])
+
+    /// Its own `Chapters` already.
+    static let mka = SafetyNetRow(
+        name: "mka", fileType: .mka, fixture: TestBundleResources.shared.tabla_mka,
+        components: matroskaComponents, foreignItems: SafetyNetMatroskaItem.foreignItems(font: true) + [.unrelatedXattr],
+        ownedItems: SafetyNetMatroskaItem.ownedItems, plant: { try SafetyNetMatroskaPlant.plant(in: $0, font: true) }
+    )
+
+    static let mkv = SafetyNetRow(
+        name: "mkv", fileType: .mkv, fixture: TestBundleResources.shared.sample_mkv,
+        components: matroskaComponents, foreignItems: SafetyNetMatroskaItem.foreignItems(font: true) + [.unrelatedXattr],
+        ownedItems: SafetyNetMatroskaItem.ownedItems, plant: { try SafetyNetMatroskaPlant.plant(in: $0, font: true) }
+    )
+
+    static let webm = SafetyNetRow(
+        name: "webm", fileType: .webm, fixture: TestBundleResources.shared.sample_webm,
+        components: matroskaComponents, foreignItems: SafetyNetMatroskaItem.foreignItems(font: false) + [.unrelatedXattr],
+        ownedItems: SafetyNetMatroskaItem.ownedItems, plant: { try SafetyNetMatroskaPlant.plant(in: $0, font: false) }
+    )
+
     /// The formats ShadowTag users edit.
     static let slice: [SafetyNetRow] = [mp3, wav, flac, m4a, m4b]
 }

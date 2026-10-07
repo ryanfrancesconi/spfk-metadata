@@ -51,6 +51,7 @@ extension SafetyNetItem {
         case let .riff(item): try item.written(by: kind, after: after)
         case let .aiff(item): try item.written(by: kind, after: after)
         case let .ogg(item): try item.written(by: kind, after: after)
+        case let .matroska(item): try item.written(by: kind, after: after)
         case let .flac(item): try item.written(by: kind, after: after)
         case let .mp4(item): try item.written(by: kind, after: after)
         }

@@ -24,6 +24,8 @@ enum SafetyNetItem: Hashable, Sendable, CustomStringConvertible {
     case aiff(SafetyNetAIFFItem)
     /// Something in an Ogg Vorbis or Opus file's comment header.
     case ogg(SafetyNetOggItem)
+    /// Something in a Matroska file's tags, attachments or chapters.
+    case matroska(SafetyNetMatroskaItem)
     /// Something in a FLAC's metadata blocks.
     case flac(SafetyNetFLACItem)
     /// Something in an MP4's atoms, or its chapters as AVFoundation reads them.
@@ -42,6 +44,7 @@ enum SafetyNetItem: Hashable, Sendable, CustomStringConvertible {
         case let .riff(item): "RIFF \(item)"
         case let .aiff(item): "AIFF \(item)"
         case let .ogg(item): "Ogg \(item)"
+        case let .matroska(item): "Matroska \(item)"
         case let .flac(item): "FLAC \(item)"
         case let .mp4(item): "MP4 \(item)"
         case let .ourReader(component): "our reader's \(component.rawValue)"
@@ -98,6 +101,9 @@ struct SafetyNetSnapshot {
     /// An AIFF or AIFF-C file's chunks.
     private(set) var aiff: AIFFChunks?
 
+    /// A Matroska or WebM file's elements.
+    private(set) var matroska: MatroskaElements?
+
     /// An Ogg file's pages and packets.
     private(set) var ogg: OggPackets?
 
@@ -123,6 +129,8 @@ struct SafetyNetSnapshot {
             riff = try RIFFChunks(data)
         } else if data.starts(with: Data("FORM".utf8)) {
             aiff = try AIFFChunks(data)
+        } else if data.starts(with: [0x1A, 0x45, 0xDF, 0xA3]) {
+            matroska = try MatroskaElements(data)
         } else if data.starts(with: Data("OggS".utf8)) {
             ogg = try OggPackets(data)
         } else if FLACBlocks.isFLAC(data) {
@@ -188,6 +196,9 @@ struct SafetyNetSnapshot {
 
         case let .ogg(oggItem):
             try oggItem.read(from: ogg)
+
+        case let .matroska(matroskaItem):
+            try matroskaItem.read(from: matroska)
 
         case let .flac(flacItem):
             try flacItem.read(from: flac)
