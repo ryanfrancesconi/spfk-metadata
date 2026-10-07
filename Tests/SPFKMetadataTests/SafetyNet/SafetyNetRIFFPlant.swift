@@ -109,6 +109,15 @@ enum SafetyNetRIFFPlant {
         }
     }
 
+    /// Moves `data` behind every other chunk, so the metadata precedes the audio as a field
+    /// recorder writes it.
+    static func plantRecorderLayout(in url: URL) throws {
+        try RIFFChunkBuilder.rewrite(url) { chunks in
+            guard let index = chunks.firstIndex(where: { $0.id == "data" }) else { throw RIFFChunkBuilder.MissingChunk() }
+            chunks.append(chunks.remove(at: index))
+        }
+    }
+
     private static func appendSubchunks(_ subchunks: [RIFFChunks.Chunk], toList type: String, in chunks: inout [RIFFChunks.Chunk]) throws {
         guard let list = chunks.first(where: { $0.listType == type }) else { throw RIFFChunkBuilder.MissingChunk() }
         try RIFFChunkBuilder.replace(in: &chunks, where: { $0.listType == type }, with: RIFFChunkBuilder.list(type, list.subchunks() + subchunks))

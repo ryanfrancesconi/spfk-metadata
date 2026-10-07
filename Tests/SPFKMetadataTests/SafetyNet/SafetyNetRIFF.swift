@@ -11,6 +11,8 @@ enum SafetyNetRIFFItem: Hashable, Sendable, CustomStringConvertible {
 
     // Foreign
     case unknownInfo, otherAssociatedData
+    /// Where the `data` chunk starts. A save that moves it has rewritten the whole audio in place.
+    case dataOffset
     /// A whole top-level chunk no writer of ours knows, compared byte for byte.
     case chunk(String)
 
@@ -28,6 +30,7 @@ enum SafetyNetRIFFItem: Hashable, Sendable, CustomStringConvertible {
         case .xmpPacket: "_PMX"
         case .unknownInfo: "INFO \(SafetyNetRIFFForeign.unknownInfoID)"
         case .otherAssociatedData: "adtl note/ltxt"
+        case .dataOffset: "data chunk offset"
         case let .chunk(id): "chunk \(id)"
         }
     }
@@ -50,7 +53,7 @@ enum SafetyNetRIFFItem: Hashable, Sendable, CustomStringConvertible {
     /// Other applications' ID3 frames and RIFF data, planted by ``SafetyNetRIFFPlant``.
     static let foreignItems: [SafetyNetForeignItem] =
         SafetyNetID3Item.foreignFrames.map { SafetyNetForeignItem(item: .id3($0)) }
-            + ([.unknownInfo] + SafetyNetRIFFForeign.unknownChunkIDs.map(SafetyNetRIFFItem.chunk) + [.otherAssociatedData])
+            + ([.unknownInfo] + SafetyNetRIFFForeign.unknownChunkIDs.map(SafetyNetRIFFItem.chunk) + [.otherAssociatedData, .dataOffset])
             .map { SafetyNetForeignItem(item: .riff($0)) }
 }
 
@@ -93,6 +96,11 @@ extension SafetyNetRIFFItem {
             return try text(riff.cuePoints().sorted { $0.sampleOffset < $1.sampleOffset }.map {
                 Self.markerLine(frame: $0.sampleOffset, name: labels[$0.id])
             })
+
+        case .dataOffset:
+            guard let index = riff.chunks.firstIndex(where: { $0.id == "data" }) else { return nil }
+            let offset = riff.chunks[..<index].reduce(12) { $0 + 8 + $1.payload.count + $1.payload.count % 2 }
+            return .text(["\(offset)"])
 
         case .otherAssociatedData:
             let chunks = try riff.associatedData().filter { $0.id != "labl" }

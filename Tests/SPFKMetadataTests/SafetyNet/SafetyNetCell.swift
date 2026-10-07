@@ -46,7 +46,7 @@ extension SafetyNetItem {
     func written(by kind: SaveKind, after: SafetyNetSnapshot) throws -> SafetyNetWrite {
         switch self {
         case .finderTags: .value(.text([SafetyNetEdit.finderTag]))
-        case .wholeFile, .xattr, .ourReader: .unchanged
+        case .wholeFile, .audio, .xattr, .ourReader: .unchanged
         case let .id3(item): try item.written(by: kind, after: after)
         case let .riff(item): try item.written(by: kind, after: after)
         case let .flac(item): try item.written(by: kind, after: after)
@@ -63,6 +63,8 @@ enum SafetyNetCell {
         let url = try await row.prepare(in: bin)
 
         var items = row.components.sorted { $0.rawValue < $1.rawValue }.flatMap(row.items(for:)) + row.foreignItems.map(\.item)
+
+        items.insert(.audio, at: 0)
 
         if !kind.writesContainer {
             items.insert(.wholeFile, at: 0)

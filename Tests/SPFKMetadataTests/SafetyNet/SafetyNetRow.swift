@@ -101,6 +101,14 @@ extension SafetyNetRow {
         ownedItems: [.bext: [.riff(.bextDateTime)]], plant: { try SafetyNetRIFFPlant.plantUndatedBroadcastExtension(in: $0) }
     )
 
+    /// The wav row's setup with every chunk moved ahead of `data`, as field recorders write them,
+    /// checking only the audio and where it sits.
+    static let wavRecorder = SafetyNetRow(
+        name: "wav-recorder", fileType: .wav, fixture: TestBundleResources.shared.tabla_wav,
+        components: common.union([.bext, .iXML, .packet]), foreignItems: [SafetyNetForeignItem(item: .riff(.dataOffset))],
+        plant: { try SafetyNetRIFFPlant.plantRecorderLayout(in: $0) }
+    )
+
     static let flac = SafetyNetRow(
         name: "flac", fileType: .flac, fixture: TestBundleResources.shared.tabla_flac,
         components: common.union([.bext, .iXML]), foreignItems: SafetyNetFLACItem.foreignItems + [.unrelatedXattr],

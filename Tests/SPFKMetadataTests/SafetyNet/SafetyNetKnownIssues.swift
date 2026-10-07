@@ -111,6 +111,10 @@ enum SafetyNetKnownIssues {
             text: "A WAV save that edits no tag still rewrites the tags, adding an INFO item to ID3: expected no new TXXX, found TXXX NUMCOLORS (F47)"
         ),
         SafetyNetKnownIssue(
+            rows: ["wav-recorder"], kinds: wavTagKinds.union([.k17]), item: .riff(.dataOffset),
+            text: "A WAV save moves the audio when metadata chunks precede data: expected data at its offset, found it moved (F48)"
+        ),
+        SafetyNetKnownIssue(
             rows: ["wav"], kinds: wavTagKinds, item: .riff(.unknownInfo),
             text: "A WAV tag save drops INFO items it has no key for: expected IFRM, found none (F20)"
         ),
@@ -185,6 +189,10 @@ enum SafetyNetKnownIssues {
         SafetyNetKnownIssue(
             rows: ["m4a", "m4b"], kinds: mp4Kinds, item: .mp4(.gaplessInfo),
             text: "An MP4 save renames the gapless-playback atom: expected iTunSMPB, found ITUNSMPB (F40)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["m4a"], kinds: mp4Kinds, item: .audio,
+            text: "An MP4 save renames the gapless-playback atom, so AVFoundation stops trimming to its sample count: expected 9152 decoded frames, found the untrimmed length (F40)"
         ),
         SafetyNetKnownIssue(
             rows: ["m4a", "m4b"], kinds: [.k0, .k5, .k6, .s2], item: .mp4(.otherCovers),

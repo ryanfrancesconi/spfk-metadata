@@ -10,6 +10,8 @@ import Testing
 enum SafetyNetItem: Hashable, Sendable, CustomStringConvertible {
     /// Every byte of the file.
     case wholeFile
+    /// The coded audio, as ``SafetyNetSnapshot/audioPayload(of:)`` extracts it. No save may change it.
+    case audio
     /// Finder's tag attribute, decoded to its stored strings.
     case finderTags
     /// One extended attribute's bytes.
@@ -29,6 +31,7 @@ enum SafetyNetItem: Hashable, Sendable, CustomStringConvertible {
     var description: String {
         switch self {
         case .wholeFile: "whole file"
+        case .audio: "audio payload"
         case .finderTags: "Finder tags"
         case let .xattr(name): "xattr \(name)"
         case let .id3(item): "ID3 \(item)"
@@ -98,6 +101,9 @@ struct SafetyNetSnapshot {
     /// An MP4's duration in seconds as AVFoundation reads it, when its chapters were read.
     private(set) var mp4Duration: Double?
 
+    /// An MP4's first audio track decoded to PCM by AVFoundation, when the audio was asked for.
+    private(set) var mp4AudioPCM: Data?
+
     init(of url: URL, items: [SafetyNetItem]) async throws {
         let data = try Data(contentsOf: url)
 
@@ -107,6 +113,10 @@ struct SafetyNetSnapshot {
             flac = try FLACBlocks(data)
         } else if data.count >= 8, data.subdata(in: 4 ..< 8) == Data("ftyp".utf8) {
             mp4 = try MP4Atoms(data)
+        }
+
+        if mp4 != nil, items.contains(.audio) {
+            mp4AudioPCM = try Self.decodedPCM(of: url)
         }
 
         if mp4 != nil, items.contains(.mp4(.chapters)) {
@@ -141,6 +151,9 @@ struct SafetyNetSnapshot {
         switch item {
         case .wholeFile:
             .bytes(data)
+
+        case .audio:
+            audioPayload(of: data).map(SafetyNetValue.bytes)
 
         case .finderTags:
             try FileXattrs.userTags(of: url).map(SafetyNetValue.text)
