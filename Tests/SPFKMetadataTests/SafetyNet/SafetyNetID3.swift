@@ -271,6 +271,15 @@ extension SafetyNetID3Item {
         case .xmpPacket:
             return .value(kind == .k17 ? nil : .bytes(Data(SafetyNetEdit.packet.utf8)))
 
+        case .infoUserText:
+            // An INFO item with no tag key is read as a custom tag and saved like one, into ID3.
+            guard let info = try after.riff?.infoItems() else { return .unchanged }
+
+            let copies = SafetyNetID3Foreign.infoOnlyItems.flatMap { id, name in
+                info.filter { $0.id == id }.map { "\(name): \($0.value)" }
+            }
+            return .value(.text(copies.isEmpty ? ["none"] : copies.sorted()))
+
         default:
             return .unchanged
         }

@@ -107,8 +107,8 @@ enum SafetyNetKnownIssues {
             text: "A WAV tag save adds a second TXXX with a description already present: expected each description once, found one twice (F33)"
         ),
         SafetyNetKnownIssue(
-            rows: ["wav"], kinds: wavTagKinds, item: .id3(.infoUserText),
-            text: "A WAV tag save copies an INFO item with no tag key into ID3 as a TXXX: expected none, found TXXX NUMCOLORS (F34)"
+            rows: ["wav"], kinds: wavTagKinds.subtracting([.k1, .k16, .s1, .s2]), item: .id3(.infoUserText),
+            text: "A WAV save that edits no tag still rewrites the tags, adding an INFO item to ID3: expected no new TXXX, found TXXX NUMCOLORS (F47)"
         ),
         SafetyNetKnownIssue(
             rows: ["wav"], kinds: wavTagKinds, item: .riff(.unknownInfo),

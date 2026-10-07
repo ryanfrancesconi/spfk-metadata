@@ -15,8 +15,10 @@ enum SafetyNetID3Foreign {
     static let artist = ["David St. Hubbins", "Nigel Tufnel"]
     static let involvedPeople = ["PRODUCER", "Ian Faith"]
 
-    /// The custom-tag names the reader gives INFO items that have no tag key (`IPLT`).
-    static let infoOnlyUserTextDescriptions: Set<String> = ["NUMCOLORS"]
+    /// INFO IDs with no tag key, and the custom-tag name the reader gives each.
+    static let infoOnlyItems = ["IPLT": "NUMCOLORS"]
+
+    static var infoOnlyUserTextDescriptions: Set<String> { Set(infoOnlyItems.values) }
 
     static func frames() throws -> [Data] {
         typealias Builder = ID3v24TagBuilder
