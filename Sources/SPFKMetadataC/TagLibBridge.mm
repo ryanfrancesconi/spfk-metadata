@@ -183,9 +183,12 @@ namespace {
         for (const auto &key : std::as_const(chapterKeys)) tags.erase(key);
     }
 
-    // The rating is absent from the PropertyMap — each container stores it differently
-    // (ID3 POPM, the MP4 `rate` atom, Xiph RATING) — so it needs carrying separately.
+    // Each container stores the rating differently (ID3 POPM, the MP4 `rate` atom, Xiph RATING), so it
+    // is carried separately. MP4's PropertyMap holds the raw `rate` value, which must not travel as text.
     int ratingStars = TagRatingReadFromFile(input.file());
+
+    if (dynamic_cast<MP4::File *>(input.file()))
+        tags.erase("RATING");
 
     if (tags.isEmpty() && ratingStars <= 0) {
         return true;

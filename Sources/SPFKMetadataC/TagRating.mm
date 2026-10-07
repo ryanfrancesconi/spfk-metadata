@@ -182,7 +182,10 @@ static int readMP4(MP4::Tag *tag) {
     if (tag->contains(kMP4RateKey)) {
         MP4::Item item = tag->item(kMP4RateKey);
         if (item.isValid()) {
-            if (int stars = starsFromStoredValue(item.toInt()); stars > 0)
+            // Stored as an integer or as text; TagLib parses the text form into a string list.
+            const StringList text = item.toStringList();
+            const int value = text.isEmpty() ? item.toInt() : text.front().toInt();
+            if (int stars = starsFromStoredValue(value); stars > 0)
                 return stars;
         }
     }

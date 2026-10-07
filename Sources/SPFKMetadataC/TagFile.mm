@@ -62,6 +62,10 @@ using namespace TagLib;
     PropertyMap properties = tag->properties();
     const bool hasXiphComment = TagUtil::xiphComment(fileRef.file()) != nullptr;
 
+    // TagLib maps the `rate` atom to RATING unconverted; the rating read below is on the star scale.
+    if (dynamic_cast<MP4::File *>(fileRef.file()))
+        properties.erase("RATING");
+
     for (const auto &property : properties) {
         // Read as markers, by XiphChapterUtil.
         if (hasXiphComment && TagUtil::isChapterField(property.first)) continue;
