@@ -1,0 +1,811 @@
+{
+  "audioFormat" : {
+    "bitRate" : 192,
+    "channelCount" : 1,
+    "duration" : 13,
+    "sampleRate" : 44100
+  },
+  "fileType" : "mp3",
+  "imageDescription" : {
+    "description" : "<file path>",
+    "hasThumbnail" : false,
+    "size" : null
+  },
+  "isAVPlayable" : true,
+  "isDecodable" : false,
+  "isProtected" : false,
+  "markerCollection" : {
+    "markerDescriptions" : [
+      {
+        "endTime" : 0.10000000000000001,
+        "markerID" : 0,
+        "name" : "Marker 1",
+        "startTime" : 0.10000000000000001
+      },
+      {
+        "endTime" : 0.20000000000000001,
+        "markerID" : 1,
+        "name" : "Marker 2",
+        "startTime" : 0.20000000000000001
+      },
+      {
+        "endTime" : 0.29999999999999999,
+        "markerID" : 2,
+        "name" : "Marker 3",
+        "startTime" : 0.29999999999999999
+      },
+      {
+        "endTime" : 0.40000000000000002,
+        "markerID" : 3,
+        "name" : "Marker 4",
+        "startTime" : 0.40000000000000002
+      },
+      {
+        "endTime" : 0.5,
+        "markerID" : 4,
+        "name" : "Marker 5",
+        "startTime" : 0.5
+      },
+      {
+        "endTime" : 0.59999999999999998,
+        "markerID" : 5,
+        "name" : "Marker 6",
+        "startTime" : 0.59999999999999998
+      },
+      {
+        "endTime" : 0.69999999999999996,
+        "markerID" : 6,
+        "name" : "Marker 7",
+        "startTime" : 0.69999999999999996
+      },
+      {
+        "endTime" : 0.80000000000000004,
+        "markerID" : 7,
+        "name" : "Marker 8",
+        "startTime" : 0.80000000000000004
+      },
+      {
+        "endTime" : 0.90000000000000002,
+        "markerID" : 8,
+        "name" : "Marker 9",
+        "startTime" : 0.90000000000000002
+      },
+      {
+        "endTime" : 1,
+        "markerID" : 9,
+        "name" : "Marker 10",
+        "startTime" : 1
+      },
+      {
+        "endTime" : 1.1000000000000001,
+        "markerID" : 10,
+        "name" : "Marker 11",
+        "startTime" : 1.1000000000000001
+      },
+      {
+        "endTime" : 1.2,
+        "markerID" : 11,
+        "name" : "Marker 12",
+        "startTime" : 1.2
+      },
+      {
+        "endTime" : 1.3,
+        "markerID" : 12,
+        "name" : "Marker 13",
+        "startTime" : 1.3
+      },
+      {
+        "endTime" : 1.3999999999999999,
+        "markerID" : 13,
+        "name" : "Marker 14",
+        "startTime" : 1.3999999999999999
+      },
+      {
+        "endTime" : 1.5,
+        "markerID" : 14,
+        "name" : "Marker 15",
+        "startTime" : 1.5
+      },
+      {
+        "endTime" : 1.6000000000000001,
+        "markerID" : 15,
+        "name" : "Marker 16",
+        "startTime" : 1.6000000000000001
+      },
+      {
+        "endTime" : 1.7,
+        "markerID" : 16,
+        "name" : "Marker 17",
+        "startTime" : 1.7
+      },
+      {
+        "endTime" : 1.8,
+        "markerID" : 17,
+        "name" : "Marker 18",
+        "startTime" : 1.8
+      },
+      {
+        "endTime" : 1.8999999999999999,
+        "markerID" : 18,
+        "name" : "Marker 19",
+        "startTime" : 1.8999999999999999
+      },
+      {
+        "endTime" : 2,
+        "markerID" : 19,
+        "name" : "Marker 20",
+        "startTime" : 2
+      },
+      {
+        "endTime" : 2.1000000000000001,
+        "markerID" : 20,
+        "name" : "Marker 21",
+        "startTime" : 2.1000000000000001
+      },
+      {
+        "endTime" : 2.2000000000000002,
+        "markerID" : 21,
+        "name" : "Marker 22",
+        "startTime" : 2.2000000000000002
+      },
+      {
+        "endTime" : 2.2999999999999998,
+        "markerID" : 22,
+        "name" : "Marker 23",
+        "startTime" : 2.2999999999999998
+      },
+      {
+        "endTime" : 2.3999999999999999,
+        "markerID" : 23,
+        "name" : "Marker 24",
+        "startTime" : 2.3999999999999999
+      },
+      {
+        "endTime" : 2.5,
+        "markerID" : 24,
+        "name" : "Marker 25",
+        "startTime" : 2.5
+      },
+      {
+        "endTime" : 2.6000000000000001,
+        "markerID" : 25,
+        "name" : "Marker 26",
+        "startTime" : 2.6000000000000001
+      },
+      {
+        "endTime" : 2.7000000000000002,
+        "markerID" : 26,
+        "name" : "Marker 27",
+        "startTime" : 2.7000000000000002
+      },
+      {
+        "endTime" : 2.7999999999999998,
+        "markerID" : 27,
+        "name" : "Marker 28",
+        "startTime" : 2.7999999999999998
+      },
+      {
+        "endTime" : 2.8999999999999999,
+        "markerID" : 28,
+        "name" : "Marker 29",
+        "startTime" : 2.8999999999999999
+      },
+      {
+        "endTime" : 3,
+        "markerID" : 29,
+        "name" : "Marker 30",
+        "startTime" : 3
+      },
+      {
+        "endTime" : 3.1000000000000001,
+        "markerID" : 30,
+        "name" : "Marker 31",
+        "startTime" : 3.1000000000000001
+      },
+      {
+        "endTime" : 3.2000000000000002,
+        "markerID" : 31,
+        "name" : "Marker 32",
+        "startTime" : 3.2000000000000002
+      },
+      {
+        "endTime" : 3.2999999999999998,
+        "markerID" : 32,
+        "name" : "Marker 33",
+        "startTime" : 3.2999999999999998
+      },
+      {
+        "endTime" : 3.3999999999999999,
+        "markerID" : 33,
+        "name" : "Marker 34",
+        "startTime" : 3.3999999999999999
+      },
+      {
+        "endTime" : 3.5,
+        "markerID" : 34,
+        "name" : "Marker 35",
+        "startTime" : 3.5
+      },
+      {
+        "endTime" : 3.6000000000000001,
+        "markerID" : 35,
+        "name" : "Marker 36",
+        "startTime" : 3.6000000000000001
+      },
+      {
+        "endTime" : 3.7000000000000002,
+        "markerID" : 36,
+        "name" : "Marker 37",
+        "startTime" : 3.7000000000000002
+      },
+      {
+        "endTime" : 3.7999999999999998,
+        "markerID" : 37,
+        "name" : "Marker 38",
+        "startTime" : 3.7999999999999998
+      },
+      {
+        "endTime" : 3.8999999999999999,
+        "markerID" : 38,
+        "name" : "Marker 39",
+        "startTime" : 3.8999999999999999
+      },
+      {
+        "endTime" : 4,
+        "markerID" : 39,
+        "name" : "Marker 40",
+        "startTime" : 4
+      },
+      {
+        "endTime" : 4.0999999999999996,
+        "markerID" : 40,
+        "name" : "Marker 41",
+        "startTime" : 4.0999999999999996
+      },
+      {
+        "endTime" : 4.2000000000000002,
+        "markerID" : 41,
+        "name" : "Marker 42",
+        "startTime" : 4.2000000000000002
+      },
+      {
+        "endTime" : 4.2999999999999998,
+        "markerID" : 42,
+        "name" : "Marker 43",
+        "startTime" : 4.2999999999999998
+      },
+      {
+        "endTime" : 4.4000000000000004,
+        "markerID" : 43,
+        "name" : "Marker 44",
+        "startTime" : 4.4000000000000004
+      },
+      {
+        "endTime" : 4.5,
+        "markerID" : 44,
+        "name" : "Marker 45",
+        "startTime" : 4.5
+      },
+      {
+        "endTime" : 4.5999999999999996,
+        "markerID" : 45,
+        "name" : "Marker 46",
+        "startTime" : 4.5999999999999996
+      },
+      {
+        "endTime" : 4.7000000000000002,
+        "markerID" : 46,
+        "name" : "Marker 47",
+        "startTime" : 4.7000000000000002
+      },
+      {
+        "endTime" : 4.7999999999999998,
+        "markerID" : 47,
+        "name" : "Marker 48",
+        "startTime" : 4.7999999999999998
+      },
+      {
+        "endTime" : 4.9000000000000004,
+        "markerID" : 48,
+        "name" : "Marker 49",
+        "startTime" : 4.9000000000000004
+      },
+      {
+        "endTime" : 5,
+        "markerID" : 49,
+        "name" : "Marker 50",
+        "startTime" : 5
+      },
+      {
+        "endTime" : 5.0999999999999996,
+        "markerID" : 50,
+        "name" : "Marker 51",
+        "startTime" : 5.0999999999999996
+      },
+      {
+        "endTime" : 5.2000000000000002,
+        "markerID" : 51,
+        "name" : "Marker 52",
+        "startTime" : 5.2000000000000002
+      },
+      {
+        "endTime" : 5.2999999999999998,
+        "markerID" : 52,
+        "name" : "Marker 53",
+        "startTime" : 5.2999999999999998
+      },
+      {
+        "endTime" : 5.4000000000000004,
+        "markerID" : 53,
+        "name" : "Marker 54",
+        "startTime" : 5.4000000000000004
+      },
+      {
+        "endTime" : 5.5,
+        "markerID" : 54,
+        "name" : "Marker 55",
+        "startTime" : 5.5
+      },
+      {
+        "endTime" : 5.5999999999999996,
+        "markerID" : 55,
+        "name" : "Marker 56",
+        "startTime" : 5.5999999999999996
+      },
+      {
+        "endTime" : 5.7000000000000002,
+        "markerID" : 56,
+        "name" : "Marker 57",
+        "startTime" : 5.7000000000000002
+      },
+      {
+        "endTime" : 5.7999999999999998,
+        "markerID" : 57,
+        "name" : "Marker 58",
+        "startTime" : 5.7999999999999998
+      },
+      {
+        "endTime" : 5.9000000000000004,
+        "markerID" : 58,
+        "name" : "Marker 59",
+        "startTime" : 5.9000000000000004
+      },
+      {
+        "endTime" : 6,
+        "markerID" : 59,
+        "name" : "Marker 60",
+        "startTime" : 6
+      },
+      {
+        "endTime" : 6.0999999999999996,
+        "markerID" : 60,
+        "name" : "Marker 61",
+        "startTime" : 6.0999999999999996
+      },
+      {
+        "endTime" : 6.2000000000000002,
+        "markerID" : 61,
+        "name" : "Marker 62",
+        "startTime" : 6.2000000000000002
+      },
+      {
+        "endTime" : 6.2999999999999998,
+        "markerID" : 62,
+        "name" : "Marker 63",
+        "startTime" : 6.2999999999999998
+      },
+      {
+        "endTime" : 6.4000000000000004,
+        "markerID" : 63,
+        "name" : "Marker 64",
+        "startTime" : 6.4000000000000004
+      },
+      {
+        "endTime" : 6.5,
+        "markerID" : 64,
+        "name" : "Marker 65",
+        "startTime" : 6.5
+      },
+      {
+        "endTime" : 6.5999999999999996,
+        "markerID" : 65,
+        "name" : "Marker 66",
+        "startTime" : 6.5999999999999996
+      },
+      {
+        "endTime" : 6.7000000000000002,
+        "markerID" : 66,
+        "name" : "Marker 67",
+        "startTime" : 6.7000000000000002
+      },
+      {
+        "endTime" : 6.7999999999999998,
+        "markerID" : 67,
+        "name" : "Marker 68",
+        "startTime" : 6.7999999999999998
+      },
+      {
+        "endTime" : 6.9000000000000004,
+        "markerID" : 68,
+        "name" : "Marker 69",
+        "startTime" : 6.9000000000000004
+      },
+      {
+        "endTime" : 7,
+        "markerID" : 69,
+        "name" : "Marker 70",
+        "startTime" : 7
+      },
+      {
+        "endTime" : 7.0999999999999996,
+        "markerID" : 70,
+        "name" : "Marker 71",
+        "startTime" : 7.0999999999999996
+      },
+      {
+        "endTime" : 7.2000000000000002,
+        "markerID" : 71,
+        "name" : "Marker 72",
+        "startTime" : 7.2000000000000002
+      },
+      {
+        "endTime" : 7.2999999999999998,
+        "markerID" : 72,
+        "name" : "Marker 73",
+        "startTime" : 7.2999999999999998
+      },
+      {
+        "endTime" : 7.4000000000000004,
+        "markerID" : 73,
+        "name" : "Marker 74",
+        "startTime" : 7.4000000000000004
+      },
+      {
+        "endTime" : 7.5,
+        "markerID" : 74,
+        "name" : "Marker 75",
+        "startTime" : 7.5
+      },
+      {
+        "endTime" : 7.5999999999999996,
+        "markerID" : 75,
+        "name" : "Marker 76",
+        "startTime" : 7.5999999999999996
+      },
+      {
+        "endTime" : 7.7000000000000002,
+        "markerID" : 76,
+        "name" : "Marker 77",
+        "startTime" : 7.7000000000000002
+      },
+      {
+        "endTime" : 7.7999999999999998,
+        "markerID" : 77,
+        "name" : "Marker 78",
+        "startTime" : 7.7999999999999998
+      },
+      {
+        "endTime" : 7.9000000000000004,
+        "markerID" : 78,
+        "name" : "Marker 79",
+        "startTime" : 7.9000000000000004
+      },
+      {
+        "endTime" : 8,
+        "markerID" : 79,
+        "name" : "Marker 80",
+        "startTime" : 8
+      },
+      {
+        "endTime" : 8.0999999999999996,
+        "markerID" : 80,
+        "name" : "Marker 81",
+        "startTime" : 8.0999999999999996
+      },
+      {
+        "endTime" : 8.1999999999999993,
+        "markerID" : 81,
+        "name" : "Marker 82",
+        "startTime" : 8.1999999999999993
+      },
+      {
+        "endTime" : 8.3000000000000007,
+        "markerID" : 82,
+        "name" : "Marker 83",
+        "startTime" : 8.3000000000000007
+      },
+      {
+        "endTime" : 8.4000000000000004,
+        "markerID" : 83,
+        "name" : "Marker 84",
+        "startTime" : 8.4000000000000004
+      },
+      {
+        "endTime" : 8.5,
+        "markerID" : 84,
+        "name" : "Marker 85",
+        "startTime" : 8.5
+      },
+      {
+        "endTime" : 8.5999999999999996,
+        "markerID" : 85,
+        "name" : "Marker 86",
+        "startTime" : 8.5999999999999996
+      },
+      {
+        "endTime" : 8.6999999999999993,
+        "markerID" : 86,
+        "name" : "Marker 87",
+        "startTime" : 8.6999999999999993
+      },
+      {
+        "endTime" : 8.8000000000000007,
+        "markerID" : 87,
+        "name" : "Marker 88",
+        "startTime" : 8.8000000000000007
+      },
+      {
+        "endTime" : 8.9000000000000004,
+        "markerID" : 88,
+        "name" : "Marker 89",
+        "startTime" : 8.9000000000000004
+      },
+      {
+        "endTime" : 9,
+        "markerID" : 89,
+        "name" : "Marker 90",
+        "startTime" : 9
+      },
+      {
+        "endTime" : 9.0999999999999996,
+        "markerID" : 90,
+        "name" : "Marker 91",
+        "startTime" : 9.0999999999999996
+      },
+      {
+        "endTime" : 9.1999999999999993,
+        "markerID" : 91,
+        "name" : "Marker 92",
+        "startTime" : 9.1999999999999993
+      },
+      {
+        "endTime" : 9.3000000000000007,
+        "markerID" : 92,
+        "name" : "Marker 93",
+        "startTime" : 9.3000000000000007
+      },
+      {
+        "endTime" : 9.4000000000000004,
+        "markerID" : 93,
+        "name" : "Marker 94",
+        "startTime" : 9.4000000000000004
+      },
+      {
+        "endTime" : 9.5,
+        "markerID" : 94,
+        "name" : "Marker 95",
+        "startTime" : 9.5
+      },
+      {
+        "endTime" : 9.5999999999999996,
+        "markerID" : 95,
+        "name" : "Marker 96",
+        "startTime" : 9.5999999999999996
+      },
+      {
+        "endTime" : 9.6999999999999993,
+        "markerID" : 96,
+        "name" : "Marker 97",
+        "startTime" : 9.6999999999999993
+      },
+      {
+        "endTime" : 9.8000000000000007,
+        "markerID" : 97,
+        "name" : "Marker 98",
+        "startTime" : 9.8000000000000007
+      },
+      {
+        "endTime" : 9.9000000000000004,
+        "markerID" : 98,
+        "name" : "Marker 99",
+        "startTime" : 9.9000000000000004
+      },
+      {
+        "endTime" : 10,
+        "markerID" : 99,
+        "name" : "Marker 100",
+        "startTime" : 10
+      },
+      {
+        "endTime" : 10.1,
+        "markerID" : 100,
+        "name" : "Marker 101",
+        "startTime" : 10.1
+      },
+      {
+        "endTime" : 10.199999999999999,
+        "markerID" : 101,
+        "name" : "Marker 102",
+        "startTime" : 10.199999999999999
+      },
+      {
+        "endTime" : 10.300000000000001,
+        "markerID" : 102,
+        "name" : "Marker 103",
+        "startTime" : 10.300000000000001
+      },
+      {
+        "endTime" : 10.4,
+        "markerID" : 103,
+        "name" : "Marker 104",
+        "startTime" : 10.4
+      },
+      {
+        "endTime" : 10.5,
+        "markerID" : 104,
+        "name" : "Marker 105",
+        "startTime" : 10.5
+      },
+      {
+        "endTime" : 10.6,
+        "markerID" : 105,
+        "name" : "Marker 106",
+        "startTime" : 10.6
+      },
+      {
+        "endTime" : 10.699999999999999,
+        "markerID" : 106,
+        "name" : "Marker 107",
+        "startTime" : 10.699999999999999
+      },
+      {
+        "endTime" : 10.800000000000001,
+        "markerID" : 107,
+        "name" : "Marker 108",
+        "startTime" : 10.800000000000001
+      },
+      {
+        "endTime" : 10.9,
+        "markerID" : 108,
+        "name" : "Marker 109",
+        "startTime" : 10.9
+      },
+      {
+        "endTime" : 11,
+        "markerID" : 109,
+        "name" : "Marker 110",
+        "startTime" : 11
+      },
+      {
+        "endTime" : 11.1,
+        "markerID" : 110,
+        "name" : "Marker 111",
+        "startTime" : 11.1
+      },
+      {
+        "endTime" : 11.199999999999999,
+        "markerID" : 111,
+        "name" : "Marker 112",
+        "startTime" : 11.199999999999999
+      },
+      {
+        "endTime" : 11.300000000000001,
+        "markerID" : 112,
+        "name" : "Marker 113",
+        "startTime" : 11.300000000000001
+      },
+      {
+        "endTime" : 11.4,
+        "markerID" : 113,
+        "name" : "Marker 114",
+        "startTime" : 11.4
+      },
+      {
+        "endTime" : 11.5,
+        "markerID" : 114,
+        "name" : "Marker 115",
+        "startTime" : 11.5
+      },
+      {
+        "endTime" : 11.6,
+        "markerID" : 115,
+        "name" : "Marker 116",
+        "startTime" : 11.6
+      },
+      {
+        "endTime" : 11.699999999999999,
+        "markerID" : 116,
+        "name" : "Marker 117",
+        "startTime" : 11.699999999999999
+      },
+      {
+        "endTime" : 11.800000000000001,
+        "markerID" : 117,
+        "name" : "Marker 118",
+        "startTime" : 11.800000000000001
+      },
+      {
+        "endTime" : 11.9,
+        "markerID" : 118,
+        "name" : "Marker 119",
+        "startTime" : 11.9
+      },
+      {
+        "endTime" : 12,
+        "markerID" : 119,
+        "name" : "Marker 120",
+        "startTime" : 12
+      },
+      {
+        "endTime" : 12.1,
+        "markerID" : 120,
+        "name" : "Marker 121",
+        "startTime" : 12.1
+      },
+      {
+        "endTime" : 12.199999999999999,
+        "markerID" : 121,
+        "name" : "Marker 122",
+        "startTime" : 12.199999999999999
+      },
+      {
+        "endTime" : 12.300000000000001,
+        "markerID" : 122,
+        "name" : "Marker 123",
+        "startTime" : 12.300000000000001
+      },
+      {
+        "endTime" : 12.4,
+        "markerID" : 123,
+        "name" : "Marker 124",
+        "startTime" : 12.4
+      },
+      {
+        "endTime" : 12.5,
+        "markerID" : 124,
+        "name" : "Marker 125",
+        "startTime" : 12.5
+      },
+      {
+        "endTime" : 12.6,
+        "markerID" : 125,
+        "name" : "Marker 126",
+        "startTime" : 12.6
+      },
+      {
+        "endTime" : 12.699999999999999,
+        "markerID" : 126,
+        "name" : "Marker 127",
+        "startTime" : 12.699999999999999
+      },
+      {
+        "endTime" : 12.800000000000001,
+        "markerID" : 127,
+        "name" : "Marker 128",
+        "startTime" : 12.800000000000001
+      },
+      {
+        "endTime" : 12.9,
+        "markerID" : 128,
+        "name" : "Marker 129",
+        "startTime" : 12.9
+      }
+    ]
+  },
+  "tagProperties" : {
+    "audioProperties" : {
+      "bitRate" : 192,
+      "channelCount" : 1,
+      "duration" : 13.061,
+      "sampleRate" : 44100
+    },
+    "data" : {
+      "customTags" : {
+
+      },
+      "tags" : {
+
+      }
+    }
+  }
+}

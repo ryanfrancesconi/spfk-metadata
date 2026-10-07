@@ -1,0 +1,40 @@
+{
+  "audioFormat" : {
+    "bitRate" : 129,
+    "channelCount" : 2,
+    "duration" : 5.2976190476190474,
+    "sampleRate" : 44100
+  },
+  "fileType" : "mp3",
+  "imageDescription" : {
+    "description" : "<file path>",
+    "hasThumbnail" : false,
+    "size" : null
+  },
+  "isAVPlayable" : true,
+  "isDecodable" : false,
+  "isProtected" : false,
+  "markerCollection" : {
+    "markerDescriptions" : [
+
+    ]
+  },
+  "tagProperties" : {
+    "audioProperties" : {
+      "bitRate" : 129,
+      "channelCount" : 2,
+      "duration" : 5.3289999999999997,
+      "sampleRate" : 44100
+    },
+    "data" : {
+      "customTags" : {
+
+      },
+      "tags" : {
+        "comment" : "Created with Sibelius.",
+        "date" : "2026",
+        "trackNumber" : "1"
+      }
+    }
+  }
+}

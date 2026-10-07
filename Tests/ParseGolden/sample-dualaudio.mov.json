@@ -1,0 +1,69 @@
+{
+  "audioFormat" : {
+    "bitRate" : 0,
+    "channelCount" : 1,
+    "duration" : 2.0660090702947844,
+    "sampleRate" : 44100
+  },
+  "audioTracks" : [
+    {
+      "channelCount" : 1,
+      "codec" : "aac",
+      "id" : 2,
+      "language" : "eng",
+      "name" : "English",
+      "sampleRate" : 44100
+    },
+    {
+      "channelCount" : 1,
+      "codec" : "aac",
+      "id" : 3,
+      "language" : "jpn",
+      "name" : "Japanese",
+      "sampleRate" : 44100
+    }
+  ],
+  "fileType" : "mov",
+  "imageDescription" : {
+    "description" : "<file path>",
+    "hasThumbnail" : false,
+    "size" : null
+  },
+  "isAVPlayable" : true,
+  "isDecodable" : false,
+  "isProtected" : false,
+  "markerCollection" : {
+    "markerDescriptions" : [
+
+    ]
+  },
+  "quickTimeUserData" : {
+    "deviceSoftware" : "Lavf62.3.100"
+  },
+  "tagProperties" : {
+    "audioProperties" : {
+      "bitRate" : 0,
+      "channelCount" : 1,
+      "duration" : 2.089,
+      "sampleRate" : 44100
+    },
+    "data" : {
+      "customTags" : {
+
+      },
+      "tags" : {
+
+      }
+    }
+  },
+  "videoTrack" : {
+    "codec" : "avc1",
+    "duration" : 2,
+    "height" : 120,
+    "nominalFrameRate" : 30,
+    "parserVersion" : 5,
+    "preciseFrameRate" : "30",
+    "rotationDegrees" : 0,
+    "width" : 160
+  }
+}

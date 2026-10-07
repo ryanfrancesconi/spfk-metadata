@@ -1,0 +1,54 @@
+{
+  "audioFormat" : {
+    "bitRate" : 32,
+    "channelCount" : 1,
+    "duration" : 2.065986394557823,
+    "sampleRate" : 44100
+  },
+  "audioTracks" : [
+    {
+      "channelCount" : 1,
+      "codec" : "aac",
+      "id" : 1,
+      "language" : "eng",
+      "sampleRate" : 44100
+    },
+    {
+      "channelCount" : 1,
+      "codec" : "aac",
+      "id" : 2,
+      "language" : "jpn",
+      "sampleRate" : 44100
+    }
+  ],
+  "fileType" : "m4a",
+  "imageDescription" : {
+    "description" : "<file path>",
+    "hasThumbnail" : false,
+    "size" : null
+  },
+  "isAVPlayable" : true,
+  "isDecodable" : false,
+  "isProtected" : false,
+  "markerCollection" : {
+    "markerDescriptions" : [
+
+    ]
+  },
+  "tagProperties" : {
+    "audioProperties" : {
+      "bitRate" : 32,
+      "channelCount" : 1,
+      "duration" : 2.089,
+      "sampleRate" : 44100
+    },
+    "data" : {
+      "customTags" : {
+
+      },
+      "tags" : {
+        "encoding" : "Lavf62.3.100"
+      }
+    }
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "audioFormat" : {
+    "bitRate" : 71,
+    "channelCount" : 1,
+    "duration" : 2.089,
+    "sampleRate" : 44100
+  },
+  "audioTracks" : [
+    {
+      "channelCount" : 1,
+      "codec" : "A_AAC",
+      "id" : 8556798350239195349,
+      "language" : "eng",
+      "name" : "English",
+      "sampleRate" : 44100
+    },
+    {
+      "channelCount" : 1,
+      "codec" : "A_AAC",
+      "id" : 14796333619115554125,
+      "language" : "jpn",
+      "name" : "Japanese",
+      "sampleRate" : 44100
+    }
+  ],
+  "fileType" : "mka",
+  "imageDescription" : {
+    "description" : "<file path>",
+    "hasThumbnail" : false,
+    "size" : null
+  },
+  "isAVPlayable" : false,
+  "isDecodable" : true,
+  "isProtected" : false,
+  "markerCollection" : {
+    "markerDescriptions" : [
+
+    ]
+  },
+  "tagProperties" : {
+    "audioProperties" : {
+      "bitRate" : 71,
+      "channelCount" : 1,
+      "duration" : 2.089,
+      "sampleRate" : 44100
+    },
+    "data" : {
+      "customTags" : {
+
+      },
+      "tags" : {
+        "encodedBy" : "Lavf62.3.100"
+      }
+    }
+  }
+}

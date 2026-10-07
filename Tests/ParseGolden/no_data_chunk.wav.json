@@ -1,0 +1,56 @@
+{
+  "audioFormat" : {
+    "bitRate" : 0,
+    "channelCount" : 0,
+    "duration" : 0,
+    "sampleRate" : 0
+  },
+  "bextDescription" : {
+    "codingHistory" : "",
+    "loudnessDescription" : {
+
+    },
+    "originationDate" : "2023-01-27",
+    "originationTime" : "11:25:48",
+    "originator" : "Pro Tools",
+    "originatorReference" : "aa4qQpK!a9Sk",
+    "sampleRate" : 0,
+    "sequenceDescription" : "",
+    "timeReferenceHigh" : 0,
+    "timeReferenceLow" : 5598352,
+    "umid" : "060A2B340101010501010F1013000000CF40FE43EA4380004EFB55D444DC571C0000000000000000000000000000000000000000000000000000000000000000",
+    "version" : 1
+  },
+  "fileType" : "wav",
+  "imageDescription" : {
+    "description" : "<file path>",
+    "hasThumbnail" : false,
+    "size" : null
+  },
+  "isAVPlayable" : false,
+  "isDecodable" : false,
+  "isProtected" : false,
+  "markerCollection" : {
+    "markerDescriptions" : [
+
+    ]
+  },
+  "tagProperties" : {
+    "audioProperties" : {
+      "bitRate" : 0,
+      "channelCount" : 0,
+      "duration" : 0,
+      "sampleRate" : 0
+    },
+    "data" : {
+      "customTags" : {
+
+      },
+      "tags" : {
+        "comment" : "<metadata album=\"\" bits=\"24\" bpm=\"120.0\" category=\"Sound Design\" channels=\"2\" comments=\"\" complexity=\"5\" composer=\"\" dirty=\"false\" duration=\"0.0\" genre=\"Horror\" hiddenKeywords=\"\" instrument=\"\" intensity=\"5\" keywords=\"Select Horror Rises\" loudnessRange=\"\" lufs=\"\" modality=\"\" moods=\"\" path=\"/Users/sammusic/Desktop/â¢FINAL SOUND PACKS 2023/Signature_String_And_Rise_Horror_v6.addLibrary/Sound Design/Element/Rises/FX/ALIBI-Fear of Falling_STEM FX-16.wav\" publisher=\"\" relatedGenres=\"Horror\" sampleRate=\"48000.0\" sectionNumber=\"0\" sequenceNumber=\"1\" subCategory=\"Element\" subType=\"FX\" title=\"ALIBI-Fear of Falling_STEM FX-16\" tonic=\"\" truePeak=\"\" typeString=\"Rises\" />",
+        "genre" : "Horror",
+        "title" : "ALIBI-Fear of Falling_STEM FX-16"
+      }
+    }
+  }
+}

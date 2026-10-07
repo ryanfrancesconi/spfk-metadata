@@ -1,0 +1,40 @@
+{
+  "audioFormat" : {
+    "bitRate" : 1411,
+    "bitsPerChannel" : 16,
+    "channelCount" : 2,
+    "duration" : 10,
+    "sampleRate" : 44100
+  },
+  "fileType" : "wav",
+  "imageDescription" : {
+    "description" : "<file path>",
+    "hasThumbnail" : false,
+    "size" : null
+  },
+  "isAVPlayable" : true,
+  "isDecodable" : false,
+  "isProtected" : false,
+  "markerCollection" : {
+    "markerDescriptions" : [
+
+    ]
+  },
+  "tagProperties" : {
+    "audioProperties" : {
+      "bitRate" : 1411,
+      "bitsPerChannel" : 16,
+      "channelCount" : 2,
+      "duration" : 10,
+      "sampleRate" : 44100
+    },
+    "data" : {
+      "customTags" : {
+
+      },
+      "tags" : {
+
+      }
+    }
+  }
+}

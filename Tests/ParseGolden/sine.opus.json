@@ -1,0 +1,38 @@
+{
+  "audioFormat" : {
+    "bitRate" : 29,
+    "channelCount" : 1,
+    "duration" : 0.25,
+    "sampleRate" : 48000
+  },
+  "fileType" : "opus",
+  "imageDescription" : {
+    "description" : "<file path>",
+    "hasThumbnail" : false,
+    "size" : null
+  },
+  "isAVPlayable" : true,
+  "isDecodable" : false,
+  "isProtected" : false,
+  "markerCollection" : {
+    "markerDescriptions" : [
+
+    ]
+  },
+  "tagProperties" : {
+    "audioProperties" : {
+      "bitRate" : 29,
+      "channelCount" : 1,
+      "duration" : 0.25,
+      "sampleRate" : 48000
+    },
+    "data" : {
+      "customTags" : {
+        "ENCODER" : "Lavc63.1.100 libopus"
+      },
+      "tags" : {
+
+      }
+    }
+  }
+}

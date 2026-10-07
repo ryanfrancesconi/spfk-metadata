@@ -1,0 +1,39 @@
+{
+  "audioFormat" : {
+    "bitRate" : 34,
+    "channelCount" : 2,
+    "duration" : 1,
+    "sampleRate" : 44100
+  },
+  "fileType" : "mp3",
+  "imageDescription" : {
+    "description" : "<file path>",
+    "hasThumbnail" : false,
+    "size" : null
+  },
+  "isAVPlayable" : true,
+  "isDecodable" : false,
+  "isProtected" : false,
+  "markerCollection" : {
+    "markerDescriptions" : [
+
+    ]
+  },
+  "tagProperties" : {
+    "audioProperties" : {
+      "bitRate" : 34,
+      "channelCount" : 2,
+      "duration" : 1.0449999999999999,
+      "sampleRate" : 44100
+    },
+    "data" : {
+      "customTags" : {
+
+      },
+      "tags" : {
+        "encoding" : "Lavf62.3.100",
+        "rating" : "4"
+      }
+    }
+  }
+}

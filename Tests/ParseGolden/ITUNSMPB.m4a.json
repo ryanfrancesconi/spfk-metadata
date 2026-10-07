@@ -1,0 +1,47 @@
+{
+  "audioFormat" : {
+    "bitRate" : 128,
+    "channelCount" : 2,
+    "duration" : 0.19066666666666668,
+    "sampleRate" : 48000
+  },
+  "audioTracks" : [
+    {
+      "channelCount" : 2,
+      "codec" : "aac",
+      "id" : 1,
+      "language" : "und",
+      "sampleRate" : 48000
+    }
+  ],
+  "fileType" : "m4a",
+  "imageDescription" : {
+    "description" : "<file path>",
+    "hasThumbnail" : false,
+    "size" : null
+  },
+  "isAVPlayable" : true,
+  "isDecodable" : false,
+  "isProtected" : false,
+  "markerCollection" : {
+    "markerDescriptions" : [
+
+    ]
+  },
+  "tagProperties" : {
+    "audioProperties" : {
+      "bitRate" : 128,
+      "channelCount" : 2,
+      "duration" : 0.23499999999999999,
+      "sampleRate" : 48000
+    },
+    "data" : {
+      "customTags" : {
+        "ITUNSMPB" : " 00000000 00000840 00000000 00000000000023C0 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000"
+      },
+      "tags" : {
+
+      }
+    }
+  }
+}

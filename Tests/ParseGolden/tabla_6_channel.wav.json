@@ -1,0 +1,41 @@
+{
+  "audioFormat" : {
+    "bitRate" : 4234,
+    "bitsPerChannel" : 16,
+    "channelCount" : 6,
+    "duration" : 3.8180000000000001,
+    "sampleRate" : 44100
+  },
+  "fileType" : "wav",
+  "imageDescription" : {
+    "description" : "<file path>",
+    "hasThumbnail" : false,
+    "size" : null
+  },
+  "isAVPlayable" : true,
+  "isDecodable" : false,
+  "isProtected" : false,
+  "markerCollection" : {
+    "markerDescriptions" : [
+
+    ]
+  },
+  "tagProperties" : {
+    "audioProperties" : {
+      "bitRate" : 4234,
+      "bitsPerChannel" : 16,
+      "channelCount" : 6,
+      "duration" : 3.8180000000000001,
+      "sampleRate" : 44100
+    },
+    "data" : {
+      "customTags" : {
+
+      },
+      "tags" : {
+        "comment" : "<metadata album=\"\" bits=\"16\" bpm=\"0.0\" category=\"Music\" channels=\"6\" comments=\"\" complexity=\"3\" composer=\"\" dirty=\"false\" duration=\"3.818185941043084\" genre=\"\" hiddenKeywords=\"\" instrument=\"\" intensity=\"2\" keywords=\"\" loudnessRange=\"\" lufs=\"\" modality=\"\" moods=\"\" path=\"/Users/rf/Documents/Dev/ADD/Packages/ADDAudio/Tests/ADDAudioTests/TestResources/audio/formats/tabla_6_channel.wav\" publisher=\"\" relatedGenres=\"\" sampleRate=\"44100.0\" sectionNumber=\"0\" sequenceNumber=\"1\" subCategory=\"Loop\" subType=\"Tabla\" title=\"tabla_6_channel\" tonic=\"\" truePeak=\"\" typeString=\"Percussion\" />",
+        "title" : "tabla_6_channel"
+      }
+    }
+  }
+}

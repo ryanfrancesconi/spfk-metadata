@@ -1,0 +1,33 @@
+{
+  "audioFormat" : {
+    "bitRate" : 2304,
+    "bitsPerChannel" : 24,
+    "channelCount" : 2,
+    "duration" : 4.3939166666666667,
+    "sampleRate" : 48000
+  },
+  "fileType" : "caf",
+  "imageDescription" : {
+    "description" : "<file path>",
+    "hasThumbnail" : false,
+    "size" : null
+  },
+  "isAVPlayable" : true,
+  "isDecodable" : false,
+  "isProtected" : false,
+  "markerCollection" : {
+    "markerDescriptions" : [
+
+    ]
+  },
+  "tagProperties" : {
+    "data" : {
+      "customTags" : {
+
+      },
+      "tags" : {
+
+      }
+    }
+  }
+}

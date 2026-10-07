@@ -1,0 +1,105 @@
+{
+  "audioFormat" : {
+    "bitRate" : 1411,
+    "bitsPerChannel" : 16,
+    "channelCount" : 2,
+    "duration" : 2.931,
+    "sampleRate" : 44100
+  },
+  "bextDescription" : {
+    "codingHistory" : "A=PCM,F=44100,W=16,M=stereo,T=original\r\n",
+    "loudnessDescription" : {
+      "loudnessIntegrated" : -22.280000000000001,
+      "loudnessRange" : -14,
+      "maxMomentaryLoudness" : -18.420000000000002,
+      "maxShortTermLoudness" : -16,
+      "maxTruePeakLevel" : -8.75
+    },
+    "originationDate" : "1984:01:01",
+    "originationTime" : "00:01:00",
+    "originator" : "ITRAIDA88396FG347125324098748726",
+    "originatorReference" : "RF666SPONGEFORK66000100510720836",
+    "sampleRate" : 44100,
+    "sequenceDescription" : "And oh how they danced The little children of Stonehenge Beneath the haunted moon For fear that daybreak might come too soonr fear that daybreak might come too soon",
+    "timeReferenceHigh" : 0,
+    "timeReferenceLow" : 158760000,
+    "umid" : "53504F4E4745464F524B303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303000",
+    "version" : 2
+  },
+  "fileType" : "wav",
+  "imageDescription" : {
+    "description" : "Shit Sandwich",
+    "hasThumbnail" : true,
+    "size" : "425x425"
+  },
+  "isAVPlayable" : true,
+  "isDecodable" : false,
+  "isProtected" : false,
+  "markerCollection" : {
+    "markerDescriptions" : [
+      {
+        "markerID" : 0,
+        "name" : "Marker 1",
+        "sampleRate" : 44100,
+        "startTime" : 0
+      },
+      {
+        "markerID" : 1,
+        "name" : "Marker 2",
+        "sampleRate" : 44100,
+        "startTime" : 1
+      },
+      {
+        "markerID" : 2,
+        "name" : "Marker 3",
+        "sampleRate" : 44100,
+        "startTime" : 2
+      }
+    ]
+  },
+  "tagProperties" : {
+    "audioProperties" : {
+      "bitRate" : 1411,
+      "bitsPerChannel" : 16,
+      "channelCount" : 2,
+      "duration" : 2.931,
+      "sampleRate" : 44100
+    },
+    "data" : {
+      "customTags" : {
+        "MUSICBRAINZ ALBUM RELEASE COUNTRY" : "UK"
+      },
+      "tags" : {
+        "album" : "This Is Spinal Tap",
+        "albumArtist" : "Spinal Tap",
+        "arranger" : "SPFKMetadata",
+        "artist" : "Spinal Tap",
+        "bpm" : "666",
+        "comment" : "And oh how they danced. The little children of Stonehenge.Beneath the haunted moon.For fear that daybreak might come too soon.",
+        "composer" : "Nigel Tufnel",
+        "conductor" : "Derek Smalls",
+        "copyright" : "1984 Universal Records, a Division of UMG Recordings, Inc.",
+        "date" : "1984",
+        "discNumber" : "1/1",
+        "encodedBy" : "SPFKMetadata",
+        "genre" : "Soundtracks",
+        "initialKey" : "E",
+        "isrc" : "AA6Q72000047",
+        "label" : "Sony/ATV Music Publishing LLC",
+        "language" : "eng",
+        "lyricist" : "David St. Hubbins",
+        "lyrics" : "Stonehenge! Where the demons dwell. Where the banshees live and they do live well. Stonehenge! Where a man's a manAnd the children dance to the Pipes of Pan.",
+        "mood" : "Druids",
+        "originalAlbum" : "This is Spinal Tap",
+        "originalArtist" : "Spinal Tap",
+        "originalDate" : "1884",
+        "originalLyricist" : "Viv Savage",
+        "releaseCountry" : "UK",
+        "remixer" : "SPFKMetadata",
+        "subtitle" : "And oh how they danced. The little children of Stonehenge. Beneath the haunted moon. For fear that daybreak might come too soon",
+        "title" : "Stonehenge",
+        "trackNumber" : "9/13"
+      }
+    }
+  }
+}

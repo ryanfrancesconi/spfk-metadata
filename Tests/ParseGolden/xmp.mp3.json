@@ -1,0 +1,49 @@
+{
+  "audioFormat" : {
+    "bitRate" : 129,
+    "channelCount" : 2,
+    "duration" : 2.9309297052154193,
+    "sampleRate" : 44100
+  },
+  "fileType" : "mp3",
+  "imageDescription" : {
+    "description" : "<file path>",
+    "hasThumbnail" : false,
+    "size" : null
+  },
+  "isAVPlayable" : true,
+  "isDecodable" : false,
+  "isProtected" : false,
+  "markerCollection" : {
+    "markerDescriptions" : [
+
+    ]
+  },
+  "tagProperties" : {
+    "audioProperties" : {
+      "bitRate" : 129,
+      "channelCount" : 2,
+      "duration" : 2.9780000000000002,
+      "sampleRate" : 44100
+    },
+    "data" : {
+      "customTags" : {
+
+      },
+      "tags" : {
+        "album" : "This Is Spinal Tap",
+        "artist" : "Spinal Tap",
+        "comment" : "And oh how they danced. The little children of Stonehenge.\nBeneath the haunted moon.\nFor fear that daybreak might come too soon.",
+        "composer" : "Nigel Tufnel",
+        "copyright" : "1984 Universal Records, a Division of UMG Recordings, Inc.",
+        "date" : "1984-00-00",
+        "discNumber" : "1/1",
+        "genre" : "Soundtracks",
+        "lyrics" : "Stonehenge! Where the demons dwell. Where the banshees live and they do live well. Stonehenge! Where a man's a manAnd the children dance to the Pipes of Pan.",
+        "remixer" : "SPFKMetadata",
+        "title" : "Stonehenge",
+        "trackNumber" : "9/13"
+      }
+    }
+  }
+}

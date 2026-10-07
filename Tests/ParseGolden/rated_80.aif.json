@@ -1,0 +1,39 @@
+{
+  "audioFormat" : {
+    "bitRate" : 1411,
+    "bitsPerChannel" : 16,
+    "channelCount" : 2,
+    "duration" : 1,
+    "sampleRate" : 44100
+  },
+  "fileType" : "aiff",
+  "imageDescription" : {
+    "description" : "/Users/rf/Documents/Dev/Spongefork/workspace/spfk-packages/spfk-testing/Sources/SPFKTesting/Resources/audio/rated/rated_80.aif",
+    "hasThumbnail" : true,
+    "size" : "1024x1024"
+  },
+  "isAVPlayable" : true,
+  "isDecodable" : false,
+  "isProtected" : false,
+  "markerCollection" : {
+    "markerDescriptions" : [
+
+    ]
+  },
+  "tagProperties" : {
+    "audioProperties" : {
+      "bitRate" : 1411,
+      "channelCount" : 2,
+      "duration" : 1,
+      "sampleRate" : 44100
+    },
+    "data" : {
+      "customTags" : {
+
+      },
+      "tags" : {
+        "rating" : "4"
+      }
+    }
+  }
+}

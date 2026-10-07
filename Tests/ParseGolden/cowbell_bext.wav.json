@@ -1,0 +1,60 @@
+{
+  "audioFormat" : {
+    "bitRate" : 2117,
+    "bitsPerChannel" : 24,
+    "channelCount" : 2,
+    "duration" : 2,
+    "sampleRate" : 44100
+  },
+  "bextDescription" : {
+    "codingHistory" : "A=PCM,F=44100,W=24,M=stereo,T=libsndfile-1.2.2\r\nA=PCM,F=44100,W=24,M=stereo,T=libsndfile-1.2.2\r\n",
+    "loudnessDescription" : {
+      "loudnessIntegrated" : 0,
+      "loudnessRange" : 1,
+      "maxMomentaryLoudness" : 0,
+      "maxShortTermLoudness" : 0,
+      "maxTruePeakLevel" : 99
+    },
+    "originationDate" : "2026-02-02",
+    "originationTime" : "00:00:00",
+    "originator" : "rf",
+    "originatorReference" : "ITRAIDA88396FG347125324098748726",
+    "sampleRate" : 44100,
+    "sequenceDescription" : "cowbell",
+    "umid" : "060A2B34010101010101021033000000000000000000008000000000000000000000000000000080000000000000000000000000202020202020202020202020",
+    "version" : 2
+  },
+  "fileType" : "wav",
+  "imageDescription" : {
+    "description" : null,
+    "hasThumbnail" : true,
+    "size" : "1024x1024"
+  },
+  "isAVPlayable" : true,
+  "isDecodable" : false,
+  "isProtected" : false,
+  "markerCollection" : {
+    "markerDescriptions" : [
+
+    ]
+  },
+  "tagProperties" : {
+    "audioProperties" : {
+      "bitRate" : 2117,
+      "bitsPerChannel" : 24,
+      "channelCount" : 2,
+      "duration" : 2,
+      "sampleRate" : 44100
+    },
+    "data" : {
+      "customTags" : {
+
+      },
+      "tags" : {
+        "loudnessIntegrated" : "-29.52",
+        "loudnessRange" : "3.01",
+        "loudnessTruePeak" : "-10.08"
+      }
+    }
+  }
+}

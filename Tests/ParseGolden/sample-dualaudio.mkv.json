@@ -1,0 +1,73 @@
+{
+  "audioFormat" : {
+    "bitRate" : 88,
+    "channelCount" : 1,
+    "duration" : 2.089,
+    "sampleRate" : 44100
+  },
+  "audioTracks" : [
+    {
+      "channelCount" : 1,
+      "codec" : "A_AAC",
+      "id" : 12861836843102821903,
+      "language" : "eng",
+      "name" : "English",
+      "sampleRate" : 44100
+    },
+    {
+      "channelCount" : 1,
+      "codec" : "A_AAC",
+      "id" : 16384173073279116566,
+      "language" : "jpn",
+      "name" : "Japanese",
+      "sampleRate" : 44100
+    }
+  ],
+  "fileType" : "mkv",
+  "imageDescription" : {
+    "description" : "<file path>",
+    "hasThumbnail" : false,
+    "size" : null
+  },
+  "isAVPlayable" : false,
+  "isDecodable" : true,
+  "isProtected" : false,
+  "markerCollection" : {
+    "markerDescriptions" : [
+
+    ]
+  },
+  "tagProperties" : {
+    "audioProperties" : {
+      "bitRate" : 88,
+      "channelCount" : 1,
+      "duration" : 2.089,
+      "sampleRate" : 44100
+    },
+    "data" : {
+      "customTags" : {
+        "COM.APPLE.QUICKTIME.CREATIONDATE" : "2026-08-02T12:00:00-0700",
+        "COM.APPLE.QUICKTIME.LOCATION.ISO6709" : "+45.5152-122.6784+015.000/",
+        "COM.APPLE.QUICKTIME.MAKE" : "Spongefork",
+        "COM.APPLE.QUICKTIME.MODEL" : "SPFKTestFixture",
+        "COM.APPLE.QUICKTIME.SOFTWARE" : "make-video-fixture.swift",
+        "COMPATIBLE_BRANDS" : "qt  ",
+        "MAJOR_BRAND" : "qt  ",
+        "MINOR_VERSION" : "0"
+      },
+      "tags" : {
+        "artist" : "Spongefork",
+        "encodedBy" : "Lavf62.3.100",
+        "title" : "SPFK Dual Audio"
+      }
+    }
+  },
+  "videoTrack" : {
+    "codec" : "avc1",
+    "duration" : 2.089,
+    "height" : 120,
+    "nominalFrameRate" : 30,
+    "parserVersion" : 5,
+    "width" : 160
+  }
+}

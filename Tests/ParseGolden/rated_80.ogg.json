@@ -1,0 +1,39 @@
+{
+  "audioFormat" : {
+    "bitRate" : 12,
+    "channelCount" : 2,
+    "duration" : 1.0013605442176872,
+    "sampleRate" : 44100
+  },
+  "fileType" : "ogg",
+  "imageDescription" : {
+    "description" : "<file path>",
+    "hasThumbnail" : false,
+    "size" : null
+  },
+  "isAVPlayable" : true,
+  "isDecodable" : false,
+  "isProtected" : false,
+  "markerCollection" : {
+    "markerDescriptions" : [
+
+    ]
+  },
+  "tagProperties" : {
+    "audioProperties" : {
+      "bitRate" : 12,
+      "channelCount" : 2,
+      "duration" : 1.0009999999999999,
+      "sampleRate" : 44100
+    },
+    "data" : {
+      "customTags" : {
+        "ENCODER" : "Lavc62.11.100 vorbis",
+        "FMPS_RATING" : "0.800"
+      },
+      "tags" : {
+        "rating" : "4"
+      }
+    }
+  }
+}

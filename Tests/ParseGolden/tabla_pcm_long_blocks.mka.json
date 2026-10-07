@@ -1,0 +1,82 @@
+{
+  "audioFormat" : {
+    "bitRate" : 2307,
+    "channelCount" : 2,
+    "duration" : 4.3940000000000001,
+    "sampleRate" : 48000
+  },
+  "audioTracks" : [
+    {
+      "channelCount" : 2,
+      "codec" : "A_PCM/INT/LIT",
+      "id" : 3106744968971236142,
+      "language" : "und",
+      "sampleRate" : 48000
+    }
+  ],
+  "fileType" : "mka",
+  "imageDescription" : {
+    "description" : "<file path>",
+    "hasThumbnail" : false,
+    "size" : null
+  },
+  "isAVPlayable" : false,
+  "isDecodable" : true,
+  "isProtected" : false,
+  "markerCollection" : {
+    "markerDescriptions" : [
+
+    ]
+  },
+  "tagProperties" : {
+    "audioProperties" : {
+      "bitRate" : 2307,
+      "channelCount" : 2,
+      "duration" : 4.3940000000000001,
+      "sampleRate" : 48000
+    },
+    "data" : {
+      "customTags" : {
+        "ALBUM_ARTIST" : "Spinal Tap",
+        "DISC" : "1/1",
+        "ENCODED_BY" : "SPFKMetadata",
+        "IBPM" : "666",
+        "ICNT" : "UK",
+        "IEDT" : "SPFKMetadata",
+        "IMUS" : "Nigel Tufnel",
+        "IPLT" : "256",
+        "IPUB" : "Sony/ATV Music Publishing LLC",
+        "IWRI" : "David St. Hubbins",
+        "LEAD_PERFORMER" : "Derek Smalls",
+        "LYRICS-LYRICS-XXX" : "Stonehenge! Where the demons dwell. Where the banshees live and they do live well. Stonehenge! Where a man's a manAnd the children dance to the Pipes of Pan.",
+        "MUSICBRAINZ_ALBUM_RELEASE_COUNTRY" : "UK",
+        "PUBLISHER" : "Sony/ATV Music Publishing LLC",
+        "TBPM" : "666",
+        "TDOR" : "1884",
+        "TEXT" : "David St. Hubbins",
+        "TIT3" : "And oh how they danced. The little children of Stonehenge. Beneath the haunted moon. For fear that daybreak might come too soon",
+        "TKEY" : "E",
+        "TMOO" : "Druids",
+        "TOAL" : "This is Spinal Tap",
+        "TOLY" : "Viv Savage",
+        "TOPE" : "Spinal Tap",
+        "TPE4" : "SPFKMetadata",
+        "TSRC" : "AA6Q72000047"
+      },
+      "tags" : {
+        "album" : "This Is Spinal Tap",
+        "artist" : "Spongefork",
+        "comment" : "And oh how they danced. The little children of Stonehenge.Beneath the haunted moon.For fear that daybreak might come too soon.",
+        "composer" : "Nigel Tufnel",
+        "copyright" : "1984 Universal Records, a Division of UMG Recordings, Inc.",
+        "date" : "1984",
+        "encodedBy" : "Lavf63.1.100",
+        "genre" : "Soundtracks",
+        "isrc" : "AA6Q72000047",
+        "language" : "eng",
+        "title" : "SPFK Tabla Matroska PCM long blocks",
+        "trackNumber" : "9/13"
+      }
+    }
+  }
+}

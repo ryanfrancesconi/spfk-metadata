@@ -1,0 +1,40 @@
+{
+  "audioFormat" : {
+    "bitRate" : 1,
+    "bitsPerChannel" : 16,
+    "channelCount" : 2,
+    "duration" : 1,
+    "sampleRate" : 44100
+  },
+  "fileType" : "flac",
+  "imageDescription" : {
+    "description" : "<file path>",
+    "hasThumbnail" : false,
+    "size" : null
+  },
+  "isAVPlayable" : true,
+  "isDecodable" : false,
+  "isProtected" : false,
+  "markerCollection" : {
+    "markerDescriptions" : [
+
+    ]
+  },
+  "tagProperties" : {
+    "audioProperties" : {
+      "bitRate" : 1,
+      "channelCount" : 2,
+      "duration" : 1,
+      "sampleRate" : 44100
+    },
+    "data" : {
+      "customTags" : {
+        "ENCODER" : "Lavf62.3.100",
+        "FMPS_RATING" : "0.800"
+      },
+      "tags" : {
+        "rating" : "4"
+      }
+    }
+  }
+}

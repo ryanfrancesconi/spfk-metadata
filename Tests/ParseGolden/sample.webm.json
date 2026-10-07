@@ -1,0 +1,64 @@
+{
+  "audioFormat" : {
+    "bitRate" : 15,
+    "channelCount" : 1,
+    "duration" : 2.0259999999999998,
+    "sampleRate" : 48000
+  },
+  "audioTracks" : [
+    {
+      "channelCount" : 1,
+      "codec" : "A_OPUS",
+      "id" : 18036882007848602005,
+      "language" : "und",
+      "sampleRate" : 48000
+    }
+  ],
+  "fileType" : "webm",
+  "imageDescription" : {
+    "description" : "<file path>",
+    "hasThumbnail" : false,
+    "size" : null
+  },
+  "isAVPlayable" : false,
+  "isDecodable" : true,
+  "isProtected" : false,
+  "markerCollection" : {
+    "markerDescriptions" : [
+
+    ]
+  },
+  "tagProperties" : {
+    "audioProperties" : {
+      "bitRate" : 15,
+      "channelCount" : 1,
+      "duration" : 2.0259999999999998,
+      "sampleRate" : 48000
+    },
+    "data" : {
+      "customTags" : {
+        "COM.APPLE.QUICKTIME.CREATIONDATE" : "2026-08-02T12:00:00-0700",
+        "COM.APPLE.QUICKTIME.LOCATION.ISO6709" : "+45.5152-122.6784+015.000/",
+        "COM.APPLE.QUICKTIME.MAKE" : "Spongefork",
+        "COM.APPLE.QUICKTIME.MODEL" : "SPFKTestFixture",
+        "COM.APPLE.QUICKTIME.SOFTWARE" : "make-video-fixture.swift",
+        "COMPATIBLE_BRANDS" : "qt  ",
+        "MAJOR_BRAND" : "qt  ",
+        "MINOR_VERSION" : "0"
+      },
+      "tags" : {
+        "artist" : "Spongefork",
+        "encodedBy" : "Lavf62.3.100",
+        "title" : "SPFK Sample WebM"
+      }
+    }
+  },
+  "videoTrack" : {
+    "codec" : "vp09",
+    "duration" : 2.0259999999999998,
+    "height" : 120,
+    "nominalFrameRate" : 30,
+    "parserVersion" : 5,
+    "width" : 160
+  }
+}

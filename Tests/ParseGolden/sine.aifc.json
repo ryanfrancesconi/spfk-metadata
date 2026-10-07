@@ -1,0 +1,39 @@
+{
+  "audioFormat" : {
+    "bitRate" : 706,
+    "bitsPerChannel" : 16,
+    "channelCount" : 1,
+    "duration" : 0.25006802721088434,
+    "sampleRate" : 44100
+  },
+  "fileType" : "aifc",
+  "imageDescription" : {
+    "description" : "<file path>",
+    "hasThumbnail" : false,
+    "size" : null
+  },
+  "isAVPlayable" : true,
+  "isDecodable" : false,
+  "isProtected" : false,
+  "markerCollection" : {
+    "markerDescriptions" : [
+
+    ]
+  },
+  "tagProperties" : {
+    "audioProperties" : {
+      "bitRate" : 706,
+      "channelCount" : 1,
+      "duration" : 0.25,
+      "sampleRate" : 44100
+    },
+    "data" : {
+      "customTags" : {
+
+      },
+      "tags" : {
+
+      }
+    }
+  }
+}

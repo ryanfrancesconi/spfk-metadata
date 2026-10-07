@@ -1,0 +1,47 @@
+{
+  "audioFormat" : {
+    "bitRate" : 32,
+    "channelCount" : 1,
+    "duration" : 0.25,
+    "sampleRate" : 44100
+  },
+  "audioTracks" : [
+    {
+      "channelCount" : 1,
+      "codec" : "aac",
+      "id" : 1,
+      "language" : "und",
+      "sampleRate" : 44100
+    }
+  ],
+  "fileType" : "m4b",
+  "imageDescription" : {
+    "description" : "<file path>",
+    "hasThumbnail" : false,
+    "size" : null
+  },
+  "isAVPlayable" : true,
+  "isDecodable" : false,
+  "isProtected" : false,
+  "markerCollection" : {
+    "markerDescriptions" : [
+
+    ]
+  },
+  "tagProperties" : {
+    "audioProperties" : {
+      "bitRate" : 32,
+      "channelCount" : 1,
+      "duration" : 0.27300000000000002,
+      "sampleRate" : 44100
+    },
+    "data" : {
+      "customTags" : {
+
+      },
+      "tags" : {
+        "encoding" : "Lavf63.1.100"
+      }
+    }
+  }
+}

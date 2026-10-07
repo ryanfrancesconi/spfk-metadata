@@ -1,0 +1,61 @@
+{
+  "audioFormat" : {
+    "bitRate" : 0,
+    "channelCount" : 1,
+    "duration" : 2,
+    "sampleRate" : 44100
+  },
+  "audioTracks" : [
+    {
+      "channelCount" : 1,
+      "codec" : "aac",
+      "id" : 2,
+      "language" : "und",
+      "sampleRate" : 44100
+    }
+  ],
+  "fileType" : "mov",
+  "imageDescription" : {
+    "description" : "<file path>",
+    "hasThumbnail" : false,
+    "size" : null
+  },
+  "isAVPlayable" : true,
+  "isDecodable" : false,
+  "isProtected" : false,
+  "markerCollection" : {
+    "markerDescriptions" : [
+
+    ]
+  },
+  "quickTimeUserData" : {
+    "deviceSoftware" : "Lavf63.1.100"
+  },
+  "tagProperties" : {
+    "audioProperties" : {
+      "bitRate" : 0,
+      "channelCount" : 1,
+      "duration" : 2.0670000000000002,
+      "sampleRate" : 44100
+    },
+    "data" : {
+      "customTags" : {
+
+      },
+      "tags" : {
+
+      }
+    }
+  },
+  "videoTrack" : {
+    "codec" : "avc1",
+    "duration" : 2.0019999999999998,
+    "height" : 120,
+    "nominalFrameRate" : 29.970030000000001,
+    "parserVersion" : 5,
+    "preciseFrameRate" : "29.97d",
+    "rotationDegrees" : 0,
+    "startTimecodeString" : "01:00:00;01",
+    "width" : 160
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "audioFormat" : {
+    "bitRate" : 705,
+    "bitsPerChannel" : 16,
+    "channelCount" : 1,
+    "duration" : 0.25,
+    "sampleRate" : 44100
+  },
+  "fileType" : "au",
+  "imageDescription" : {
+    "description" : "<file path>",
+    "hasThumbnail" : false,
+    "size" : null
+  },
+  "isAVPlayable" : true,
+  "isDecodable" : false,
+  "isProtected" : false,
+  "markerCollection" : {
+    "markerDescriptions" : [
+
+    ]
+  },
+  "tagProperties" : {
+    "data" : {
+      "customTags" : {
+
+      },
+      "tags" : {
+
+      }
+    }
+  }
+}
