@@ -55,10 +55,10 @@ static void writeText(uint8_t *bytes, NSUInteger offset, NSString *value, NSUInt
     StringUtil::strncpy_validate((char *)bytes + offset, encodedText(value, size).c_str(), size);
 }
 
-/// Date and time: a short value is padded with the character '0', never terminated. Nil leaves the
-/// field zeroed.
+/// Date and time: a short value is padded with the character '0', never terminated. Nil or empty
+/// leaves the field zeroed, the form a recorder without a clock writes.
 static void writeFixedText(uint8_t *bytes, NSUInteger offset, NSString *value, NSUInteger size) {
-    if (!value) {
+    if (value.length == 0) {
         return;
     }
 

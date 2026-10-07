@@ -134,10 +134,6 @@ enum SafetyNetKnownIssues {
             rows: ["wav"], kinds: [.k0, .k7, .k8, .s1], item: .riff(.otherAssociatedData),
             text: "A WAV marker save drops other apps' adtl note and ltxt chunks: expected both, found none (F35)"
         ),
-        SafetyNetKnownIssue(
-            rows: ["wav-undated-bext"], kinds: wavTagKinds, item: .riff(.bextDateTime),
-            text: "A WAV tag save fills an empty BEXT origination date and time with '0' characters: expected 18 NUL bytes, found \"000000000000000000\" (F36)"
-        ),
     ]
 
     /// Every FLAC save that writes the container: each runs the iXML/BEXT write and the tag save.
