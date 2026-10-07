@@ -11,7 +11,11 @@ let package = Package(
         .library(
             name: "SPFKMetadata",
             targets: ["SPFKMetadata", "SPFKMetadataC"]
-        )
+        ),
+
+        // File I/O measurements of the parse and save paths -- see Sources/MetadataBench. An
+        // executable because the numbers only mean anything compiled `-O`.
+        .executable(name: "spfk-metadata-bench", targets: ["MetadataBench"]),
     ],
     dependencies: [
         .package(url: "https://github.com/ryanfrancesconi/spfk-taglib", from: "1.5.0"),
@@ -48,6 +52,15 @@ let package = Package(
             ],
             cxxSettings: [
                 .headerSearchPath("include_private")
+            ]
+        ),
+        .executableTarget(
+            name: "MetadataBench",
+            dependencies: [
+                .targetItem(name: "SPFKMetadata", condition: nil),
+                .targetItem(name: "SPFKMetadataC", condition: nil),
+                .product(name: "SPFKMetadataBase", package: "spfk-metadata-base"),
+                .product(name: "SPFKBench", package: "spfk-testing"),
             ]
         ),
         .testTarget(
