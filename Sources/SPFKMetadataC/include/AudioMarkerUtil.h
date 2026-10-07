@@ -2,6 +2,8 @@
 
 #import <Foundation/Foundation.h>
 
+NS_ASSUME_NONNULL_BEGIN
+
 /// Reads, writes, and copies WAV and AIFF markers.
 ///
 /// A RIFF WAVE file's `cue ` and `adtl` chunks are handled through TagLib, with names stored as
@@ -10,7 +12,7 @@
 @interface AudioMarkerUtil : NSObject
 
 /// Nil when there are none or the file can't be opened.
-+ (NSArray *)read:(NSURL *)url;
++ (nullable NSArray *)read:(NSURL *)url;
 
 /// Replaces every marker. Positions use the file's sample rate, not each marker's.
 + (BOOL)write:(NSArray *)markers to:(NSURL *)url;
@@ -21,3 +23,5 @@
 + (BOOL)copyMarkers:(NSURL *)url to:(NSURL *)destination;
 
 @end
+
+NS_ASSUME_NONNULL_END

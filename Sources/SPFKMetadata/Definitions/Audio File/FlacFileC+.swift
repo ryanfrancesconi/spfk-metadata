@@ -2,10 +2,10 @@
 
 import Foundation
 import SPFKMetadataBase
-import SPFKMetadataC
+internal import SPFKMetadataC
 
 extension FlacFileC {
-    public var bextDescription: BEXTDescription? {
+    var bextDescription: BEXTDescription? {
         get {
             guard let bextDescriptionC else { return nil }
             return BEXTDescription(info: bextDescriptionC)

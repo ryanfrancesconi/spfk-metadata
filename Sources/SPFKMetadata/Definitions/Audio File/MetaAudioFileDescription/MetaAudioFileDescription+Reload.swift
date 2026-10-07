@@ -4,7 +4,7 @@ import AEXML
 import Foundation
 import SPFKBase
 import SPFKMetadataBase
-import SPFKMetadataC
+internal import SPFKMetadataC
 
 extension MetaAudioFileDescription {
     /// Re-reads the file's tags and, for WAV and FLAC, its BEXT and iXML, leaving markers, artwork,

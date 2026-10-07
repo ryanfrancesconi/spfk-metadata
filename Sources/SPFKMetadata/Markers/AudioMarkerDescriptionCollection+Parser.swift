@@ -4,7 +4,7 @@ import Foundation
 import SPFKAudioBase
 import SPFKBase
 import SPFKMetadataBase
-import SPFKMetadataC
+internal import SPFKMetadataC
 
 extension AudioMarkerDescriptionCollection {
     /// Reads the file's markers. Keep the cases in step with `MetaAudioFileDescription.saveMarkers()`,
@@ -51,7 +51,7 @@ extension AudioMarkerDescriptionCollection {
     }
 
     /// From WAV or AIFF markers.
-    public init(audioMarkers value: [AudioMarker]) {
+    init(audioMarkers value: [AudioMarker]) {
         self.init(
             markerDescriptions: value.map {
                 AudioMarkerDescription(riffMarker: $0)
@@ -59,7 +59,7 @@ extension AudioMarkerDescriptionCollection {
     }
 
     /// From chapters whose format stores its own end time.
-    public init(chapterMarkers value: [ChapterMarker]) {
+    init(chapterMarkers value: [ChapterMarker]) {
         self.init(
             markerDescriptions: value.map {
                 AudioMarkerDescription(chapterMarker: $0)
@@ -67,12 +67,12 @@ extension AudioMarkerDescriptionCollection {
     }
 
     /// For MP4: end time and color in each title's suffix.
-    public var fileEncodedChapterMarkers: [ChapterMarker] {
+    var fileEncodedChapterMarkers: [ChapterMarker] {
         markerDescriptions.map(\.fileEncodedChapterMarker)
     }
 
     /// For MP3 and Xiph: color only in each title's suffix.
-    public var colorEncodedChapterMarkers: [ChapterMarker] {
+    var colorEncodedChapterMarkers: [ChapterMarker] {
         markerDescriptions.map(\.colorEncodedChapterMarker)
     }
 }

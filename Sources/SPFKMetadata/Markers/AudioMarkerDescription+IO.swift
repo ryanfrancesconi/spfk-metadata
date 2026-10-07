@@ -4,11 +4,11 @@ import Foundation
 import SPFKAudioBase
 import SPFKBase
 import SPFKMetadataBase
-import SPFKMetadataC
+internal import SPFKMetadataC
 
 extension AudioMarkerDescription {
     /// From a WAV or AIFF marker, recovering end time and color from the name's JSON suffix.
-    public init(riffMarker marker: AudioMarker) {
+    init(riffMarker marker: AudioMarker) {
         let (name, duration, hexColor) = Self.decodeFileName(marker.name ?? "")
 
         self.init(
@@ -23,7 +23,7 @@ extension AudioMarkerDescription {
     }
 
     /// From a chapter whose format stores its own end time; the title's suffix supplies color only.
-    public init(chapterMarker marker: ChapterMarker) {
+    init(chapterMarker marker: ChapterMarker) {
         let (name, _, hexColor) = Self.decodeFileName(marker.name ?? "")
         self.init(
             name: name.isEmpty ? nil : name,
@@ -47,7 +47,7 @@ extension AudioMarkerDescription {
     }
 
     /// Converts to an `AudioMarker` for WAV/AIFF writing, with endTime and color in the name suffix.
-    public func audioMarker(markerID: Int, fileType: AudioFileType?, fileSampleRate: Double? = nil) -> AudioMarker {
+    func audioMarker(markerID: Int, fileType: AudioFileType?, fileSampleRate: Double? = nil) -> AudioMarker {
         let isAIFF = fileType == .aiff || fileType == .aifc
 
         return AudioMarker(
@@ -59,13 +59,13 @@ extension AudioMarkerDescription {
     }
 
     /// For MP3 and Xiph, which store the end time natively. Read back by `init(chapterMarker:)`.
-    public var colorEncodedChapterMarker: ChapterMarker {
+    var colorEncodedChapterMarker: ChapterMarker {
         ChapterMarker(name: colorEncodedName, startTime: startTime, endTime: endTime ?? startTime)
     }
 
     /// For MP4, whose chapters store neither end time nor color. Read back by
     /// `init(fileEncodedChapter:)`.
-    public var fileEncodedChapterMarker: ChapterMarker {
+    var fileEncodedChapterMarker: ChapterMarker {
         ChapterMarker(name: fileEncodedName, startTime: startTime, endTime: endTime ?? startTime)
     }
 }

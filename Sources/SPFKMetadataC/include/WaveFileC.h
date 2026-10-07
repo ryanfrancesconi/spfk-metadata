@@ -31,8 +31,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property(nullable, nonatomic) TagPicture *tagPicture;
 
-/// `AudioMarker`s.
-@property(nonatomic, strong, nonnull) NSArray *markers;
+/// `AudioMarker`s. Nil when the file has none.
+@property(nonatomic, strong, nullable) NSArray *markers;
 
 @property(nonatomic, strong, nonnull) NSString *path;
 

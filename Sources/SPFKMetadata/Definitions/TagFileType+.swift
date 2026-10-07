@@ -2,11 +2,11 @@
 
 import Foundation
 import SPFKMetadataBase
-import SPFKMetadataC
+internal import SPFKMetadataC
 
 /// Adds `CaseIterable` conformance to the C-defined `TagFileTypeDef` constants for Swift enumeration.
 extension TagFileTypeDef: @retroactive CaseIterable {
-    public static var allCases: [TagFileTypeDef] {
+    static var allCases: [TagFileTypeDef] {
         [
             .aac,
             .aiff,

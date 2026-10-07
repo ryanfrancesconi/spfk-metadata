@@ -2,7 +2,7 @@
 
 import Foundation
 import SPFKMetadataBase
-import SPFKMetadataC
+internal import SPFKMetadataC
 
 extension WaveFileProperties {
     /// The values `MetaAudioFileDescription(parsing:)` records for a WAV, from one open. Nil when

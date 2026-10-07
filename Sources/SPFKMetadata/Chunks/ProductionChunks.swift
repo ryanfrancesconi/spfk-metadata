@@ -3,7 +3,7 @@
 import Foundation
 import SPFKAudioBase
 import SPFKMetadataBase
-import SPFKMetadataC
+internal import SPFKMetadataC
 
 /// The BEXT and iXML chunks of WAV and FLAC files, read and written apart from the tags.
 ///

@@ -4,7 +4,7 @@ import AVFoundation
 import Foundation
 import Numerics
 import SPFKBase
-import SPFKMetadata
+@testable import SPFKMetadata
 import SPFKMetadataBase
 import SPFKTesting
 import Testing

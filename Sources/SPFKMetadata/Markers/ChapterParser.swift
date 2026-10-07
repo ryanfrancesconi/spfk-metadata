@@ -4,12 +4,12 @@ import AVFoundation
 import Foundation
 import SPFKBase
 import SPFKMetadataBase
-import SPFKMetadataC
+internal import SPFKMetadataC
 
 /// Reads chapters through AVFoundation, which cannot write them. The fallback for the MP4 and Xiph
 /// families when TagLib finds none.
-public enum ChapterParser {
-    public static func parse(url: URL) async throws -> [ChapterMarker] {
+enum ChapterParser {
+    static func parse(url: URL) async throws -> [ChapterMarker] {
         guard url.exists else {
             throw MetadataError.readFailed(.markers, url)
         }

@@ -2,7 +2,7 @@
 
 import Foundation
 import SPFKMetadataBase
-import SPFKMetadataC
+internal import SPFKMetadataC
 
 extension BEXTDescription {
     /// Nil when the WAV has no BEXT chunk or can't be opened.
@@ -16,7 +16,7 @@ extension BEXTDescription {
     }
 
     /// UMID only from version 1, loudness only from version 2.
-    public init(info: BEXTDescriptionC) {
+    init(info: BEXTDescriptionC) {
         self.init()
 
         version = info.version
@@ -46,7 +46,7 @@ extension BEXTDescription {
     }
 
     /// The version is raised, never lowered, to fit a UMID (1) or loudness (2).
-    public var bextDescriptionC: BEXTDescriptionC {
+    var bextDescriptionC: BEXTDescriptionC {
         let info = BEXTDescriptionC()
 
         func updateVersion(_ requiredVersion: Int16) {

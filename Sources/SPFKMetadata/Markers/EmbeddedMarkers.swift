@@ -3,7 +3,7 @@
 import Foundation
 import SPFKAudioBase
 import SPFKMetadataBase
-import SPFKMetadataC
+internal import SPFKMetadataC
 
 /// Writes and removes a file's markers without touching its tags.
 ///

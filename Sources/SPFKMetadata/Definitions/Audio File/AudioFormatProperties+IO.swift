@@ -4,7 +4,7 @@ import AVFoundation
 import Foundation
 import SPFKAudioBase
 import SPFKMetadataBase
-import SPFKMetadataC
+internal import SPFKMetadataC
 
 extension AudioFormatProperties {
     public init(audioFile: AVAudioFile) {
@@ -18,7 +18,7 @@ extension AudioFormatProperties {
         )
     }
 
-    public init(cObject: TagAudioPropertiesC) {
+    init(cObject: TagAudioPropertiesC) {
         self.init(
             channelCount: AVAudioChannelCount(cObject.channelCount),
             sampleRate: cObject.sampleRate,

@@ -1,14 +1,15 @@
 // Copyright Ryan Francesconi. All Rights Reserved. Revision History at https://github.com/ryanfrancesconi/spfk-metadata
 
+import Foundation
 import SPFKAudioBase
 import SPFKMetadataBase
-import SPFKMetadataC
+internal import SPFKMetadataC
 
 // swiftformat:disable consecutiveSpaces
 
 extension AudioFileType {
     /// Nil for a format TagLib doesn't parse (`.caf`, `.w64`).
-    public var tagType: TagFileTypeDef? {
+    var tagType: TagFileTypeDef? {
         switch self {
         case .aac:  .aac
         case .aifc,
@@ -60,7 +61,7 @@ extension AudioFileType {
         return nil
     }
 
-    public init?(tagType: TagFileTypeDef) {
+    init?(tagType: TagFileTypeDef) {
         for item in Self.allCases where item.tagType == tagType {
             self = item
             return

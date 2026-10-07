@@ -2,10 +2,10 @@
 
 import Foundation
 import SPFKMetadataBase
-import SPFKMetadataC
+internal import SPFKMetadataC
 
 extension WaveFileC {
-    public var bextDescription: BEXTDescription? {
+    var bextDescription: BEXTDescription? {
         get {
             guard let bextDescriptionC else { return nil }
             return BEXTDescription(info: bextDescriptionC)
@@ -21,14 +21,14 @@ extension WaveFileC {
         }
     }
 
-    public subscript(info key: InfoFrameKey) -> String? {
+    subscript(info key: InfoFrameKey) -> String? {
         get { infoDictionary[key.value] as? String }
         set {
             infoDictionary[key.value] = newValue
         }
     }
 
-    public subscript(id3 key: ID3FrameKey) -> String? {
+    subscript(id3 key: ID3FrameKey) -> String? {
         get { id3Dictionary[key.value] as? String }
         set {
             id3Dictionary[key.value] = newValue

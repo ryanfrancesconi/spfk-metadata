@@ -3,7 +3,7 @@
 import AVFoundation
 import Foundation
 import SPFKAudioBase
-import SPFKMetadata
+@testable import SPFKMetadata
 import SPFKMetadataBase
 import SPFKMetadataC
 import SPFKTesting

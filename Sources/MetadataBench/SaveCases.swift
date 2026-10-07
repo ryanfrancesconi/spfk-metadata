@@ -4,7 +4,6 @@ import Foundation
 import SPFKBench
 import SPFKMetadata
 import SPFKMetadataBase
-import SPFKMetadataC
 
 /// The parse and save measurements every format's cases share. A parse counts the opens it made;
 /// a save counts the KiB it wrote. Every save runs on a fresh APFS clone of its master, so a "first
@@ -96,10 +95,10 @@ struct SaveCases {
     }
 
     func editArtwork(_ description: inout MetaAudioFileDescription) throws {
-        guard let picture = TagPictureRef(url: coverURL, pictureDescription: "", pictureType: "") else {
+        guard let artwork = EmbeddedArtwork(contentsOf: coverURL) else {
             throw BenchError("could not read \(coverURL.lastPathComponent)")
         }
-        description.imageDescription.pictureRef = picture
+        description.imageDescription.cgImage = artwork.cgImage
     }
 
     func editAll(_ description: inout MetaAudioFileDescription) throws {

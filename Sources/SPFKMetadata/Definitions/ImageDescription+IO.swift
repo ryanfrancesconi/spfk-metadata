@@ -3,7 +3,7 @@
 import CoreImage
 import Foundation
 import SPFKMetadataBase
-import SPFKMetadataC
+internal import SPFKMetadataC
 
 extension ImageDescription {
     /// `description` is the picture's when it has one, else nil.
@@ -21,7 +21,7 @@ extension ImageDescription {
 
     /// The getter keeps the image's own file type, else PNG when it has alpha and JPEG when not, and
     /// always describes the front cover: the setter keeps no picture type.
-    public var pictureRef: TagPictureRef? {
+    var pictureRef: TagPictureRef? {
         get {
             guard let cgImage else {
                 return nil

@@ -131,9 +131,9 @@ class WaveFileTests: BinTestCase {
         file.iXML =
             "<?xml version=\"1.0\" encoding=\"UTF-8\"?><BWFXML><IXML_VERSION>1.4</IXML_VERSION><PROJECT>a new project</PROJECT></BWFXML>"
         file.bextDescriptionC?.sequenceDescription = "a new bext description"
-        file.markers.append(
-            AudioMarker(name: "new marker", time: 0, sampleRate: 44100, markerID: 0)
-        )
+        file.markers = (file.markers ?? []) + [
+            AudioMarker(name: "new marker", time: 0, sampleRate: 44100, markerID: 0),
+        ]
 
         if let picture = TagPictureRef(
             url: TestBundleResources.shared.sharksandwich,

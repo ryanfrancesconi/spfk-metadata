@@ -2,7 +2,7 @@
 
 import Foundation
 import SPFKBase
-import SPFKMetadata
+@testable import SPFKMetadata
 import SPFKMetadataBase
 import SPFKMetadataC
 import SPFKTesting

@@ -1,7 +1,7 @@
 import AVFoundation
 import SPFKBase
 import SPFKImage
-import SPFKMetadata
+@testable import SPFKMetadata
 import SPFKMetadataBase
 import SPFKMetadataC
 import SPFKTesting
@@ -104,8 +104,8 @@ class MetaAudioFileDescriptionWAVChunkTests: BinTestCase {
         // Establish initial marker count and add one via WaveFileC
         let markerFile = WaveFileC(path: tmpfile.path)
         #expect(markerFile.load())
-        let initialCount = markerFile.markers.count
-        markerFile.markers.append(AudioMarker(name: "Test Marker", time: 1.0, sampleRate: 44100, markerID: 0))
+        let initialCount = markerFile.markers?.count ?? 0
+        markerFile.markers = (markerFile.markers ?? []) + [AudioMarker(name: "Test Marker", time: 1.0, sampleRate: 44100, markerID: 0)]
         markerFile.markersNeedsSave = true
         markerFile.imageNeedsSave = false
         #expect(markerFile.save())

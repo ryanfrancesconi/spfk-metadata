@@ -4,7 +4,7 @@ import Foundation
 import SPFKAudioBase
 import SPFKBase
 import SPFKMetadataBase
-import SPFKMetadataC
+internal import SPFKMetadataC
 
 /// What a native save does with the XMP packet a WAV's `_PMX` chunk or an MP3's ID3v2 `PRIV`
 /// frame stores. The bytes are written as given; nothing here parses XMP.

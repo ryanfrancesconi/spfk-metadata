@@ -2,10 +2,10 @@
 
 import Foundation
 import SPFKMetadataBase
-import SPFKMetadataC
+internal import SPFKMetadataC
 
 extension ID3File {
-    public subscript(id3 key: ID3FrameKey) -> String? {
+    subscript(id3 key: ID3FrameKey) -> String? {
         dictionary?[key.value] as? String
     }
 }

@@ -8,7 +8,7 @@ import SPFKBase
 import SPFKFileSystem
 import SPFKMatroska
 import SPFKMetadataBase
-import SPFKMetadataC
+internal import SPFKMetadataC
 import SPFKUtils
 
 extension MetaAudioFileDescription {
@@ -223,7 +223,7 @@ extension MetaAudioFileDescription {
     }
 
     /// Embeds artwork through TagLib.
-    public func save(pictureRef: TagPictureRef) throws {
+    func save(pictureRef: TagPictureRef) throws {
         guard TagPicture.write(pictureRef, path: url.path) else {
             throw NSError(description: "Failed to update image")
         }
@@ -321,7 +321,7 @@ extension MetaAudioFileDescription {
 extension MetaAudioFileDescription {
     /// For WAV and AIFF. A region's end time and color ride in a JSON suffix on the name, since
     /// cue points have neither.
-    public var audioMarkers: [AudioMarker] {
+    var audioMarkers: [AudioMarker] {
         markerCollection.markerDescriptions.enumerated().map { i, desc in
             desc.audioMarker(markerID: i, fileType: fileType, fileSampleRate: audioFormat?.sampleRate)
         }

@@ -2,7 +2,7 @@
 
 import Foundation
 import SPFKMetadataBase
-import SPFKMetadataC
+internal import SPFKMetadataC
 import SPFKUtils
 
 extension TagProperties {

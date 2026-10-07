@@ -10,7 +10,7 @@ let package = Package(
     products: [
         .library(
             name: "SPFKMetadata",
-            targets: ["SPFKMetadata", "SPFKMetadataC"]
+            targets: ["SPFKMetadata"]
         ),
 
         // File I/O measurements of the parse and save paths -- see Sources/MetadataBench. An
@@ -58,7 +58,6 @@ let package = Package(
             name: "MetadataBench",
             dependencies: [
                 .targetItem(name: "SPFKMetadata", condition: nil),
-                .targetItem(name: "SPFKMetadataC", condition: nil),
                 .product(name: "SPFKMetadataBase", package: "spfk-metadata-base"),
                 .product(name: "SPFKBench", package: "spfk-testing"),
             ]
