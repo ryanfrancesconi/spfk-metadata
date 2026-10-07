@@ -57,10 +57,6 @@ enum SafetyNetKnownIssues {
             text: "An MP3 tag save merges a second-language COMM into the first and rewrites a described one: expected 3 frames with languages \"eng\" and \"fra\" kept, found 2, one joined with a space and one \"XXX | SAFETY NET NOTE\" (F15, F29)"
         ),
         SafetyNetKnownIssue(
-            rows: ["mp3"], kinds: [.k0, .k5, .k6, .s2], item: .id3(.otherPictures),
-            text: "An MP3 artwork save deletes the file's other pictures: expected the back cover, found none (F26)"
-        ),
-        SafetyNetKnownIssue(
             rows: ["mp3"], kinds: [.k7, .s1], item: .id3(.tableOfContents),
             text: "An MP3 marker save leaves CTOC listing the old chapters: expected the new CHAP element IDs, found the previous ones (F10)"
         ),
@@ -123,10 +119,6 @@ enum SafetyNetKnownIssues {
             text: "A WAV tag save re-serializes iXML, dropping comments and turning CDATA into escaped text: expected the comment and CDATA nodes, found neither (F13)"
         ),
         SafetyNetKnownIssue(
-            rows: ["wav"], kinds: [.k0, .k5, .k6, .s2], item: .id3(.otherPictures),
-            text: "A WAV artwork save deletes the file's other pictures: expected the back cover, found none (F26)"
-        ),
-        SafetyNetKnownIssue(
             rows: ["wav"], kinds: [.k0], item: .id3(.frontCover),
             text: "A WAV save flagged for artwork re-encodes an unchanged front cover: expected the same image bytes, found new ones (F30)"
         ),
@@ -151,10 +143,6 @@ enum SafetyNetKnownIssues {
         SafetyNetKnownIssue(
             rows: ["flac"], kinds: [.k4], item: .flac(.iXML),
             text: "A FLAC iXML edit re-serializes the rest of the document, dropping comments and turning CDATA into escaped text: expected the edit beside the comment and CDATA nodes, found neither (F13)"
-        ),
-        SafetyNetKnownIssue(
-            rows: ["flac"], kinds: [.k0, .k5, .k6, .s2], item: .flac(.otherPictures),
-            text: "A FLAC artwork save deletes the file's other pictures: expected the back cover, found none (F26)"
         ),
         SafetyNetKnownIssue(
             rows: ["flac"], kinds: [.k0], item: .flac(.frontCover),
@@ -189,10 +177,6 @@ enum SafetyNetKnownIssues {
         SafetyNetKnownIssue(
             rows: ["m4a"], kinds: mp4Kinds, item: .audio,
             text: "An MP4 save renames the gapless-playback atom, so AVFoundation stops trimming to its sample count: expected 9152 decoded frames, found the untrimmed length (F40)"
-        ),
-        SafetyNetKnownIssue(
-            rows: ["m4a", "m4b"], kinds: [.k0, .k5, .k6, .s2], item: .mp4(.otherCovers),
-            text: "An MP4 artwork save deletes the file's other covr images: expected the second image, found none (F26)"
         ),
         SafetyNetKnownIssue(
             rows: ["m4a", "m4b"], kinds: [.k0], item: .mp4(.frontCover),

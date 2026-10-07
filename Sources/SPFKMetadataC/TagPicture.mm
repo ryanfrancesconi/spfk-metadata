@@ -84,6 +84,33 @@ static const VariantMap &artworkPicture(const List<VariantMap> &pictures) {
     return pictures.front();
 }
 
+/// `pictures` with the one ``artworkPicture`` chooses replaced by `replacement`; every other picture
+/// is kept in place. With no pictures, `replacement` is the list.
+static List<VariantMap> replacingArtwork(const List<VariantMap> &pictures, const VariantMap &replacement) {
+    int target = pictures.isEmpty() ? -1 : 0;
+    int index = 0;
+
+    for (const auto &picture : pictures) {
+        if (picture.value(pictureTypeKey).value<String>() == frontCoverType) {
+            target = index;
+            break;
+        }
+        index++;
+    }
+
+    List<VariantMap> result;
+
+    if (target < 0)
+        result.append(replacement);
+
+    index = 0;
+    for (const auto &picture : pictures) {
+        result.append(index++ == target ? replacement : picture);
+    }
+
+    return result;
+}
+
 /// Nil when ImageIO cannot write the type.
 static NSData *tryEncodeImage(CGImageRef image, NSString *typeIdentifier) {
     CFMutableDataRef buf = CFDataCreateMutable(NULL, 0);
@@ -178,6 +205,7 @@ static void clearLegacyFlacXiphCommentPictures(FileRef &fileRef) {
 + (bool)write:(nullable TagPictureRef *)picture toTag:(nonnull void *)opaqueTag {
     Tag *tag = static_cast<Tag *>(opaqueTag);
 
+    // Removing artwork clears every picture, so nothing else takes its place on screen.
     if (!picture) {
         tag->setComplexProperties(pictureKey, {});
         return true;
@@ -187,7 +215,7 @@ static void clearLegacyFlacXiphCommentPictures(FileRef &fileRef) {
     if (!encodePicture(picture, map))
         return false;
 
-    tag->setComplexProperties(pictureKey, {map});
+    tag->setComplexProperties(pictureKey, replacingArtwork(tag->complexProperties(pictureKey), map));
     return true;
 }
 
@@ -220,6 +248,7 @@ static void clearLegacyFlacXiphCommentPictures(FileRef &fileRef) {
     if (fileRef.isNull())
         return false;
 
+    // Removing artwork clears every picture, so nothing else takes its place on screen.
     List<VariantMap> pictures;
 
     if (picture) {
@@ -227,7 +256,12 @@ static void clearLegacyFlacXiphCommentPictures(FileRef &fileRef) {
         if (!encodePicture(picture, map))
             return false;
 
-        pictures.append(map);
+        auto existing = fileRef.complexProperties(pictureKey);
+
+        if (existing.isEmpty())
+            existing = flacXiphCommentPictureFallback(fileRef);
+
+        pictures = replacingArtwork(existing, map);
     }
 
     if (!fileRef.setComplexProperties(pictureKey, pictures))

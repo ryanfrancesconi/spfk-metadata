@@ -74,9 +74,7 @@ final class MultiplePictureSurvivalTests: BinTestCase {
 
         let pictures = try mp3Pictures(in: url)
         let back = Picture(type: Self.backCover, data: try backData)
-        withKnownIssue("An artwork change deletes the file's other pictures: expected the back cover, found none (F26)") {
-            #expect(pictures.contains(back), "back cover lost; pictures: \(pictures.map(\.type))")
-        }
+        #expect(pictures.contains(back), "back cover lost; pictures: \(pictures.map(\.type))")
         #expect(pictures.contains { $0.data != (try? frontData) && $0.data != (try? backData) }, "new artwork not written")
         #expect(pictures.contains { $0.type == Self.frontCover }, "no front cover; picture types: \(pictures.map(\.type))")
     }
@@ -178,9 +176,7 @@ final class MultiplePictureSurvivalTests: BinTestCase {
 
         let pictures = try flacPictures(in: url)
         let back = Picture(type: Self.backCover, data: try backData)
-        withKnownIssue("An artwork change deletes the file's other pictures: expected the back cover, found none (F26)") {
-            #expect(pictures.contains(back), "back cover lost; pictures: \(pictures.map(\.type))")
-        }
+        #expect(pictures.contains(back), "back cover lost; pictures: \(pictures.map(\.type))")
         #expect(pictures.contains { $0.data != (try? frontData) && $0.data != (try? backData) }, "new artwork not written")
         #expect(pictures.contains { $0.type == Self.frontCover }, "no front cover; picture types: \(pictures.map(\.type))")
     }

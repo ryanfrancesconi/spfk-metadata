@@ -55,6 +55,17 @@ extension SafetyNetItem {
     }
 }
 
+extension SafetyNetItem {
+    /// Removing artwork clears every picture, the other apps' included, so nothing else is shown in
+    /// its place. Every other unowned item stays as it was.
+    func unownedWrite(by kind: SaveKind) -> SafetyNetWrite {
+        switch (self, kind) {
+        case (.id3(.otherPictures), .k6), (.flac(.otherPictures), .k6), (.mp4(.otherCovers), .k6): .value(nil)
+        default: .unchanged
+        }
+    }
+}
+
 /// Runs one cell: prepare the fixture, snapshot, save, snapshot, compare item by item.
 enum SafetyNetCell {
     static func run(_ testCase: SafetyNetCase, in bin: URL) async throws {
@@ -81,7 +92,7 @@ enum SafetyNetCell {
         for item in items where SafetyNetCoveredCells.coveringTest(row: row, kind: kind, item: item) == nil {
             let isWritten = row.component(of: item).map(kind.written.contains) ?? false
 
-            switch isWritten ? try item.written(by: kind, after: after) : .unchanged {
+            switch isWritten ? try item.written(by: kind, after: after) : item.unownedWrite(by: kind) {
             case .unchanged:
                 SafetyNetSnapshot.expectUnchanged(item, before: before, after: after, row: row, kind: kind)
             case let .value(value):

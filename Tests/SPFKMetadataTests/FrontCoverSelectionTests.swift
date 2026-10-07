@@ -77,9 +77,7 @@ final class FrontCoverSelectionTests: BinTestCase {
         let front = pictures.filter { $0.type == Self.frontCover }.map(\.size)
         #expect(front == [Self.frontSize], "front cover pixel sizes after save: \(front)")
 
-        withKnownIssue("An artwork save deletes the file's other pictures: expected the back cover, found none (F26)") {
-            #expect(pictures.contains { $0.type == Self.backCover && $0.size == Self.backSize })
-        }
+        #expect(pictures.contains { $0.type == Self.backCover && $0.size == Self.backSize })
     }
 
     // MARK: - MP3
