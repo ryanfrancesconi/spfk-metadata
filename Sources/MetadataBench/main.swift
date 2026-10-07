@@ -7,9 +7,9 @@ import SPFKBench
 //
 //   spfk-metadata-bench regress --json <out>   the fixed case set bench.sh compares; corpus written
 //                                              into METADATA_BENCH_DIR
-//   spfk-metadata-bench wav [--size-mib N] [--iterations N] [--dir <path>]
-//                                              the same cases at any audio size, with each save's
-//                                              chunk layout printed
+//   spfk-metadata-bench wav|formats [--size-mib N] [--iterations N] [--dir <path>]
+//                                              the WAV or the other formats' cases at any audio
+//                                              size; `wav` prints each save's chunk layout
 //
 // A regression case id is never renamed or reshaped without a new corpus id in bench.sh.
 
@@ -23,6 +23,12 @@ func value(after flag: String) -> String? {
 /// The audio size of the regression corpus. Changing it changes every case: new corpus id.
 let regressionAudioMiB = 64
 
+func makeCases(in directory: URL, iterations: Int, warmup: Int) throws -> SaveCases {
+    let coverURL = directory.appendingPathComponent("cover.jpg")
+    try BenchCover.write(to: coverURL)
+    return SaveCases(directory: directory, coverURL: coverURL, iterations: iterations, warmup: warmup)
+}
+
 func makeDirectory(_ path: String?) throws -> URL {
     let url = path.map { URL(fileURLWithPath: $0) }
         ?? FileManager.default.temporaryDirectory.appendingPathComponent("spfk-metadata-bench-\(ProcessInfo.processInfo.processIdentifier)")
@@ -31,30 +37,39 @@ func makeDirectory(_ path: String?) throws -> URL {
 }
 
 do {
-    switch arguments.dropFirst().first {
+    let mode = arguments.dropFirst().first
+
+    switch mode {
     case "regress":
-        var run = RegressionRun(bench: "metadata")
         guard let path = ProcessInfo.processInfo.environment["METADATA_BENCH_DIR"] else {
             throw BenchError("METADATA_BENCH_DIR unset")
         }
-        let corpus = try WAVCorpus(directory: makeDirectory(path), audioBytes: regressionAudioMiB << 20)
-        try await WAVBench(corpus: corpus, iterations: 5, warmup: 1, showsLayout: false).run(into: &run)
+        let directory = try makeDirectory(path)
+        let cases = try makeCases(in: directory, iterations: 5, warmup: 1)
+        var run = RegressionRun(bench: "metadata")
+        try await WAVBench(corpus: WAVCorpus(directory: directory, audioBytes: regressionAudioMiB << 20, coverURL: cases.coverURL), cases: cases, showsLayout: false).run(into: &run)
+        try await FormatBench(corpus: FormatCorpus(directory: directory, pcmBytes: regressionAudioMiB << 20), cases: cases).run(into: &run)
         try run.write()
 
-    case "wav":
+    case "wav", "formats":
         let sizeMiB = value(after: "--size-mib").flatMap(Int.init) ?? regressionAudioMiB
         let iterations = value(after: "--iterations").flatMap(Int.init) ?? 3
         let directory = try makeDirectory(value(after: "--dir"))
         defer { try? FileManager.default.removeItem(at: directory) }
 
         let counting = IOCounters.isCounting ? "" : " -- I/O not counted, run with bench-open-counter injected"
-        FileHandle.standardError.write(Data("WAV, \(sizeMiB) MiB of audio, \(iterations) iterations\(counting)\n".utf8))
+        FileHandle.standardError.write(Data("\(mode ?? ""), \(sizeMiB) MiB of audio, \(iterations) iterations\(counting)\n".utf8))
+
+        let cases = try makeCases(in: directory, iterations: iterations, warmup: 0)
         var run = RegressionRun(bench: "metadata")
-        let corpus = try WAVCorpus(directory: directory, audioBytes: sizeMiB << 20)
-        try await WAVBench(corpus: corpus, iterations: iterations, warmup: 0, showsLayout: true).run(into: &run)
+        if mode == "wav" {
+            try await WAVBench(corpus: WAVCorpus(directory: directory, audioBytes: sizeMiB << 20, coverURL: cases.coverURL), cases: cases, showsLayout: true).run(into: &run)
+        } else {
+            try await FormatBench(corpus: FormatCorpus(directory: directory, pcmBytes: sizeMiB << 20), cases: cases).run(into: &run)
+        }
 
     default:
-        print("usage: spfk-metadata-bench regress --json <out> | wav [--size-mib N] [--iterations N] [--dir <path>]")
+        print("usage: spfk-metadata-bench regress --json <out> | wav|formats [--size-mib N] [--iterations N] [--dir <path>]")
         exit(64)
     }
 } catch {
