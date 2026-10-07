@@ -11,10 +11,7 @@ extension AudioMarkerDescriptionCollection {
     /// or markers are saved that can't be read back.
     public init(url: URL, fileType: AudioFileType? = nil) async throws {
         guard let fileType = fileType ?? AudioFileType(url: url) else {
-            throw NSError(
-                file: #file, function: #function,
-                description: "Unable to determine file type from \(url.lastPathComponent)"
-            )
+            throw MetadataError.unsupportedFormat(nil, .markers)
         }
 
         switch fileType {
@@ -49,9 +46,7 @@ extension AudioMarkerDescriptionCollection {
             self = AudioMarkerDescriptionCollection(audioMarkers: value)
 
         default:
-            throw NSError(
-                file: #file, function: #function, description: "Unsupported file type: \(url.lastPathComponent)"
-            )
+            throw MetadataError.unsupportedFormat(fileType, .markers)
         }
     }
 

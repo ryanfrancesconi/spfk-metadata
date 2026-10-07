@@ -11,7 +11,7 @@ import SPFKMetadataC
 public enum ChapterParser {
     public static func parse(url: URL) async throws -> [ChapterMarker] {
         guard url.exists else {
-            throw NSError(description: "Failed to open \(url.path)")
+            throw MetadataError.readFailed(.markers, url)
         }
 
         let asset = AVURLAsset(url: url)

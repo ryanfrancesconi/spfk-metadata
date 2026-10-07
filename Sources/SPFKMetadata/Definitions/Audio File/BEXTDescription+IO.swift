@@ -126,7 +126,7 @@ extension BEXTDescription {
     public static func write(bextDescription: BEXTDescription, to url: URL) throws {
         let waveFile = WaveFileC(path: url.path)
         guard waveFile.load() else {
-            throw NSError(description: "Failed to open \(url.path) for BEXT writing")
+            throw MetadataError.writeFailed(.bext, url)
         }
 
         waveFile.bextDescriptionC = bextDescription.bextDescriptionC
@@ -134,7 +134,7 @@ extension BEXTDescription {
         waveFile.imageNeedsSave = false
 
         guard waveFile.save() else {
-            throw NSError(description: "Failed to write BEXT chunk to \(url.path)")
+            throw MetadataError.writeFailed(.bext, url)
         }
     }
 }

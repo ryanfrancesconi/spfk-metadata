@@ -6,7 +6,7 @@ import SPFKMetadataC
 import SPFKUtils
 
 extension TagProperties {
-    /// Throws when the file can't be opened or TagLib doesn't parse the format.
+    /// Throws `MetadataError.readFailed` when the file can't be opened or TagLib doesn't parse the format.
     public init(url: URL) throws {
         self.init()
         try load(url: url)
@@ -17,7 +17,7 @@ extension TagProperties {
         let tagFile = TagFile(path: url.path)
 
         guard tagFile.load() else {
-            throw NSError(description: "Failed to load tag file: \(url.path)")
+            throw MetadataError.readFailed(.tags, url)
         }
 
         if let value = tagFile.audioProperties {
@@ -25,7 +25,7 @@ extension TagProperties {
         }
 
         guard let dict = tagFile.dictionary as? [String: String] else {
-            throw NSError(description: "Failed to open file or no metadata for: \(url.path)")
+            throw MetadataError.readFailed(.tags, url)
         }
 
         for item in dict {
@@ -49,7 +49,7 @@ extension TagProperties {
         storedXMPPacket.apply { tagFile.xmpNeedsSave = true; tagFile.xmpPacket = $0 }
 
         guard tagFile.save() else {
-            throw NSError(description: "Failed to update tags in \(url.path)")
+            throw MetadataError.writeFailed(.tags, url)
         }
     }
 
@@ -63,13 +63,13 @@ extension TagProperties {
     /// are not copied.
     public static func copyTags(from source: URL, to destination: URL) throws {
         guard TagLibBridge.copyTags(fromPath: source.path, toPath: destination.path) else {
-            throw NSError(description: "Failed to copy tags from \(source.path) to \(destination.path)")
+            throw MetadataError.copyFailed(.tags, from: source, to: destination)
         }
     }
 
     public static func removeAllTags(in url: URL) throws {
         guard TagLibBridge.removeAllTags(url.path) else {
-            throw NSError(description: "Failed to removeAll tags in \(url.path)")
+            throw MetadataError.removeFailed(.tags, url)
         }
     }
 }

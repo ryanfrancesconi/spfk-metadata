@@ -3,6 +3,7 @@
 import Foundation
 import SPFKAudioBase
 import SPFKBase
+import SPFKMetadataBase
 import SPFKMetadataC
 
 /// What a native save does with the XMP packet a WAV's `_PMX` chunk or an MP3's ID3v2 `PRIV`
@@ -30,7 +31,7 @@ public enum StoredXMPPacketWrite: Sendable, Hashable {
         guard needsWrite else { return }
 
         guard TagLibBridge.setStoredXMPPacket(packet, path: url.path) else {
-            throw NSError(description: "Failed to write the XMP packet to \(url.path)")
+            throw MetadataError.writeFailed(.xmpPacket, url)
         }
     }
 
