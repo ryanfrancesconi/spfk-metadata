@@ -88,11 +88,26 @@ static int readID3(ID3v2::Tag *tag) {
     return -1;
 }
 
+/// Writes the app's own POPM only; other players' frames, ratings and play counts are kept.
 static void writeID3(ID3v2::Tag *tag, int stars) {
     if (!tag)
         return;
 
-    tag->removeFrames("POPM");
+    bool anotherPlayerRates = false;
+
+    // Collected first: removing invalidates the iteration.
+    {
+        ID3v2::FrameList toRemove;
+        for (auto *f : tag->frameList("POPM")) {
+            auto *popm = dynamic_cast<ID3v2::PopularimeterFrame *>(f);
+            if (popm && popm->email().toCString(true) == std::string(kWMPEmail))
+                toRemove.append(f);
+            else if (popm && popm->rating() > 0)
+                anotherPlayerRates = true;
+        }
+        for (auto *f : toRemove)
+            tag->removeFrame(f);
+    }
 
     // Collected first: removing invalidates the iteration.
     {
@@ -106,12 +121,14 @@ static void writeID3(ID3v2::Tag *tag, int stars) {
             tag->removeFrame(f);
     }
 
-    if (stars <= 0)
+    // A cleared rating is stored as 0 while another player's rating remains, which the reader would
+    // otherwise show in its place.
+    if (stars <= 0 && !anotherPlayerRates)
         return;
 
     auto *frame = new ID3v2::PopularimeterFrame();
     frame->setEmail(String(kWMPEmail, String::Latin1)); // ID3v2 POPM email field is ISO-8859-1 (Latin1) per spec
-    frame->setRating(popmByteFromStars(stars));
+    frame->setRating(stars > 0 ? popmByteFromStars(stars) : 0);
     frame->setCounter(0);
     tag->addFrame(frame);
 }

@@ -33,10 +33,6 @@ enum SafetyNetKnownIssues {
             text: "An MP3 save adds an ID3v1 tag the file did not have: expected none, found one (F7)"
         ),
         SafetyNetKnownIssue(
-            rows: ["mp3"], kinds: mp3TagKinds, item: .id3(.otherPopularimeter),
-            text: "An MP3 tag save deletes other players' POPM frames: expected 1, found 0 (F8)"
-        ),
-        SafetyNetKnownIssue(
             rows: ["mp3"], kinds: mp3TagKinds, item: .id3(.artist),
             text: "An MP3 tag save flattens a multi-valued TPE1: expected two values, found one joined with a space (F15)"
         ),
@@ -70,10 +66,6 @@ enum SafetyNetKnownIssues {
     private static let wavTagKinds: Set<SaveKind> = [.k0, .k1, .k2, .k3, .k4, .k5, .k6, .k7, .k8, .s1, .s2, .k16]
 
     private static let wave: [SafetyNetKnownIssue] = [
-        SafetyNetKnownIssue(
-            rows: ["wav"], kinds: wavTagKinds, item: .id3(.otherPopularimeter),
-            text: "A WAV tag save deletes other players' POPM frames: expected 1, found 0 (F8)"
-        ),
         SafetyNetKnownIssue(
             rows: ["wav"], kinds: wavTagKinds, item: .id3(.artist),
             text: "A WAV tag save flattens a multi-valued TPE1: expected two values, found one joined with a space (F15)"
