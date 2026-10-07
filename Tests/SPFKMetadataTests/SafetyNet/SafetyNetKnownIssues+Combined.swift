@@ -1,0 +1,170 @@
+// Copyright Ryan Francesconi. All Rights Reserved. Revision History at https://github.com/ryanfrancesconi/spfk-metadata
+
+import Foundation
+
+/// The combined kinds' known failures. Each repeats a single-flag kind's finding on the same row,
+/// with that finding's text.
+extension SafetyNetKnownIssues {
+    static let combined: [SafetyNetKnownIssue] = [
+        SafetyNetKnownIssue(
+            rows: ["flac"], kinds: [.k9, .k10, .k11, .k12, .s3], item: .flac(.multiValuedField),
+            text: "A FLAC save flattens a repeated Vorbis field: expected ENCODER twice, found one value joined with a space (F15)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["flac"], kinds: [.k9, .k10, .k11, .k12, .s3], item: .flac(.iXML),
+            text: "A FLAC save re-serializes iXML, dropping comments and turning CDATA into escaped text: expected the comment and CDATA nodes, found neither (F13)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["aac"], kinds: [.k9], item: .id3(.comments),
+            text: "An MP3 tag save merges a second-language COMM into the first and rewrites a described one: expected 3 frames with languages \"eng\" and \"fra\" kept, found 2, one joined with a space and one \"XXX | SAFETY NET NOTE\" (F15, F29)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["aifc", "aiff"], kinds: [.k9, .k10, .k11, .k12, .s3], item: .id3(.comments),
+            text: "An AIFF save merges a second-language COMM into the first and rewrites a described one: expected the \"eng\" and \"fra\" frames kept, found them merged and upper-cased (F15, F29)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["rf64", "wav"], kinds: [.k9, .k10, .k11, .k12, .s3, .s4], item: .id3(.comments),
+            text: "A WAV tag save drops a second undescribed COMM in another language: expected the \"fra\" frame kept beside the file's comment, found it removed (F15)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["mp3"], kinds: [.k9, .k10, .k11, .k12, .s3, .s4], item: .id3(.comments),
+            text: "An MP3 tag save merges a second-language COMM into the first and rewrites a described one: expected 3 frames with languages \"eng\" and \"fra\" kept, found 2, one joined with a space and one \"XXX | SAFETY NET NOTE\" (F15, F29)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["aac"], kinds: [.k9], item: .id3(.id3v1),
+            text: "An MP3 save adds an ID3v1 tag the file did not have: expected none, found one (F7)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["mp3"], kinds: [.k9, .k10, .k11, .k12, .s3, .s4], item: .id3(.id3v1),
+            text: "An MP3 save adds an ID3v1 tag the file did not have: expected none, found one (F7)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["rf64", "wav"], kinds: [.k9, .k10, .k11, .k12, .s3, .s4], item: .id3(.involvedPeople),
+            text: "A WAV tag save moves another app's TIPL into a TXXX: expected the TIPL frame, found none (F24)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["aac"], kinds: [.k9], item: .id3(.artist),
+            text: "An MP3 tag save flattens a multi-valued TPE1: expected two values, found one joined with a space (F15)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["aifc", "aiff"], kinds: [.k9, .k10, .k11, .k12, .s3], item: .id3(.artist),
+            text: "An AIFF save flattens a multi-valued TPE1: expected two values, found one joined with a space (F15)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["rf64", "wav"], kinds: [.k9, .k10, .k11, .k12, .s3, .s4], item: .id3(.artist),
+            text: "A WAV tag save flattens a multi-valued TPE1: expected two values, found one joined with a space (F15)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["mp3"], kinds: [.k9, .k10, .k11, .k12, .s3, .s4], item: .id3(.artist),
+            text: "An MP3 tag save flattens a multi-valued TPE1: expected two values, found one joined with a space (F15)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["rf64", "wav"], kinds: [.k9, .k10, .k11, .k12, .s3, .s4], item: .id3(.duplicateUserText),
+            text: "A WAV tag save adds a second TXXX with a description already present: expected each description once, found one twice (F33)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["rf64", "wav"], kinds: [.k11], item: .id3(.infoUserText),
+            text: "A WAV save that edits no tag still rewrites the tags, adding an INFO item to ID3: expected no new TXXX, found TXXX NUMCOLORS (F47)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["rf64", "wav"], kinds: [.k9, .k10, .k11, .k12, .s3, .s4], item: .id3(.frameIDUserText),
+            text: "A WAV tag save writes USLT, WXXX and TIPL as TXXX frames named after them: expected none, found three (F24)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["aac"], kinds: [.k9], item: .id3(.userText),
+            text: "An MP3 tag save upper-cases other apps' TXXX descriptions: expected \"SafetyNet Foreign\", found \"SAFETYNET FOREIGN\" (F29)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["aifc", "aiff"], kinds: [.k9, .k10, .k11, .k12, .s3], item: .id3(.userText),
+            text: "An AIFF save upper-cases other apps' TXXX descriptions: expected \"SafetyNet Foreign\", found \"SAFETYNET FOREIGN\" (F29)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["mp3"], kinds: [.k9, .k10, .k11, .k12, .s3, .s4], item: .id3(.userText),
+            text: "An MP3 tag save upper-cases other apps' TXXX descriptions: expected \"SafetyNet Foreign\", found \"SAFETYNET FOREIGN\" (F29)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["aac"], kinds: [.k9], item: .id3(.lyrics),
+            text: "An MP3 tag save rewrites other apps' USLT frames: expected language \"eng\" and description \"Safety Net\", found \"XXX\" and \"SAFETY NET\" (F29)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["aifc", "aiff"], kinds: [.k9, .k10, .k11, .k12, .s3], item: .id3(.lyrics),
+            text: "An AIFF save rewrites other apps' USLT frames: expected language \"eng\" and description \"Safety Net\", found \"XXX\" and \"SAFETY NET\" (F29)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["rf64", "wav"], kinds: [.k9, .k10, .k11, .k12, .s3, .s4], item: .id3(.lyrics),
+            text: "A WAV tag save moves another app's USLT into a TXXX: expected the USLT frame, found none (F24)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["mp3"], kinds: [.k9, .k10, .k11, .k12, .s3, .s4], item: .id3(.lyrics),
+            text: "An MP3 tag save rewrites other apps' USLT frames: expected language \"eng\" and description \"Safety Net\", found \"XXX\" and \"SAFETY NET\" (F29)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["aac"], kinds: [.k9], item: .id3(.userURL),
+            text: "An MP3 tag save upper-cases other apps' WXXX descriptions: expected \"Safety Net Link\", found \"SAFETY NET LINK\" (F29)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["aifc", "aiff"], kinds: [.k9, .k10, .k11, .k12, .s3], item: .id3(.userURL),
+            text: "An AIFF save upper-cases other apps' WXXX descriptions: expected \"Safety Net Link\", found \"SAFETY NET LINK\" (F29)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["rf64", "wav"], kinds: [.k9, .k10, .k11, .k12, .s3, .s4], item: .id3(.userURL),
+            text: "A WAV tag save moves another app's WXXX into a TXXX: expected the WXXX frame, found none (F24)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["mp3"], kinds: [.k9, .k10, .k11, .k12, .s3, .s4], item: .id3(.userURL),
+            text: "An MP3 tag save upper-cases other apps' WXXX descriptions: expected \"Safety Net Link\", found \"SAFETY NET LINK\" (F29)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["aac"], kinds: [.k9], item: .id3(.majorVersion),
+            text: "An MP3 save re-renders an ID3v2.3 tag as ID3v2.4: expected 2.3, found 2.4 (F7)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["mp3"], kinds: [.k9, .k10, .k11, .k12, .s3, .s4], item: .id3(.majorVersion),
+            text: "An MP3 save re-renders an ID3v2.3 tag as ID3v2.4: expected 2.3, found 2.4 (F7)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["m4a", "m4b", "m4v", "mov", "mp4"], kinds: [.k9, .k10, .k11, .k12, .s3], item: .mp4(.unknownFreeform),
+            text: "An MP4 save upper-cases another app's iTunes freeform name: expected \"SafetyNet Foreign\", found \"SAFETYNET FOREIGN\" (F40)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["m4a", "m4b", "m4v", "mov", "mp4"], kinds: [.k9, .k10, .k11, .k12, .s3], item: .mp4(.gaplessInfo),
+            text: "An MP4 save renames the gapless-playback atom: expected iTunSMPB, found ITUNSMPB (F40)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["m4a", "m4b", "m4v", "mov", "mp4"], kinds: [.k10, .k11, .k12, .s3], item: .mp4(.chapters),
+            text: "An MP4 marker save whose first marker starts after zero adds an untitled chapter at zero that other players list: expected the written chapters only, found an extra one at 0.000 (F41)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["m4a", "m4b", "m4v", "mov", "mp4"], kinds: [.k9, .k10, .k11, .k12, .s3], item: .mp4(.multiValuedText),
+            text: "An MP4 save flattens a multi-valued text item: expected ©ART twice, found one value joined with a space (F15)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["mka", "mkv", "webm"], kinds: [.k9], item: .matroska(.unknownTag),
+            text: "A Matroska save moves another app's untargeted tag from album to track level: expected no TargetTypeValue, found 30 (F50)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["ogg", "opus"], kinds: [.k9, .k10, .k11, .k12, .s3], item: .ogg(.multiValuedField),
+            text: "An Ogg save flattens a repeated comment field: expected ENCODER twice, found one value joined with a space (F15)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["rf64", "wav"], kinds: [.k9, .k10, .k11, .k12, .s3, .s4], item: .riff(.unknownInfo),
+            text: "A WAV tag save drops INFO items it has no key for: expected IFRM, found none (F20)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["wav"], kinds: [.k10, .k11, .k12, .s3], item: .riff(.otherAssociatedData),
+            text: "A WAV marker save drops other apps' adtl note and ltxt chunks: expected both, found none (F35)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["rf64"], kinds: [.k10, .k11, .k12, .s3], item: .riff(.otherAssociatedData),
+            text: "An RF64 marker save drops other apps' adtl note and ltxt chunks: expected both, found none (F35)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["rf64", "wav"], kinds: [.k9, .k10, .k11, .k12, .s3, .s4], item: .riff(.iXML),
+            text: "A WAV tag save re-serializes iXML, dropping comments and turning CDATA into escaped text: expected the comment and CDATA nodes, found neither (F13)"
+        ),
+        SafetyNetKnownIssue(
+            rows: ["m4a"], kinds: [.k9, .k10, .k11, .k12, .s3], item: .audio,
+            text: "An MP4 save renames the gapless-playback atom, so AVFoundation stops trimming to its sample count: expected 9152 decoded frames, found the untrimmed length (F40)"
+        ),
+    ]
+}

@@ -24,6 +24,10 @@ enum SaveKind: String, CaseIterable, Hashable, Sendable, CustomTestStringConvert
     case k6 = "K6"
     case k7 = "K7"
     case k8 = "K8"
+    case k9 = "K9"
+    case k10 = "K10"
+    case k11 = "K11"
+    case k12 = "K12"
     case k13 = "K13"
     case k14 = "K14"
     case k15 = "K15"
@@ -31,6 +35,8 @@ enum SaveKind: String, CaseIterable, Hashable, Sendable, CustomTestStringConvert
     case k17 = "K17"
     case s1 = "S1"
     case s2 = "S2"
+    case s3 = "S3"
+    case s4 = "S4"
     // The lower writers other callers use, each called as its consumer calls it.
     /// `TagProperties(url:)` then `save(to:)`, unedited (TorchTag).
     case e1 = "E1"
@@ -70,6 +76,11 @@ enum SaveKind: String, CaseIterable, Hashable, Sendable, CustomTestStringConvert
         case .k4, .e7, .e9: [.iXML]
         case .k5, .k6, .e3, .e4: [.artwork]
         case .k7, .k8, .e5: [.markers]
+        case .k9: [.tags, .artwork]
+        case .k10, .s3: [.tags, .markers]
+        case .k11: [.artwork, .markers]
+        case .k12: [.tags, .artwork, .markers]
+        case .s4: [.packet, .tags]
         case .k13: [.finderTags]
         case .k15, .k17: [.packet]
         case .k16: [.packet, .tags]
@@ -108,7 +119,8 @@ enum SaveKind: String, CaseIterable, Hashable, Sendable, CustomTestStringConvert
         case .k4: row.holds(.iXML)
         case .e6, .e7: row.holds(.bext) && row.fileType == .wav
         case .e8, .e9: row.holds(.bext) && row.fileType == .flac
-        case .k7, .k8, .s1, .e5: row.holds(.markers)
+        case .k7, .k8, .k10, .k11, .k12, .s1, .s3, .e5: row.holds(.markers)
+        case .s4: row.holds(.packet)
         case .k13: row.holds(.finderTags)
         case .k15, .k16, .k17: row.holds(.packet)
         default: true
@@ -177,6 +189,24 @@ enum SaveKind: String, CaseIterable, Hashable, Sendable, CustomTestStringConvert
         case .s1:
             return [Self.replaceMarkers, Self.editTitle]
 
+        case .k9:
+            return [Self.combined([.metadata, .image])]
+
+        case .k10:
+            return [Self.combined([.metadata, .markers])]
+
+        case .k11:
+            return [Self.combined([.image, .markers])]
+
+        case .k12:
+            return [Self.combined([.metadata, .image, .markers])]
+
+        case .s3:
+            return [Self.editTitle, Self.replaceMarkers]
+
+        case .s4:
+            return [Step(flags: [], packet: .replace(SafetyNetEdit.packet)) { _ in }, Self.editTitle]
+
         case .s2:
             return [Self.replaceArtwork, Self.editTitle]
 
@@ -193,6 +223,18 @@ enum SaveKind: String, CaseIterable, Hashable, Sendable, CustomTestStringConvert
         for step in steps(for: row) {
             try step.edit(&description)
             try description.save(dirtyFlags: step.flags, storedXMPPacket: step.packet)
+        }
+    }
+
+    /// One save carrying several flags, each with the edit its single-flag kind makes.
+    private static func combined(_ flags: Set<MetadataDirtyFlag>) -> Step {
+        let steps = [(MetadataDirtyFlag.metadata, editTitle), (.image, replaceArtwork), (.markers, replaceMarkers)]
+            .filter { flags.contains($0.0) }.map(\.1)
+
+        return Step(flags: flags) { description in
+            for step in steps {
+                try step.edit(&description)
+            }
         }
     }
 
