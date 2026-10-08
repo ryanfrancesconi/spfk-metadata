@@ -130,7 +130,7 @@ final class WaveLayoutTests: BinTestCase {
             data: nil, width: 70000, height: 1, bitsPerComponent: 8, bytesPerRow: 0,
             space: CGColorSpaceCreateDeviceGray(), bitmapInfo: CGImageAlphaInfo.none.rawValue
         ))
-        description.imageDescription.cgImage = try #require(context.makeImage())
+        description.imageDescription.cgImage = context.makeImage()
         description.tagProperties[.title] = Self.editedTitle
 
         #expect(throws: MetadataError.writeFailed(.artwork, url)) {
