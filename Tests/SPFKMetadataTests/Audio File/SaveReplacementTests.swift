@@ -84,6 +84,7 @@ final class SaveReplacementTests: BinTestCase {
         #expect(try await MetaAudioFileDescription(parsing: link).tagProperties[.title] == "Replaced")
     }
 
+    #if os(macOS)
     /// A disk image formatted `fileSystem` (an `hdiutil -fs` name), attached for `body`.
     private func withVolume(_ fileSystem: String, _ body: (URL) async throws -> Void) async throws {
         let image = bin.appendingPathComponent("volume-\(UUID().uuidString).dmg")
@@ -139,6 +140,7 @@ final class SaveReplacementTests: BinTestCase {
         process.waitUntilExit()
         guard process.terminationStatus == 0 else { throw CocoaError(.executableLoad) }
     }
+    #endif
 
     @Test func aFileInAReadOnlyFolderIsSavedInPlace() async throws {
         let url = try copyToBin(url: TestBundleResources.shared.tabla_mp3)
