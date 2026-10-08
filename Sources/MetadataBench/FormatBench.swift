@@ -17,20 +17,26 @@ struct FormatBench {
             let master = try corpus.write(format)
             let kib = (try FileManager.default.attributesOfItem(atPath: master.path)[.size] as? Int ?? 0) / 1024
             FileHandle.standardError.write(Data("  \(format.rawValue): master \(kib) KiB\n".utf8))
-            await measure(format, master: master, into: &run)
+            try await measure(format, master: master, into: &run)
             try FileManager.default.removeItem(at: master)
             try? FileManager.default.removeItem(at: cases.work(for: master))
         }
     }
 
-    private func measure(_ format: BenchFormat, master: URL, into run: inout RegressionRun) async {
+    /// A container with no marker writer (Matroska) skips the marker case, and its `save-all`
+    /// leaves markers out.
+    private func measure(_ format: BenchFormat, master: URL, into run: inout RegressionRun) async throws {
         let prefix = "\(format.rawValue).fresh"
+        let storesMarkers = try await MetaAudioFileDescription(parsing: master).canStoreMarkers
+        let all: Set<MetadataDirtyFlag> = storesMarkers ? [.metadata, .image, .markers] : [.metadata, .image]
 
         await cases.parse("\(prefix).parse", master, into: &run)
         await cases.save("\(prefix).save-metadata", master, [.metadata], cases.editTitle, into: &run)
         await cases.save("\(prefix).save-image", master, [.image], cases.editArtwork, into: &run)
-        await cases.save("\(prefix).save-markers", master, [.markers], cases.editMarkers, into: &run)
-        await cases.save("\(prefix).save-all", master, [.metadata, .image, .markers], cases.editAll, into: &run)
-        await cases.save("\(prefix).save-all-again", master, [.metadata, .image, .markers], firstSave: true, cases.editAll, into: &run)
+        if storesMarkers {
+            await cases.save("\(prefix).save-markers", master, [.markers], cases.editMarkers, into: &run)
+        }
+        await cases.save("\(prefix).save-all", master, all, cases.editAll, into: &run)
+        await cases.save("\(prefix).save-all-again", master, all, firstSave: true, cases.editAll, into: &run)
     }
 }

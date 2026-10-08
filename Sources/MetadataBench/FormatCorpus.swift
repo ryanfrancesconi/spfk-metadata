@@ -4,13 +4,22 @@ import AVFoundation
 import Foundation
 
 /// The other formats the save path writes, each as an encoder leaves a fresh file: no tags, no
-/// artwork, whatever padding the encoder reserves. MP3 and AIFF are written byte by byte; FLAC and
-/// M4A are encoded through Core Audio, which needs the process outside the sandbox.
+/// artwork, whatever padding the encoder reserves. FLAC and M4A are encoded through Core Audio,
+/// which needs the process outside the sandbox; the rest are written byte by byte.
 enum BenchFormat: String, CaseIterable {
     case mp3
     case flac
     case m4a
     case aiff = "aif"
+    /// AIFF with an `ID3 ` chunk ahead of `SSND`, where a tag save that appends it moves the audio.
+    case aiffLeadingID3 = "aif-id3"
+    case ogg
+    case opus
+    case mka
+
+    var pathExtension: String {
+        self == .aiffLeadingID3 ? BenchFormat.aiff.rawValue : rawValue
+    }
 }
 
 struct FormatCorpus {
@@ -24,12 +33,16 @@ struct FormatCorpus {
     }
 
     func write(_ format: BenchFormat) throws -> URL {
-        let url = directory.appendingPathComponent("master.\(format.rawValue)")
+        let url = directory.appendingPathComponent("master-\(format.rawValue).\(format.pathExtension)")
         try? FileManager.default.removeItem(at: url)
 
         switch format {
         case .mp3: try writeMP3(to: url)
-        case .aiff: try writeAIFF(to: url)
+        case .aiff: try writeAIFF(to: url, leadingID3: false)
+        case .aiffLeadingID3: try writeAIFF(to: url, leadingID3: true)
+        case .ogg: try OggCorpus(seconds: seconds).writeVorbis(to: url)
+        case .opus: try OggCorpus(seconds: seconds).writeOpus(to: url)
+        case .mka: try MatroskaCorpus(seconds: seconds).write(to: url)
         case .flac: try encode(to: url, settings: [AVFormatIDKey: kAudioFormatFLAC, AVEncoderBitDepthHintKey: 16])
         case .m4a: try encode(to: url, settings: [AVFormatIDKey: kAudioFormatMPEG4AAC])
         }
@@ -55,21 +68,22 @@ struct FormatCorpus {
         }
     }
 
-    /// `COMM` and `SSND` holding 16-bit stereo noise.
-    private func writeAIFF(to url: URL) throws {
+    /// `COMM`, then `ID3 ` when `leadingID3`, then `SSND` holding 16-bit stereo noise.
+    private func writeAIFF(to url: URL, leadingID3: Bool) throws {
         let frames = seconds * 48000
         let audioBytes = frames * 4
         let sampleRate48k = Data([0x40, 0x0E, 0xBB, 0x80, 0, 0, 0, 0, 0, 0])
         let comm = be16(2) + be32(UInt32(frames)) + be16(16) + sampleRate48k
+        let id3 = leadingID3 ? try beChunk("ID3 ", WAVCorpus.id3Tag(artwork: nil)) : Data()
         let ssndHeader = Data("SSND".utf8) + be32(UInt32(8 + audioBytes)) + be32(0) + be32(0)
-        let formSize = 4 + 8 + comm.count + ssndHeader.count + audioBytes
+        let formSize = 4 + 8 + comm.count + id3.count + ssndHeader.count + audioBytes
 
         FileManager.default.createFile(atPath: url.path, contents: nil)
         let handle = try FileHandle(forWritingTo: url)
         defer { try? handle.close() }
 
         try handle.write(contentsOf: Data("FORM".utf8) + be32(UInt32(formSize)) + Data("AIFF".utf8))
-        try handle.write(contentsOf: Data("COMM".utf8) + be32(UInt32(comm.count)) + comm + ssndHeader)
+        try handle.write(contentsOf: beChunk("COMM", comm) + id3 + ssndHeader)
         try WAVCorpus.writeAudio(byteCount: audioBytes, to: handle)
     }
 
@@ -97,6 +111,13 @@ struct FormatCorpus {
             try file.write(from: buffer)
         }
     }
+}
+
+/// An IFF chunk with a big-endian size, padded to an even length.
+func beChunk(_ id: String, _ payload: Data) -> Data {
+    var data = Data(id.utf8) + be32(UInt32(payload.count)) + payload
+    if payload.count.isMultiple(of: 2) == false { data.append(0) }
+    return data
 }
 
 func be16(_ value: Int) -> Data {
