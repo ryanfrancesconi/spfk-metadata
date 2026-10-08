@@ -238,7 +238,7 @@ extension MetaAudioFileDescription {
     }
 
     /// Tags and chunks are always rendered, markers and artwork only when flagged; only what changed
-    /// is written.
+    /// is written. A failed artwork, marker or rating write throws after the rest is saved.
     private mutating func saveWave(imageNeedsSave: Bool, markersNeedsSave: Bool, storedXMPPacket: StoredXMPPacketWrite) throws {
         let waveFile = WaveFileC(path: url.path)
         storedXMPPacket.apply { waveFile.xmpNeedsSave = true; waveFile.xmpPacket = $0 }
@@ -282,7 +282,7 @@ extension MetaAudioFileDescription {
         }
 
         guard waveFile.save() else {
-            throw NSError(description: "Failed to save \(url.path)")
+            throw MetadataError.writeFailed(waveFile.failedComponent, url)
         }
     }
 

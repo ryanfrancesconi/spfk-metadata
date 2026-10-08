@@ -1,5 +1,6 @@
 // Copyright Ryan Francesconi. All Rights Reserved. Revision History at https://github.com/ryanfrancesconi/spfk-metadata
 
+import CoreGraphics
 import Foundation
 import SPFKBase
 import SPFKMetadataBase
@@ -117,6 +118,27 @@ final class WaveLayoutTests: BinTestCase {
         try StoredXMPPacketWrite.replace(SafetyNetSetup.xmpPacket(title: "Reachable")).write(to: url)
 
         #expect(TagLibBridge.storedXMPPacket(url.path)?.contains("Reachable") == true)
+    }
+
+    /// An artwork the encoder rejects fails the save after everything else is written (F9).
+    @Test func artworkEncodeFailureThrows() async throws {
+        let url = try recorderFixture(form: .riff)
+        var description = try await MetaAudioFileDescription(parsing: url)
+
+        // Wider than JPEG can store, and JPEG is where an untyped image is encoded.
+        let context = try #require(CGContext(
+            data: nil, width: 70000, height: 1, bitsPerComponent: 8, bytesPerRow: 0,
+            space: CGColorSpaceCreateDeviceGray(), bitmapInfo: CGImageAlphaInfo.none.rawValue
+        ))
+        description.imageDescription.cgImage = try #require(context.makeImage())
+        description.tagProperties[.title] = Self.editedTitle
+
+        #expect(throws: MetadataError.writeFailed(.artwork, url)) {
+            try description.save(dirtyFlags: [.metadata, .image])
+        }
+
+        let reread = try await MetaAudioFileDescription(parsing: url)
+        #expect(reread.tagProperties[.title] == Self.editedTitle)
     }
 
     // MARK: - Writers

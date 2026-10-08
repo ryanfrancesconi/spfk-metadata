@@ -34,4 +34,12 @@ extension WaveFileC {
             id3Dictionary[key.value] = newValue
         }
     }
+
+    /// The component a failed `save()` reports; `.tags` when nothing was written.
+    var failedComponent: MetadataError.Component {
+        if failedComponents.contains(.container) { return .tags }
+        if failedComponents.contains(.artwork) { return .artwork }
+        if failedComponents.contains(.markers) { return .markers }
+        return .rating
+    }
 }

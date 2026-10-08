@@ -111,15 +111,20 @@ using namespace TagLib;
 }
 
 - (bool)save {
+    _failedComponents = WaveFileComponentsNone;
+
     WaveMarkerFile file(_path.UTF8String);
 
     if (!file.isValid() || file.readOnly()) {
-        cout << "Not a wave file" << endl;
+        _failedComponents = WaveFileComponentsContainer;
         return false;
     }
 
     std::vector<WaveChunkPlanner::Edit> edits;
-    const bool markersSaved = !_markersNeedsSave || WaveMarkers::render(file, _markers, edits);
+
+    if (_markersNeedsSave && !WaveMarkers::render(file, _markers, edits)) {
+        _failedComponents |= WaveFileComponentsMarkers;
+    }
 
     if (_xmpNeedsSave) {
         const ByteVector packet = _xmpPacket.length > 0 ? ByteVector(_xmpPacket.UTF8String) : ByteVector();
@@ -136,8 +141,8 @@ using namespace TagLib;
     // An empty String removes the chunk.
     file.setiXMLData(_iXML ? String(_iXML.UTF8String, String::UTF8) : String());
 
-    if (_imageNeedsSave) {
-        [TagPicture write:_tagPicture.pictureRef toTag:file.tag()];
+    if (_imageNeedsSave && ![TagPicture write:_tagPicture.pictureRef toTag:file.tag()]) {
+        _failedComponents |= WaveFileComponentsArtwork;
     }
 
     // Kept out of the PropertyMap; written as POPM below.
@@ -165,11 +170,15 @@ using namespace TagLib;
         file.InfoTag()->setFieldText(tagKey, tagValue);
     }
 
-    if (!TagRatingWriteToFile(&file, ratingStars))
-        return false;
+    if (!TagRatingWriteToFile(&file, ratingStars)) {
+        _failedComponents |= WaveFileComponentsRating;
+    }
 
-    const bool tagsSaved = WaveChunkPlanner::save(file, edits);
-    return tagsSaved && markersSaved;
+    if (!WaveChunkPlanner::save(file, edits)) {
+        _failedComponents = WaveFileComponentsContainer;
+    }
+
+    return _failedComponents == WaveFileComponentsNone;
 }
 
 @end

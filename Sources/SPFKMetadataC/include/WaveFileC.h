@@ -11,6 +11,16 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+/// What a failed `-[WaveFileC save]` could not write.
+typedef NS_OPTIONS(NSUInteger, WaveFileComponents) {
+    WaveFileComponentsNone = 0,
+    /// The file could not be opened or written: nothing was saved.
+    WaveFileComponentsContainer = 1 << 0,
+    WaveFileComponentsRating = 1 << 1,
+    WaveFileComponentsMarkers = 1 << 2,
+    WaveFileComponentsArtwork = 1 << 3,
+};
+
 /// A RIFF, RF64 or BW64 WAVE's INFO, ID3, BEXT, iXML, artwork and markers through TagLib.
 @interface WaveFileC : NSObject
 
@@ -55,8 +65,12 @@ NS_ASSUME_NONNULL_BEGIN
 - (bool)load;
 
 /// Rewrites every chunk whose bytes change, never moving the audio; INFO fields absent from
-/// `infoDictionary` are removed.
+/// `infoDictionary` are removed. On `false`, `failedComponents` names what was not written; unless
+/// it holds `WaveFileComponentsContainer`, everything else was.
 - (bool)save;
+
+/// Set by `save`.
+@property(nonatomic, readonly) WaveFileComponents failedComponents;
 
 @end
 
