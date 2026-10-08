@@ -138,10 +138,6 @@ enum SafetyNetKnownIssues {
             rows: ["flac"], kinds: [.k4], item: .flac(.iXML),
             text: "A FLAC iXML edit re-serializes the rest of the document, dropping comments and turning CDATA into escaped text: expected the edit beside the comment and CDATA nodes, found neither (F13)"
         ),
-        SafetyNetKnownIssue(
-            rows: ["flac-ixml-only-bext"], kinds: [.k1, .k2, .k5], item: .flac(.blockSet),
-            text: "A FLAC save writes a bext block for a BEXT held only in iXML's <BEXT>: expected no bext block, found one (F39)"
-        ),
     ]
 
     /// Every Ogg Vorbis and Opus save kind in the net: each runs the tag save first.

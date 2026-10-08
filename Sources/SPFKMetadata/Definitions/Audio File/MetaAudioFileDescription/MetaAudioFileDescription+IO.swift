@@ -195,6 +195,7 @@ extension MetaAudioFileDescription {
             let flacFile = FlacFileC(path: url.path)
             flacFile.bextDescription = bextDescription
             flacFile.iXML = iXMLMetadata
+            flacFile.bextNeedsSave = bextDescription == nil || bextDescription != bextHeldByIXML
 
             if !flacFile.write(toFile: session.file) {
                 failed.insert(.bext)
@@ -324,6 +325,14 @@ extension MetaAudioFileDescription {
 }
 
 extension MetaAudioFileDescription {
+    /// The BEXT a FLAC's iXML `<BEXT>` holds, which the parser falls back to when the file has no BEXT
+    /// block. A save leaves the block alone while the description still holds exactly this, rather
+    /// than adding a block the file never had.
+    private var bextHeldByIXML: BEXTDescription? {
+        guard let iXMLMetadata, let ixml = try? IXMLMetadata(xml: iXMLMetadata) else { return nil }
+        return BEXTDescription(ixmlMetadata: ixml)?.validated()
+    }
+
     /// Positions convert at the sample rate Core Audio reads, as its own marker write did.
     private func setAIFFMarkers(in session: MetadataSaveSession) -> Bool {
         guard let sampleRate = audioFormat?.sampleRate, sampleRate > 0 else { return false }

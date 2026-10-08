@@ -21,6 +21,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property(nullable, nonatomic) NSString *iXML;
 
+/// False leaves the file's BEXT block as it is, whatever `bextDescriptionC` holds. Defaults to true.
+@property(nonatomic) bool bextNeedsSave;
+
 @property(nonatomic, strong, nonnull) NSString *path;
 
 - (instancetype)initWithPath:(nonnull NSString *)path;

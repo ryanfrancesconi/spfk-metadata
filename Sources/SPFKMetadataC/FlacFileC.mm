@@ -18,6 +18,7 @@ using namespace TagLib;
 - (instancetype)initWithPath:(nonnull NSString *)path {
     self = [super init];
     _path = path;
+    _bextNeedsSave = true;
     return self;
 }
 
@@ -86,7 +87,9 @@ using namespace TagLib;
         return false;
     }
 
-    if (_bextDescriptionC) {
+    if (!_bextNeedsSave) {
+        // Left as the file has it.
+    } else if (_bextDescriptionC) {
         NSData *bextData = [_bextDescriptionC serializedData];
         flacFile->setBEXTData(ByteVector((const char *)bextData.bytes, (unsigned int)bextData.length));
     } else {

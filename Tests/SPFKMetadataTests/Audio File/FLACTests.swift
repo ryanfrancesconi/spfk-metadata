@@ -308,6 +308,28 @@ final class ExternalFLACApplicationBlockTests: BinTestCase {
         #expect(bext.timeReferenceLow == 48_000)
     }
 
+    /// A BEXT held only in iXML is left there by a save that does not change it, and written as a
+    /// block once it is edited, so the edit reads back.
+    @Test func aBEXTHeldOnlyInIXMLIsWrittenAsABlockOnceEdited() async throws {
+        let url = try copyToBin(url: TestBundleResources.shared.flac_bext_ixml_external)
+
+        // A save writes the BEXT into iXML's `<BEXT>` too; the plant then removes the block.
+        var setup = try await MetaAudioFileDescription(parsing: url)
+        try setup.save(dirtyFlags: [.metadata])
+        try SafetyNetFLACPlant.plantIXMLOnlyBroadcastExtension(in: url)
+
+        var description = try await MetaAudioFileDescription(parsing: url)
+        var bext = try #require(description.bextDescription)
+        bext.originator = "Edited Originator"
+        description.bextDescription = bext
+        try description.save(dirtyFlags: [.metadata])
+
+        let flac = FlacFileC(path: url.path)
+        #expect(flac.load())
+        #expect(flac.bextDescriptionC?.originator == "Edited Originator")
+        #expect(try await MetaAudioFileDescription(parsing: url).bextDescription?.originator == "Edited Originator")
+    }
+
     /// Vorbis comment tags written by ffmpeg are read alongside APPLICATION blocks.
     @Test func ffmpegVorbisTagsReadAlongsideApplicationBlocks() async throws {
         let url = TestBundleResources.shared.flac_bext_ixml_external
