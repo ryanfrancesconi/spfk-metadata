@@ -128,8 +128,14 @@ extension SafetyNetRIFFItem {
             return riff.first("_PMX").map { .bytes($0.payload) }
 
         case let .chunk(id):
-            return riff.first(id).map { .bytes($0.payload) }
+            return riff.chunks.first { $0.id == id && !Self.isWriterFiller($0) }.map { .bytes($0.payload) }
         }
+    }
+
+    /// Free space spfk-metadata's WAV writer left, which it signs to tell its own `JUNK` from
+    /// another application's.
+    private static func isWriterFiller(_ chunk: RIFFChunks.Chunk) -> Bool {
+        chunk.id == "JUNK" && chunk.payload.prefix(4) == Data("SPFK".utf8)
     }
 
     private static func dataOffset(in riff: RIFFChunks) -> Int? {

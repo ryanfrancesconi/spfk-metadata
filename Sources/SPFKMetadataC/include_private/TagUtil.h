@@ -21,6 +21,7 @@
 #import <taglib/commentsframe.h>
 #import <taglib/id3v2frame.h>
 #import <taglib/id3v2tag.h>
+#import <taglib/infotag.h>
 #import <taglib/privateframe.h>
 #import <taglib/textidentificationframe.h>
 #import <taglib/tpropertymap.h>
@@ -97,6 +98,22 @@ static void clearMP4Items(MP4::Tag *tag, bool keepingUnmapped) {
         tag->removeItem(key);
 }
 
+/// Empties a WAV's ID3 and INFO tags in memory. `strip()` removes their chunks from the file at
+/// once, moving everything after them, the audio included when they precede it.
+static void clearWaveTags(RIFF::WAV::File *file) {
+    // Not over a copy of the list: it owns its frames and would delete them a second time.
+    if (ID3v2::Tag *id3 = file->ID3v2Tag()) {
+        while (!id3->frameList().isEmpty())
+            id3->removeFrame(id3->frameList().front());
+    }
+
+    if (RIFF::Info::Tag *info = file->InfoTag()) {
+        const RIFF::Info::FieldListMap fields = info->fieldListMap();
+        for (const auto &[key, _] : fields)
+            info->removeField(key);
+    }
+}
+
 /// Empties every tag, so the save writes only what the caller sets; `setProperties` alone leaves
 /// format-specific storage (iTunes freeform atoms) behind. Every MP4 item goes, cleared in memory
 /// as `clearMP4Items` describes. Vorbis, Opus and AIFF have no strip; only their mapped properties
@@ -105,7 +122,7 @@ static void clearTags(FileRef &fileRef) {
     File *f = fileRef.file();
 
     if (auto *fp = dynamic_cast<RIFF::WAV::File *>(f)) {
-        fp->strip();
+        clearWaveTags(fp);
     } else if (auto *fp = dynamic_cast<MP4::File *>(f)) {
         clearMP4Items(fp->tag(), false);
     } else if (auto *fp = dynamic_cast<MPEG::File *>(f)) {

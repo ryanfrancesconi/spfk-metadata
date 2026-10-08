@@ -95,10 +95,6 @@ enum SafetyNetKnownIssues {
             text: "A WAV save that edits no tag still rewrites the tags, adding an INFO item to ID3: expected no new TXXX, found TXXX NUMCOLORS (F47)"
         ),
         SafetyNetKnownIssue(
-            rows: ["wav-recorder"], kinds: wavTagKinds.union([.k17]), item: .riff(.dataOffset),
-            text: "A WAV save moves the audio when metadata chunks precede data: expected data at its offset, found it moved (F48)"
-        ),
-        SafetyNetKnownIssue(
             rows: ["wav", "rf64"], kinds: wavTagKinds, item: .riff(.unknownInfo),
             text: "A WAV tag save drops INFO items it has no key for: expected IFRM, found none (F20)"
         ),
@@ -111,13 +107,8 @@ enum SafetyNetKnownIssues {
             text: "A WAV save flagged for artwork re-encodes an unchanged front cover: expected the same image bytes, found new ones (F30)"
         ),
         SafetyNetKnownIssue(
-            rows: ["wav"], kinds: [.k0, .k7, .k8, .s1], item: .riff(.otherAssociatedData),
+            rows: ["wav", "rf64"], kinds: [.k0, .k7, .k8, .s1], item: .riff(.otherAssociatedData),
             text: "A WAV marker save drops other apps' adtl note and ltxt chunks: expected both, found none (F35)"
-        ),
-        // Core Audio writes an RF64's markers, and removing them all leaves the adtl alone.
-        SafetyNetKnownIssue(
-            rows: ["rf64"], kinds: [.k0, .k7, .s1], item: .riff(.otherAssociatedData),
-            text: "An RF64 marker save drops other apps' adtl note and ltxt chunks: expected both, found none (F35)"
         ),
     ]
 

@@ -37,6 +37,7 @@
 
 #import "StringUtil.h"
 #import "TagUtil.h"
+#import "WaveChunkPlanner.h"
 #import "WaveMarkerChunks.h"
 
 using namespace std;
@@ -109,7 +110,7 @@ namespace {
 
     tag->setTitle(String(title.UTF8String, String::UTF8));
 
-    return fileRef.save();
+    return WaveChunkPlanner::save(fileRef.file());
 }
 
 + (nullable NSString *)getComment:(NSString *)path {
@@ -147,7 +148,7 @@ namespace {
 
     tag->setComment(String(comment.UTF8String, String::UTF8));
 
-    return fileRef.save();
+    return WaveChunkPlanner::save(fileRef.file());
 }
 
 + (bool)removeAllTags:(NSString *)path {
@@ -161,7 +162,7 @@ namespace {
 
     TagUtil::clearTags(fileRef);
 
-    return fileRef.save();
+    return WaveChunkPlanner::save(fileRef.file());
 }
 
 + (bool)copyTagsFromPath:(NSString *)path toPath:(NSString *)toPath {
@@ -211,7 +212,7 @@ namespace {
     // The destination is already stripped, so its tags are saved even when the rating can't be.
     bool ratingWritten = ratingStars <= 0 || TagRatingWriteToFile(output.file(), ratingStars);
 
-    return output.save() && ratingWritten;
+    return WaveChunkPlanner::save(output.file()) && ratingWritten;
 }
 
 + (nullable NSString *)storedXMPPacket:(NSString *)path {
@@ -261,10 +262,9 @@ namespace {
     if (!isWave) return false;
 
     WaveMarkerFile waveFile(path.UTF8String, false);
-    if (!waveFile.isValid() || waveFile.readOnly()) return false;
+    if (!waveFile.isValid()) return false;
 
-    waveFile.setXMPData(data);
-    return true;
+    return WaveChunkPlanner::write(waveFile, { { "_PMX", ByteVector(), data.isEmpty() ? std::nullopt : std::optional<ByteVector>(data) } });
 }
 
 @end

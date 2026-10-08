@@ -7,6 +7,7 @@
 #import <taglib/wavfile.h>
 
 #import "AudioMarker.h"
+#import "WaveChunkPlanner.h"
 #import "WaveMarkerChunks.h"
 
 using namespace TagLib;
@@ -98,25 +99,6 @@ ByteVector WaveMarkerFile::adtlData() {
     return ByteVector();
 }
 
-void WaveMarkerFile::replaceMarkerChunks(const ByteVector &cue, const ByteVector &adtl) {
-    removeChunk("cue ");
-
-    for (int i = static_cast<int>(chunkCount()) - 1; i >= 0; i--) {
-        if (chunkName(i) == "LIST" && chunkData(i).startsWith("adtl")) {
-            removeChunk(i);
-        }
-    }
-
-    if (!cue.isEmpty()) {
-        setChunkData("cue ", cue);
-    }
-
-    // alwaysCreate, or the first LIST — which may be INFO — is overwritten.
-    if (!adtl.isEmpty()) {
-        setChunkData("LIST", ByteVector("adtl") + adtl, true);
-    }
-}
-
 ByteVector WaveMarkerFile::xmpData() {
     for (unsigned int i = 0; i < chunkCount(); i++) {
         if (chunkName(i) == "_PMX") {
@@ -125,14 +107,6 @@ ByteVector WaveMarkerFile::xmpData() {
     }
 
     return ByteVector();
-}
-
-void WaveMarkerFile::setXMPData(const ByteVector &packet) {
-    if (packet.isEmpty()) {
-        removeChunk("_PMX");
-    } else {
-        setChunkData("_PMX", packet);
-    }
 }
 
 namespace WaveMarkers {
@@ -181,7 +155,7 @@ NSArray *read(WaveMarkerFile &file) {
     return [markers copy];
 }
 
-bool write(WaveMarkerFile &file, NSArray *markers) {
+bool render(WaveMarkerFile &file, NSArray *markers, std::vector<WaveChunkPlanner::Edit> &edits) {
     const RIFF::WAV::Properties *properties = file.audioProperties();
     const double sampleRate = properties ? properties->sampleRate() : 0;
 
@@ -227,14 +201,20 @@ bool write(WaveMarkerFile &file, NSArray *markers) {
         }
     }
 
-    file.replaceMarkerChunks(cue, adtl);
+    edits.push_back({ "cue ", ByteVector(), cue.isEmpty() ? std::nullopt : std::optional<ByteVector>(cue) });
+    edits.push_back({ "LIST", "adtl", adtl.isEmpty() ? std::nullopt : std::optional<ByteVector>(ByteVector("adtl") + adtl) });
     return true;
+}
+
+bool write(WaveMarkerFile &file, NSArray *markers) {
+    std::vector<WaveChunkPlanner::Edit> edits;
+    return render(file, markers, edits) && WaveChunkPlanner::write(file, edits);
 }
 } // namespace WaveMarkers
 
 @implementation WaveMarkerChunks
 
-+ (BOOL)isRIFFWave:(NSURL *)url {
++ (BOOL)isWave:(NSURL *)url {
     NSFileHandle *handle = [NSFileHandle fileHandleForReadingFromURL:url error:nil];
     NSData *header = [handle readDataUpToLength:12 error:nil];
     [handle closeAndReturnError:nil];
@@ -244,7 +224,8 @@ bool write(WaveMarkerFile &file, NSArray *markers) {
     }
 
     const char *bytes = static_cast<const char *>(header.bytes);
-    return memcmp(bytes, "RIFF", 4) == 0 && memcmp(bytes + 8, "WAVE", 4) == 0;
+    const bool isForm = memcmp(bytes, "RIFF", 4) == 0 || memcmp(bytes, "RF64", 4) == 0 || memcmp(bytes, "BW64", 4) == 0;
+    return isForm && memcmp(bytes + 8, "WAVE", 4) == 0;
 }
 
 + (NSArray *)read:(NSURL *)url {

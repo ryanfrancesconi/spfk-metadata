@@ -80,6 +80,8 @@ The container I/O entry points throw `MetadataError`, which names the operation 
 
 `SPFKMetadataC` is an internal Objective-C++ target over TagLib. The library product does not include it and the Swift module imports it `internal`, so no public declaration names a bridge type. SwiftPM still lets a dependent package import the target directly; nothing outside this package should, and a grep for `SPFKMetadataC` outside it is the check.
 
+**Every WAV write goes through `WaveChunkPlanner`, never `RIFF::WAV::File::save()`.** TagLib's save removes each chunk it writes and appends it again, which moves every byte after it — the whole audio, when the metadata precedes `data` as field recorders write it. The planner rewrites a chunk in place when it fits and otherwise appends it, leaving its old slot as zeroed `JUNK` it signs as its own; only signed `JUNK` is reused. A new WAV writer saves through `WaveChunkPlanner::save` or `write`, and must not call TagLib's chunk-removing API (`strip`, `removeChunk`, `setChunkData`).
+
 **The rating does not travel through TagLib's PropertyMap.** Every container stores it differently — ID3v2 POPM (MP3, WAV, AIFF), Xiph `RATING` plus `FMPS_RATING`, the MP4 `rate` atom plus a freeform atom, APE `RATING`, ASF `WM/SharedUserRating`, a Matroska `RATING` SimpleTag — so `TagFile` pulls `RATING` out of the map and dispatches per format (`TagRating.mm`). A container with no branch there reads back correctly, because its PropertyMap already carries the value, while saving a non-zero rating fails. Enabling a new container means adding a branch.
 
 ## Dependencies

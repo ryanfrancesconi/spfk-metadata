@@ -17,6 +17,7 @@
 #import "TagImageDecoding.h"
 #import "TagPicture.h"
 #import "TagPictureRef.h"
+#import "WaveChunkPlanner.h"
 
 using namespace std;
 using namespace TagLib;
@@ -279,7 +280,7 @@ static void clearLegacyFlacXiphCommentPictures(FileRef &fileRef) {
         return false;
 
     clearLegacyFlacXiphCommentPictures(fileRef);
-    return fileRef.save();
+    return WaveChunkPlanner::save(fileRef.file());
 }
 
 @end

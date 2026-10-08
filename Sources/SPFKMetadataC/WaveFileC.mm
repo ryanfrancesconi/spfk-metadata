@@ -6,17 +6,16 @@
 #include <vector>
 
 #import <taglib/privateframe.h>
-#import <taglib/tfilestream.h>
 #import <taglib/textidentificationframe.h>
 #import <taglib/tpropertymap.h>
 #import <taglib/wavfile.h>
 
-#import "AudioMarkerUtil.h"
 #import "ID3File.h"
 #import "TagFile.h"
 #import "TagRating.h"
 #import "TagRatingFile.h"
 #import "TagUtil.h"
+#import "WaveChunkPlanner.h"
 #import "WaveFileC.h"
 #import "WaveMarkerChunks.h"
 
@@ -66,8 +65,7 @@ using namespace TagLib;
         _audioPropertiesC.bitsPerSample = audioProperties->bitsPerSample();
     }
 
-    NSURL *url = [NSURL fileURLWithPath:_path];
-    _markers = [WaveMarkerChunks isRIFFWave:url] ? WaveMarkers::read(*waveFile) : [AudioMarkerUtil read:url];
+    _markers = WaveMarkers::read(*waveFile);
 
     if (waveFile->hasBEXTData() && !waveFile->BEXTData().isEmpty()) {
         ByteVector bext = waveFile->BEXTData();
@@ -113,42 +111,33 @@ using namespace TagLib;
 }
 
 - (bool)save {
-    bool isRIFFWave = [WaveMarkerChunks isRIFFWave:[NSURL fileURLWithPath:_path]];
-    bool markersSaved = isRIFFWave ? true : [self saveExtras];
+    WaveMarkerFile file(_path.UTF8String);
 
-    // Declared first so it outlives the file, which does not own it. A chunk resized ahead of
-    // `data` moves the whole audio through the move buffer, a seek, read, seek and write per block.
-    FileStream stream(_path.UTF8String);
-    stream.setMoveBufferSize(1 << 20);
-    WaveMarkerFile file(&stream);
-
-    if (!file.isValid()) {
+    if (!file.isValid() || file.readOnly()) {
         cout << "Not a wave file" << endl;
         return false;
     }
 
-    WaveMarkerFile *waveFile = &file;
+    std::vector<WaveChunkPlanner::Edit> edits;
+    const bool markersSaved = !_markersNeedsSave || WaveMarkers::render(file, _markers, edits);
 
-    if (isRIFFWave && _markersNeedsSave) {
-        markersSaved = WaveMarkers::write(*waveFile, _markers);
+    if (_xmpNeedsSave) {
+        const ByteVector packet = _xmpPacket.length > 0 ? ByteVector(_xmpPacket.UTF8String) : ByteVector();
+        edits.push_back({ "_PMX", ByteVector(), packet.isEmpty() ? std::nullopt : std::optional<ByteVector>(packet) });
     }
 
     if (_bextDescriptionC) {
         NSData *bextData = [_bextDescriptionC serializedData];
-        waveFile->setBEXTData(ByteVector((const char *)bextData.bytes, (unsigned int)bextData.length));
+        file.setBEXTData(ByteVector((const char *)bextData.bytes, (unsigned int)bextData.length));
     } else {
-        waveFile->setBEXTData(ByteVector());
-    }
-
-    if (_xmpNeedsSave) {
-        waveFile->setXMPData(_xmpPacket.length > 0 ? ByteVector(_xmpPacket.UTF8String) : ByteVector());
+        file.setBEXTData(ByteVector());
     }
 
     // An empty String removes the chunk.
-    waveFile->setiXMLData(_iXML ? String(_iXML.UTF8String, String::UTF8) : String());
+    file.setiXMLData(_iXML ? String(_iXML.UTF8String, String::UTF8) : String());
 
     if (_imageNeedsSave) {
-        [TagPicture write:_tagPicture.pictureRef toTag:waveFile->tag()];
+        [TagPicture write:_tagPicture.pictureRef toTag:file.tag()];
     }
 
     // Kept out of the PropertyMap; written as POPM below.
@@ -157,13 +146,13 @@ using namespace TagLib;
     NSMutableDictionary *filteredDict = [NSMutableDictionary dictionaryWithDictionary:_id3Dictionary];
     [filteredDict removeObjectForKey:@"RATING"];
     PropertyMap properties = TagUtil::convertToPropertyMap(filteredDict);
-    waveFile->ID3v2Tag()->setProperties(properties);
+    file.ID3v2Tag()->setProperties(properties);
 
     // Cleared first, so a field absent from the dictionary is removed.
     {
-        auto existingInfoFields = waveFile->InfoTag()->fieldListMap();
+        auto existingInfoFields = file.InfoTag()->fieldListMap();
         for (const auto &pair : existingInfoFields) {
-            waveFile->InfoTag()->removeField(pair.first);
+            file.InfoTag()->removeField(pair.first);
         }
     }
 
@@ -173,24 +162,14 @@ using namespace TagLib;
         ByteVector tagKey = String(key.UTF8String, String::UTF8).data(String::UTF8);
         String tagValue = String(value.UTF8String, String::UTF8);
 
-        waveFile->InfoTag()->setFieldText(tagKey, tagValue);
+        file.InfoTag()->setFieldText(tagKey, tagValue);
     }
 
-    if (!TagRatingWriteToFile(waveFile, ratingStars))
+    if (!TagRatingWriteToFile(&file, ratingStars))
         return false;
 
-    bool tagsSaved = waveFile->save();
+    const bool tagsSaved = WaveChunkPlanner::save(file, edits);
     return tagsSaved && markersSaved;
-}
-
-/// Formats other than RIFF WAVE (RF64, BW64) write markers through Core Audio, before TagLib opens the file.
-- (bool)saveExtras {
-    if (_markersNeedsSave) {
-        NSURL *url = [NSURL fileURLWithPath:_path];
-        return [AudioMarkerUtil write:_markers to:url];
-    }
-
-    return true;
 }
 
 @end

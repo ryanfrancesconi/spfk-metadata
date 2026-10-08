@@ -21,6 +21,7 @@
 #import "TagLibBridge.h"
 #import "TagRating.h"
 #import "TagRatingFile.h"
+#import "WaveChunkPlanner.h"
 
 @implementation TagFile
 
@@ -172,7 +173,7 @@ using namespace TagLib;
         fileRef.setComplexProperties(String("PICTURE"), existingPictures);
     }
 
-    return fileRef.save();
+    return WaveChunkPlanner::save(fileRef.file());
 }
 
 @end

@@ -7,14 +7,14 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-/// Reads and writes RIFF WAVE markers as `cue ` and `LIST`/`adtl` chunks through TagLib.
+/// Reads and writes RIFF, RF64 and BW64 WAVE markers as `cue ` and `LIST`/`adtl` chunks through TagLib.
 ///
 /// Names are written as UTF-8, and read as UTF-8 when valid, otherwise as Windows-1252 —
 /// the encoding Core Audio uses, which cannot store most scripts.
 @interface WaveMarkerChunks : NSObject
 
-/// Whether the file starts with `RIFF....WAVE`. RF64, BW64 and Wave64 are not.
-+ (BOOL)isRIFFWave:(NSURL *)url;
+/// Whether the file is a RIFF, RF64 or BW64 WAVE. Wave64 is not.
++ (BOOL)isWave:(NSURL *)url;
 
 /// `nil` when the file has no markers or cannot be read.
 + (nullable NSArray *)read:(NSURL *)url;
@@ -30,6 +30,8 @@ NS_ASSUME_NONNULL_END
 
 #import <taglib/wavfile.h>
 
+#import "WaveChunkPlanner.h"
+
 /// A WAV file with access to its `cue ` chunk, `LIST`/`adtl` list and `_PMX` XMP chunk, which
 /// TagLib does not expose.
 class WaveMarkerFile : public TagLib::RIFF::WAV::File {
@@ -42,19 +44,17 @@ public:
     /// The first `adtl` list's sub-chunks, without the type ID. Empty when there is none.
     TagLib::ByteVector adtlData();
 
-    /// Writes immediately. An empty argument removes that chunk.
-    void replaceMarkerChunks(const TagLib::ByteVector &cue, const TagLib::ByteVector &adtl);
-
     /// The `_PMX` chunk's XMP packet. Empty when there is none.
     TagLib::ByteVector xmpData();
-
-    /// Writes immediately. An empty argument removes the chunk.
-    void setXMPData(const TagLib::ByteVector &packet);
 };
 
 namespace WaveMarkers {
 /// Positions come from the file's own sample rate. `nil` when the file has no markers.
 NSArray *_Nullable read(WaveMarkerFile &file);
+
+/// The `cue ` and `adtl` edits that replace the file's markers; an empty array removes them.
+/// `false` when the file has no sample rate.
+bool render(WaveMarkerFile &file, NSArray *_Nonnull markers, std::vector<WaveChunkPlanner::Edit> &edits);
 
 /// Replaces the file's markers on disk. `false` when the file has no sample rate.
 bool write(WaveMarkerFile &file, NSArray *_Nonnull markers);

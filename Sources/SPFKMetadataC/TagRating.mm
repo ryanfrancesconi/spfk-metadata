@@ -30,6 +30,7 @@
 #import "TagRating.h"
 #import "TagRatingFile.h"
 #import "TagRatingScale.h"
+#import "WaveChunkPlanner.h"
 
 using namespace std;
 using namespace TagLib;
@@ -410,7 +411,7 @@ int TagRatingStarsInDictionary(NSDictionary *dictionary) {
 
     if (!TagRatingWriteToFile(fileRef.file(), stars))
         return NO;
-    return fileRef.save();
+    return WaveChunkPlanner::save(fileRef.file());
 }
 
 @end

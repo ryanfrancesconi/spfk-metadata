@@ -148,7 +148,7 @@ static BOOL RemoveMarkers(AudioFileID fileID) {
 @implementation AudioMarkerUtil
 
 + (NSArray *)read:(NSURL *)url {
-    if ([WaveMarkerChunks isRIFFWave:url]) {
+    if ([WaveMarkerChunks isWave:url]) {
         return [WaveMarkerChunks read:url];
     }
 
@@ -165,7 +165,7 @@ static BOOL RemoveMarkers(AudioFileID fileID) {
 }
 
 + (BOOL)write:(NSArray *)markers to:(NSURL *)url {
-    if ([WaveMarkerChunks isRIFFWave:url]) {
+    if ([WaveMarkerChunks isWave:url]) {
         return [WaveMarkerChunks write:markers to:url];
     }
 
@@ -182,7 +182,7 @@ static BOOL RemoveMarkers(AudioFileID fileID) {
 }
 
 + (BOOL)remove:(NSURL *)url {
-    if ([WaveMarkerChunks isRIFFWave:url]) {
+    if ([WaveMarkerChunks isWave:url]) {
         return [WaveMarkerChunks write:@[] to:url];
     }
 

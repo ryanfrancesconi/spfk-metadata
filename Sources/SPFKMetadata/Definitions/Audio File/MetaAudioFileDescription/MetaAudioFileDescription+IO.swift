@@ -146,7 +146,7 @@ extension MetaAudioFileDescription {
         let imageNeedsSave = writable.contains(.image)
         let markersNeedsSave = writable.contains(.markers)
 
-        // A container rewrite costs the whole file (20-30 s at 4 GB); a Finder tag change shouldn't pay it.
+        // A container save can rewrite the whole file; a Finder tag change shouldn't pay it.
         let containerNeedsSave = writable.contains(.metadata) || imageNeedsSave || markersNeedsSave
 
         if !containerNeedsSave {
@@ -237,7 +237,8 @@ extension MetaAudioFileDescription {
         imageDescription.cgImage = nil
     }
 
-    /// Tags and chunks are always written; markers and artwork only when flagged.
+    /// Tags and chunks are always rendered, markers and artwork only when flagged; only what changed
+    /// is written.
     private mutating func saveWave(imageNeedsSave: Bool, markersNeedsSave: Bool, storedXMPPacket: StoredXMPPacketWrite) throws {
         let waveFile = WaveFileC(path: url.path)
         storedXMPPacket.apply { waveFile.xmpNeedsSave = true; waveFile.xmpPacket = $0 }

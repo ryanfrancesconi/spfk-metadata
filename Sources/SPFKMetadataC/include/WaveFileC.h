@@ -11,8 +11,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-/// A WAV's INFO, ID3, BEXT, iXML, artwork and markers through TagLib. Markers in RF64 and BW64 go
-/// through Core Audio instead.
+/// A RIFF, RF64 or BW64 WAVE's INFO, ID3, BEXT, iXML, artwork and markers through TagLib.
 @interface WaveFileC : NSObject
 
 /// Set by `load`.
@@ -55,7 +54,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (bool)load;
 
-/// Rewrites every chunk; INFO fields absent from `infoDictionary` are removed.
+/// Rewrites every chunk whose bytes change, never moving the audio; INFO fields absent from
+/// `infoDictionary` are removed.
 - (bool)save;
 
 @end
