@@ -139,10 +139,6 @@ enum SafetyNetKnownIssues {
             text: "A FLAC iXML edit re-serializes the rest of the document, dropping comments and turning CDATA into escaped text: expected the edit beside the comment and CDATA nodes, found neither (F13)"
         ),
         SafetyNetKnownIssue(
-            rows: ["flac"], kinds: [.k0], item: .flac(.chapters),
-            text: "A FLAC marker save of unchanged markers turns point chapters into regions: expected no CHAPTERnnnEND, found one ending at the next chapter (F38)"
-        ),
-        SafetyNetKnownIssue(
             rows: ["flac-ixml-only-bext"], kinds: [.k1, .k2, .k5], item: .flac(.blockSet),
             text: "A FLAC save writes a bext block for a BEXT held only in iXML's <BEXT>: expected no bext block, found one (F39)"
         ),
@@ -155,10 +151,6 @@ enum SafetyNetKnownIssues {
         SafetyNetKnownIssue(
             rows: ["ogg", "opus"], kinds: oggKinds, item: .ogg(.multiValuedField),
             text: "An Ogg save flattens a repeated comment field: expected ENCODER twice, found one value joined with a space (F15)"
-        ),
-        SafetyNetKnownIssue(
-            rows: ["ogg", "opus"], kinds: [.k0], item: .ogg(.chapters),
-            text: "An Ogg marker save of unchanged markers turns point chapters into regions: expected no CHAPTERnnnEND, found one ending at the next chapter (F38)"
         ),
     ]
 

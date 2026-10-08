@@ -134,12 +134,9 @@ static void removeAllChapterFields(Ogg::XiphComment *comment) {
             name = @(nameIt->second.front().toCString(true));
         }
 
-        // END is written only for regions; a point chapter ends where the next begins.
-        NSTimeInterval endTime = max(timestampField(fields, chapterKey(idx, "END")), 0.0);
-
-        if (endTime == 0 && i + 1 < indices.size()) {
-            endTime = max(timestampField(fields, chapterKey(indices[i + 1])), 0.0);
-        }
+        // END is written only for regions, so a chapter without one reads back as a point: giving
+        // it the next chapter's start would have the next save write it as a region.
+        NSTimeInterval endTime = max(timestampField(fields, chapterKey(idx, "END")), startTime);
 
         ChapterMarker *marker = [[ChapterMarker alloc] initWithName:name startTime:startTime endTime:endTime];
         [array addObject:marker];
