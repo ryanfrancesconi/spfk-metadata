@@ -8,7 +8,8 @@
 namespace FileSave {
 
 /// Saves `file` without moving its audio where the container allows it: a WAV through
-/// `WaveChunkPlanner`, anything else through its own `save()`.
+/// `WaveChunkPlanner`, Matroska with `WriteStyle::AvoidInsert`, anything else through its own
+/// `save()`.
 bool save(TagLib::File *file);
 
 } // namespace FileSave
