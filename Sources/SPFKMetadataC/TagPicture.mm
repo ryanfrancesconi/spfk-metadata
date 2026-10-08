@@ -73,6 +73,9 @@ static TagPictureRef *_Nullable buildPictureRef(const VariantMap &picture) {
     // TagPictureRef retains its own.
     CGImageRelease(imageRef);
 
+    pictureRef.storedData = nsData;
+    pictureRef.storedMimeType = mimeType;
+
     return pictureRef;
 }
 
@@ -142,18 +145,25 @@ static bool encodePicture(TagPictureRef *picture, VariantMap &outMap) {
         outMap.insert(pictureTypeKey, String(value, String::Type::UTF8));
     }
 
-    UTType *encodeType = picture.utType;
-    NSData *encoded = tryEncodeImage(picture.cgImage, encodeType.identifier);
+    // An unchanged picture keeps its bytes: re-encoding a lossy image degrades it on every save.
+    NSData *encoded = picture.storedData;
+    NSString *mimeType = picture.storedMimeType;
 
-    if (!encoded) {
-        encodeType = [UTType typeWithIdentifier:@"public.jpeg"];
+    if (!encoded || !mimeType) {
+        UTType *encodeType = picture.utType;
         encoded = tryEncodeImage(picture.cgImage, encodeType.identifier);
+
+        if (!encoded) {
+            encodeType = [UTType typeWithIdentifier:@"public.jpeg"];
+            encoded = tryEncodeImage(picture.cgImage, encodeType.identifier);
+        }
+
+        if (!encoded)
+            return false;
+
+        mimeType = encodeType.preferredMIMEType;
     }
 
-    if (!encoded)
-        return false;
-
-    NSString *mimeType = encodeType.preferredMIMEType;
     const char *mimeValue = StringUtil::utf8CString(mimeType);
     outMap.insert(mimeTypeKey, String(mimeValue, String::Type::UTF8));
 

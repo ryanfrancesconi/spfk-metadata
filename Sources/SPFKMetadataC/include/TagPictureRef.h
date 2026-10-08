@@ -19,6 +19,11 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property(nonatomic, strong, nonnull) UTType *utType;
 
+/// The picture's bytes as a file stores them, with their MIME type; written as they are instead of
+/// re-encoding `cgImage`. Nil for an image that has not come from a file unchanged.
+@property(nonatomic, strong, nullable) NSData *storedData;
+@property(nonatomic, strong, nullable) NSString *storedMimeType;
+
 /// Retains `cgImage`.
 - (nonnull id)initWithImage:(CGImageRef)cgImage
                      utType:(UTType *)utType

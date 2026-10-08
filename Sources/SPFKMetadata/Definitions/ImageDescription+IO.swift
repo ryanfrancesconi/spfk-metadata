@@ -45,11 +45,18 @@ extension ImageDescription {
                 pictureType: Self.frontCoverPictureType
             )
 
+            pictureRef.storedData = storedPicture?.data
+            pictureRef.storedMimeType = storedPicture?.mimeType
+
             return pictureRef
         }
 
         set {
-            cgImage = newValue?.cgImage
+            if let newValue, let data = newValue.storedData, let mimeType = newValue.storedMimeType {
+                setImage(newValue.cgImage, storedAs: StoredPicture(data: data, mimeType: mimeType))
+            } else {
+                cgImage = newValue?.cgImage
+            }
 
             if let desc = newValue?.pictureDescription, desc != "" {
                 description = desc

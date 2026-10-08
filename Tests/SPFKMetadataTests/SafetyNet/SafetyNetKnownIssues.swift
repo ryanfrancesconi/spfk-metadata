@@ -44,10 +44,6 @@ enum SafetyNetKnownIssues {
             rows: ["mp3", "aac"], kinds: mp3TagKinds, item: .id3(.comments),
             text: "An MP3 tag save merges a second-language COMM into the first and rewrites a described one: expected 3 frames with languages \"eng\" and \"fra\" kept, found 2, one joined with a space and one \"XXX | SAFETY NET NOTE\" (F15, F29)"
         ),
-        SafetyNetKnownIssue(
-            rows: ["mp3", "aac"], kinds: [.k0], item: .id3(.frontCover),
-            text: "An MP3 save flagged for artwork re-encodes an unchanged front cover: expected the same image bytes, found new ones (F30)"
-        ),
     ]
 
     /// Every WAV and RF64 save that writes tags: all but the packet-only saves, which rewrite only `_PMX`.
@@ -95,10 +91,6 @@ enum SafetyNetKnownIssues {
             text: "A WAV tag save re-serializes iXML, dropping comments and turning CDATA into escaped text: expected the comment and CDATA nodes, found neither (F13)"
         ),
         SafetyNetKnownIssue(
-            rows: ["wav", "rf64"], kinds: [.k0], item: .id3(.frontCover),
-            text: "A WAV save flagged for artwork re-encodes an unchanged front cover: expected the same image bytes, found new ones (F30)"
-        ),
-        SafetyNetKnownIssue(
             rows: ["wav", "rf64"], kinds: [.k0, .k7, .k8, .s1], item: .riff(.otherAssociatedData),
             text: "A WAV marker save drops other apps' adtl note and ltxt chunks: expected both, found none (F35)"
         ),
@@ -128,10 +120,6 @@ enum SafetyNetKnownIssues {
             rows: ["aiff", "aifc"], kinds: aiffKinds, item: .id3(.comments),
             text: "An AIFF save merges a second-language COMM into the first and rewrites a described one: expected the \"eng\" and \"fra\" frames kept, found them merged and upper-cased (F15, F29)"
         ),
-        SafetyNetKnownIssue(
-            rows: ["aiff", "aifc"], kinds: [.k0], item: .id3(.frontCover),
-            text: "An AIFF save flagged for artwork re-encodes an unchanged front cover: expected the same image bytes, found new ones (F30)"
-        ),
     ]
 
     /// Every FLAC save that writes the container: each runs the iXML/BEXT write and the tag save.
@@ -149,10 +137,6 @@ enum SafetyNetKnownIssues {
         SafetyNetKnownIssue(
             rows: ["flac"], kinds: [.k4], item: .flac(.iXML),
             text: "A FLAC iXML edit re-serializes the rest of the document, dropping comments and turning CDATA into escaped text: expected the edit beside the comment and CDATA nodes, found neither (F13)"
-        ),
-        SafetyNetKnownIssue(
-            rows: ["flac"], kinds: [.k0], item: .flac(.frontCover),
-            text: "A FLAC save flagged for artwork re-encodes an unchanged front cover: expected the same image bytes, found new ones (F30)"
         ),
         SafetyNetKnownIssue(
             rows: ["flac"], kinds: [.k0], item: .flac(.chapters),
@@ -173,10 +157,6 @@ enum SafetyNetKnownIssues {
             text: "An Ogg save flattens a repeated comment field: expected ENCODER twice, found one value joined with a space (F15)"
         ),
         SafetyNetKnownIssue(
-            rows: ["ogg", "opus"], kinds: [.k0], item: .ogg(.frontCover),
-            text: "An Ogg save flagged for artwork re-encodes an unchanged front cover: expected the same image bytes, found new ones (F30)"
-        ),
-        SafetyNetKnownIssue(
             rows: ["ogg", "opus"], kinds: [.k0], item: .ogg(.chapters),
             text: "An Ogg marker save of unchanged markers turns point chapters into regions: expected no CHAPTERnnnEND, found one ending at the next chapter (F38)"
         ),
@@ -191,10 +171,6 @@ enum SafetyNetKnownIssues {
             text: "An MP4 save flattens a multi-valued text item: expected ©ART twice, found one value joined with a space (F15)"
         ),
         SafetyNetKnownIssue(
-            rows: ["m4a", "m4b", "mp4", "m4v", "mov"], kinds: [.k0], item: .mp4(.frontCover),
-            text: "An MP4 save flagged for artwork re-encodes an unchanged cover: expected the same image bytes, found new ones (F30)"
-        ),
-        SafetyNetKnownIssue(
             rows: ["m4a", "m4b", "mp4", "m4v", "mov"], kinds: [.k7, .s1], item: .mp4(.chapters),
             text: "An MP4 marker save whose first marker starts after zero adds an untitled chapter at zero that other players list: expected the written chapters only, found an extra one at 0.000 (F41)"
         ),
@@ -207,10 +183,6 @@ enum SafetyNetKnownIssues {
         SafetyNetKnownIssue(
             rows: ["mka", "mkv", "webm"], kinds: matroskaKinds, item: .matroska(.unknownTag),
             text: "A Matroska save moves another app's untargeted tag from album to track level: expected no TargetTypeValue, found 30 (F50)"
-        ),
-        SafetyNetKnownIssue(
-            rows: ["mka", "mkv", "webm"], kinds: [.k0], item: .matroska(.frontCover),
-            text: "A Matroska save flagged for artwork re-encodes an unchanged cover: expected the same image bytes, found new ones (F30)"
         ),
     ]
 
