@@ -24,13 +24,22 @@ const ByteVector fillerSignature("SPFK", 4);
 bool read(File &file, Table &table) {
     file.seek(0);
     const ByteVector header = file.readBlock(12);
-    if (header.size() < 12 || header.mid(8, 4) != "WAVE")
+    if (header.size() < 12)
         return false;
 
     const ByteVector form = header.mid(0, 4);
-    table.longForm = form == "RF64" || form == "BW64";
-    if (!table.longForm && form != "RIFF")
+    const ByteVector type = header.mid(8, 4);
+
+    if (form == "FORM" && (type == "AIFF" || type == "AIFC")) {
+        table.bigEndian = true;
+        table.fillerID = ByteVector("FLLR", 4);
+    } else if (type == "WAVE") {
+        table.longForm = form == "RF64" || form == "BW64";
+        if (!table.longForm && form != "RIFF")
+            return false;
+    } else {
         return false;
+    }
 
     const offset_t length = file.length();
     unsigned long long dataSize64 = 0;
@@ -47,7 +56,7 @@ bool read(File &file, Table &table) {
         if (!isValidChunkName(id))
             break;
 
-        const unsigned int declared = chunkHeader.toUInt(4, false);
+        const unsigned int declared = chunkHeader.toUInt(4, table.bigEndian);
         const offset_t available = length - offset - 8;
         long long size = declared;
 
@@ -69,7 +78,7 @@ bool read(File &file, Table &table) {
         file.seek(offset + 8);
         if (id == "LIST" && size >= 4)
             chunk.listType = file.readBlock(4);
-        if (id == "JUNK" && size >= 4)
+        if (id == table.fillerID && size >= 4)
             chunk.isFiller = file.readBlock(4) == fillerSignature;
 
         offset = chunk.end();

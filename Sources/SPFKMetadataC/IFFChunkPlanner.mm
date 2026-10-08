@@ -2,6 +2,7 @@
 
 #include <algorithm>
 
+#import <taglib/aifffile.h>
 #import <taglib/id3v2tag.h>
 #import <taglib/infotag.h>
 
@@ -27,8 +28,8 @@ bool matches(const Chunk &chunk, const IFFChunkPlanner::Edit &edit) {
     return chunk.id == edit.id && (edit.listType.isEmpty() || chunk.listType == edit.listType);
 }
 
-ByteVector render(const ByteVector &id, const ByteVector &payload) {
-    ByteVector bytes = id + ByteVector::fromUInt(payload.size(), false) + payload;
+ByteVector render(const ByteVector &id, const ByteVector &payload, bool bigEndian) {
+    ByteVector bytes = id + ByteVector::fromUInt(payload.size(), bigEndian) + payload;
 
     if (payload.size() & 1)
         bytes.append('\0');
@@ -92,7 +93,7 @@ void Planner::put(offset_t at, const ByteVector &bytes) {
 /// A filler `total` bytes long, even and at least 8; below 12 there is no room to sign it. Its
 /// payload is free space already, or stale and zeroed by `zeroStale`.
 void Planner::putFillerHeader(offset_t at, offset_t total) {
-    ByteVector header = ByteVector("JUNK", 4) + ByteVector::fromUInt(static_cast<unsigned int>(total - 8), false);
+    ByteVector header = table.fillerID + ByteVector::fromUInt(static_cast<unsigned int>(total - 8), table.bigEndian);
     if (total >= 12)
         header.append(fillerSignature);
 
@@ -126,7 +127,7 @@ void Planner::zeroStale() {
 void Planner::vacate(size_t index) {
     Chunk &chunk = chunks[index];
 
-    put(chunk.offset, ByteVector("JUNK", 4));
+    put(chunk.offset, table.fillerID);
 
     if (chunk.size >= 4)
         put(chunk.offset + 8, fillerSignature);
@@ -134,7 +135,7 @@ void Planner::vacate(size_t index) {
     const offset_t signature = chunk.size >= 4 ? 4 : 0;
     markStale(chunk.offset + 8 + signature, chunk.offset + 8 + chunk.size);
 
-    chunk.id = "JUNK";
+    chunk.id = table.fillerID;
     chunk.listType = ByteVector();
     chunk.isFiller = chunk.size >= 4;
 }
@@ -170,7 +171,7 @@ bool Planner::placeInRun(size_t start, size_t end, const IFFChunkPlanner::Edit &
 
     if (rest > 0) {
         putFillerHeader(at + size, rest);
-        placed.push_back({ ByteVector("JUNK", 4), ByteVector(), at + size, rest - 8, 0, rest >= 12 });
+        placed.push_back({ table.fillerID, ByteVector(), at + size, rest - 8, 0, rest >= 12 });
     }
 
     chunks.erase(chunks.begin() + start, chunks.begin() + end + 1);
@@ -229,7 +230,7 @@ void Planner::append(const IFFChunkPlanner::Edit &edit, const ByteVector &bytes)
     const offset_t reserve = spare > 0 ? reserveSize : std::max(reserveSize, leftover);
 
     block.append(bytes);
-    block.append(ByteVector("JUNK", 4) + ByteVector::fromUInt(static_cast<unsigned int>(reserve - 8), false) + fillerSignature);
+    block.append(table.fillerID + ByteVector::fromUInt(static_cast<unsigned int>(reserve - 8), table.bigEndian) + fillerSignature);
 
     const offset_t blockEnd = blockStart + block.size();
     const offset_t end = at + size + reserve + spare;
@@ -253,11 +254,11 @@ void Planner::append(const IFFChunkPlanner::Edit &edit, const ByteVector &bytes)
     }
 
     chunks.push_back({ edit.id, edit.listType, at, static_cast<offset_t>(edit.payload->size()), static_cast<offset_t>(edit.payload->size() & 1), false });
-    chunks.push_back({ ByteVector("JUNK", 4), ByteVector(), at + size, reserve - 8, 0, false });
+    chunks.push_back({ table.fillerID, ByteVector(), at + size, reserve - 8, 0, false });
 
     if (spare > 0) {
         putFillerHeader(at + size + reserve, spare);
-        chunks.push_back({ ByteVector("JUNK", 4), ByteVector(), at + size + reserve, spare - 8, 0, true });
+        chunks.push_back({ table.fillerID, ByteVector(), at + size + reserve, spare - 8, 0, true });
     }
 
     table.end = end;
@@ -280,7 +281,7 @@ void Planner::writeFormSize() {
         writeIfChanged(4, ByteVector::fromUInt(0xFFFFFFFFu, false));
         writeIfChanged(table.ds64, ByteVector::fromULongLong(static_cast<unsigned long long>(total), false));
     } else {
-        writeIfChanged(4, ByteVector::fromUInt(static_cast<unsigned int>(total), false));
+        writeIfChanged(4, ByteVector::fromUInt(static_cast<unsigned int>(total), table.bigEndian));
     }
 }
 
@@ -307,7 +308,7 @@ bool Planner::apply(const std::vector<IFFChunkPlanner::Edit> &edits) {
         for (size_t i = 1; i < existing.size(); i++)
             vacate(indexAt(existing[i]));
 
-        const ByteVector bytes = render(edit.id, *edit.payload);
+        const ByteVector bytes = render(edit.id, *edit.payload, table.bigEndian);
 
         if (!existing.empty()) {
             const size_t index = indexAt(existing.front());
@@ -363,6 +364,16 @@ bool save(RIFF::WAV::File &file, std::vector<Edit> edits) {
     edits.push_back({ "LIST", "INFO", payload(info && !info->isEmpty() ? info->render() : ByteVector()) });
 
     return write(file, edits);
+}
+
+bool save(RIFF::AIFF::File &file) {
+    if (!file.isValid())
+        return false;
+
+    const ID3v2::Tag *id3 = file.tag();
+    const ByteVector tag = id3 && !id3->isEmpty() ? id3->render() : ByteVector();
+
+    return write(file, { { "ID3 ", ByteVector(), tag.isEmpty() ? std::nullopt : std::optional<ByteVector>(tag) } });
 }
 
 } // namespace IFFChunkPlanner
