@@ -14,6 +14,9 @@ NS_ASSUME_NONNULL_BEGIN
 /// Writes a QuickTime chapter track, replacing the existing one.
 + (bool)write:(NSArray *)chapters to:(NSString *)path;
 
+/// `write:to:`'s change, made to an open `TagLib::File *` without saving it.
++ (bool)write:(NSArray *)chapters toFile:(void *)file;
+
 /// Removes both the QuickTime track and the Nero atom.
 + (bool)remove:(NSString *)path;
 

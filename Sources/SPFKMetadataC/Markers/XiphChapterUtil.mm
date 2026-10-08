@@ -154,7 +154,11 @@ static void removeAllChapterFields(Ogg::XiphComment *comment) {
         return false;
     }
 
-    Ogg::XiphComment *comment = TagUtil::xiphComment(fileRef.file(), /* create */ true);
+    return [self write:chapters toFile:fileRef.file()] && fileRef.save();
+}
+
++ (bool)write:(NSArray *)chapters toFile:(void *)opaqueFile {
+    Ogg::XiphComment *comment = TagUtil::xiphComment(static_cast<File *>(opaqueFile), /* create */ true);
 
     if (!comment) {
         return false;
@@ -178,7 +182,7 @@ static void removeAllChapterFields(Ogg::XiphComment *comment) {
         index++;
     }
 
-    return fileRef.save();
+    return true;
 }
 
 + (bool)remove:(NSString *)path {

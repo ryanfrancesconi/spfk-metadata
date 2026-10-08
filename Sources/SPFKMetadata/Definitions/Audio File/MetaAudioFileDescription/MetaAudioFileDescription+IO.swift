@@ -155,11 +155,7 @@ extension MetaAudioFileDescription {
             if fileType == .wav {
                 try saveWave(imageNeedsSave: imageNeedsSave, markersNeedsSave: markersNeedsSave, storedXMPPacket: storedXMPPacket)
             } else {
-                if fileType == .flac {
-                    try saveFLAC()
-                }
-
-                try saveOther(imageNeedsSave: imageNeedsSave, markersNeedsSave: markersNeedsSave, storedXMPPacket: storedXMPPacket)
+                try saveSession(imageNeedsSave: imageNeedsSave, markersNeedsSave: markersNeedsSave, storedXMPPacket: storedXMPPacket)
             }
         }
 
@@ -177,36 +173,69 @@ extension MetaAudioFileDescription {
         }
     }
 
-    /// Writes FLAC's iXML and BEXT APPLICATION blocks. Must run before `saveOther()`, whose TagLib
-    /// save keeps APPLICATION blocks already on disk.
-    private func saveFLAC() throws {
-        let flacFile = FlacFileC(path: url.path)
-        guard flacFile.load() else {
-            throw NSError(description: "Failed to open \(url.path) for FLAC iXML/BEXT writing")
+    /// Every component written into one TagLib open and saved once; AIFF markers go through Core
+    /// Audio after it. A component that fails throws after everything else is saved.
+    private mutating func saveSession(imageNeedsSave: Bool, markersNeedsSave: Bool, storedXMPPacket: StoredXMPPacketWrite) throws {
+        guard let session = MetadataSaveSession(path: url.path) else {
+            throw MetadataError.writeFailed(.tags, url)
         }
 
-        flacFile.bextDescription = bextDescription
-        flacFile.iXML = iXMLMetadata
+        var failed: Set<MetadataError.Component> = []
 
-        guard flacFile.save() else {
-            throw NSError(description: "Failed to write iXML/BEXT to \(url.path)")
+        // Keeps the existing artwork; an artwork change is written below.
+        let tagFile = TagFile(path: url.path)
+        tagFile.dictionary = tagProperties.tagLibPropertyMap
+        storedXMPPacket.apply { tagFile.xmpNeedsSave = true; tagFile.xmpPacket = $0 }
+
+        if !tagFile.write(toFileRef: session.fileRef) {
+            failed.insert(.rating)
         }
-    }
 
-    private mutating func saveOther(imageNeedsSave: Bool, markersNeedsSave: Bool, storedXMPPacket: StoredXMPPacketWrite) throws {
-        // Keeps the existing artwork; an artwork change is applied below.
-        try tagProperties.save(to: url, storedXMPPacket: storedXMPPacket)
+        if fileType == .flac {
+            let flacFile = FlacFileC(path: url.path)
+            flacFile.bextDescription = bextDescription
+            flacFile.iXML = iXMLMetadata
 
-        if imageNeedsSave {
-            if let pictureRef = pictureRefToWrite {
-                try save(pictureRef: pictureRef)
-            } else {
-                try removePicture()
+            if !flacFile.write(toFile: session.file) {
+                failed.insert(.bext)
             }
         }
 
-        if markersNeedsSave {
-            try saveMarkers()
+        if imageNeedsSave, !TagPicture.write(pictureRefToWrite, toFileRef: session.fileRef) {
+            failed.insert(.artwork)
+        }
+
+        let coreAudioMarkers = markersNeedsSave && (fileType == .aiff || fileType == .aifc)
+        var unstorableMarkers = false
+
+        if markersNeedsSave, !coreAudioMarkers {
+            switch saveMarkers(into: session) {
+            case true?: break
+            case false?: failed.insert(.markers)
+            case nil: unstorableMarkers = true
+            }
+        }
+
+        guard session.save() else {
+            throw MetadataError.writeFailed(.tags, url)
+        }
+
+        if imageNeedsSave, pictureRefToWrite == nil {
+            imageDescription.cgImage = nil
+        }
+
+        if coreAudioMarkers, !AudioMarkerUtil.write(audioMarkers, to: url) {
+            failed.insert(.markers)
+        }
+
+        if let component = [MetadataError.Component.artwork, .markers, .bext, .rating].first(where: failed.contains) {
+            throw MetadataError.writeFailed(component, url)
+        }
+
+        // `save(dirtyFlags:)` filters on `AudioFileType.markerWriteTypes`, so this is that list
+        // disagreeing with `saveMarkers(into:)`. Returning would clear the dirty flag and lose the markers.
+        if unstorableMarkers {
+            throw UnstorableMetadataError(fileType: fileType, flags: [.markers])
         }
     }
 
@@ -220,13 +249,6 @@ extension MetaAudioFileDescription {
         }
 
         return pictureRef
-    }
-
-    /// Embeds artwork through TagLib.
-    func save(pictureRef: TagPictureRef) throws {
-        guard TagPicture.write(pictureRef, path: url.path) else {
-            throw NSError(description: "Failed to update image")
-        }
     }
 
     /// Removes embedded artwork from the file via TagLib and clears it from memory.
@@ -286,35 +308,21 @@ extension MetaAudioFileDescription {
         }
     }
 
-    /// Keep the cases in step with `AudioFileType.markerWriteTypes` and
+    /// The markers' part of a save, written into `session`: false when they fail, nil when the
+    /// container has none. Keep the cases in step with `AudioFileType.markerWriteTypes` and
     /// `AudioMarkerDescriptionCollection.init(url:fileType:)`, or markers are written that can't be
-    /// read back. Runs last, so throwing costs only the markers. `EmbeddedMarkers` is the other
-    /// marker dispatch; it differs on WAV, which this writes through `saveWave()`.
-    private func saveMarkers() throws {
-        let path = url.path
-        let success: Bool
-
+    /// read back. AIFF's go through Core Audio and WAV's through `saveWave()`; `EmbeddedMarkers` is
+    /// the other marker dispatch.
+    private func saveMarkers(into session: MetadataSaveSession) -> Bool? {
         switch fileType {
         case .mp3:
-            success = MPEGChapterUtil.write(markerCollection.colorEncodedChapterMarkers, to: path)
-
+            MPEGChapterUtil.write(markerCollection.colorEncodedChapterMarkers, toFile: session.file)
         case .m4a, .mp4, .aac, .m4b, .mov, .m4v:
-            success = MP4ChapterUtil.write(markerCollection.fileEncodedChapterMarkers, to: path)
-
+            MP4ChapterUtil.write(markerCollection.fileEncodedChapterMarkers, toFile: session.file)
         case .flac, .ogg, .opus:
-            success = XiphChapterUtil.write(markerCollection.colorEncodedChapterMarkers, to: path)
-
-        case .aiff, .aifc:
-            success = AudioMarkerUtil.write(audioMarkers, to: url)
-
+            XiphChapterUtil.write(markerCollection.colorEncodedChapterMarkers, toFile: session.file)
         default:
-            // `save(dirtyFlags:)` filters on `AudioFileType.markerWriteTypes`, so this is that list
-            // disagreeing with the switch. Returning would clear the dirty flag and lose the markers.
-            throw UnstorableMetadataError(fileType: fileType, flags: [.markers])
-        }
-
-        guard success else {
-            throw NSError(description: "Failed to save markers to \(url.path)")
+            nil
         }
     }
 }

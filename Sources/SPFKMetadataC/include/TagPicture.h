@@ -34,6 +34,10 @@ typedef NS_ENUM(NSInteger, TagPictureReadResult) {
 /// Nil removes the artwork. False only when the file can't be opened or the image can't be encoded.
 + (bool)write:(nullable TagPictureRef *)picture path:(nonnull NSString *)path;
 
+/// `write:path:`'s change, made to an open `TagLib::FileRef *` without saving it. False only when
+/// the image can't be encoded.
++ (bool)write:(nullable TagPictureRef *)picture toFileRef:(nonnull void *)fileRef;
+
 // MARK: - Tag-based (uses an existing TagLib session)
 
 /// `tag` is a non-NULL `TagLib::Tag *`.

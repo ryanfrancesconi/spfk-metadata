@@ -106,7 +106,11 @@ static NSString *elementIDName(const ByteVector &elementID) {
         return false;
     }
 
-    MPEG::File *mpegFile = dynamic_cast<MPEG::File *>(fileRef.file());
+    return [self write:chapters toFile:fileRef.file()] && fileRef.save();
+}
+
++ (bool)write:(NSArray *)chapters toFile:(void *)opaqueFile {
+    MPEG::File *mpegFile = dynamic_cast<MPEG::File *>(static_cast<File *>(opaqueFile));
 
     if (!mpegFile) {
         cout << "setMP3Chapters: Not a MPEG File" << endl;
@@ -146,7 +150,7 @@ static NSString *elementIDName(const ByteVector &elementID) {
         mpegFile->ID3v2Tag()->addFrame(tableOfContents);
     }
 
-    return mpegFile->save();
+    return true;
 }
 
 + (bool)remove:(NSString *)path {

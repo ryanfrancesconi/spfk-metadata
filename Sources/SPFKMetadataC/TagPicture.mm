@@ -260,6 +260,12 @@ static void clearLegacyFlacXiphCommentPictures(FileRef &fileRef) {
     if (fileRef.isNull())
         return false;
 
+    return [self write:picture toFileRef:&fileRef] && WaveChunkPlanner::save(fileRef.file());
+}
+
++ (bool)write:(nullable TagPictureRef *)picture toFileRef:(nonnull void *)opaqueFileRef {
+    FileRef &fileRef = *static_cast<FileRef *>(opaqueFileRef);
+
     // Removing artwork clears every picture, so nothing else takes its place on screen.
     List<VariantMap> pictures;
 
@@ -280,7 +286,7 @@ static void clearLegacyFlacXiphCommentPictures(FileRef &fileRef) {
         return false;
 
     clearLegacyFlacXiphCommentPictures(fileRef);
-    return WaveChunkPlanner::save(fileRef.file());
+    return true;
 }
 
 @end

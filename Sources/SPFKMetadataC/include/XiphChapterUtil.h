@@ -14,6 +14,9 @@ NS_ASSUME_NONNULL_BEGIN
 /// Replaces every CHAPTER* field.
 + (bool)write:(NSArray *)chapters to:(NSString *)path;
 
+/// `write:to:`'s change, made to an open `TagLib::File *` without saving it.
++ (bool)write:(NSArray *)chapters toFile:(void *)file;
+
 + (bool)remove:(NSString *)path;
 
 @end

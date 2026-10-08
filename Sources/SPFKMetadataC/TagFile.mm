@@ -117,6 +117,12 @@ using namespace TagLib;
         return false;
     }
 
+    return [self writeToFileRef:&fileRef] && WaveChunkPlanner::save(fileRef.file());
+}
+
+- (bool)writeToFileRef:(void *)opaqueFileRef {
+    FileRef &fileRef = *static_cast<FileRef *>(opaqueFileRef);
+
     // Kept out of the PropertyMap, where it would become a TXXX:RATING frame.
     int ratingStars = TagRatingStarsInDictionary(_dictionary);
 
@@ -173,7 +179,7 @@ using namespace TagLib;
         fileRef.setComplexProperties(String("PICTURE"), existingPictures);
     }
 
-    return WaveChunkPlanner::save(fileRef.file());
+    return true;
 }
 
 @end

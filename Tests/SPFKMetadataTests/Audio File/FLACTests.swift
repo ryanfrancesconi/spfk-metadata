@@ -319,8 +319,8 @@ final class ExternalFLACApplicationBlockTests: BinTestCase {
 
 // MARK: - MetaAudioFileDescription FLAC end-to-end
 
-/// End-to-end tests for `MetaAudioFileDescription` with FLAC files, covering
-/// the `loadFLAC()` / `saveFLAC()` paths introduced for iXML/BEXT APPLICATION block support.
+/// End-to-end tests for `MetaAudioFileDescription` with FLAC files, covering its iXML and BEXT
+/// APPLICATION blocks.
 @Suite(.tags(.file))
 final class MetaAudioFileDescriptionFLACTests: BinTestCase {
     /// Parsing a plain FLAC produces valid audio format properties.

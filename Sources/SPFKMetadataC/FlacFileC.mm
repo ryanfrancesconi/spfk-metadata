@@ -74,7 +74,11 @@ using namespace TagLib;
         return false;
     }
 
-    auto *flacFile = dynamic_cast<FLAC::File *>(fileRef.file());
+    return [self writeToFile:fileRef.file()] && fileRef.save();
+}
+
+- (bool)writeToFile:(void *)opaqueFile {
+    auto *flacFile = dynamic_cast<FLAC::File *>(static_cast<File *>(opaqueFile));
 
     if (!flacFile) {
         cout << "FlacFileC: Not a FLAC file: " << _path.UTF8String << endl;
@@ -90,7 +94,7 @@ using namespace TagLib;
 
     flacFile->setiXMLData(_iXML ? String(_iXML.UTF8String, String::UTF8) : String());
 
-    return flacFile->save();
+    return true;
 }
 
 @end

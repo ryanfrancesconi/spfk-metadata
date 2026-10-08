@@ -65,6 +65,22 @@ static NSTimeInterval chapterTimeToSeconds(long long chapterTime) {
 }
 
 + (bool)write:(NSArray *)chapters to:(NSString *)path {
+    MP4::File file(path.UTF8String);
+
+    if (!file.isOpen() || !file.isValid()) {
+        return false;
+    }
+
+    return [self write:chapters toFile:&file] && file.save();
+}
+
++ (bool)write:(NSArray *)chapters toFile:(void *)opaqueFile {
+    auto *file = dynamic_cast<MP4::File *>(static_cast<TagLib::File *>(opaqueFile));
+
+    if (!file) {
+        return false;
+    }
+
     MP4::ChapterList chapterList;
 
     for (ChapterMarker *marker in chapters) {
@@ -78,17 +94,11 @@ static NSTimeInterval chapterTimeToSeconds(long long chapterTime) {
         chapterList.append(MP4::Chapter(title, secondsToChapterTime(marker.startTime)));
     }
 
-    MP4::File file(path.UTF8String);
-
-    if (!file.isOpen() || !file.isValid()) {
-        return false;
-    }
-
     // A Nero list left beside the new track would disagree with it, and the reader falls back to it
     // when the track is empty.
-    file.setQtChapters(chapterList);
-    file.setNeroChapters(MP4::ChapterList());
-    return file.save();
+    file->setQtChapters(chapterList);
+    file->setNeroChapters(MP4::ChapterList());
+    return true;
 }
 
 + (bool)remove:(NSString *)path {

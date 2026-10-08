@@ -31,6 +31,10 @@ NS_ASSUME_NONNULL_BEGIN
 /// A nil property removes its block.
 - (bool)save;
 
+/// `save`'s change, made to an open `TagLib::File *` without saving it. False when it is not a FLAC
+/// file.
+- (bool)writeToFile:(void *)file;
+
 @end
 
 NS_ASSUME_NONNULL_END

@@ -37,6 +37,10 @@ NS_ASSUME_NONNULL_BEGIN
 /// a Xiph comment's chapter fields, which a chapter key in `dictionary` does not replace.
 - (bool)save;
 
+/// `save`'s changes, made to an open `TagLib::FileRef *` without saving it. False only when the
+/// rating cannot be written.
+- (bool)writeToFileRef:(void *)fileRef;
+
 @end
 
 NS_ASSUME_NONNULL_END

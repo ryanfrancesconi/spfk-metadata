@@ -239,8 +239,7 @@ class MetaAudioFileDescriptionArtworkTests: BinTestCase {
     }
 
     /// Saving with .metadata + .markers must not strip embedded artwork (M4A).
-    /// This exercises the saveMarkers() → MP4ChapterUtil.write() path, which opens
-    /// a second MP4::File and calls save() after artwork has been restored.
+    /// The tag, artwork and chapter writers share one TagLib save, so none may clear another's atoms.
     @Test func m4aMarkerSavePreservesArtwork() async throws {
         let tmpfile = try copyToBin(url: TestBundleResources.shared.tabla_m4a)
 
