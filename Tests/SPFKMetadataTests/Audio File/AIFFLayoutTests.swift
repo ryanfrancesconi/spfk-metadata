@@ -120,6 +120,19 @@ final class AIFFLayoutTests: BinTestCase {
         #expect(actual.first("MARK")?.payload.count == expected.first("MARK")?.payload.count)
     }
 
+    /// A name past 255 bytes reaching the writer untrimmed keeps its longest whole-character prefix.
+    @Test func anOverlongRawMarkerNameIsTrimmedAtACharacter() async throws {
+        let url = try bareFixture()
+        let format = try #require(try await MetaAudioFileDescription(parsing: url).audioFormat)
+        let name = "e\u{301}" + String(repeating: "日", count: 100) // 302 bytes; the first character is two scalars
+
+        let marker = AudioMarker(name: name, time: 0.5, sampleRate: format.sampleRate, markerID: 0)
+        #expect(AudioMarkerUtil.write([marker], to: url))
+
+        let stored = try #require(try AIFFChunks(contentsOf: url).markers().first?.name)
+        #expect(stored == "e\u{301}" + String(repeating: "日", count: 84))
+    }
+
     /// A markers-only write keeps a tag stored after the sound data on a file with no room ahead of it.
     @Test func embeddedMarkersKeepATrailingTag() async throws {
         let url = try copyToBin(url: TestBundleResources.shared.tabla_aif)

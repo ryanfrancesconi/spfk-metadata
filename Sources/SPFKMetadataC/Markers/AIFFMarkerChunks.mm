@@ -12,10 +12,27 @@ using namespace TagLib;
 
 namespace {
 
-/// A length byte and the name's UTF-8 bytes, padded to an even length.
+/// The longest whole-character prefix of `name` that fits in `maxBytes` UTF-8 bytes.
+NSString *prefixFitting(NSString *name, NSUInteger maxBytes) {
+    NSUInteger end = 0;
+    NSUInteger byteCount = 0;
+
+    while (end < name.length) {
+        const NSRange character = [name rangeOfComposedCharacterSequenceAtIndex:end];
+        const NSUInteger characterBytes = [[name substringWithRange:character] lengthOfBytesUsingEncoding:NSUTF8StringEncoding];
+        if (byteCount + characterBytes > maxBytes) break;
+        byteCount += characterBytes;
+        end = NSMaxRange(character);
+    }
+
+    return [name substringToIndex:end];
+}
+
+/// A length byte and the name's UTF-8 bytes, padded to an even length. A name past 255 bytes keeps
+/// its longest whole-character prefix, where Core Audio would store "?".
 ByteVector pascalString(NSString *name) {
-    NSData *utf8 = [name ?: @"" dataUsingEncoding:NSUTF8StringEncoding];
-    const ByteVector text = utf8.length <= 255 ? ByteVector(static_cast<const char *>(utf8.bytes), static_cast<unsigned int>(utf8.length)) : ByteVector("?", 1);
+    NSData *utf8 = [prefixFitting(name ?: @"", 255) dataUsingEncoding:NSUTF8StringEncoding];
+    const ByteVector text(static_cast<const char *>(utf8.bytes), static_cast<unsigned int>(utf8.length));
 
     ByteVector bytes(1, static_cast<char>(text.size()));
     bytes.append(text);
