@@ -113,10 +113,6 @@ extension SafetyNetKnownIssues {
             text: "An MP4 TagProperties save flattens a multi-valued text item: expected ©ART twice, found one value (F15)"
         ),
         SafetyNetKnownIssue(
-            rows: mp4Rows, kinds: [.e5], item: .mp4(.chapters),
-            text: "An MP4 chapter write whose first marker starts after zero adds an untitled chapter at zero (F41)"
-        ),
-        SafetyNetKnownIssue(
             rows: ["mka", "mkv", "webm"], kinds: tagSave, item: .matroska(.unknownTag),
             text: "A Matroska TagProperties save moves another app's untargeted tag from album to track level (F50)"
         ),

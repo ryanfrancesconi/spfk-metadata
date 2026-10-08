@@ -50,10 +50,11 @@ class ChapterMarkerTests: BinTestCase {
         let names = r_markers.compactMap(\.name)
         let times = r_markers.map(\.startTime)
 
-        #expect(r_markers.count == 4)
-        // empty marker at 0 is placeholder dummy added to correctly offset subsequent markers
-        #expect(names == ["", "Marker 1", "Marker 2", "Marker 3"])
-        #expect(times == [0.0, 1.0, 2.0, 3.0])
+        // The placeholder TagLib keeps at 0 is skipped by the chapter track's edit list, so
+        // AVFoundation lists only the chapters written.
+        #expect(r_markers.count == 3)
+        #expect(names == ["Marker 1", "Marker 2", "Marker 3"])
+        #expect(times == [1.0, 2.0, 3.0])
         
     }
 }

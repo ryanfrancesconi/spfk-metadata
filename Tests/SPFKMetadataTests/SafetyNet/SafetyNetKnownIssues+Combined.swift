@@ -107,10 +107,6 @@ extension SafetyNetKnownIssues {
             text: "An MP3 tag save upper-cases other apps' WXXX descriptions: expected \"Safety Net Link\", found \"SAFETY NET LINK\" (F29)"
         ),
         SafetyNetKnownIssue(
-            rows: ["m4a", "m4b", "m4v", "mov", "mp4"], kinds: [.k10, .k11, .k12, .s3], item: .mp4(.chapters),
-            text: "An MP4 marker save whose first marker starts after zero adds an untitled chapter at zero that other players list: expected the written chapters only, found an extra one at 0.000 (F41)"
-        ),
-        SafetyNetKnownIssue(
             rows: ["m4a", "m4b", "m4v", "mov", "mp4"], kinds: [.k9, .k10, .k11, .k12, .s3], item: .mp4(.multiValuedText),
             text: "An MP4 save flattens a multi-valued text item: expected ©ART twice, found one value joined with a space (F15)"
         ),
