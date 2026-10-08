@@ -17,20 +17,12 @@ extension SafetyNetKnownIssues {
             text: "A TagProperties save flattens a multi-valued TPE1: expected two values, found one joined with a space (F15)"
         ),
         SafetyNetKnownIssue(
-            rows: tagFileRows, kinds: tagSave, item: .id3(.comments),
-            text: "A TagProperties save merges a second-language COMM into the first and rewrites a described one (F15, F29)"
+            rows: ["mp3", "aiff"], kinds: tagSave, item: .id3(.comments),
+            text: "A TagProperties save merges a second-language COMM into the file's own: expected the \"fra\" frame kept, found it joined to the first (F15)"
         ),
         SafetyNetKnownIssue(
-            rows: tagFileRows, kinds: tagSave, item: .id3(.lyrics),
-            text: "A TagProperties save rewrites other apps' USLT frames: expected language \"eng\", found \"XXX\" and an upper-cased description (F29)"
-        ),
-        SafetyNetKnownIssue(
-            rows: tagFileRows, kinds: tagSave, item: .id3(.userURL),
-            text: "A TagProperties save upper-cases other apps' WXXX descriptions (F29)"
-        ),
-        SafetyNetKnownIssue(
-            rows: tagFileRows.union(waveRows), kinds: tagSave, item: .id3(.userText),
-            text: "A TagProperties save upper-cases other apps' TXXX descriptions: expected \"SafetyNet Foreign\", found \"SAFETYNET FOREIGN\" (F29)"
+            rows: waveRows, kinds: tagSave, item: .id3(.userText),
+            text: "A WAV TagProperties save upper-cases other apps' TXXX descriptions: expected \"SafetyNet Foreign\", found \"SAFETYNET FOREIGN\" (F29)"
         ),
     ]
 

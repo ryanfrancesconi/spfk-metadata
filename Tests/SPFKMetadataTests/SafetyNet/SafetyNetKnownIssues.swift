@@ -29,20 +29,8 @@ enum SafetyNetKnownIssues {
             text: "An MP3 tag save flattens a multi-valued TPE1: expected two values, found one joined with a space (F15)"
         ),
         SafetyNetKnownIssue(
-            rows: ["mp3", "aac"], kinds: mp3TagKinds, item: .id3(.userText),
-            text: "An MP3 tag save upper-cases other apps' TXXX descriptions: expected \"SafetyNet Foreign\", found \"SAFETYNET FOREIGN\" (F29)"
-        ),
-        SafetyNetKnownIssue(
-            rows: ["mp3", "aac"], kinds: mp3TagKinds, item: .id3(.lyrics),
-            text: "An MP3 tag save rewrites other apps' USLT frames: expected language \"eng\" and description \"Safety Net\", found \"XXX\" and \"SAFETY NET\" (F29)"
-        ),
-        SafetyNetKnownIssue(
-            rows: ["mp3", "aac"], kinds: mp3TagKinds, item: .id3(.userURL),
-            text: "An MP3 tag save upper-cases other apps' WXXX descriptions: expected \"Safety Net Link\", found \"SAFETY NET LINK\" (F29)"
-        ),
-        SafetyNetKnownIssue(
-            rows: ["mp3", "aac"], kinds: mp3TagKinds, item: .id3(.comments),
-            text: "An MP3 tag save merges a second-language COMM into the first and rewrites a described one: expected 3 frames with languages \"eng\" and \"fra\" kept, found 2, one joined with a space and one \"XXX | SAFETY NET NOTE\" (F15, F29)"
+            rows: ["mp3"], kinds: mp3TagKinds, item: .id3(.comments),
+            text: "An MP3 tag save merges a second-language COMM into the file's own: expected 3 frames with \"fra\" kept, found 2, \"Un commentaire\" joined to the first with a space (F15)"
         ),
     ]
 
@@ -105,20 +93,8 @@ enum SafetyNetKnownIssues {
             text: "An AIFF save flattens a multi-valued TPE1: expected two values, found one joined with a space (F15)"
         ),
         SafetyNetKnownIssue(
-            rows: ["aiff", "aifc"], kinds: aiffKinds, item: .id3(.userText),
-            text: "An AIFF save upper-cases other apps' TXXX descriptions: expected \"SafetyNet Foreign\", found \"SAFETYNET FOREIGN\" (F29)"
-        ),
-        SafetyNetKnownIssue(
-            rows: ["aiff", "aifc"], kinds: aiffKinds, item: .id3(.lyrics),
-            text: "An AIFF save rewrites other apps' USLT frames: expected language \"eng\" and description \"Safety Net\", found \"XXX\" and \"SAFETY NET\" (F29)"
-        ),
-        SafetyNetKnownIssue(
-            rows: ["aiff", "aifc"], kinds: aiffKinds, item: .id3(.userURL),
-            text: "An AIFF save upper-cases other apps' WXXX descriptions: expected \"Safety Net Link\", found \"SAFETY NET LINK\" (F29)"
-        ),
-        SafetyNetKnownIssue(
-            rows: ["aiff", "aifc"], kinds: aiffKinds, item: .id3(.comments),
-            text: "An AIFF save merges a second-language COMM into the first and rewrites a described one: expected the \"eng\" and \"fra\" frames kept, found them merged and upper-cased (F15, F29)"
+            rows: ["aiff"], kinds: aiffKinds, item: .id3(.comments),
+            text: "An AIFF save merges a second-language COMM into the file's own: expected 3 frames with \"fra\" kept, found 2, \"Un commentaire\" joined to the first with a space (F15)"
         ),
     ]
 

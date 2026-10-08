@@ -171,16 +171,18 @@ static void clearTags(FileRef &fileRef) {
     }
 }
 
-/// Clears the mapped properties ahead of a tag save. An MP3 is cleared in memory, keeping every
-/// ID3v2 frame the PropertyMap can't express (`CHAP`, `CTOC`, `APIC`, `GEOB`, `PRIV`, …) and an APE
-/// tag's binary items. An MP4 keeps every item without a property key; the rating writer replaces
-/// `rate` itself. Any other format is cleared by `clearTags`.
+/// Clears the mapped properties ahead of a tag save. An MP3 or AIFF ID3v2 tag is left alone:
+/// `ID3v2::Tag::setProperties` keeps each frame whose properties are unchanged, with its
+/// description case and language, and replaces the rest. An MP3's APE tag keeps only its binary
+/// items. An MP4 keeps every item without a property key; the rating writer replaces `rate`
+/// itself. Any other format is cleared by `clearTags`.
 static void clearTagsForSave(FileRef &fileRef) {
     if (auto *fp = dynamic_cast<MPEG::File *>(fileRef.file())) {
-        fp->setProperties(PropertyMap()); // ID3v2 and ID3v1
         if (APE::Tag *ape = fp->APETag()) ape->setProperties(PropertyMap());
         return;
     }
+
+    if (dynamic_cast<RIFF::AIFF::File *>(fileRef.file())) return;
 
     if (auto *fp = dynamic_cast<MP4::File *>(fileRef.file())) {
         clearMP4Items(fp->tag(), true);
