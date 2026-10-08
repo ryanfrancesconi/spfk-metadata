@@ -48,7 +48,15 @@ using namespace TagLib;
 }
 
 - (bool)save {
-    return FileSave::save(_fileRef->file());
+    if (!_fileRef)
+        return false;
+
+    const bool saved = FileSave::save(_fileRef->file());
+
+    // Closing flushes the stream's buffered writes, so the next writer to open the file sees them.
+    _fileRef.reset();
+    _stream.reset();
+    return saved;
 }
 
 @end

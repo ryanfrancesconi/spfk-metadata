@@ -17,6 +17,7 @@ NS_ASSUME_NONNULL_BEGIN
 /// Nil when TagLib cannot open the file for writing.
 - (nullable instancetype)initWithPath:(NSString *)path;
 
+/// Writes every change and closes the file; the session cannot be used after it.
 - (bool)save;
 
 @end
