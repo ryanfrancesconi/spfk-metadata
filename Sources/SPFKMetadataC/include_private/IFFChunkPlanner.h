@@ -1,7 +1,7 @@
 // Copyright Ryan Francesconi. All Rights Reserved. Revision History at https://github.com/ryanfrancesconi/spfk-metadata
 
-#ifndef WAVECHUNKPLANNER_H
-#define WAVECHUNKPLANNER_H
+#ifndef IFFCHUNKPLANNER_H
+#define IFFCHUNKPLANNER_H
 
 #include <optional>
 #include <vector>
@@ -19,7 +19,7 @@
 ///
 /// The file's own chunk table no longer matches the disk afterwards, so the `File` must not be
 /// read or saved again.
-namespace WaveChunkPlanner {
+namespace IFFChunkPlanner {
 
 struct Edit {
     /// `bext`, `ID3 `, `LIST`, …
@@ -38,6 +38,6 @@ bool write(TagLib::File &file, const std::vector<Edit> &edits);
 /// and INFO.
 bool save(TagLib::RIFF::WAV::File &file, std::vector<Edit> edits = {});
 
-} // namespace WaveChunkPlanner
+} // namespace IFFChunkPlanner
 
 #endif

@@ -15,7 +15,7 @@
 #import "TagRating.h"
 #import "TagRatingFile.h"
 #import "TagUtil.h"
-#import "WaveChunkPlanner.h"
+#import "IFFChunkPlanner.h"
 #import "WaveFileC.h"
 #import "WaveMarkerChunks.h"
 
@@ -120,7 +120,7 @@ using namespace TagLib;
         return false;
     }
 
-    std::vector<WaveChunkPlanner::Edit> edits;
+    std::vector<IFFChunkPlanner::Edit> edits;
 
     if (_markersNeedsSave && !WaveMarkers::render(file, _markers, edits)) {
         _failedComponents |= WaveFileComponentsMarkers;
@@ -174,7 +174,7 @@ using namespace TagLib;
         _failedComponents |= WaveFileComponentsRating;
     }
 
-    if (!WaveChunkPlanner::save(file, edits)) {
+    if (!IFFChunkPlanner::save(file, edits)) {
         _failedComponents = WaveFileComponentsContainer;
     }
 

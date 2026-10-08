@@ -2,7 +2,7 @@
 
 #include <algorithm>
 
-#import "WaveChunkTable.h"
+#import "IFFChunkTable.h"
 
 using namespace TagLib;
 
@@ -17,7 +17,7 @@ bool isValidChunkName(const ByteVector &name) {
 
 } // namespace
 
-namespace WaveChunkTable {
+namespace IFFChunkTable {
 
 const ByteVector fillerSignature("SPFK", 4);
 
@@ -89,4 +89,4 @@ bool read(File &file, Table &table) {
     return !table.chunks.empty() && (!table.longForm || table.ds64 > 0);
 }
 
-} // namespace WaveChunkTable
+} // namespace IFFChunkTable

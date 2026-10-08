@@ -30,7 +30,7 @@ NS_ASSUME_NONNULL_END
 
 #import <taglib/wavfile.h>
 
-#import "WaveChunkPlanner.h"
+#import "IFFChunkPlanner.h"
 
 /// A WAV file with access to its `cue ` chunk, `LIST`/`adtl` list and `_PMX` XMP chunk, which
 /// TagLib does not expose.
@@ -54,7 +54,7 @@ NSArray *_Nullable read(WaveMarkerFile &file);
 
 /// The `cue ` and `adtl` edits that replace the file's markers; an empty array removes them.
 /// `false` when the file has no sample rate.
-bool render(WaveMarkerFile &file, NSArray *_Nonnull markers, std::vector<WaveChunkPlanner::Edit> &edits);
+bool render(WaveMarkerFile &file, NSArray *_Nonnull markers, std::vector<IFFChunkPlanner::Edit> &edits);
 
 /// Replaces the file's markers on disk. `false` when the file has no sample rate.
 bool write(WaveMarkerFile &file, NSArray *_Nonnull markers);

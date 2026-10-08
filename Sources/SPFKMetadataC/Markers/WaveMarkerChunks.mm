@@ -7,7 +7,7 @@
 #import <taglib/wavfile.h>
 
 #import "AudioMarker.h"
-#import "WaveChunkPlanner.h"
+#import "IFFChunkPlanner.h"
 #import "WaveMarkerChunks.h"
 
 using namespace TagLib;
@@ -155,7 +155,7 @@ NSArray *read(WaveMarkerFile &file) {
     return [markers copy];
 }
 
-bool render(WaveMarkerFile &file, NSArray *markers, std::vector<WaveChunkPlanner::Edit> &edits) {
+bool render(WaveMarkerFile &file, NSArray *markers, std::vector<IFFChunkPlanner::Edit> &edits) {
     const RIFF::WAV::Properties *properties = file.audioProperties();
     const double sampleRate = properties ? properties->sampleRate() : 0;
 
@@ -207,8 +207,8 @@ bool render(WaveMarkerFile &file, NSArray *markers, std::vector<WaveChunkPlanner
 }
 
 bool write(WaveMarkerFile &file, NSArray *markers) {
-    std::vector<WaveChunkPlanner::Edit> edits;
-    return render(file, markers, edits) && WaveChunkPlanner::write(file, edits);
+    std::vector<IFFChunkPlanner::Edit> edits;
+    return render(file, markers, edits) && IFFChunkPlanner::write(file, edits);
 }
 } // namespace WaveMarkers
 

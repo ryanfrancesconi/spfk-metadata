@@ -38,7 +38,7 @@
 #import "StringUtil.h"
 #import "TagUtil.h"
 #import "FileSave.h"
-#import "WaveChunkPlanner.h"
+#import "IFFChunkPlanner.h"
 #import "WaveMarkerChunks.h"
 
 using namespace std;
@@ -265,7 +265,7 @@ namespace {
     WaveMarkerFile waveFile(path.UTF8String, false);
     if (!waveFile.isValid()) return false;
 
-    return WaveChunkPlanner::write(waveFile, { { "_PMX", ByteVector(), data.isEmpty() ? std::nullopt : std::optional<ByteVector>(data) } });
+    return IFFChunkPlanner::write(waveFile, { { "_PMX", ByteVector(), data.isEmpty() ? std::nullopt : std::optional<ByteVector>(data) } });
 }
 
 @end

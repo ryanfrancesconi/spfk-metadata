@@ -1,15 +1,15 @@
 // Copyright Ryan Francesconi. All Rights Reserved. Revision History at https://github.com/ryanfrancesconi/spfk-metadata
 
-#ifndef WAVECHUNKTABLE_H
-#define WAVECHUNKTABLE_H
+#ifndef IFFCHUNKTABLE_H
+#define IFFCHUNKTABLE_H
 
 #include <vector>
 
 #include <taglib/tbytevector.h>
 #include <taglib/tfile.h>
 
-/// A RIFF, RF64 or BW64 WAVE's top-level chunks, as `WaveChunkPlanner` places them.
-namespace WaveChunkTable {
+/// A RIFF, RF64 or BW64 WAVE's top-level chunks, as `IFFChunkPlanner` places them.
+namespace IFFChunkTable {
 
 /// The first payload bytes of every `JUNK` the planner writes.
 extern const TagLib::ByteVector fillerSignature;
@@ -40,6 +40,6 @@ struct Table {
 /// False for a file that is not a WAVE, has no chunks, or is long-form without a `ds64`.
 bool read(TagLib::File &file, Table &table);
 
-} // namespace WaveChunkTable
+} // namespace IFFChunkTable
 
 #endif

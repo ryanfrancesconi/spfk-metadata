@@ -5,12 +5,12 @@
 #import <taglib/id3v2tag.h>
 #import <taglib/infotag.h>
 
-#import "WaveChunkPlanner.h"
-#import "WaveChunkTable.h"
+#import "IFFChunkPlanner.h"
+#import "IFFChunkTable.h"
 
 using namespace TagLib;
-using WaveChunkTable::Chunk;
-using WaveChunkTable::fillerSignature;
+using IFFChunkTable::Chunk;
+using IFFChunkTable::fillerSignature;
 
 namespace {
 
@@ -20,7 +20,7 @@ const offset_t reserveSize = 1024;
 /// Bound on one zero-filling write.
 const offset_t zeroBlockSize = 1 << 20;
 
-bool matches(const Chunk &chunk, const WaveChunkPlanner::Edit &edit) {
+bool matches(const Chunk &chunk, const IFFChunkPlanner::Edit &edit) {
     if (edit.id == "ID3 ")
         return chunk.id == "ID3 " || chunk.id == "id3 ";
 
@@ -40,11 +40,11 @@ class Planner {
 public:
     explicit Planner(File &file) : file(file) {}
 
-    bool apply(const std::vector<WaveChunkPlanner::Edit> &edits);
+    bool apply(const std::vector<IFFChunkPlanner::Edit> &edits);
 
 private:
     File &file;
-    WaveChunkTable::Table table;
+    IFFChunkTable::Table table;
     std::vector<Chunk> &chunks = table.chunks;
     /// Ranges that held an owned chunk's old content and that nothing new has covered yet.
     std::vector<std::pair<offset_t, offset_t>> stale;
@@ -57,9 +57,9 @@ private:
     void zeroStale();
     void vacate(size_t index);
     bool isUnchanged(const Chunk &chunk, const ByteVector &payload);
-    bool placeInRun(size_t start, size_t end, const WaveChunkPlanner::Edit &edit, const ByteVector &bytes);
-    void place(const WaveChunkPlanner::Edit &edit, const ByteVector &bytes);
-    void append(const WaveChunkPlanner::Edit &edit, const ByteVector &bytes);
+    bool placeInRun(size_t start, size_t end, const IFFChunkPlanner::Edit &edit, const ByteVector &bytes);
+    void place(const IFFChunkPlanner::Edit &edit, const ByteVector &bytes);
+    void append(const IFFChunkPlanner::Edit &edit, const ByteVector &bytes);
     void writeFormSize();
 };
 
@@ -149,7 +149,7 @@ bool Planner::isUnchanged(const Chunk &chunk, const ByteVector &payload) {
 
 /// Writes `bytes` over chunks `start`…`end` when they hold it with nothing left over, or with
 /// enough left for a filler after it.
-bool Planner::placeInRun(size_t start, size_t end, const WaveChunkPlanner::Edit &edit, const ByteVector &bytes) {
+bool Planner::placeInRun(size_t start, size_t end, const IFFChunkPlanner::Edit &edit, const ByteVector &bytes) {
     const offset_t at = chunks[start].offset;
     const offset_t room = chunks[end].end() - at;
     const offset_t size = bytes.size();
@@ -179,7 +179,7 @@ bool Planner::placeInRun(size_t start, size_t end, const WaveChunkPlanner::Edit 
 }
 
 /// Into the first run of fillers that holds it, else after the last chunk.
-void Planner::place(const WaveChunkPlanner::Edit &edit, const ByteVector &bytes) {
+void Planner::place(const IFFChunkPlanner::Edit &edit, const ByteVector &bytes) {
     for (size_t start = 0; start < chunks.size(); start++) {
         if (!chunks[start].isFiller)
             continue;
@@ -200,7 +200,7 @@ void Planner::place(const WaveChunkPlanner::Edit &edit, const ByteVector &bytes)
 
 /// After the last chunk, reusing a run of fillers that ends the file, followed by a reserve no
 /// later edit in this save may take. What is left of a reused run stays free space.
-void Planner::append(const WaveChunkPlanner::Edit &edit, const ByteVector &bytes) {
+void Planner::append(const IFFChunkPlanner::Edit &edit, const ByteVector &bytes) {
     const offset_t oldEnd = table.end;
     const offset_t size = bytes.size();
 
@@ -284,11 +284,11 @@ void Planner::writeFormSize() {
     }
 }
 
-bool Planner::apply(const std::vector<WaveChunkPlanner::Edit> &edits) {
-    if (file.readOnly() || !WaveChunkTable::read(file, table))
+bool Planner::apply(const std::vector<IFFChunkPlanner::Edit> &edits) {
+    if (file.readOnly() || !IFFChunkTable::read(file, table))
         return false;
 
-    std::vector<std::pair<const WaveChunkPlanner::Edit *, ByteVector>> unplaced;
+    std::vector<std::pair<const IFFChunkPlanner::Edit *, ByteVector>> unplaced;
 
     for (const auto &edit : edits) {
         std::vector<offset_t> existing;
@@ -342,7 +342,7 @@ bool Planner::apply(const std::vector<WaveChunkPlanner::Edit> &edits) {
 
 } // namespace
 
-namespace WaveChunkPlanner {
+namespace IFFChunkPlanner {
 
 bool write(File &file, const std::vector<Edit> &edits) {
     return Planner(file).apply(edits);
@@ -365,4 +365,4 @@ bool save(RIFF::WAV::File &file, std::vector<Edit> edits) {
     return write(file, edits);
 }
 
-} // namespace WaveChunkPlanner
+} // namespace IFFChunkPlanner
