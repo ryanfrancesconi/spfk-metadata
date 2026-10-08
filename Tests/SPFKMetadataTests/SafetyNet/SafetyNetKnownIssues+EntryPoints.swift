@@ -129,18 +129,6 @@ extension SafetyNetKnownIssues {
             text: "An MP4 TagProperties save flattens a multi-valued text item: expected ©ART twice, found one value (F15)"
         ),
         SafetyNetKnownIssue(
-            rows: mp4Rows, kinds: tagSave, item: .mp4(.unknownFreeform),
-            text: "An MP4 TagProperties save upper-cases another app's iTunes freeform name (F40)"
-        ),
-        SafetyNetKnownIssue(
-            rows: mp4Rows, kinds: tagSave, item: .mp4(.gaplessInfo),
-            text: "An MP4 TagProperties save renames the gapless-playback atom: expected iTunSMPB, found ITUNSMPB (F40)"
-        ),
-        SafetyNetKnownIssue(
-            rows: ["m4a"], kinds: tagSave, item: .audio,
-            text: "An MP4 TagProperties save renames the gapless-playback atom, so AVFoundation stops trimming to its sample count (F40)"
-        ),
-        SafetyNetKnownIssue(
             rows: mp4Rows, kinds: [.e5], item: .mp4(.chapters),
             text: "An MP4 chapter write whose first marker starts after zero adds an untitled chapter at zero (F41)"
         ),

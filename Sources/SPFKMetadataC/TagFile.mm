@@ -141,6 +141,9 @@ using namespace TagLib;
         }
     }
 
+    auto *mp4File = dynamic_cast<MP4::File *>(f);
+    const auto freeformNames = TagUtil::mp4FreeformNames(mp4File ? mp4File->tag() : nullptr);
+
     // Cleared before writing, so anything absent from the new dictionary is removed.
     TagUtil::clearTagsForSave(fileRef);
 
@@ -159,6 +162,7 @@ using namespace TagLib;
 
     properties.removeEmpty();
     fileRef.setProperties(properties);
+    TagUtil::restoreMP4FreeformNames(mp4File ? mp4File->tag() : nullptr, freeformNames);
 
     // After `setProperties`, which removes every field absent from `properties`.
     for (const auto &[key, values] : chapterFields) {

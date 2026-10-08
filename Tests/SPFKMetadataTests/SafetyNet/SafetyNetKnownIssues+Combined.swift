@@ -123,14 +123,6 @@ extension SafetyNetKnownIssues {
             text: "An MP3 save re-renders an ID3v2.3 tag as ID3v2.4: expected 2.3, found 2.4 (F7)"
         ),
         SafetyNetKnownIssue(
-            rows: ["m4a", "m4b", "m4v", "mov", "mp4"], kinds: [.k9, .k10, .k11, .k12, .s3], item: .mp4(.unknownFreeform),
-            text: "An MP4 save upper-cases another app's iTunes freeform name: expected \"SafetyNet Foreign\", found \"SAFETYNET FOREIGN\" (F40)"
-        ),
-        SafetyNetKnownIssue(
-            rows: ["m4a", "m4b", "m4v", "mov", "mp4"], kinds: [.k9, .k10, .k11, .k12, .s3], item: .mp4(.gaplessInfo),
-            text: "An MP4 save renames the gapless-playback atom: expected iTunSMPB, found ITUNSMPB (F40)"
-        ),
-        SafetyNetKnownIssue(
             rows: ["m4a", "m4b", "m4v", "mov", "mp4"], kinds: [.k10, .k11, .k12, .s3], item: .mp4(.chapters),
             text: "An MP4 marker save whose first marker starts after zero adds an untitled chapter at zero that other players list: expected the written chapters only, found an extra one at 0.000 (F41)"
         ),
@@ -161,10 +153,6 @@ extension SafetyNetKnownIssues {
         SafetyNetKnownIssue(
             rows: ["rf64", "wav"], kinds: [.k9, .k10, .k11, .k12, .s3, .s4], item: .riff(.iXML),
             text: "A WAV tag save re-serializes iXML, dropping comments and turning CDATA into escaped text: expected the comment and CDATA nodes, found neither (F13)"
-        ),
-        SafetyNetKnownIssue(
-            rows: ["m4a"], kinds: [.k9, .k10, .k11, .k12, .s3], item: .audio,
-            text: "An MP4 save renames the gapless-playback atom, so AVFoundation stops trimming to its sample count: expected 9152 decoded frames, found the untrimmed length (F40)"
         ),
     ]
 }

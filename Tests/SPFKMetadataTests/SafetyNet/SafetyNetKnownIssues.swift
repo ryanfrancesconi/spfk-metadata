@@ -199,18 +199,6 @@ enum SafetyNetKnownIssues {
             text: "An MP4 save flattens a multi-valued text item: expected ©ART twice, found one value joined with a space (F15)"
         ),
         SafetyNetKnownIssue(
-            rows: ["m4a", "m4b", "mp4", "m4v", "mov"], kinds: mp4Kinds, item: .mp4(.unknownFreeform),
-            text: "An MP4 save upper-cases another app's iTunes freeform name: expected \"SafetyNet Foreign\", found \"SAFETYNET FOREIGN\" (F40)"
-        ),
-        SafetyNetKnownIssue(
-            rows: ["m4a", "m4b", "mp4", "m4v", "mov"], kinds: mp4Kinds, item: .mp4(.gaplessInfo),
-            text: "An MP4 save renames the gapless-playback atom: expected iTunSMPB, found ITUNSMPB (F40)"
-        ),
-        SafetyNetKnownIssue(
-            rows: ["m4a"], kinds: mp4Kinds, item: .audio,
-            text: "An MP4 save renames the gapless-playback atom, so AVFoundation stops trimming to its sample count: expected 9152 decoded frames, found the untrimmed length (F40)"
-        ),
-        SafetyNetKnownIssue(
             rows: ["m4a", "m4b", "mp4", "m4v", "mov"], kinds: [.k0], item: .mp4(.frontCover),
             text: "An MP4 save flagged for artwork re-encodes an unchanged cover: expected the same image bytes, found new ones (F30)"
         ),

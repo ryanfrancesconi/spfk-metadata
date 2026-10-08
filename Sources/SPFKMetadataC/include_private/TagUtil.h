@@ -11,6 +11,7 @@
 #import <taglib/fileref.h>
 #import <taglib/flacfile.h>
 #import <taglib/mp4file.h>
+#import <taglib/mp4itemfactory.h>
 #import <taglib/mpegfile.h>
 #import <taglib/opusfile.h>
 #import <taglib/rifffile.h>
@@ -96,6 +97,37 @@ static void clearMP4Items(MP4::Tag *tag, bool keepingUnmapped) {
     }
     for (const auto &key : std::as_const(keys))
         tag->removeItem(key);
+}
+
+/// The MP4 freeform items whose name differs from the one their property key recreates, keyed by
+/// that name. TagLib keys an unknown `----:com.apple.iTunes:` item by its upper-cased name, so a tag
+/// save would rename it: `iTunSMPB` to `ITUNSMPB`, which AVFoundation then ignores.
+static std::map<String, String> mp4FreeformNames(const MP4::Tag *tag) {
+    std::map<String, String> names;
+    if (!tag) return names;
+
+    const MP4::ItemFactory *factory = MP4::ItemFactory::instance();
+    for (const auto &[name, item] : tag->itemMap()) {
+        if (!name.startsWith("----:")) continue;
+
+        const String key = factory->propertyKeyForName(name.data(String::UTF8)).upper();
+        const String recreated(factory->nameForPropertyKey(key), String::UTF8);
+        if (!key.isEmpty() && !recreated.isEmpty() && recreated != name) names[recreated] = name;
+    }
+    return names;
+}
+
+/// Moves each item `setProperties` recreated back to the name `mp4FreeformNames` recorded for it.
+static void restoreMP4FreeformNames(MP4::Tag *tag, const std::map<String, String> &names) {
+    if (!tag) return;
+
+    for (const auto &[recreated, original] : names) {
+        if (!tag->contains(recreated)) continue;
+
+        const MP4::Item item = tag->item(recreated);
+        tag->removeItem(recreated);
+        tag->setItem(original, item);
+    }
 }
 
 /// Empties a WAV's ID3 and INFO tags in memory. `strip()` removes their chunks from the file at
