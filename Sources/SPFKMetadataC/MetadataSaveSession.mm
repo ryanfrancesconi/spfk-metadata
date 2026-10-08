@@ -5,6 +5,7 @@
 
 #import <taglib/aifffile.h>
 #import <taglib/fileref.h>
+#import <taglib/tdeferredwritestream.h>
 #import <taglib/tfilestream.h>
 
 #import "MetadataSaveSession.h"
@@ -14,8 +15,10 @@
 using namespace TagLib;
 
 @implementation MetadataSaveSession {
-    // The stream outlives the FileRef, which reads through it and does not own it.
+    // Each stream outlives what reads through it: the FileRef reads the deferred stream, which
+    // reads the file.
     std::unique_ptr<FileStream> _stream;
+    std::unique_ptr<DeferredWriteStream> _deferred;
     std::unique_ptr<FileRef> _fileRef;
     std::vector<IFFChunkPlanner::Edit> _chunkEdits;
 }
@@ -27,11 +30,11 @@ using namespace TagLib;
     if (!_stream->isOpen() || _stream->readOnly())
         return nil;
 
-    // Audio moved by a metadata block growing ahead of it goes through this buffer.
-    _stream->setMoveBufferSize(1 << 20);
+    // Every writer's changes are held until `save`, which moves any audio they displace once.
+    _deferred = std::make_unique<DeferredWriteStream>(_stream.get());
 
     // No audio properties: a save doesn't need them.
-    _fileRef = std::make_unique<FileRef>(_stream.get(), false);
+    _fileRef = std::make_unique<FileRef>(_deferred.get(), false);
     if (_fileRef->isNull())
         return nil;
 
@@ -40,6 +43,7 @@ using namespace TagLib;
 
 - (void)dealloc {
     _fileRef.reset();
+    _deferred.reset();
     _stream.reset();
 }
 
@@ -65,8 +69,12 @@ using namespace TagLib;
     else
         saved = FileSave::save(_fileRef->file());
 
+    // A failed save leaves the file as it was rather than half written.
+    saved = saved && _deferred->commit();
+
     // Closing flushes the stream's buffered writes, so the next writer to open the file sees them.
     _fileRef.reset();
+    _deferred.reset();
     _stream.reset();
     return saved;
 }

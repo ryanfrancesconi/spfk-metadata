@@ -5,7 +5,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 /// One TagLib open of a file for a save: each writer's `toFile:`/`toFileRef:` method changes it in
-/// memory, and `save` writes them all at once.
+/// memory, and `save` writes them all at once, moving any audio they displace at most once.
 @interface MetadataSaveSession : NSObject
 
 /// The `TagLib::FileRef *`, for the writers' `toFileRef:` methods.
