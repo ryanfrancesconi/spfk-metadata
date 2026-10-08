@@ -254,7 +254,7 @@ namespace {
             if (data.isEmpty() && !mpegFile->hasID3v2Tag()) return true;
 
             TagUtil::setXMPPrivateFrame(mpegFile->ID3v2Tag(true), data);
-            return mpegFile->save();
+            return FileSave::save(mpegFile);
         }
 
         isWave = dynamic_cast<RIFF::WAV::File *>(fileRef.file()) != nullptr;

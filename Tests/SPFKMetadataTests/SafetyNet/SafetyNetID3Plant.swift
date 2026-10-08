@@ -59,10 +59,14 @@ enum SafetyNetID3Plant {
         try ID3v24TagBuilder.replaceTagWithVersion3(in: url, frames: plantedFrames(from: tag.frames, majorVersion: tag.majorVersion))
     }
 
-    /// `frames` as v2.3 frames with the setup's `TPE1` replaced by a two-valued one and its `CTOC`
-    /// by one listing the chapters actually present, followed by the foreign frames.
+    /// Frames ID3v2.3 cannot hold; a real v2.3 tag has none, and a save keeps v2.3 only without them.
+    static let version4OnlyFrameIDs: Set<String> = ["ASPI", "EQU2", "RVA2", "SEEK", "SIGN", "TDRL", "TDTG", "TMOO", "TPRO", "TSST"]
+
+    /// `frames` as v2.3 frames, less those v2.3 cannot hold, with the setup's `TPE1` replaced by a
+    /// two-valued one and its `CTOC` by one listing the chapters actually present, followed by the
+    /// foreign frames.
     static func plantedFrames(from frames: [ID3v2Frames.Frame], majorVersion: UInt8) throws -> [Data] {
-        let kept = frames.filter { $0.id != "TPE1" && $0.id != "CTOC" }
+        let kept = frames.filter { $0.id != "TPE1" && $0.id != "CTOC" && !version4OnlyFrameIDs.contains($0.id) }
         let chapterIDs = try frames.filter { $0.id == "CHAP" }.map { try ID3v2Frames.Chapter($0.body, majorVersion: majorVersion).elementID }
         let tableOfContents = chapterIDs.isEmpty ? [] : [ID3v24TagBuilder.version3TableOfContents(elementID: "toc", flags: 0x03, children: chapterIDs)]
 

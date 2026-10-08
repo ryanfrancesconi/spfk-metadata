@@ -15,6 +15,7 @@
 
 #import "ChapterMarker.h"
 #import "MPEGChapterUtil.h"
+#import "FileSave.h"
 #import <StringUtil.h>
 
 using namespace std;
@@ -106,7 +107,7 @@ static NSString *elementIDName(const ByteVector &elementID) {
         return false;
     }
 
-    return [self write:chapters toFile:fileRef.file()] && fileRef.save();
+    return [self write:chapters toFile:fileRef.file()] && FileSave::save(fileRef.file());
 }
 
 + (bool)write:(NSArray *)chapters toFile:(void *)opaqueFile {
@@ -169,7 +170,7 @@ static NSString *elementIDName(const ByteVector &elementID) {
 
     mpegFile->ID3v2Tag()->removeFrames("CHAP");
 
-    return mpegFile->save();
+    return FileSave::save(mpegFile);
 }
 
 @end

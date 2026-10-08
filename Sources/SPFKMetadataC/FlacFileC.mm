@@ -8,6 +8,7 @@
 #import "BEXTDescriptionC.h"
 #import "FlacFileC.h"
 #import "TagAudioPropertiesC.h"
+#import "FileSave.h"
 
 @implementation FlacFileC
 
@@ -74,7 +75,7 @@ using namespace TagLib;
         return false;
     }
 
-    return [self writeToFile:fileRef.file()] && fileRef.save();
+    return [self writeToFile:fileRef.file()] && FileSave::save(fileRef.file());
 }
 
 - (bool)writeToFile:(void *)opaqueFile {

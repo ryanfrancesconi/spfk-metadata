@@ -7,6 +7,7 @@
 
 #import "ChapterMarker.h"
 #import "MP4ChapterUtil.h"
+#import "FileSave.h"
 
 using namespace TagLib;
 
@@ -71,7 +72,7 @@ static NSTimeInterval chapterTimeToSeconds(long long chapterTime) {
         return false;
     }
 
-    return [self write:chapters toFile:&file] && file.save();
+    return [self write:chapters toFile:&file] && FileSave::save(&file);
 }
 
 + (bool)write:(NSArray *)chapters toFile:(void *)opaqueFile {
@@ -110,7 +111,7 @@ static NSTimeInterval chapterTimeToSeconds(long long chapterTime) {
 
     file.setQtChapters(MP4::ChapterList());
     file.setNeroChapters(MP4::ChapterList());
-    return file.save();
+    return FileSave::save(&file);
 }
 
 @end

@@ -31,14 +31,6 @@ extension SafetyNetKnownIssues {
             text: "An MP3 tag save merges a second-language COMM into the first and rewrites a described one: expected 3 frames with languages \"eng\" and \"fra\" kept, found 2, one joined with a space and one \"XXX | SAFETY NET NOTE\" (F15, F29)"
         ),
         SafetyNetKnownIssue(
-            rows: ["aac"], kinds: [.k9], item: .id3(.id3v1),
-            text: "An MP3 save adds an ID3v1 tag the file did not have: expected none, found one (F7)"
-        ),
-        SafetyNetKnownIssue(
-            rows: ["mp3"], kinds: [.k9, .k10, .k11, .k12, .s3, .s4], item: .id3(.id3v1),
-            text: "An MP3 save adds an ID3v1 tag the file did not have: expected none, found one (F7)"
-        ),
-        SafetyNetKnownIssue(
             rows: ["rf64", "wav"], kinds: [.k9, .k10, .k11, .k12, .s3, .s4], item: .id3(.involvedPeople),
             text: "A WAV tag save moves another app's TIPL into a TXXX: expected the TIPL frame, found none (F24)"
         ),
@@ -113,14 +105,6 @@ extension SafetyNetKnownIssues {
         SafetyNetKnownIssue(
             rows: ["mp3"], kinds: [.k9, .k10, .k11, .k12, .s3, .s4], item: .id3(.userURL),
             text: "An MP3 tag save upper-cases other apps' WXXX descriptions: expected \"Safety Net Link\", found \"SAFETY NET LINK\" (F29)"
-        ),
-        SafetyNetKnownIssue(
-            rows: ["aac"], kinds: [.k9], item: .id3(.majorVersion),
-            text: "An MP3 save re-renders an ID3v2.3 tag as ID3v2.4: expected 2.3, found 2.4 (F7)"
-        ),
-        SafetyNetKnownIssue(
-            rows: ["mp3"], kinds: [.k9, .k10, .k11, .k12, .s3, .s4], item: .id3(.majorVersion),
-            text: "An MP3 save re-renders an ID3v2.3 tag as ID3v2.4: expected 2.3, found 2.4 (F7)"
         ),
         SafetyNetKnownIssue(
             rows: ["m4a", "m4b", "m4v", "mov", "mp4"], kinds: [.k10, .k11, .k12, .s3], item: .mp4(.chapters),

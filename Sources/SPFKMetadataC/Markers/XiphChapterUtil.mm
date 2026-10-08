@@ -15,6 +15,7 @@
 #import "ChapterMarker.h"
 #import "TagUtil.h"
 #import "XiphChapterUtil.h"
+#import "FileSave.h"
 
 using namespace std;
 using namespace TagLib;
@@ -154,7 +155,7 @@ static void removeAllChapterFields(Ogg::XiphComment *comment) {
         return false;
     }
 
-    return [self write:chapters toFile:fileRef.file()] && fileRef.save();
+    return [self write:chapters toFile:fileRef.file()] && FileSave::save(fileRef.file());
 }
 
 + (bool)write:(NSArray *)chapters toFile:(void *)opaqueFile {
@@ -200,7 +201,7 @@ static void removeAllChapterFields(Ogg::XiphComment *comment) {
 
     removeAllChapterFields(comment);
 
-    return fileRef.save();
+    return FileSave::save(fileRef.file());
 }
 
 @end

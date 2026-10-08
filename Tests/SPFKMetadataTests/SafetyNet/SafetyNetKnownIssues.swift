@@ -25,14 +25,6 @@ enum SafetyNetKnownIssues {
 
     private static let id3: [SafetyNetKnownIssue] = [
         SafetyNetKnownIssue(
-            rows: ["mp3", "aac"], kinds: mp3ContainerKinds, item: .id3(.majorVersion),
-            text: "An MP3 save re-renders an ID3v2.3 tag as ID3v2.4: expected 2.3, found 2.4 (F7)"
-        ),
-        SafetyNetKnownIssue(
-            rows: ["mp3", "aac"], kinds: mp3ContainerKinds, item: .id3(.id3v1),
-            text: "An MP3 save adds an ID3v1 tag the file did not have: expected none, found one (F7)"
-        ),
-        SafetyNetKnownIssue(
             rows: ["mp3", "aac"], kinds: mp3TagKinds, item: .id3(.artist),
             text: "An MP3 tag save flattens a multi-valued TPE1: expected two values, found one joined with a space (F15)"
         ),

@@ -13,22 +13,6 @@ extension SafetyNetKnownIssues {
 
     private static let id3EntryPoints: [SafetyNetKnownIssue] = [
         SafetyNetKnownIssue(
-            rows: ["mp3"], kinds: [.e1, .e2, .e3, .e4, .e5], item: .id3(.majorVersion),
-            text: "An MP3 write re-renders an ID3v2.3 tag as ID3v2.4: expected 2.3, found 2.4 (F7)"
-        ),
-        SafetyNetKnownIssue(
-            rows: ["aac"], kinds: [.e1, .e2, .e3, .e4], item: .id3(.majorVersion),
-            text: "An AAC write re-renders an ID3v2.3 tag as ID3v2.4: expected 2.3, found 2.4 (F7)"
-        ),
-        SafetyNetKnownIssue(
-            rows: ["mp3"], kinds: [.e1, .e2, .e3, .e4, .e5], item: .id3(.id3v1),
-            text: "An MP3 write adds an ID3v1 tag the file did not have: expected none, found one (F7)"
-        ),
-        SafetyNetKnownIssue(
-            rows: ["aac"], kinds: [.e1, .e2, .e3, .e4], item: .id3(.id3v1),
-            text: "An AAC write adds an ID3v1 tag the file did not have: expected none, found one (F7)"
-        ),
-        SafetyNetKnownIssue(
             rows: tagFileRows, kinds: tagSave, item: .id3(.artist),
             text: "A TagProperties save flattens a multi-valued TPE1: expected two values, found one joined with a space (F15)"
         ),
