@@ -3,6 +3,7 @@
 
 #import <AudioToolbox/AudioToolbox.h>
 
+#import "AIFFMarkerChunks.h"
 #import "AudioMarker.h"
 #import "AudioMarkerUtil.h"
 #import "WaveMarkerChunks.h"
@@ -129,6 +130,22 @@ static BOOL WriteMarkers(AudioFileID fileID, NSArray *markers, NSURL *url) {
     return true;
 }
 
+/// The file's sample rate as Core Audio reads it; 0 when it cannot be read.
+static Float64 FileSampleRate(NSURL *url) {
+    AudioFileID fileID;
+
+    if (!OpenAudioFile(url, kAudioFileReadPermission, &fileID)) {
+        return 0;
+    }
+
+    AudioStreamBasicDescription format = {};
+    UInt32 dataFormatSize = sizeof(format);
+    OSStatus status = AudioFileGetProperty(fileID, kAudioFilePropertyDataFormat, &dataFormatSize, &format);
+    AudioFileClose(fileID);
+
+    return status == noErr ? format.mSampleRate : 0;
+}
+
 static BOOL RemoveMarkers(AudioFileID fileID) {
     UInt32 propertySize = (UInt32)NumAudioFileMarkersToNumBytes(0);
     AudioFileMarkerList *markerList = malloc(propertySize);
@@ -169,6 +186,11 @@ static BOOL RemoveMarkers(AudioFileID fileID) {
         return [WaveMarkerChunks write:markers to:url];
     }
 
+    // Core Audio rewrites the whole file to make room for `MARK` ahead of the sound data.
+    if ([AIFFMarkerChunks isAIFF:url]) {
+        return [AIFFMarkerChunks write:markers to:url sampleRate:FileSampleRate(url)];
+    }
+
     AudioFileID fileID;
 
     if (!OpenAudioFile(url, kAudioFileReadWritePermission, &fileID)) {
@@ -184,6 +206,10 @@ static BOOL RemoveMarkers(AudioFileID fileID) {
 + (BOOL)remove:(NSURL *)url {
     if ([WaveMarkerChunks isWave:url]) {
         return [WaveMarkerChunks write:@[] to:url];
+    }
+
+    if ([AIFFMarkerChunks isAIFF:url]) {
+        return [AIFFMarkerChunks write:@[] to:url sampleRate:0];
     }
 
     AudioFileID fileID;

@@ -1,18 +1,20 @@
 // Copyright Ryan Francesconi. All Rights Reserved. Revision History at https://github.com/ryanfrancesconi/spfk-metadata
 
+import AudioToolbox
 import AVFoundation
 import CoreGraphics
 import Foundation
 import SPFKBase
 import SPFKImage
 import SPFKMetadataBase
+import SPFKMetadataC
 import SPFKTesting
 import Testing
 
 @testable import SPFKMetadata
 
-/// A tag or artwork save leaves an AIFF's `SSND` where it was, on a file whose `ID3 ` chunk
-/// precedes it. Markers are written by Core Audio, which rewrites the file, so they are not covered.
+/// A tag, artwork or marker save leaves an AIFF's `SSND` where it was: tags and artwork on a file
+/// whose `ID3 ` chunk precedes it, markers on one with nothing ahead of it to grow into.
 @Suite(.tags(.file))
 final class AIFFLayoutTests: BinTestCase {
     enum Writer: String, CaseIterable, CustomTestStringConvertible {
@@ -20,6 +22,8 @@ final class AIFFLayoutTests: BinTestCase {
         case artworkSave
         case titleAndArtworkSave
         case tagPropertiesSave
+        case markerSave
+        case everythingSave
 
         var testDescription: String { rawValue }
     }
@@ -29,7 +33,8 @@ final class AIFFLayoutTests: BinTestCase {
 
     @Test(arguments: Writer.allCases)
     func aSaveLeavesTheSoundDataInPlace(writer: Writer) async throws {
-        let url = try leadingID3Fixture()
+        let writesMarkers = writer == .markerSave || writer == .everythingSave
+        let url = try writesMarkers ? bareFixture() : leadingID3Fixture()
         let before = try Self.soundChunk(in: url)
 
         switch writer {
@@ -50,6 +55,16 @@ final class AIFFLayoutTests: BinTestCase {
             var properties = try TagProperties(url: url)
             properties[.title] = Self.longTitle
             try properties.save(to: url)
+        case .markerSave:
+            var description = try await MetaAudioFileDescription(parsing: url)
+            description.markerCollection = Self.storableMarkers
+            try description.save(dirtyFlags: [.markers])
+        case .everythingSave:
+            var description = try await MetaAudioFileDescription(parsing: url)
+            description.tagProperties[.title] = Self.longTitle
+            description.imageDescription.cgImage = try CGImage.contentsOf(url: TestBundleResources.shared.sharksandwich)
+            description.markerCollection = Self.storableMarkers
+            try description.save(dirtyFlags: [.metadata, .image, .markers])
         }
 
         let after = try Self.soundChunk(in: url)
@@ -57,24 +72,119 @@ final class AIFFLayoutTests: BinTestCase {
         #expect(after.payload == before.payload)
 
         let reread = try await MetaAudioFileDescription(parsing: url)
-        if writer != .artworkSave {
+        if [.titleSave, .titleAndArtworkSave, .tagPropertiesSave, .everythingSave].contains(writer) {
             #expect(reread.tagProperties[.title] == Self.longTitle)
         }
-        if writer == .artworkSave || writer == .titleAndArtworkSave {
+        if [.artworkSave, .titleAndArtworkSave, .everythingSave].contains(writer) {
             #expect(reread.imageDescription.cgImage != nil)
+        }
+        if writesMarkers {
+            #expect(reread.markerCollection.markerDescriptions.map(\.name) == Self.storableMarkers.markerDescriptions.map(\.name))
         }
 
         let original = try AVAudioFile(forReading: TestBundleResources.shared.tabla_aif)
         #expect(try AVAudioFile(forReading: url).length == original.length)
     }
 
-    /// `tabla.aif` with its `ID3 ` chunk moved ahead of `SSND`.
+    /// A non-ASCII name, the longest name a `MARK` holds, and positions between frames.
+    private static let storableMarkers = AudioMarkerDescriptionCollection(markerDescriptions: [
+        AudioMarkerDescription(name: "First", startTime: 0.010_41),
+        AudioMarkerDescription(name: "Ünïcødé ✓ 日本", startTime: 0.5),
+        AudioMarkerDescription(name: String(repeating: "a", count: 255), startTime: 1.25),
+    ])
+
+    /// `storableMarkers`, an empty name, and a name one byte past what a `MARK` holds, which Core
+    /// Audio stores as "?".
+    private static let boundaryMarkers = AudioMarkerDescriptionCollection(
+        markerDescriptions: storableMarkers.markerDescriptions + [
+            AudioMarkerDescription(name: "", startTime: 2.000_01),
+            AudioMarkerDescription(name: String(repeating: "b", count: 256), startTime: 1.5),
+        ]
+    )
+
+    @Test func aMarkerSaveStoresWhatCoreAudioStores() async throws {
+        let ours = try bareFixture()
+        let coreAudio = bin.appendingPathComponent("core-audio.aif")
+        try FileManager.default.copyItem(at: ours, to: coreAudio)
+
+        var description = try await MetaAudioFileDescription(parsing: ours)
+        description.markerCollection = Self.boundaryMarkers
+        try description.save(dirtyFlags: [.markers])
+
+        try Self.coreAudioWrite(description.audioMarkers, to: coreAudio)
+
+        // Compared as parsed markers: Core Audio leaves a Pascal string's pad byte uninitialized.
+        let expected = try AIFFChunks(contentsOf: coreAudio)
+        let actual = try AIFFChunks(contentsOf: ours)
+        #expect(try actual.markers() == expected.markers())
+        #expect(actual.first("MARK")?.payload.count == expected.first("MARK")?.payload.count)
+    }
+
+    /// A markers-only write keeps a tag stored after the sound data on a file with no room ahead of it.
+    @Test func embeddedMarkersKeepATrailingTag() async throws {
+        let url = try copyToBin(url: TestBundleResources.shared.tabla_aif)
+        try AIFFChunkBuilder.rewrite(url) { chunks in chunks.removeAll { $0.id == "FLLR" || $0.id == "MARK" } }
+        let tag = try #require(AIFFChunks(contentsOf: url).first("ID3 "))
+        let before = try Self.soundChunk(in: url)
+
+        let format = try #require(try await MetaAudioFileDescription(parsing: url).audioFormat)
+        try EmbeddedMarkers.write(Self.storableMarkers.markerDescriptions, to: url, fileType: .aiff, fileSampleRate: format.sampleRate)
+
+        let after = try AIFFChunks(contentsOf: url)
+        #expect(after.first("ID3 ")?.payload == tag.payload)
+        #expect(try after.markers().map(\.name) == Self.storableMarkers.markerDescriptions.map(\.name))
+        #expect(try Self.soundChunk(in: url).offset == before.offset)
+    }
+
+    /// Core Audio's own marker write, the reference ours is compared with.
+    private static func coreAudioWrite(_ markers: [AudioMarker], to url: URL) throws {
+        var fileID: AudioFileID?
+        try #require(AudioFileOpenURL(url as CFURL, .readWritePermission, 0, &fileID) == noErr)
+        let file = try #require(fileID)
+        defer { AudioFileClose(file) }
+
+        var format = AudioStreamBasicDescription()
+        var formatSize = UInt32(MemoryLayout<AudioStreamBasicDescription>.size)
+        try #require(AudioFileGetProperty(file, kAudioFilePropertyDataFormat, &formatSize, &format) == noErr)
+
+        let size = NumAudioFileMarkersToNumBytes(markers.count)
+        let list = UnsafeMutableRawPointer.allocate(byteCount: size, alignment: MemoryLayout<AudioFileMarkerList>.alignment)
+        defer { list.deallocate() }
+        list.initializeMemory(as: UInt8.self, repeating: 0, count: size)
+        list.assumingMemoryBound(to: AudioFileMarkerList.self).pointee.mNumberMarkers = UInt32(markers.count)
+
+        let offset = try #require(MemoryLayout<AudioFileMarkerList>.offset(of: \AudioFileMarkerList.mMarkers))
+        let entries = (list + offset).assumingMemoryBound(to: AudioFileMarker.self)
+        let names = markers.map { NSString(string: $0.name ?? "") as CFString }
+
+        for (index, marker) in markers.enumerated() {
+            var entry = AudioFileMarker()
+            entry.mFramePosition = marker.time * format.mSampleRate
+            entry.mName = Unmanaged.passUnretained(names[index])
+            entry.mMarkerID = Int32(index)
+            entries[index] = entry
+        }
+
+        let status = withExtendedLifetime(names) { AudioFileSetProperty(file, kAudioFilePropertyMarkerList, UInt32(size), list) }
+        try #require(status == noErr)
+    }
+
+    /// `tabla.aif` as `COMM`, `SSND`: no tag, filler or marker chunk.
+    private func bareFixture() throws -> URL {
+        let url = try copyToBin(url: TestBundleResources.shared.tabla_aif)
+        try AIFFChunkBuilder.rewrite(url) { chunks in chunks.removeAll { $0.id != "COMM" && $0.id != "SSND" } }
+        return url
+    }
+
+    /// `tabla.aif` as `COMM`, `ID3 `, `SSND`: the tag ahead of the sound data, and no filler or
+    /// marker chunk to grow into.
     private func leadingID3Fixture() throws -> URL {
         let url = try copyToBin(url: TestBundleResources.shared.tabla_aif)
 
         try AIFFChunkBuilder.rewrite(url) { chunks in
             let id3 = try #require(chunks.firstIndex { $0.id == "ID3 " })
             let tag = chunks.remove(at: id3)
+            chunks.removeAll { $0.id == "FLLR" || $0.id == "MARK" }
             let sound = try #require(chunks.firstIndex { $0.id == "SSND" })
             chunks.insert(tag, at: sound)
         }

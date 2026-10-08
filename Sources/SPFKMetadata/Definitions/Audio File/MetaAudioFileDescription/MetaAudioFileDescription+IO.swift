@@ -173,8 +173,8 @@ extension MetaAudioFileDescription {
         }
     }
 
-    /// Every component written into one TagLib open and saved once; AIFF markers go through Core
-    /// Audio after it. A component that fails throws after everything else is saved.
+    /// Every component written into one TagLib open and saved once. A component that fails throws
+    /// after everything else is saved.
     private mutating func saveSession(imageNeedsSave: Bool, markersNeedsSave: Bool, storedXMPPacket: StoredXMPPacketWrite) throws {
         guard let session = MetadataSaveSession(path: url.path) else {
             throw MetadataError.writeFailed(.tags, url)
@@ -205,10 +205,9 @@ extension MetaAudioFileDescription {
             failed.insert(.artwork)
         }
 
-        let coreAudioMarkers = markersNeedsSave && (fileType == .aiff || fileType == .aifc)
         var unstorableMarkers = false
 
-        if markersNeedsSave, !coreAudioMarkers {
+        if markersNeedsSave {
             switch saveMarkers(into: session) {
             case true?: break
             case false?: failed.insert(.markers)
@@ -222,10 +221,6 @@ extension MetaAudioFileDescription {
 
         if imageNeedsSave, pictureRefToWrite == nil {
             imageDescription.cgImage = nil
-        }
-
-        if coreAudioMarkers, !AudioMarkerUtil.write(audioMarkers, to: url) {
-            failed.insert(.markers)
         }
 
         if let component = [MetadataError.Component.artwork, .markers, .bext, .rating].first(where: failed.contains) {
@@ -311,8 +306,7 @@ extension MetaAudioFileDescription {
     /// The markers' part of a save, written into `session`: false when they fail, nil when the
     /// container has none. Keep the cases in step with `AudioFileType.markerWriteTypes` and
     /// `AudioMarkerDescriptionCollection.init(url:fileType:)`, or markers are written that can't be
-    /// read back. AIFF's go through Core Audio and WAV's through `saveWave()`; `EmbeddedMarkers` is
-    /// the other marker dispatch.
+    /// read back. WAV's go through `saveWave()`; `EmbeddedMarkers` is the other marker dispatch.
     private func saveMarkers(into session: MetadataSaveSession) -> Bool? {
         switch fileType {
         case .mp3:
@@ -321,6 +315,8 @@ extension MetaAudioFileDescription {
             MP4ChapterUtil.write(markerCollection.fileEncodedChapterMarkers, toFile: session.file)
         case .flac, .ogg, .opus:
             XiphChapterUtil.write(markerCollection.colorEncodedChapterMarkers, toFile: session.file)
+        case .aiff, .aifc:
+            setAIFFMarkers(in: session)
         default:
             nil
         }
@@ -328,6 +324,13 @@ extension MetaAudioFileDescription {
 }
 
 extension MetaAudioFileDescription {
+    /// Positions convert at the sample rate Core Audio reads, as its own marker write did.
+    private func setAIFFMarkers(in session: MetadataSaveSession) -> Bool {
+        guard let sampleRate = audioFormat?.sampleRate, sampleRate > 0 else { return false }
+        session.setAIFFMarkers(audioMarkers, sampleRate: sampleRate)
+        return true
+    }
+
     /// For WAV and AIFF. A region's end time and color ride in a JSON suffix on the name, since
     /// cue points have neither.
     var audioMarkers: [AudioMarker] {

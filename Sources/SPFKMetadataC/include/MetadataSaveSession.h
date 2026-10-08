@@ -17,6 +17,10 @@ NS_ASSUME_NONNULL_BEGIN
 /// Nil when TagLib cannot open the file for writing.
 - (nullable instancetype)initWithPath:(NSString *)path;
 
+/// An AIFF's markers, written into the `MARK` chunk by `save`; positions convert at `sampleRate`. An
+/// empty array removes the chunk.
+- (void)setAIFFMarkers:(NSArray *)markers sampleRate:(double)sampleRate;
+
 /// Writes every change and closes the file; the session cannot be used after it.
 - (bool)save;
 

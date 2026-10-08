@@ -40,8 +40,8 @@ bool write(TagLib::File &file, const std::vector<Edit> &edits);
 /// and INFO.
 bool save(TagLib::RIFF::WAV::File &file, std::vector<Edit> edits = {});
 
-/// What `RIFF::AIFF::File::save()` writes from the file's state: the ID3v2.4 tag.
-bool save(TagLib::RIFF::AIFF::File &file);
+/// `edits`, then what `RIFF::AIFF::File::save()` writes from the file's state: the ID3v2.4 tag.
+bool save(TagLib::RIFF::AIFF::File &file, std::vector<Edit> edits = {});
 
 } // namespace IFFChunkPlanner
 

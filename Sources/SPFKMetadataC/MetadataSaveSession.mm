@@ -1,11 +1,14 @@
 // Copyright Ryan Francesconi. All Rights Reserved. Revision History at https://github.com/ryanfrancesconi/spfk-metadata
 
 #import <memory>
+#import <vector>
 
+#import <taglib/aifffile.h>
 #import <taglib/fileref.h>
 #import <taglib/tfilestream.h>
 
 #import "MetadataSaveSession.h"
+#import "AIFFMarkerChunks.h"
 #import "FileSave.h"
 
 using namespace TagLib;
@@ -14,6 +17,7 @@ using namespace TagLib;
     // The stream outlives the FileRef, which reads through it and does not own it.
     std::unique_ptr<FileStream> _stream;
     std::unique_ptr<FileRef> _fileRef;
+    std::vector<IFFChunkPlanner::Edit> _chunkEdits;
 }
 
 - (nullable instancetype)initWithPath:(NSString *)path {
@@ -47,11 +51,19 @@ using namespace TagLib;
     return _fileRef->file();
 }
 
+- (void)setAIFFMarkers:(NSArray *)markers sampleRate:(double)sampleRate {
+    _chunkEdits.push_back(AIFFMarkers::edit(markers, sampleRate));
+}
+
 - (bool)save {
     if (!_fileRef)
         return false;
 
-    const bool saved = FileSave::save(_fileRef->file());
+    bool saved;
+    if (auto *aiff = dynamic_cast<RIFF::AIFF::File *>(_fileRef->file()); aiff && !_chunkEdits.empty())
+        saved = IFFChunkPlanner::save(*aiff, _chunkEdits);
+    else
+        saved = FileSave::save(_fileRef->file());
 
     // Closing flushes the stream's buffered writes, so the next writer to open the file sees them.
     _fileRef.reset();

@@ -366,14 +366,15 @@ bool save(RIFF::WAV::File &file, std::vector<Edit> edits) {
     return write(file, edits);
 }
 
-bool save(RIFF::AIFF::File &file) {
+bool save(RIFF::AIFF::File &file, std::vector<Edit> edits) {
     if (!file.isValid())
         return false;
 
     const ID3v2::Tag *id3 = file.tag();
     const ByteVector tag = id3 && !id3->isEmpty() ? id3->render() : ByteVector();
 
-    return write(file, { { "ID3 ", ByteVector(), tag.isEmpty() ? std::nullopt : std::optional<ByteVector>(tag) } });
+    edits.push_back({ "ID3 ", ByteVector(), tag.isEmpty() ? std::nullopt : std::optional<ByteVector>(tag) });
+    return write(file, edits);
 }
 
 } // namespace IFFChunkPlanner
