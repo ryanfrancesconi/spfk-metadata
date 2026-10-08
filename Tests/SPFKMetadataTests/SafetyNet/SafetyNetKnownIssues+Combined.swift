@@ -7,10 +7,6 @@ import Foundation
 extension SafetyNetKnownIssues {
     static let combined: [SafetyNetKnownIssue] = [
         SafetyNetKnownIssue(
-            rows: ["flac"], kinds: [.k9, .k10, .k11, .k12, .s3], item: .flac(.multiValuedField),
-            text: "A FLAC save flattens a repeated Vorbis field: expected ENCODER twice, found one value joined with a space (F15)"
-        ),
-        SafetyNetKnownIssue(
             rows: ["flac"], kinds: [.k9, .k10, .k11, .k12, .s3], item: .flac(.iXML),
             text: "A FLAC save re-serializes iXML, dropping comments and turning CDATA into escaped text: expected the comment and CDATA nodes, found neither (F13)"
         ),
@@ -31,20 +27,8 @@ extension SafetyNetKnownIssues {
             text: "A WAV tag save moves another app's TIPL into a TXXX: expected the TIPL frame, found none (F24)"
         ),
         SafetyNetKnownIssue(
-            rows: ["aac"], kinds: [.k9], item: .id3(.artist),
-            text: "An MP3 tag save flattens a multi-valued TPE1: expected two values, found one joined with a space (F15)"
-        ),
-        SafetyNetKnownIssue(
-            rows: ["aifc", "aiff"], kinds: [.k9, .k10, .k11, .k12, .s3], item: .id3(.artist),
-            text: "An AIFF save flattens a multi-valued TPE1: expected two values, found one joined with a space (F15)"
-        ),
-        SafetyNetKnownIssue(
             rows: ["rf64", "wav"], kinds: [.k9, .k10, .k11, .k12, .s3, .s4], item: .id3(.artist),
             text: "A WAV tag save flattens a multi-valued TPE1: expected two values, found one joined with a space (F15)"
-        ),
-        SafetyNetKnownIssue(
-            rows: ["mp3"], kinds: [.k9, .k10, .k11, .k12, .s3, .s4], item: .id3(.artist),
-            text: "An MP3 tag save flattens a multi-valued TPE1: expected two values, found one joined with a space (F15)"
         ),
         SafetyNetKnownIssue(
             rows: ["rf64", "wav"], kinds: [.k9, .k10, .k11, .k12, .s3, .s4], item: .id3(.duplicateUserText),
@@ -67,16 +51,8 @@ extension SafetyNetKnownIssues {
             text: "A WAV tag save moves another app's WXXX into a TXXX: expected the WXXX frame, found none (F24)"
         ),
         SafetyNetKnownIssue(
-            rows: ["m4a", "m4b", "m4v", "mov", "mp4"], kinds: [.k9, .k10, .k11, .k12, .s3], item: .mp4(.multiValuedText),
-            text: "An MP4 save flattens a multi-valued text item: expected ©ART twice, found one value joined with a space (F15)"
-        ),
-        SafetyNetKnownIssue(
             rows: ["mka", "mkv", "webm"], kinds: [.k9], item: .matroska(.unknownTag),
             text: "A Matroska save moves another app's untargeted tag from album to track level: expected no TargetTypeValue, found 30 (F50)"
-        ),
-        SafetyNetKnownIssue(
-            rows: ["ogg", "opus"], kinds: [.k9, .k10, .k11, .k12, .s3], item: .ogg(.multiValuedField),
-            text: "An Ogg save flattens a repeated comment field: expected ENCODER twice, found one value joined with a space (F15)"
         ),
         SafetyNetKnownIssue(
             rows: ["rf64", "wav"], kinds: [.k9, .k10, .k11, .k12, .s3, .s4], item: .riff(.unknownInfo),

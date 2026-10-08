@@ -144,6 +144,15 @@ using namespace TagLib;
     auto *mp4File = dynamic_cast<MP4::File *>(f);
     const auto freeformNames = TagUtil::mp4FreeformNames(mp4File ? mp4File->tag() : nullptr);
 
+    // `load` joins a multi-valued property into one string; a value that still equals that join
+    // was not edited, so the stored list is written back whole. Read before the clear.
+    PropertyMap storedLists;
+    if (fileRef.tag()) {
+        for (const auto &[key, values] : fileRef.tag()->properties()) {
+            if (values.size() > 1 && TagUtil::storesListInOneFrame(f, key, values)) storedLists.insert(key, values);
+        }
+    }
+
     // Cleared before writing, so anything absent from the new dictionary is removed.
     TagUtil::clearTagsForSave(fileRef);
 
@@ -156,8 +165,9 @@ using namespace TagLib;
         String tagKey = String(key.UTF8String, String::UTF8);
         if (hasXiphComment && TagUtil::isChapterField(tagKey))
             continue;
-        StringList tagValue = StringList(String(value.UTF8String, String::UTF8));
-        properties.insert(tagKey, tagValue);
+        const String tagString = String(value.UTF8String, String::UTF8);
+        const StringList stored = storedLists.value(tagKey);
+        properties.insert(tagKey, !stored.isEmpty() && stored.toString() == tagString ? stored : StringList(tagString));
     }
 
     properties.removeEmpty();

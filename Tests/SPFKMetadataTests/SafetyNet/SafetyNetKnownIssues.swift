@@ -16,7 +16,7 @@ struct SafetyNetKnownIssue: Sendable {
 /// that starts passing records `knownIssueNotRecorded` and turns the suite red until its entry is
 /// removed.
 enum SafetyNetKnownIssues {
-    static let table: [SafetyNetKnownIssue] = id3 + wave + aiff + flac + ogg + mp4 + matroska + entryPoints + combined
+    static let table: [SafetyNetKnownIssue] = id3 + wave + aiff + flac + matroska + entryPoints + combined
 
     /// Every MP3 save that writes the container; AAC's are the subset without markers or a packet.
     private static let mp3ContainerKinds: Set<SaveKind> = [.k0, .k1, .k2, .k5, .k6, .k7, .s1, .s2, .k15, .k16, .k17]
@@ -24,10 +24,6 @@ enum SafetyNetKnownIssues {
     private static let mp3TagKinds: Set<SaveKind> = [.k0, .k1, .k2, .k5, .k6, .k7, .s1, .s2, .k16]
 
     private static let id3: [SafetyNetKnownIssue] = [
-        SafetyNetKnownIssue(
-            rows: ["mp3", "aac"], kinds: mp3TagKinds, item: .id3(.artist),
-            text: "An MP3 tag save flattens a multi-valued TPE1: expected two values, found one joined with a space (F15)"
-        ),
         SafetyNetKnownIssue(
             rows: ["mp3"], kinds: mp3TagKinds, item: .id3(.comments),
             text: "An MP3 tag save merges a second-language COMM into the file's own: expected 3 frames with \"fra\" kept, found 2, \"Un commentaire\" joined to the first with a space (F15)"
@@ -89,10 +85,6 @@ enum SafetyNetKnownIssues {
 
     private static let aiff: [SafetyNetKnownIssue] = [
         SafetyNetKnownIssue(
-            rows: ["aiff", "aifc"], kinds: aiffKinds, item: .id3(.artist),
-            text: "An AIFF save flattens a multi-valued TPE1: expected two values, found one joined with a space (F15)"
-        ),
-        SafetyNetKnownIssue(
             rows: ["aiff"], kinds: aiffKinds, item: .id3(.comments),
             text: "An AIFF save merges a second-language COMM into the file's own: expected 3 frames with \"fra\" kept, found 2, \"Un commentaire\" joined to the first with a space (F15)"
         ),
@@ -103,36 +95,12 @@ enum SafetyNetKnownIssues {
 
     private static let flac: [SafetyNetKnownIssue] = [
         SafetyNetKnownIssue(
-            rows: ["flac"], kinds: flacContainerKinds, item: .flac(.multiValuedField),
-            text: "A FLAC save flattens a repeated Vorbis field: expected ENCODER twice, found one value joined with a space (F15)"
-        ),
-        SafetyNetKnownIssue(
             rows: ["flac"], kinds: flacContainerKinds.subtracting([.k4]), item: .flac(.iXML),
             text: "A FLAC save re-serializes iXML, dropping comments and turning CDATA into escaped text: expected the comment and CDATA nodes, found neither (F13)"
         ),
         SafetyNetKnownIssue(
             rows: ["flac"], kinds: [.k4], item: .flac(.iXML),
             text: "A FLAC iXML edit re-serializes the rest of the document, dropping comments and turning CDATA into escaped text: expected the edit beside the comment and CDATA nodes, found neither (F13)"
-        ),
-    ]
-
-    /// Every Ogg Vorbis and Opus save kind in the net: each runs the tag save first.
-    private static let oggKinds: Set<SaveKind> = [.k0, .k1, .k2, .k5, .k6, .k7, .k8, .s1, .s2]
-
-    private static let ogg: [SafetyNetKnownIssue] = [
-        SafetyNetKnownIssue(
-            rows: ["ogg", "opus"], kinds: oggKinds, item: .ogg(.multiValuedField),
-            text: "An Ogg save flattens a repeated comment field: expected ENCODER twice, found one value joined with a space (F15)"
-        ),
-    ]
-
-    /// Every MP4-family save kind in the net: each runs the tag save first.
-    private static let mp4Kinds: Set<SaveKind> = [.k0, .k1, .k2, .k5, .k6, .k7, .k8, .s1, .s2]
-
-    private static let mp4: [SafetyNetKnownIssue] = [
-        SafetyNetKnownIssue(
-            rows: ["m4a", "m4b", "mp4", "m4v", "mov"], kinds: mp4Kinds, item: .mp4(.multiValuedText),
-            text: "An MP4 save flattens a multi-valued text item: expected ©ART twice, found one value joined with a space (F15)"
         ),
     ]
 

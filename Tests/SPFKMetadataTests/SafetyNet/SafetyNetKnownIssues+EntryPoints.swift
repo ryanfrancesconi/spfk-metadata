@@ -4,18 +4,12 @@ import Foundation
 
 /// The entry-point kinds' known failures, kept beside the save kinds' table they extend.
 extension SafetyNetKnownIssues {
-    private static let tagFileRows: Set<String> = ["mp3", "aac", "aiff", "aifc"]
     private static let waveRows: Set<String> = ["wav", "rf64"]
-    private static let mp4Rows: Set<String> = ["m4a", "m4b", "mp4", "m4v", "mov"]
     private static let tagSave: Set<SaveKind> = [.e1, .e2]
 
     static let entryPoints: [SafetyNetKnownIssue] = id3EntryPoints + waveEntryPoints + otherEntryPoints
 
     private static let id3EntryPoints: [SafetyNetKnownIssue] = [
-        SafetyNetKnownIssue(
-            rows: tagFileRows, kinds: tagSave, item: .id3(.artist),
-            text: "A TagProperties save flattens a multi-valued TPE1: expected two values, found one joined with a space (F15)"
-        ),
         SafetyNetKnownIssue(
             rows: ["mp3", "aiff"], kinds: tagSave, item: .id3(.comments),
             text: "A TagProperties save merges a second-language COMM into the file's own: expected the \"fra\" frame kept, found it joined to the first (F15)"
@@ -30,8 +24,8 @@ extension SafetyNetKnownIssues {
     /// `WaveFileC` writes re-render the tag from its dictionary (F23).
     private static let waveEntryPoints: [SafetyNetKnownIssue] = [
         SafetyNetKnownIssue(
-            rows: waveRows, kinds: [.e1, .e2, .e6, .e7], item: .id3(.artist),
-            text: "A WAV TagProperties save or MetadataPaster write flattens a multi-valued TPE1: expected two values, found one joined (F15, F23)"
+            rows: waveRows, kinds: [.e6, .e7], item: .id3(.artist),
+            text: "A WAV MetadataPaster write flattens a multi-valued TPE1: expected two values, found one joined (F15, F23)"
         ),
         SafetyNetKnownIssue(
             rows: waveRows, kinds: [.e1, .e2, .e6, .e7], item: .id3(.comments),
@@ -89,20 +83,8 @@ extension SafetyNetKnownIssues {
 
     private static let otherEntryPoints: [SafetyNetKnownIssue] = [
         SafetyNetKnownIssue(
-            rows: ["flac"], kinds: tagSave, item: .flac(.multiValuedField),
-            text: "A FLAC TagProperties save flattens a repeated Vorbis field: expected ENCODER twice, found one value (F15)"
-        ),
-        SafetyNetKnownIssue(
             rows: ["flac"], kinds: [.e9], item: .flac(.iXML),
             text: "A FLAC iXML write takes our reader's re-serialized document, losing comments and CDATA (F13)"
-        ),
-        SafetyNetKnownIssue(
-            rows: ["ogg", "opus"], kinds: tagSave, item: .ogg(.multiValuedField),
-            text: "An Ogg TagProperties save flattens a repeated comment field: expected ENCODER twice, found one value (F15)"
-        ),
-        SafetyNetKnownIssue(
-            rows: mp4Rows, kinds: tagSave, item: .mp4(.multiValuedText),
-            text: "An MP4 TagProperties save flattens a multi-valued text item: expected ©ART twice, found one value (F15)"
         ),
         SafetyNetKnownIssue(
             rows: ["mka", "mkv", "webm"], kinds: tagSave, item: .matroska(.unknownTag),

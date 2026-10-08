@@ -74,6 +74,29 @@ static Ogg::XiphComment *xiphComment(File *file, bool create = false) {
     return nullptr;
 }
 
+/// Whether a property's stored list can be written back as one list. Always, outside ID3v2; in an
+/// ID3v2 tag only when one text frame holds it, since `createFrameForProperty` turns a list of
+/// comments, lyrics or URLs, each stored as its own frame, into a single TXXX.
+static bool storesListInOneFrame(File *file, const String &key, const StringList &values) {
+    ID3v2::Tag *tag = nullptr;
+
+    if (auto *mpeg = dynamic_cast<MPEG::File *>(file)) tag = mpeg->ID3v2Tag();
+    else if (auto *aiff = dynamic_cast<RIFF::AIFF::File *>(file)) tag = aiff->tag();
+    else if (auto *wav = dynamic_cast<RIFF::WAV::File *>(file)) tag = wav->ID3v2Tag();
+    else return true;
+
+    if (!tag) return false;
+
+    for (auto *frame : tag->frameList()) {
+        const auto *textFrame = dynamic_cast<ID3v2::TextIdentificationFrame *>(frame);
+        if (!textFrame) continue;
+        const PropertyMap frameProperties = textFrame->asProperties();
+        if (frameProperties.contains(key) && frameProperties[key] == values) return true;
+    }
+
+    return false;
+}
+
 /// A Xiph comment field holding chapters (`CHAPTER000`, `CHAPTER000NAME`, …). They are markers,
 /// written by `XiphChapterUtil`; the tag path neither reads, writes nor copies them.
 static bool isChapterField(const String &key) {
