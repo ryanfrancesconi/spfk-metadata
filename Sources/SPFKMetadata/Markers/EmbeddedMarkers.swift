@@ -23,8 +23,8 @@ public enum EmbeddedMarkers {
     ) throws {
         let success: Bool
 
-        switch fileType {
-        case .wav, .w64, .aiff, .aifc:
+        switch fileType.markerStorage {
+        case .riffCues, .aiffMarks, .coreAudio:
             // Cue points; endTime and color travel in the name suffix.
             let audioMarkers = descriptions.enumerated().map { i, desc in
                 desc.audioMarker(markerID: i, fileType: fileType, fileSampleRate: fileSampleRate)
@@ -32,21 +32,21 @@ public enum EmbeddedMarkers {
 
             success = AudioMarkerUtil.write(audioMarkers, to: url)
 
-        case .mp3:
+        case .id3Chapters:
             // ID3 CHAP frames carry endTime natively, so only the color is encoded into the title.
             success = MPEGChapterUtil.write(descriptions.map(\.colorEncodedChapterMarker), to: url.path)
 
-        case .flac, .ogg, .opus:
+        case .xiphChapters:
             // Vorbis comment chapters; endTime is native here too.
             success = XiphChapterUtil.write(descriptions.map(\.colorEncodedChapterMarker), to: url.path)
 
-        case .m4a, .mp4, .aac, .m4b, .mov, .m4v:
+        case .mp4Chapters:
             // The QuickTime chapter track has neither an endTime nor a color field, so the title's
             // JSON suffix carries both. A bare `ChapterMarker` would demote every colored region
             // to an uncolored point marker.
             success = MP4ChapterUtil.write(descriptions.map(\.fileEncodedChapterMarker), to: url.path)
 
-        default:
+        case nil:
             throw MetadataError.unsupportedFormat(fileType, .markers)
         }
 
@@ -61,20 +61,20 @@ public enum EmbeddedMarkers {
     ///   is not an error signal.
     @discardableResult
     public static func removeAll(from url: URL, fileType: AudioFileType) throws -> Bool {
-        switch fileType {
-        case .wav, .w64, .aiff, .aifc:
+        switch fileType.markerStorage {
+        case .riffCues, .aiffMarks, .coreAudio:
             AudioMarkerUtil.remove(url)
 
-        case .mp3:
+        case .id3Chapters:
             MPEGChapterUtil.remove(url.path)
 
-        case .flac, .ogg, .opus:
+        case .xiphChapters:
             XiphChapterUtil.remove(url.path)
 
-        case .m4a, .mp4, .aac, .m4b, .mov, .m4v:
+        case .mp4Chapters:
             MP4ChapterUtil.remove(url.path)
 
-        default:
+        case nil:
             throw MetadataError.unsupportedFormat(fileType, .markers)
         }
     }

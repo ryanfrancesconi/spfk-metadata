@@ -12,13 +12,11 @@ import Testing
 
 @Suite(.tags(.file))
 final class EmbeddedMarkersTests: BinTestCase {
-    /// Wider than `markerWriteTypes`: the dispatch also takes `.w64` and `.aac`.
-    static let dispatched: Set<AudioFileType> = [
-        .wav, .w64, .aiff, .aifc, .mp3, .flac, .ogg, .opus, .m4a, .mp4, .aac, .m4b, .mov, .m4v,
-    ]
+    /// Every type with marker storage: wider than `markerWriteTypes` by Core Audio's `.w64`.
+    static let dispatched = Set(AudioFileType.allCases.filter { $0.markerStorage != nil })
 
     static let writable = TestBundleResources.shared.oneFilePerContainer.filter {
-        AudioFileType(url: $0).map { dispatched.contains($0) && $0 != .aac } == true
+        AudioFileType(url: $0).map { dispatched.contains($0) } == true
     }
 
     static let writableWithTags = writable.filter { AudioFileType(url: $0)?.supportsMetadata == true }
@@ -47,13 +45,6 @@ final class EmbeddedMarkersTests: BinTestCase {
     @Test(arguments: writable)
     func writeRoundTrips(source: URL) async throws {
         try await roundTrip(source)
-    }
-
-    /// F44: ADTS AAC goes to the MP4 chapter writer, which can't open it.
-    @Test func aacRoundTrips() async throws {
-        await withKnownIssue("F44") {
-            try await roundTrip(TestBundleResources.shared.tabla_aac)
-        }
     }
 
     private func roundTrip(_ source: URL) async throws {

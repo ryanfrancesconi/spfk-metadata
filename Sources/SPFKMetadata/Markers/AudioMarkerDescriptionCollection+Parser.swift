@@ -7,15 +7,15 @@ import SPFKMetadataBase
 internal import SPFKMetadataC
 
 extension AudioMarkerDescriptionCollection {
-    /// Reads the file's markers. Keep the cases in step with `MetaAudioFileDescription.saveMarkers()`,
-    /// or markers are saved that can't be read back.
+    /// Reads the file's markers from its ``AudioFileType/markerStorage``, the same table every
+    /// writer dispatches on.
     public init(url: URL, fileType: AudioFileType? = nil) async throws {
         guard let fileType = fileType ?? AudioFileType(url: url) else {
             throw MetadataError.unsupportedFormat(nil, .markers)
         }
 
-        switch fileType {
-        case .m4a, .mp4, .aac, .m4b, .mov, .m4v:
+        switch fileType.markerStorage {
+        case .mp4Chapters:
             // AVFoundation covers files with neither a QuickTime nor a Nero chapter list.
             let rawChapters = MP4ChapterUtil.read(url.path) as? [ChapterMarker] ?? []
             if rawChapters.isNotEmpty {
@@ -27,7 +27,7 @@ extension AudioMarkerDescriptionCollection {
                 self = AudioMarkerDescriptionCollection(chapterMarkers: value)
             }
 
-        case .ogg, .opus, .flac:
+        case .xiphChapters:
             // AVFoundation covers files without CHAPTER* fields.
             let xiph: [ChapterMarker] = XiphChapterUtil.read(url.path) as? [ChapterMarker] ?? []
             if xiph.isNotEmpty {
@@ -37,15 +37,15 @@ extension AudioMarkerDescriptionCollection {
                 self = AudioMarkerDescriptionCollection(chapterMarkers: value)
             }
 
-        case .mp3:
+        case .id3Chapters:
             let value: [ChapterMarker] = MPEGChapterUtil.read(url.path) as? [ChapterMarker] ?? []
             self = AudioMarkerDescriptionCollection(chapterMarkers: value)
 
-        case .aiff, .aifc, .wav, .w64:
+        case .riffCues, .aiffMarks, .coreAudio:
             let value: [AudioMarker] = AudioMarkerUtil.read(url) as? [AudioMarker] ?? []
             self = AudioMarkerDescriptionCollection(audioMarkers: value)
 
-        default:
+        case nil:
             throw MetadataError.unsupportedFormat(fileType, .markers)
         }
     }

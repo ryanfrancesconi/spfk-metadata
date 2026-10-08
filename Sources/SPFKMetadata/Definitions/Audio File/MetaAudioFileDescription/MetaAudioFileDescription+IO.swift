@@ -228,8 +228,8 @@ extension MetaAudioFileDescription {
             throw MetadataError.writeFailed(component, url)
         }
 
-        // `save(dirtyFlags:)` filters on `AudioFileType.markerWriteTypes`, so this is that list
-        // disagreeing with `saveMarkers(into:)`. Returning would clear the dirty flag and lose the markers.
+        // `save(dirtyFlags:)` filters on `AudioFileType.markerWriteTypes`, derived from the same
+        // storage, so this is unreachable. Returning would clear the dirty flag and lose the markers.
         if unstorableMarkers {
             throw UnstorableMetadataError(fileType: fileType, flags: [.markers])
         }
@@ -305,20 +305,18 @@ extension MetaAudioFileDescription {
     }
 
     /// The markers' part of a save, written into `session`: false when they fail, nil when the
-    /// container has none. Keep the cases in step with `AudioFileType.markerWriteTypes` and
-    /// `AudioMarkerDescriptionCollection.init(url:fileType:)`, or markers are written that can't be
-    /// read back. WAV's go through `saveWave()`; `EmbeddedMarkers` is the other marker dispatch.
+    /// container has no storage a save writes. WAV's go through `saveWave()`.
     private func saveMarkers(into session: MetadataSaveSession) -> Bool? {
-        switch fileType {
-        case .mp3:
+        switch fileType?.markerStorage {
+        case .id3Chapters:
             MPEGChapterUtil.write(markerCollection.colorEncodedChapterMarkers, toFile: session.file)
-        case .m4a, .mp4, .aac, .m4b, .mov, .m4v:
+        case .mp4Chapters:
             MP4ChapterUtil.write(markerCollection.fileEncodedChapterMarkers, toFile: session.file)
-        case .flac, .ogg, .opus:
+        case .xiphChapters:
             XiphChapterUtil.write(markerCollection.colorEncodedChapterMarkers, toFile: session.file)
-        case .aiff, .aifc:
+        case .aiffMarks:
             setAIFFMarkers(in: session)
-        default:
+        case .riffCues, .coreAudio, nil:
             nil
         }
     }
