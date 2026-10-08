@@ -6,7 +6,7 @@
 #import <taglib/tfilestream.h>
 
 #import "MetadataSaveSession.h"
-#import "WaveChunkPlanner.h"
+#import "FileSave.h"
 
 using namespace TagLib;
 
@@ -48,7 +48,7 @@ using namespace TagLib;
 }
 
 - (bool)save {
-    return WaveChunkPlanner::save(_fileRef->file());
+    return FileSave::save(_fileRef->file());
 }
 
 @end

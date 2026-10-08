@@ -21,7 +21,7 @@
 #import "TagLibBridge.h"
 #import "TagRating.h"
 #import "TagRatingFile.h"
-#import "WaveChunkPlanner.h"
+#import "FileSave.h"
 
 @implementation TagFile
 
@@ -117,7 +117,7 @@ using namespace TagLib;
         return false;
     }
 
-    return [self writeToFileRef:&fileRef] && WaveChunkPlanner::save(fileRef.file());
+    return [self writeToFileRef:&fileRef] && FileSave::save(fileRef.file());
 }
 
 - (bool)writeToFileRef:(void *)opaqueFileRef {

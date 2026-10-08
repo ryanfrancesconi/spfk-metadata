@@ -37,6 +37,7 @@
 
 #import "StringUtil.h"
 #import "TagUtil.h"
+#import "FileSave.h"
 #import "WaveChunkPlanner.h"
 #import "WaveMarkerChunks.h"
 
@@ -110,7 +111,7 @@ namespace {
 
     tag->setTitle(String(title.UTF8String, String::UTF8));
 
-    return WaveChunkPlanner::save(fileRef.file());
+    return FileSave::save(fileRef.file());
 }
 
 + (nullable NSString *)getComment:(NSString *)path {
@@ -148,7 +149,7 @@ namespace {
 
     tag->setComment(String(comment.UTF8String, String::UTF8));
 
-    return WaveChunkPlanner::save(fileRef.file());
+    return FileSave::save(fileRef.file());
 }
 
 + (bool)removeAllTags:(NSString *)path {
@@ -162,7 +163,7 @@ namespace {
 
     TagUtil::clearTags(fileRef);
 
-    return WaveChunkPlanner::save(fileRef.file());
+    return FileSave::save(fileRef.file());
 }
 
 + (bool)copyTagsFromPath:(NSString *)path toPath:(NSString *)toPath {
@@ -212,7 +213,7 @@ namespace {
     // The destination is already stripped, so its tags are saved even when the rating can't be.
     bool ratingWritten = ratingStars <= 0 || TagRatingWriteToFile(output.file(), ratingStars);
 
-    return WaveChunkPlanner::save(output.file()) && ratingWritten;
+    return FileSave::save(output.file()) && ratingWritten;
 }
 
 + (nullable NSString *)storedXMPPacket:(NSString *)path {

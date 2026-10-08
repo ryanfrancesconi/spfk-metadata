@@ -365,11 +365,4 @@ bool save(RIFF::WAV::File &file, std::vector<Edit> edits) {
     return write(file, edits);
 }
 
-bool save(File *file) {
-    if (auto *wav = dynamic_cast<RIFF::WAV::File *>(file))
-        return save(*wav);
-
-    return file->save();
-}
-
 } // namespace WaveChunkPlanner

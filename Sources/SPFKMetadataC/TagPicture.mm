@@ -17,7 +17,7 @@
 #import "TagImageDecoding.h"
 #import "TagPicture.h"
 #import "TagPictureRef.h"
-#import "WaveChunkPlanner.h"
+#import "FileSave.h"
 
 using namespace std;
 using namespace TagLib;
@@ -260,7 +260,7 @@ static void clearLegacyFlacXiphCommentPictures(FileRef &fileRef) {
     if (fileRef.isNull())
         return false;
 
-    return [self write:picture toFileRef:&fileRef] && WaveChunkPlanner::save(fileRef.file());
+    return [self write:picture toFileRef:&fileRef] && FileSave::save(fileRef.file());
 }
 
 + (bool)write:(nullable TagPictureRef *)picture toFileRef:(nonnull void *)opaqueFileRef {

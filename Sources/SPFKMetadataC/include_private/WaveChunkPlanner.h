@@ -38,9 +38,6 @@ bool write(TagLib::File &file, const std::vector<Edit> &edits);
 /// and INFO.
 bool save(TagLib::RIFF::WAV::File &file, std::vector<Edit> edits = {});
 
-/// `save` for a WAV, the file's own `save()` for any other format.
-bool save(TagLib::File *file);
-
 } // namespace WaveChunkPlanner
 
 #endif
