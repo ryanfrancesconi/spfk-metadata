@@ -29,8 +29,7 @@
     },
     "data" : {
       "customTags" : {
-        "ENCODER" : "Lavf62.3.100",
-        "FMPS_RATING" : "0.800"
+        "ENCODER" : "Lavf62.3.100"
       },
       "tags" : {
         "rating" : "4"

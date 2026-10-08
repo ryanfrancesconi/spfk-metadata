@@ -28,8 +28,7 @@
     },
     "data" : {
       "customTags" : {
-        "ENCODER" : "Lavc62.11.100 vorbis",
-        "FMPS_RATING" : "0.800"
+        "ENCODER" : "Lavc62.11.100 vorbis"
       },
       "tags" : {
         "rating" : "4"

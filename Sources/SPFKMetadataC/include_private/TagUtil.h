@@ -80,6 +80,11 @@ static bool isChapterField(const String &key) {
     return key.upper().startsWith("CHAPTER");
 }
 
+/// A Xiph comment's `FMPS_RATING`: the rating writer's own mirror of `RATING`, never a tag.
+static bool isRatingMirrorField(const String &key) {
+    return key.upper() == "FMPS_RATING";
+}
+
 /// Removes `ilst` items in memory: all of them, or with `keepingUnmapped` only those with a property
 /// key, leaving `stik`, `rtng`, store IDs, other applications' freeform atoms, `covr` and `rate`.
 /// `setProperties` alone misses an iTunes freeform atom whose name is not upper case (`iTunSMPB`):

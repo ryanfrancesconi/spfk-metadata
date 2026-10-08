@@ -176,11 +176,12 @@ namespace {
 
     PropertyMap tags = input.file()->properties();
 
-    // Chapter fields are markers; the caller's marker step carries them.
+    // Chapter fields are markers, which the caller's marker step carries; FMPS_RATING mirrors the
+    // rating, carried below.
     if (TagUtil::xiphComment(input.file())) {
         StringList chapterKeys;
         for (const auto &[key, _] : tags) {
-            if (TagUtil::isChapterField(key)) chapterKeys.append(key);
+            if (TagUtil::isChapterField(key) || TagUtil::isRatingMirrorField(key)) chapterKeys.append(key);
         }
         for (const auto &key : std::as_const(chapterKeys)) tags.erase(key);
     }

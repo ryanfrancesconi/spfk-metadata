@@ -68,8 +68,8 @@ using namespace TagLib;
         properties.erase("RATING");
 
     for (const auto &property : properties) {
-        // Read as markers, by XiphChapterUtil.
-        if (hasXiphComment && TagUtil::isChapterField(property.first)) continue;
+        // Read as markers, by XiphChapterUtil, and as the rating, below.
+        if (hasXiphComment && (TagUtil::isChapterField(property.first) || TagUtil::isRatingMirrorField(property.first))) continue;
 
         const char *ckey = property.first.toCString(true);
         String cval = property.second.toString();
