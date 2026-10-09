@@ -133,7 +133,7 @@ final class WaveLayoutTests: BinTestCase {
         description.imageDescription.cgImage = context.makeImage()
         description.tagProperties[.title] = Self.editedTitle
 
-        #expect(throws: MetadataError.writeFailed(.artwork, url)) {
+        #expect(throws: MetadataError.incompleteSave(written: [.metadata], failures: [.writeFailed(.artwork, url)])) {
             try description.save(dirtyFlags: [.metadata, .image])
         }
 

@@ -55,7 +55,7 @@ final class ReadFailureSaveTests: BinTestCase {
 
         description.set(tag: .title, value: "Edited")
 
-        #expect(throws: MetadataError.readFailed(.tags, url)) {
+        #expect(throws: MetadataError.incompleteSave(written: [], failures: [.readFailed(.tags, url)])) {
             try description.save(dirtyFlags: [.metadata])
         }
 
@@ -95,14 +95,14 @@ final class ReadFailureSaveTests: BinTestCase {
             AudioMarkerDescription(name: "New", startTime: 0.25, markerID: 0),
         ])
 
-        #expect(throws: MetadataError.readFailed(.markers, url)) {
+        #expect(throws: MetadataError.incompleteSave(written: [], failures: [.readFailed(.markers, url)])) {
             try description.save(dirtyFlags: [.markers])
         }
 
         try await expectKept(url)
     }
 
-    /// The flag that was read is written; the one that was not throws after it.
+    /// The flag that was read is written; the one that was not is named after it.
     @Test(arguments: formats)
     func aSaveWritesTheFlagsThatWereRead(source: URL) async throws {
         let url = try await prepared(source)
@@ -113,7 +113,7 @@ final class ReadFailureSaveTests: BinTestCase {
             AudioMarkerDescription(name: "New", startTime: 0.25, markerID: 0),
         ])
 
-        #expect(throws: MetadataError.readFailed(.markers, url)) {
+        #expect(throws: MetadataError.incompleteSave(written: [.metadata], failures: [.readFailed(.markers, url)])) {
             try description.save(dirtyFlags: [.metadata, .markers])
         }
 
@@ -137,7 +137,9 @@ final class ReadFailureSaveTests: BinTestCase {
 
         description.set(tag: .title, value: "Edited")
 
-        #expect(throws: MetadataError.readFailed(.bext, url)) {
+        #expect(throws: MetadataError.incompleteSave(
+            written: [], failures: [.readFailed(.bext, url), .readFailed(.ixml, url)]
+        )) {
             try description.save(dirtyFlags: [.metadata])
         }
 
@@ -171,7 +173,7 @@ final class ReadFailureSaveTests: BinTestCase {
         description.readStatus.failed = [.tags]
         description.tagProperties = TagProperties()
 
-        #expect(throws: MetadataError.readFailed(.tags, url)) {
+        #expect(throws: MetadataError.incompleteSave(written: [], failures: [.readFailed(.tags, url)])) {
             try description.save(dirtyFlags: [.metadata])
         }
 

@@ -12,7 +12,7 @@ import Testing
 @testable import SPFKMetadata
 
 /// Pins `AudioFileType.metadataTypes` and `markerWriteTypes` against the writers: a listed type
-/// must round-trip, and an unlisted one must refuse with ``UnstorableMetadataError``.
+/// must round-trip, and an unlisted one must refuse with ``MetadataError/unstorable(_:_:)``.
 @Suite(.tags(.file))
 final class FormatCapabilityRoundTripTests: BinTestCase {
     static let fixtures: [URL] = {
@@ -39,7 +39,7 @@ final class FormatCapabilityRoundTripTests: BinTestCase {
             var description = MetaAudioFileDescription(url: url, fileType: fileType)
             description.tagProperties[.title] = title
 
-            #expect(throws: UnstorableMetadataError(fileType: fileType, flags: [.metadata])) {
+            #expect(throws: MetadataError.incompleteSave(written: [], failures: [.unstorable(fileType, [.metadata])])) {
                 try description.save(dirtyFlags: [.metadata])
             }
             return
@@ -78,7 +78,7 @@ final class FormatCapabilityRoundTripTests: BinTestCase {
             var description = MetaAudioFileDescription(url: url, fileType: fileType)
             description.markerCollection = AudioMarkerDescriptionCollection(markerDescriptions: [marker])
 
-            #expect(throws: UnstorableMetadataError(fileType: fileType, flags: [.markers])) {
+            #expect(throws: MetadataError.incompleteSave(written: [], failures: [.unstorable(fileType, [.markers])])) {
                 try description.save(dirtyFlags: [.markers])
             }
             return
@@ -131,7 +131,7 @@ final class FormatCapabilityRoundTripTests: BinTestCase {
         description.tagProperties[.title] = "Unstorable"
         description.urlProperties.finderTags = FinderTagGroup(tags: [FinderTagDescription(label: "Unstorable")])
 
-        #expect(throws: UnstorableMetadataError(fileType: .caf, flags: [.metadata])) {
+        #expect(throws: MetadataError.incompleteSave(written: [.finderTags], failures: [.unstorable(.caf, [.metadata])])) {
             try description.save(dirtyFlags: [.metadata, .finderTags])
         }
 
@@ -147,7 +147,7 @@ final class FormatCapabilityRoundTripTests: BinTestCase {
         var description = MetaAudioFileDescription(url: url, fileType: .caf)
         description.tagProperties[.title] = "Unstorable"
 
-        #expect(throws: UnstorableMetadataError(fileType: .caf, flags: [.metadata])) {
+        #expect(throws: MetadataError.incompleteSave(written: [], failures: [.unstorable(.caf, [.metadata])])) {
             try description.save(dirtyFlags: [.metadata])
         }
 

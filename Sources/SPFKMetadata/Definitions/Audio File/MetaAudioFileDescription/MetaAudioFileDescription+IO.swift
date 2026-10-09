@@ -132,88 +132,17 @@ extension MetaAudioFileDescription {
 }
 
 extension MetaAudioFileDescription {
-    /// Writes what `dirtyFlags` names, then the Finder tags and modification date. `.xmp` is
-    /// written elsewhere; `storedXMPPacket` replaces or removes the packet a WAV or MP3 stores,
-    /// in the same TagLib save.
-    ///
-    /// Throws ``MetadataError/readFailed(_:_:)`` for a flag whose component ``readStatus`` says the
-    /// parse could not read, which is not written; ``MetadataError/writeFailed(_:_:)`` for a
-    /// component that could not be written; and ``UnstorableMetadataError`` for flags the container
-    /// has no writer for. Each is thrown after writing everything else.
-    public mutating func save(
-        dirtyFlags: Set<MetadataDirtyFlag> = [.metadata],
-        storedXMPPacket: StoredXMPPacketWrite = .keep
-    ) throws {
-        // First, so a locked file fails with one error rather than a partial save; TagLib
-        // reports the lock only as `false`.
-        try url.requireWritable()
-
-        if storedXMPPacket != .keep, !(fileType.map(StoredXMPPacketWrite.fileTypes.contains) ?? false) {
-            throw NSError(description: "A .\(url.pathExtension) file stores no XMP packet of its own")
-        }
-
-        let unstorable = unstorableFlags(in: dirtyFlags)
-        let unread = unreadFlags(in: dirtyFlags.subtracting(unstorable))
-        let writable = dirtyFlags.subtracting(unstorable).subtracting(unread)
-
-        // Nothing else to write, so the file is left untouched, modification date included.
-        if writable.isEmpty {
-            if let error = unreadError(for: unread) { throw error }
-
-            if unstorable.isNotEmpty {
-                throw UnstorableMetadataError(fileType: fileType, flags: unstorable)
-            }
-        }
-
-        let imageNeedsSave = writable.contains(.image)
-        let markersNeedsSave = writable.contains(.markers)
-
-        // A container save can rewrite the whole file; a Finder tag change shouldn't pay it.
-        let containerNeedsSave = writable.contains(.metadata) || imageNeedsSave || markersNeedsSave
-
-        if !containerNeedsSave {
-            try storedXMPPacket.write(to: url)
-        } else {
-            if fileType == .wav {
-                try saveWave(
-                    metadataNeedsSave: writable.contains(.metadata), imageNeedsSave: imageNeedsSave,
-                    markersNeedsSave: markersNeedsSave, storedXMPPacket: storedXMPPacket
-                )
-            } else {
-                try saveSession(
-                    metadataNeedsSave: writable.contains(.metadata), imageNeedsSave: imageNeedsSave,
-                    markersNeedsSave: markersNeedsSave, storedXMPPacket: storedXMPPacket
-                )
-            }
-        }
-
-        #if os(macOS)
-            let finderTags = urlProperties.finderTags
-            try url.set(finderTags: finderTags)
-            try url.updateModificationDate()
-
-            // Rebuilt, or a stale date reads as an external change on the next scan.
-            urlProperties = URLProperties(url: url)
-        #endif
-
-        if let error = unreadError(for: unread) { throw error }
-
-        if unstorable.isNotEmpty {
-            throw UnstorableMetadataError(fileType: fileType, flags: unstorable)
-        }
-    }
-
-    /// Every component written into one TagLib open and saved once. A component that fails throws
-    /// after everything else is saved. A FLAC's BEXT and iXML are written only when they differ
+    /// Every component written into one TagLib open and saved once, returning those that failed;
+    /// throws when nothing could be saved. A FLAC's BEXT and iXML are written only when they differ
     /// from the file's. Tags the parse could not read are left as the file has them.
-    private mutating func saveSession(
+    mutating func saveSession(
         metadataNeedsSave: Bool, imageNeedsSave: Bool, markersNeedsSave: Bool, storedXMPPacket: StoredXMPPacketWrite
-    ) throws {
+    ) throws -> Set<MetadataComponent> {
         guard let session = MetadataSaveSession(path: url.path) else {
             throw MetadataError.writeFailed(.tags, url)
         }
 
-        var failed: Set<MetadataError.Component> = []
+        var failed: Set<MetadataComponent> = []
         let tagsWereRead = readStatus.holdsFileValue(of: .tags)
 
         // Every container save writes the whole tag map. Keeps the existing artwork; an artwork
@@ -248,14 +177,10 @@ extension MetaAudioFileDescription {
             failed.insert(.artwork)
         }
 
-        var unstorableMarkers = false
-
-        if markersNeedsSave {
-            switch saveMarkers(into: session) {
-            case true?: break
-            case false?: failed.insert(.markers)
-            case nil: unstorableMarkers = true
-            }
+        // A nil result is unreachable: `save(dirtyFlags:)` filters on `markerWriteTypes`, derived
+        // from the same storage. Counted as failed, so the dirty flag is kept.
+        if markersNeedsSave, saveMarkers(into: session) != true {
+            failed.insert(.markers)
         }
 
         guard session.save() else {
@@ -264,22 +189,14 @@ extension MetaAudioFileDescription {
 
         // The packet rides the tag write, so it goes alone when that was skipped.
         if !tagsWereRead {
-            try storedXMPPacket.write(to: url)
+            do { try storedXMPPacket.write(to: url) } catch { failed.insert(.xmp) }
         }
 
         if imageNeedsSave, pictureRefToWrite == nil {
             imageDescription.cgImage = nil
         }
 
-        if let component = [MetadataError.Component.artwork, .markers, .bext, .rating].first(where: failed.contains) {
-            throw MetadataError.writeFailed(component, url)
-        }
-
-        // `save(dirtyFlags:)` filters on `AudioFileType.markerWriteTypes`, derived from the same
-        // storage, so this is unreachable. Returning would clear the dirty flag and lose the markers.
-        if unstorableMarkers {
-            throw UnstorableMetadataError(fileType: fileType, flags: [.markers])
-        }
+        return failed
     }
 
     /// `imageDescription.pictureRef`, minus the file's own path: a parse without artwork leaves it
@@ -303,11 +220,11 @@ extension MetaAudioFileDescription {
     }
 
     /// Markers and artwork are written only when flagged; the tags, BEXT and iXML only when
-    /// `.metadata` is and they differ from the file's. A failed artwork, marker or rating write
-    /// throws after the rest is saved.
-    private mutating func saveWave(
+    /// `.metadata` is and they differ from the file's. Returns the components that failed; throws
+    /// when nothing could be saved.
+    mutating func saveWave(
         metadataNeedsSave: Bool, imageNeedsSave: Bool, markersNeedsSave: Bool, storedXMPPacket: StoredXMPPacketWrite
-    ) throws {
+    ) throws -> Set<MetadataComponent> {
         let waveFile = WaveFileC(path: url.path)
         storedXMPPacket.apply { waveFile.xmpNeedsSave = true; waveFile.xmpPacket = $0 }
 
@@ -331,8 +248,13 @@ extension MetaAudioFileDescription {
         }
 
         guard waveFile.save() else {
-            throw MetadataError.writeFailed(waveFile.failedComponent, url)
+            guard !waveFile.failedComponents.contains(.container) else {
+                throw MetadataError.writeFailed(.tags, url)
+            }
+            return waveFile.failedWrites
         }
+
+        return []
     }
 
     /// The tags, BEXT and iXML that differ from the file's; all of them when it can't be read.

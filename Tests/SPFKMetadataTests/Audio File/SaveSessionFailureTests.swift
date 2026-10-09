@@ -49,7 +49,7 @@ final class SaveSessionFailureTests: BinTestCase {
             AudioMarkerDescription(name: "Second", startTime: 1.5),
         ])
 
-        #expect(throws: MetadataError.writeFailed(.artwork, url)) {
+        #expect(throws: MetadataError.incompleteSave(written: [.metadata, .markers], failures: [.writeFailed(.artwork, url)])) {
             try description.save(dirtyFlags: [.metadata, .image, .markers])
         }
 

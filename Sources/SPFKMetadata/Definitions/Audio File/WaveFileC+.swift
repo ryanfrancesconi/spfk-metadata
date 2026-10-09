@@ -28,8 +28,17 @@ extension WaveFileC {
         }
     }
 
+    /// The components a failed `save()` could not write, short of the whole file.
+    var failedWrites: Set<MetadataComponent> {
+        var result = Set<MetadataComponent>()
+        if failedComponents.contains(.artwork) { result.insert(.artwork) }
+        if failedComponents.contains(.markers) { result.insert(.markers) }
+        if failedComponents.contains(.rating) { result.insert(.rating) }
+        return result
+    }
+
     /// The component a failed `save()` reports; `.tags` when nothing was written.
-    var failedComponent: MetadataError.Component {
+    var failedComponent: MetadataComponent {
         if failedComponents.contains(.container) { return .tags }
         if failedComponents.contains(.artwork) { return .artwork }
         if failedComponents.contains(.markers) { return .markers }

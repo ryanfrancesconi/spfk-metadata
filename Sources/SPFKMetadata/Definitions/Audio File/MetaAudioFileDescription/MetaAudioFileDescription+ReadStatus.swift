@@ -22,23 +22,14 @@ extension MetaAudioFileDescription {
     /// The flags in `dirtyFlags` that would write a component ``readStatus`` says was not read.
     func unreadFlags(in dirtyFlags: Set<MetadataDirtyFlag>) -> Set<MetadataDirtyFlag> {
         dirtyFlags.filter { flag in
-            Self.components(writtenBy: flag).contains { !readStatus.holdsFileValue(of: $0) }
+            flag.components.contains { !readStatus.holdsFileValue(of: $0) }
         }
     }
 
-    /// Names the first unread component of `flags`; nil when there is none.
-    func unreadError(for flags: Set<MetadataDirtyFlag>) -> MetadataError? {
-        let components = MetadataDirtyFlag.allCases.filter(flags.contains).flatMap(Self.components(writtenBy:))
-
-        return components.first { !readStatus.holdsFileValue(of: $0) }.map { .readFailed($0, url) }
-    }
-
-    private static func components(writtenBy flag: MetadataDirtyFlag) -> [MetadataError.Component] {
-        switch flag {
-        case .metadata: [.tags, .rating, .bext, .ixml]
-        case .markers: [.markers]
-        case .image: [.artwork]
-        case .xmp, .finderTags: []
-        }
+    /// Names each unread component of `flags`, in declaration order.
+    func unreadErrors(for flags: Set<MetadataDirtyFlag>) -> [MetadataError] {
+        MetadataComponent.allCases
+            .filter { flags.contains($0.dirtyFlag) && !readStatus.holdsFileValue(of: $0) }
+            .map { .readFailed($0, url) }
     }
 }
