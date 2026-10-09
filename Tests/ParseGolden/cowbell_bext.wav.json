@@ -27,7 +27,7 @@
   "fileType" : "wav",
   "imageDescription" : {
     "description" : null,
-    "hasThumbnail" : true,
+    "hasThumbnail" : false,
     "size" : "1024x1024"
   },
   "isAVPlayable" : true,

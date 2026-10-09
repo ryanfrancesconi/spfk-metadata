@@ -55,7 +55,12 @@ extension MetaAudioFileDescription {
         // Each read gates on its own formats; a WAV reaches neither.
         await loadVideoTrack()
 
-        await updateImageThumbnail()
+        // No thumbnail: its decode costs more than the rest of the parse with a large cover, so
+        // whoever displays the artwork makes it (`ImageDescription.createThumbnail()`). Without
+        // artwork, display supplies the Finder icon, which is per-machine rather than file content.
+        if imageDescription.cgImage == nil {
+            imageDescription.description = url.path
+        }
     }
 
     /// The frames AVFoundation can play: the chunks' count, or `AVAudioFile`'s where they give none.
@@ -108,16 +113,6 @@ extension MetaAudioFileDescription {
         }
 
         imageDescription.pictureRef = try? TagPictureRef.parsing(url: url)
-    }
-
-    /// No embedded artwork means no thumbnail. The Finder icon is per-machine, not file content,
-    /// so display supplies it: `NSWorkspace.FinderIcon.fileType(for:)`.
-    private mutating func updateImageThumbnail() async {
-        if imageDescription.cgImage == nil {
-            imageDescription.description = url.path
-        }
-
-        await imageDescription.createThumbnail()
     }
 }
 

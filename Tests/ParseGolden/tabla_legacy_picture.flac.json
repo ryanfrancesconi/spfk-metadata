@@ -9,7 +9,7 @@
   "fileType" : "flac",
   "imageDescription" : {
     "description" : null,
-    "hasThumbnail" : true,
+    "hasThumbnail" : false,
     "size" : "425x425"
   },
   "isAVPlayable" : true,

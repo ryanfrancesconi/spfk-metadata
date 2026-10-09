@@ -8,7 +8,7 @@
   "fileType" : "mp3",
   "imageDescription" : {
     "description" : "Smell the glove",
-    "hasThumbnail" : true,
+    "hasThumbnail" : false,
     "size" : "600x592"
   },
   "isAVPlayable" : true,

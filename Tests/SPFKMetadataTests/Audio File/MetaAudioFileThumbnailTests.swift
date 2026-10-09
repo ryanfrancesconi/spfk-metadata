@@ -22,11 +22,19 @@ final class MetaAudioFileThumbnailTests: TestCaseModel {
         #expect(description.imageDescription.thumbnailData == nil)
     }
 
-    @Test func fileWithEmbeddedArtworkStillGetsThumbnail() async throws {
-        let url = TestBundleResources.shared.mp3_id3
-        let description = try await MetaAudioFileDescription(parsing: url)
+    /// The thumbnail's decode costs as much as the whole parse of a file with a large cover, so
+    /// the parse leaves it to whoever displays the artwork.
+    @Test func aParseLeavesTheThumbnailUnmade() async throws {
+        let description = try await MetaAudioFileDescription(parsing: TestBundleResources.shared.mp3_id3)
 
         #expect(description.imageDescription.cgImage != nil)
+        #expect(description.imageDescription.thumbnailImage == nil)
+        #expect(description.imageDescription.thumbnailData == nil)
+    }
+
+    @Test func aThumbnailIsMadeOnDemand() async throws {
+        var description = try await MetaAudioFileDescription(parsing: TestBundleResources.shared.mp3_id3)
+        await description.imageDescription.createThumbnail()
 
         let thumbnail = try #require(description.imageDescription.thumbnailImage)
         #expect(thumbnail.width <= 64)

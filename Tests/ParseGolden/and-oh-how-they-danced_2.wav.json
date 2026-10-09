@@ -29,7 +29,7 @@
   "fileType" : "wav",
   "imageDescription" : {
     "description" : "Shit Sandwich",
-    "hasThumbnail" : true,
+    "hasThumbnail" : false,
     "size" : "425x425"
   },
   "isAVPlayable" : true,

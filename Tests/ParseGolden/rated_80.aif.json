@@ -9,7 +9,7 @@
   "fileType" : "aiff",
   "imageDescription" : {
     "description" : "/Users/rf/Documents/Dev/Spongefork/workspace/spfk-packages/spfk-testing/Sources/SPFKTesting/Resources/audio/rated/rated_80.aif",
-    "hasThumbnail" : true,
+    "hasThumbnail" : false,
     "size" : "1024x1024"
   },
   "isAVPlayable" : true,
