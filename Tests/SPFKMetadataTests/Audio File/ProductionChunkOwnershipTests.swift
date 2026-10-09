@@ -21,6 +21,7 @@ final class ProductionChunkOwnershipTests: BinTestCase {
         case artworkSave
         case bextSave
         case iXMLSave
+        case iXMLCommentSave
         case normalizedIXMLTitleSave
         case productionBEXTWrite
         case productionIXMLWrite
@@ -28,12 +29,13 @@ final class ProductionChunkOwnershipTests: BinTestCase {
         var testDescription: String { rawValue }
 
         var writesBEXT: Bool { [.bextSave, .productionBEXTWrite].contains(self) }
-        var writesIXML: Bool { [.iXMLSave, .productionIXMLWrite].contains(self) }
+        var writesIXML: Bool { [.iXMLSave, .iXMLCommentSave, .productionIXMLWrite].contains(self) }
     }
 
     static let editedTitle = "Ownership Edited"
     static let editedProject = "Ownership Project Edited"
     static let editedDescription = "Ownership BEXT Edited"
+    static let comment = "<!-- Written by another recorder -->\n"
 
     /// As another recorder writes it: a comment, a CDATA section and a trailing line break, none of
     /// which survive a parse and re-serialization.
@@ -85,6 +87,15 @@ final class ProductionChunkOwnershipTests: BinTestCase {
 
         let payload = try #require(RIFFChunks(contentsOf: url).first("bext")?.payload)
         try expectUnmodeledBytesKept(in: payload)
+    }
+
+    @Test(arguments: [AudioFileType.wav, .flac])
+    func commentOnlyIXMLEditIsWritten(fileType: AudioFileType) async throws {
+        let url = try fileType == .wav ? waveFixture() : flacFixture()
+
+        try await write(.iXMLCommentSave, to: url, fileType: fileType)
+
+        #expect(ProductionChunks.readIXML(from: url, fileType: fileType) == Self.iXML.replacingOccurrences(of: Self.comment, with: ""))
     }
 
     @Test func waveParseHoldsIXMLAsStored() async throws {
@@ -166,6 +177,11 @@ final class ProductionChunkOwnershipTests: BinTestCase {
         case .iXMLSave:
             var description = try await MetaAudioFileDescription(parsing: url)
             description.iXMLMetadata = try #require(description.iXMLMetadata).replacingOccurrences(of: "Ownership Project", with: Self.editedProject)
+            try description.save(dirtyFlags: [.metadata])
+
+        case .iXMLCommentSave:
+            var description = try await MetaAudioFileDescription(parsing: url)
+            description.iXMLMetadata = try #require(description.iXMLMetadata).replacingOccurrences(of: Self.comment, with: "")
             try description.save(dirtyFlags: [.metadata])
 
         case .normalizedIXMLTitleSave:

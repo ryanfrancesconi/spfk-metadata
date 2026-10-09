@@ -208,7 +208,7 @@ extension MetaAudioFileDescription {
 
             if stored.read(fromFile: session.file) {
                 flacFile.bextNeedsSave = bextDiffers(from: stored.parsedBEXT)
-                flacFile.iXMLNeedsSave = !IXMLMetadata.isSameDocument(stored.iXML, iXMLMetadata)
+                flacFile.iXMLNeedsSave = !IXMLMetadata.isUnedited(iXMLMetadata, stored: stored.iXML)
             }
 
             if !flacFile.write(toFile: session.file) {
@@ -313,7 +313,7 @@ extension MetaAudioFileDescription {
 
         waveFile.setTagChanges(tagProperties, storedIn: stored)
         waveFile.bextNeedsSave = bextDiffers(from: stored.bextDescription?.validated())
-        waveFile.iXMLNeedsSave = !IXMLMetadata.isSameDocument(stored.iXML, iXMLMetadata)
+        waveFile.iXMLNeedsSave = !IXMLMetadata.isUnedited(iXMLMetadata, stored: stored.iXML)
     }
 
     /// The markers' part of a save, written into `session`: false when they fail, nil when the
