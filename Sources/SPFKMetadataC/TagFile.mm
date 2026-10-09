@@ -6,6 +6,7 @@
 #import <taglib/aifffile.h>
 #import <taglib/fileref.h>
 #import <taglib/flacfile.h>
+#import <taglib/id3v1tag.h>
 #import <taglib/mp4file.h>
 #import <taglib/mpegfile.h>
 #import <taglib/opusfile.h>
@@ -16,6 +17,7 @@
 
 #import "StringUtil.h"
 #import "TagAudioPropertiesC.h"
+#import "ID3PropertyFrames.h"
 #import "TagUtil.h"
 #import "TagFile.h"
 #import "TagLibBridge.h"
@@ -145,13 +147,32 @@ using namespace TagLib;
     const auto freeformNames = TagUtil::mp4FreeformNames(mp4File ? mp4File->tag() : nullptr);
 
     // `load` joins a multi-valued property into one string; a value that still equals that join
-    // was not edited, so the stored list is written back whole. Read before the clear.
+    // was not edited, so the stored list is written back whole. A list spread over several ID3v2
+    // frames (two COMMs) cannot pass through `setProperties`; its frames are detached here and
+    // re-added after it. Read before the clear.
     PropertyMap storedLists;
+    PropertyMap keptLists;
+    ID3v2::FrameList keptFrames;
+    ID3v2::Tag *id3 = ID3PropertyFrames::tag(f);
+
     if (fileRef.tag()) {
         for (const auto &[key, values] : fileRef.tag()->properties()) {
-            if (values.size() > 1 && TagUtil::storesListInOneFrame(f, key, values)) storedLists.insert(key, values);
+            if (values.size() < 2) continue;
+
+            if (ID3PropertyFrames::storesListInOneFrame(f, key, values)) {
+                storedLists.insert(key, values);
+                continue;
+            }
+
+            NSString *value = [_dictionary objectForKey:@(key.toCString(true))];
+            if (!id3 || value == nil || String(value.UTF8String, String::UTF8) != values.toString()) continue;
+
+            keptLists.insert(key, values);
+            keptFrames.append(ID3PropertyFrames::framesHolding(id3, key));
         }
     }
+
+    for (auto *frame : keptFrames) id3->removeFrame(frame, false);
 
     // Cleared before writing, so anything absent from the new dictionary is removed.
     TagUtil::clearTagsForSave(fileRef);
@@ -163,7 +184,7 @@ using namespace TagLib;
             continue;
         NSString *value = [_dictionary objectForKey:key];
         String tagKey = String(key.UTF8String, String::UTF8);
-        if (hasXiphComment && TagUtil::isChapterField(tagKey))
+        if ((hasXiphComment && TagUtil::isChapterField(tagKey)) || keptLists.contains(tagKey))
             continue;
         const String tagString = String(value.UTF8String, String::UTF8);
         const StringList stored = storedLists.value(tagKey);
@@ -173,6 +194,14 @@ using namespace TagLib;
     properties.removeEmpty();
     fileRef.setProperties(properties);
     TagUtil::restoreMP4FreeformNames(mp4File ? mp4File->tag() : nullptr, freeformNames);
+
+    for (auto *frame : keptFrames) id3->addFrame(frame);
+
+    // `setProperties` gave an MP3's ID3v1 tag the properties without the kept lists.
+    if (mpegFile && mpegFile->ID3v1Tag() && !keptLists.isEmpty()) {
+        PropertyMap id3v1Properties = properties;
+        mpegFile->ID3v1Tag()->setProperties(id3v1Properties.merge(keptLists));
+    }
 
     // After `setProperties`, which removes every field absent from `properties`.
     for (const auto &[key, values] : chapterFields) {

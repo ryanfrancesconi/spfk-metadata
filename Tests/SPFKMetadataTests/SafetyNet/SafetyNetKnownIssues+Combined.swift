@@ -11,16 +11,8 @@ extension SafetyNetKnownIssues {
             text: "A FLAC save re-serializes iXML, dropping comments and turning CDATA into escaped text: expected the comment and CDATA nodes, found neither (F13)"
         ),
         SafetyNetKnownIssue(
-            rows: ["aiff"], kinds: [.k9, .k10, .k11, .k12, .s3], item: .id3(.comments),
-            text: "An AIFF save merges a second-language COMM into the file's own: expected 3 frames with \"fra\" kept, found 2, \"Un commentaire\" joined to the first with a space (F15)"
-        ),
-        SafetyNetKnownIssue(
             rows: ["rf64", "wav"], kinds: [.k9, .k10, .k11, .k12, .s3, .s4], item: .id3(.comments),
             text: "A WAV tag save drops a second undescribed COMM in another language: expected the \"fra\" frame kept beside the file's comment, found it removed (F15)"
-        ),
-        SafetyNetKnownIssue(
-            rows: ["mp3"], kinds: [.k9, .k10, .k11, .k12, .s3, .s4], item: .id3(.comments),
-            text: "An MP3 tag save merges a second-language COMM into the file's own: expected 3 frames with \"fra\" kept, found 2, \"Un commentaire\" joined to the first with a space (F15)"
         ),
         SafetyNetKnownIssue(
             rows: ["rf64", "wav"], kinds: [.k9, .k10, .k11, .k12, .s3, .s4], item: .id3(.involvedPeople),

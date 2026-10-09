@@ -11,10 +11,6 @@ extension SafetyNetKnownIssues {
 
     private static let id3EntryPoints: [SafetyNetKnownIssue] = [
         SafetyNetKnownIssue(
-            rows: ["mp3", "aiff"], kinds: tagSave, item: .id3(.comments),
-            text: "A TagProperties save merges a second-language COMM into the file's own: expected the \"fra\" frame kept, found it joined to the first (F15)"
-        ),
-        SafetyNetKnownIssue(
             rows: waveRows, kinds: tagSave, item: .id3(.userText),
             text: "A WAV TagProperties save upper-cases other apps' TXXX descriptions: expected \"SafetyNet Foreign\", found \"SAFETYNET FOREIGN\" (F29)"
         ),

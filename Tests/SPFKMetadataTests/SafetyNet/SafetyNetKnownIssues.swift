@@ -16,19 +16,7 @@ struct SafetyNetKnownIssue: Sendable {
 /// that starts passing records `knownIssueNotRecorded` and turns the suite red until its entry is
 /// removed.
 enum SafetyNetKnownIssues {
-    static let table: [SafetyNetKnownIssue] = id3 + wave + aiff + flac + matroska + entryPoints + combined
-
-    /// Every MP3 save that writes the container; AAC's are the subset without markers or a packet.
-    private static let mp3ContainerKinds: Set<SaveKind> = [.k0, .k1, .k2, .k5, .k6, .k7, .s1, .s2, .k15, .k16, .k17]
-    /// Every MP3 save that writes the tag; a packet-only save (K15, K17) rewrites only the `PRIV`.
-    private static let mp3TagKinds: Set<SaveKind> = [.k0, .k1, .k2, .k5, .k6, .k7, .s1, .s2, .k16]
-
-    private static let id3: [SafetyNetKnownIssue] = [
-        SafetyNetKnownIssue(
-            rows: ["mp3"], kinds: mp3TagKinds, item: .id3(.comments),
-            text: "An MP3 tag save merges a second-language COMM into the file's own: expected 3 frames with \"fra\" kept, found 2, \"Un commentaire\" joined to the first with a space (F15)"
-        ),
-    ]
+    static let table: [SafetyNetKnownIssue] = wave + flac + matroska + entryPoints + combined
 
     /// Every WAV and RF64 save that writes tags: all but the packet-only saves, which rewrite only `_PMX`.
     private static let wavTagKinds: Set<SaveKind> = [.k0, .k1, .k2, .k3, .k4, .k5, .k6, .k7, .k8, .s1, .s2, .k16]
@@ -77,16 +65,6 @@ enum SafetyNetKnownIssues {
         SafetyNetKnownIssue(
             rows: ["wav", "rf64"], kinds: [.k0, .k7, .k8, .s1], item: .riff(.otherAssociatedData),
             text: "A WAV marker save drops other apps' adtl note and ltxt chunks: expected both, found none (F35)"
-        ),
-    ]
-
-    /// Every AIFF save kind in the net: each runs the tag save first.
-    private static let aiffKinds: Set<SaveKind> = [.k0, .k1, .k2, .k5, .k6, .k7, .k8, .s1, .s2]
-
-    private static let aiff: [SafetyNetKnownIssue] = [
-        SafetyNetKnownIssue(
-            rows: ["aiff"], kinds: aiffKinds, item: .id3(.comments),
-            text: "An AIFF save merges a second-language COMM into the file's own: expected 3 frames with \"fra\" kept, found 2, \"Un commentaire\" joined to the first with a space (F15)"
         ),
     ]
 
