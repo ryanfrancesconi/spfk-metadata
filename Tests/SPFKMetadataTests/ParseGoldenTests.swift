@@ -45,12 +45,14 @@ struct ParseGoldenTests {
         let actual = try await Self.dump(of: url)
         let golden = Self.goldenDirectory.appendingPathComponent(url.lastPathComponent + ".json")
 
-        guard let expected = try? String(contentsOf: golden, encoding: .utf8) else {
+        guard FileManager.default.fileExists(atPath: golden.path) else {
             try FileManager.default.createDirectory(at: Self.goldenDirectory, withIntermediateDirectories: true)
             try actual.write(to: golden, atomically: true, encoding: .utf8)
             Issue.record("Recorded \(golden.lastPathComponent); review it and re-run")
             return
         }
+
+        let expected = try String(contentsOf: golden, encoding: .utf8)
 
         let expectedLines = expected.components(separatedBy: "\n")
         let actualLines = actual.components(separatedBy: "\n")
