@@ -7,7 +7,7 @@ NS_ASSUME_NONNULL_BEGIN
 /// MP3 chapters as ID3v2 CHAP frames, named by an embedded TIT2 or else the element ID.
 @interface MPEGChapterUtil : NSObject
 
-/// In frame order. Nil when the file can't be opened, isn't MPEG, or has no ID3v2 tag.
+/// In frame order; empty when it isn't MPEG or has no ID3v2 tag. Nil when the file can't be opened.
 + (nullable NSArray *)read:(NSString *)path;
 
 /// Replaces every CHAP frame.

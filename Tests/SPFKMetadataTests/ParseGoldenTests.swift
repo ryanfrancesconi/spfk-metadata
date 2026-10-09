@@ -69,7 +69,7 @@ struct ParseGoldenTests {
 
     /// The description's own encoding without what belongs to this machine (the path and URL
     /// properties), plus what its encoding leaves out: the artwork's size, type and whether a
-    /// thumbnail was made.
+    /// thumbnail was made, and any failed component read.
     static func dump(of url: URL) async throws -> String {
         let parsed: MetaAudioFileDescription
 
@@ -103,6 +103,12 @@ struct ParseGoldenTests {
             "size": image.cgImage.map { "\($0.width)x\($0.height)" as Any } ?? NSNull(),
             "hasThumbnail": image.thumbnailData != nil,
         ] as [String: Any]
+
+        // Not encoded, and listed only when a read failed: a fixture that reads cleanly is absent,
+        // never failed.
+        if parsed.readStatus.failed.isEmpty == false {
+            object["readFailures"] = parsed.readStatus.failed.map { "\($0)" }.sorted()
+        }
 
         let data = try JSONSerialization.data(withJSONObject: object, options: [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes])
         return String(decoding: data, as: UTF8.self).replacingOccurrences(of: url.path, with: "<file path>") + "\n"

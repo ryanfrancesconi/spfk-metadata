@@ -62,7 +62,7 @@ static NSString *elementIDName(const ByteVector &elementID) {
     MPEG::File *file = dynamic_cast<MPEG::File *>(fileRef.file());
 
     if (!file || !file->hasID3v2Tag()) {
-        return nil;
+        return @[];
     }
 
     ID3v2::FrameList chapterList = file->ID3v2Tag()->frameList("CHAP");

@@ -18,7 +18,7 @@ static BOOL OpenAudioFile(NSURL *url, AudioFilePermissions permission, AudioFile
     return true;
 }
 
-/// Takes ownership of each marker's name.
+/// Takes ownership of each marker's name. Nil when the list can't be read.
 static NSArray *MarkersFromList(AudioFileID fileID, AudioFileMarkerList *markerList, UInt32 propertySize, NSURL *url) {
     if (noErr != AudioFileGetProperty(fileID, kAudioFilePropertyMarkerList, &propertySize, markerList)) {
         NSLog(@"AudioMarkerUtil: Failed to get kAudioFilePropertyMarkerList for %@", url);
@@ -28,7 +28,7 @@ static NSArray *MarkersFromList(AudioFileID fileID, AudioFileMarkerList *markerL
     UInt32 count = markerList->mNumberMarkers;
 
     if (count <= 0) {
-        return NULL;
+        return @[];
     }
 
     AudioStreamBasicDescription format;
@@ -73,7 +73,7 @@ static NSArray *ReadMarkers(AudioFileID fileID, NSURL *url) {
     }
 
     if (propertySize <= 0) {
-        return NULL;
+        return @[];
     }
 
     AudioFileMarkerList *markerList = malloc(propertySize);

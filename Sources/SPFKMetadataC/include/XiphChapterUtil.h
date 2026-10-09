@@ -8,7 +8,7 @@ NS_ASSUME_NONNULL_BEGIN
 /// for a region `CHAPTER000END`. Without an END, a chapter ends where the next begins.
 @interface XiphChapterUtil : NSObject
 
-/// In chapter-number order. Nil when the file can't be opened, isn't Xiph, or has no chapters.
+/// In chapter-number order; empty when it isn't Xiph or has no chapters. Nil when the file can't be opened.
 + (nullable NSArray *)read:(NSString *)path;
 
 /// Replaces every CHAPTER* field.

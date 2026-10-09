@@ -41,7 +41,7 @@ static NSTimeInterval chapterTimeToSeconds(long long chapterTime) {
     }
 
     if (chapters.isEmpty()) {
-        return nil;
+        return @[];
     }
 
     NSMutableArray *array = [[NSMutableArray alloc] init];
@@ -62,7 +62,7 @@ static NSTimeInterval chapterTimeToSeconds(long long chapterTime) {
         [array addObject:marker];
     }
 
-    return array.count > 0 ? array : nil;
+    return array;
 }
 
 + (bool)write:(NSArray *)chapters to:(NSString *)path {

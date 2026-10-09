@@ -11,8 +11,13 @@ internal import SPFKMetadataC
 import SPFKUtils
 
 extension MetaAudioFileDescription {
-    /// Reads all metadata from the file. Throws when no reader can open it.
+    /// Reads all metadata from the file. Throws when no reader can open it; a component whose
+    /// reader alone fails is recorded in ``readStatus``.
     public init(parsing url: URL) async throws {
+        try await self.init(parsing: url, reads: ParseReads())
+    }
+
+    init(parsing url: URL, reads: ParseReads) async throws {
         let fileType = AudioFileType(url: url)
         let route = try await ParseRoute(url: url, fileType: fileType)
 
@@ -25,20 +30,20 @@ extension MetaAudioFileDescription {
             frameCount = try loadWave()
 
         case .audioFile:
-            try await load()
+            await load(reads)
 
             if fileType == .flac {
-                loadFLAC()
+                loadFLAC(reads)
             }
 
         case let .tagStore(error):
-            try await load()
+            await load(reads)
 
             guard let properties = tagProperties.audioProperties else { throw error }
             audioFormat = properties
 
         case .asset:
-            try await load()
+            await load(reads)
         }
 
         // A malformed container (a WAV with a wrong RIFF size) can open and still report 0 frames.
@@ -91,9 +96,13 @@ extension MetaAudioFileDescription {
 
     /// Adds FLAC's iXML and BEXT APPLICATION blocks to what `load()` read. BEXT falls back to
     /// iXML's `<BEXT>` element, where Sequoia writes it.
-    private mutating func loadFLAC() {
+    private mutating func loadFLAC(_ reads: ParseReads) {
         let flacFile = FlacFileC(path: url.path)
-        guard flacFile.load() else { return }
+
+        guard reads.flacChunks(flacFile) else {
+            readStatus.failed.formUnion([.bext, .ixml])
+            return
+        }
 
         if let props = flacFile.audioPropertiesC, props.bitsPerSample > 0 {
             audioFormat?.update(bitsPerChannel: Int(props.bitsPerSample))
@@ -102,14 +111,20 @@ extension MetaAudioFileDescription {
         readEmbeddedMetadata(from: flacFile)
     }
 
-    private mutating func load() async throws {
-        // Best-effort: TagLib does not read every format (.caf).
-        if let value = try? TagProperties(url: url) {
-            tagProperties = value
+    private mutating func load(_ reads: ParseReads) async {
+        do {
+            tagProperties = try reads.tags(url)
+        } catch {
+            // TagLib reads no tags from a container nothing can write them to (.caf).
+            if canStoreTags { readStatus.failed.insert(.tags) }
         }
 
-        if let value = try? await AudioMarkerDescriptionCollection(url: url) {
-            markerCollection = value
+        do {
+            markerCollection = try await reads.markers(url, fileType)
+        } catch MetadataError.unsupportedFormat {
+            // The container has nowhere to keep markers.
+        } catch {
+            readStatus.failed.insert(.markers)
         }
 
         imageDescription.pictureRef = try? TagPictureRef.parsing(url: url)
@@ -121,9 +136,10 @@ extension MetaAudioFileDescription {
     /// written elsewhere; `storedXMPPacket` replaces or removes the packet a WAV or MP3 stores,
     /// in the same TagLib save.
     ///
-    /// Throws ``MetadataError/writeFailed(_:_:)`` for a component that could not be written and
-    /// ``UnstorableMetadataError`` for flags the container has no writer for, each after writing
-    /// everything else.
+    /// Throws ``MetadataError/readFailed(_:_:)`` for a flag whose component ``readStatus`` says the
+    /// parse could not read, which is not written; ``MetadataError/writeFailed(_:_:)`` for a
+    /// component that could not be written; and ``UnstorableMetadataError`` for flags the container
+    /// has no writer for. Each is thrown after writing everything else.
     public mutating func save(
         dirtyFlags: Set<MetadataDirtyFlag> = [.metadata],
         storedXMPPacket: StoredXMPPacketWrite = .keep
@@ -137,11 +153,16 @@ extension MetaAudioFileDescription {
         }
 
         let unstorable = unstorableFlags(in: dirtyFlags)
-        let writable = dirtyFlags.subtracting(unstorable)
+        let unread = unreadFlags(in: dirtyFlags.subtracting(unstorable))
+        let writable = dirtyFlags.subtracting(unstorable).subtracting(unread)
 
         // Nothing else to write, so the file is left untouched, modification date included.
-        if unstorable.isNotEmpty, writable.isEmpty {
-            throw UnstorableMetadataError(fileType: fileType, flags: unstorable)
+        if writable.isEmpty {
+            if let error = unreadError(for: unread) { throw error }
+
+            if unstorable.isNotEmpty {
+                throw UnstorableMetadataError(fileType: fileType, flags: unstorable)
+            }
         }
 
         let imageNeedsSave = writable.contains(.image)
@@ -175,6 +196,8 @@ extension MetaAudioFileDescription {
             urlProperties = URLProperties(url: url)
         #endif
 
+        if let error = unreadError(for: unread) { throw error }
+
         if unstorable.isNotEmpty {
             throw UnstorableMetadataError(fileType: fileType, flags: unstorable)
         }
@@ -182,7 +205,7 @@ extension MetaAudioFileDescription {
 
     /// Every component written into one TagLib open and saved once. A component that fails throws
     /// after everything else is saved. A FLAC's BEXT and iXML are written only when they differ
-    /// from the file's.
+    /// from the file's. Tags the parse could not read are left as the file has them.
     private mutating func saveSession(
         metadataNeedsSave: Bool, imageNeedsSave: Bool, markersNeedsSave: Bool, storedXMPPacket: StoredXMPPacketWrite
     ) throws {
@@ -191,14 +214,18 @@ extension MetaAudioFileDescription {
         }
 
         var failed: Set<MetadataError.Component> = []
+        let tagsWereRead = readStatus.holdsFileValue(of: .tags)
 
-        // Keeps the existing artwork; an artwork change is written below.
-        let tagFile = TagFile(path: url.path)
-        tagFile.dictionary = tagProperties.tagLibPropertyMap
-        storedXMPPacket.apply { tagFile.xmpNeedsSave = true; tagFile.xmpPacket = $0 }
+        // Every container save writes the whole tag map. Keeps the existing artwork; an artwork
+        // change is written below.
+        if tagsWereRead {
+            let tagFile = TagFile(path: url.path)
+            tagFile.dictionary = tagProperties.tagLibPropertyMap
+            storedXMPPacket.apply { tagFile.xmpNeedsSave = true; tagFile.xmpPacket = $0 }
 
-        if !tagFile.write(toFileRef: session.fileRef) {
-            failed.insert(.rating)
+            if !tagFile.write(toFileRef: session.fileRef) {
+                failed.insert(.rating)
+            }
         }
 
         if fileType == .flac, metadataNeedsSave {
@@ -233,6 +260,11 @@ extension MetaAudioFileDescription {
 
         guard session.save() else {
             throw MetadataError.writeFailed(.tags, url)
+        }
+
+        // The packet rides the tag write, so it goes alone when that was skipped.
+        if !tagsWereRead {
+            try storedXMPPacket.write(to: url)
         }
 
         if imageNeedsSave, pictureRefToWrite == nil {

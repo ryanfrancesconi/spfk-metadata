@@ -112,7 +112,7 @@ static void removeAllChapterFields(Ogg::XiphComment *comment) {
     Ogg::XiphComment *comment = TagUtil::xiphComment(fileRef.file());
 
     if (!comment) {
-        return nil;
+        return @[];
     }
 
     const auto &fields = comment->fieldListMap();
@@ -142,7 +142,7 @@ static void removeAllChapterFields(Ogg::XiphComment *comment) {
         [array addObject:marker];
     }
 
-    return array.count > 0 ? array : nil;
+    return array;
 }
 
 + (bool)write:(NSArray *)chapters to:(NSString *)path {

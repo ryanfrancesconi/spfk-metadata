@@ -7,7 +7,8 @@ internal import SPFKMetadataC
 
 extension MetaAudioFileDescription {
     /// Re-reads the file's tags and, for WAV and FLAC, its BEXT and iXML, leaving markers, artwork,
-    /// the audio format and URL properties as they are.
+    /// the audio format and URL properties as they are. What it reads is no longer in
+    /// ``readStatus``.
     ///
     /// For after a write that changes those fields behind this description's back -- an XMP write
     /// on WAV, AIFF or MP3 exports into them.
@@ -27,11 +28,13 @@ extension MetaAudioFileDescription {
             bextDescription = nil
 
             readEmbeddedMetadata(from: waveFile)
+            readStatus.failed.subtract([.tags, .bext, .ixml])
 
         default:
             let audioProperties = tagProperties.audioProperties
             tagProperties = try TagProperties(url: url)
             tagProperties.audioProperties = tagProperties.audioProperties ?? audioProperties
+            readStatus.failed.remove(.tags)
 
             if fileType == .flac {
                 let flacFile = FlacFileC(path: url.path)
@@ -43,6 +46,7 @@ extension MetaAudioFileDescription {
                 iXMLMetadata = nil
                 bextDescription = nil
                 readEmbeddedMetadata(from: flacFile)
+                readStatus.failed.subtract([.bext, .ixml])
             }
         }
     }

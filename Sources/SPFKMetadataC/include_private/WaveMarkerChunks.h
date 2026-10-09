@@ -16,7 +16,7 @@ NS_ASSUME_NONNULL_BEGIN
 /// Whether the file is a RIFF, RF64 or BW64 WAVE. Wave64 is not.
 + (BOOL)isWave:(NSURL *)url;
 
-/// `nil` when the file has no markers or cannot be read.
+/// Empty when the file has no markers; `nil` when it cannot be read.
 + (nullable NSArray *)read:(NSURL *)url;
 
 /// Replaces every marker in the file. An empty array removes them.

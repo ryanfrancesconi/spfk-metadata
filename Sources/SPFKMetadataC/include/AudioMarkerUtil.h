@@ -10,7 +10,7 @@ NS_ASSUME_NONNULL_BEGIN
 /// stored as UTF-8. AIFF and Wave64 go through Core Audio's `kAudioFilePropertyMarkerList`.
 @interface AudioMarkerUtil : NSObject
 
-/// Nil when there are none or the file can't be opened.
+/// Empty when there are none; nil when the file or its marker list can't be read.
 + (nullable NSArray *)read:(NSURL *)url;
 
 /// Replaces every marker. Positions use the file's sample rate, not each marker's.

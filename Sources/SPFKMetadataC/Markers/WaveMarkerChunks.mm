@@ -335,7 +335,7 @@ bool write(WaveMarkerFile &file, NSArray *markers) {
         return nil;
     }
 
-    return WaveMarkers::read(file);
+    return WaveMarkers::read(file) ?: @[];
 }
 
 + (BOOL)write:(NSArray *)markers to:(NSURL *)url {

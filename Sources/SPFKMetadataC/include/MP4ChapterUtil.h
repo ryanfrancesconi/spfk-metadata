@@ -8,7 +8,7 @@ NS_ASSUME_NONNULL_BEGIN
 /// Neither stores an end time, so a chapter ends where the next begins and the last at 0.
 @interface MP4ChapterUtil : NSObject
 
-/// Nil when the file can't be opened or has no chapters.
+/// Empty when it has no chapters; nil when the file can't be opened.
 + (nullable NSArray *)read:(NSString *)path;
 
 /// Writes a QuickTime chapter track, replacing the existing one.
