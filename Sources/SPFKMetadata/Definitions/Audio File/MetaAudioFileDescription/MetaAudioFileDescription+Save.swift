@@ -10,7 +10,7 @@ import SPFKUtils
 extension MetaAudioFileDescription {
     /// Writes what `dirtyFlags` names, then the Finder tags and modification date. `.xmp` is
     /// written elsewhere; `storedXMPPacket` replaces or removes the packet a WAV or MP3 stores,
-    /// in the same TagLib save.
+    /// inside the container save when it writes the WAV or the tags, and on its own otherwise.
     ///
     /// Each component of a flag is refused on its own: one that was not read (``readStatus``),
     /// failed to write, or that the container cannot store is left as the file has it, and

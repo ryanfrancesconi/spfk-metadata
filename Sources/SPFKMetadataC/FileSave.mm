@@ -39,7 +39,6 @@ bool save(File *file) {
     if (auto *aiff = dynamic_cast<RIFF::AIFF::File *>(file))
         return IFFChunkPlanner::save(*aiff);
 
-    // A grown element ahead of the last cluster is voided and appended instead of moving the clusters.
     // The ID3v2 version the file has, v2.4 for a new tag or one holding a frame v2.3 would drop,
     // and no ID3v1 or stripped APE tag it didn't have: `save()` alone writes v2.4, copies the tag
     // into a new ID3v1 and strips the rest.
@@ -49,6 +48,7 @@ bool save(File *file) {
         return mpeg->save(tags, File::StripNone, mpeg->hasID3v2Tag() ? id3Version(mpeg->ID3v2Tag()) : ID3v2::v4, File::DoNotDuplicate);
     }
 
+    // A grown element ahead of the last cluster is voided and appended instead of moving the clusters.
     if (auto *matroska = dynamic_cast<Matroska::File *>(file))
         return matroska->save(Matroska::WriteStyle::AvoidInsert);
 

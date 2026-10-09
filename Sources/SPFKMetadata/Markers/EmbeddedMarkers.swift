@@ -7,8 +7,8 @@ internal import SPFKMetadataC
 
 /// Writes and removes a file's markers without touching its tags.
 ///
-/// `MetaAudioFileDescription.save(dirtyFlags: [.markers])` also rewrites the tags, so a caller
-/// holding only markers would strip them going that way.
+/// On any file but a WAV, `MetaAudioFileDescription.save(dirtyFlags: [.markers])` also rewrites
+/// the tags it read, so a caller holding only markers would strip them going that way.
 public enum EmbeddedMarkers {
     /// Writes `descriptions` in the order given, replacing the file's markers. An empty array
     /// leaves the file's markers in place; use ``removeAll(from:fileType:)`` to clear them.

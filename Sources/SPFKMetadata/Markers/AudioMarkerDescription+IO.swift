@@ -86,8 +86,8 @@ extension AudioMarkerDescription {
         return "\(baseName) \(suffix)"
     }
 
-    /// Longest marker name, in UTF-8 bytes, that an AIFF `MARK` chunk holds. Core Audio replaces
-    /// a longer name with `"?"`, losing the JSON suffix with it.
+    /// Longest marker name, in UTF-8 bytes, that an AIFF `MARK` chunk holds. The chunk writer cuts
+    /// a longer name short, which would lose the JSON suffix.
     public static let aiffMaxNameByteCount = 255
 
     /// `fileEncodedName`, with the display name trimmed so the whole string fits in

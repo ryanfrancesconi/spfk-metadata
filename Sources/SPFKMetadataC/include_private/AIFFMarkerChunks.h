@@ -9,8 +9,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 /// Writes AIFF and AIFF-C markers as a `MARK` chunk through `IFFChunkPlanner`, so the sound data
 /// never moves and no other chunk is touched. The bytes are Core Audio's: IDs from each marker's
-/// index, positions in frames rounded half up and clamped at 0, names as UTF-8 Pascal strings, and
-/// a name longer than 255 bytes stored as "?". Reading stays with Core Audio.
+/// index, positions in frames rounded half up and clamped at 0, names as UTF-8 Pascal strings. A
+/// name longer than 255 bytes keeps its longest whole-character prefix. Reading stays with Core Audio.
 @interface AIFFMarkerChunks : NSObject
 
 /// Whether the file is an AIFF or AIFF-C.

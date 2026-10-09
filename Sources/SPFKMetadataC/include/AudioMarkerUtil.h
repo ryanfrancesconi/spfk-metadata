@@ -7,7 +7,8 @@ NS_ASSUME_NONNULL_BEGIN
 /// Reads, writes, and copies WAV and AIFF markers.
 ///
 /// A RIFF, RF64 or BW64 WAVE's `cue ` and `adtl` chunks are handled through TagLib, with names
-/// stored as UTF-8. AIFF and Wave64 go through Core Audio's `kAudioFilePropertyMarkerList`.
+/// stored as UTF-8. AIFF is written as a `MARK` chunk (`AIFFMarkerChunks`); AIFF reads and
+/// Wave64 go through Core Audio's `kAudioFilePropertyMarkerList`.
 @interface AudioMarkerUtil : NSObject
 
 /// Empty when there are none; nil when the file or its marker list can't be read.
