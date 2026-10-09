@@ -9,23 +9,7 @@ extension EmbeddedArtwork {
     /// The front cover, else the first picture. Nil when the file has none; throws
     /// `MetadataError.readFailed` when the file can't be opened or its picture doesn't decode.
     public static func read(from url: URL) throws -> EmbeddedArtwork? {
-        var result = TagPictureReadResult.found
-        let pictureRef = TagPicture.readPath(url.path, result: &result)
-
-        switch result {
-        case .none:
-            return nil
-
-        case .found:
-            guard let pictureRef else { throw MetadataError.readFailed(.artwork, url) }
-            return EmbeddedArtwork(pictureRef: pictureRef)
-
-        case .openFailed, .decodeFailed:
-            throw MetadataError.readFailed(.artwork, url)
-
-        @unknown default:
-            throw MetadataError.readFailed(.artwork, url)
-        }
+        try TagPictureRef.reading(url: url).map(EmbeddedArtwork.init(pictureRef:))
     }
 
     /// Any image file `CGImageSource` reads. Nil when it can't.

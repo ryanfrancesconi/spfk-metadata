@@ -16,6 +16,16 @@ extension ImageDescription {
         }
     }
 
+    /// The file's artwork as `EmbeddedArtwork.read(from:)` finds it, holding the bytes the file
+    /// stores so that writing it back leaves them unchanged. Nil when the file has none.
+    public static func read(from url: URL) throws -> ImageDescription? {
+        guard let pictureRef = try TagPictureRef.reading(url: url) else { return nil }
+
+        var imageDescription = ImageDescription()
+        imageDescription.pictureRef = pictureRef
+        return imageDescription
+    }
+
     /// TagLib's name for picture type 3.
     private static let frontCoverPictureType = "Front Cover"
 
