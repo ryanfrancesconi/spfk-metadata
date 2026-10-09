@@ -52,5 +52,6 @@
         "title" : "SPFK Sample Matroska Audio"
       }
     }
-  }
+  },
+  "trackReaderVersion" : 6
 }

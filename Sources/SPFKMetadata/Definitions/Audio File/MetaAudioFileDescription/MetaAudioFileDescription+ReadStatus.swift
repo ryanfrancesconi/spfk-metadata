@@ -15,6 +15,9 @@ extension MetaAudioFileDescription {
             try await AudioMarkerDescriptionCollection(url: $0, fileType: $1)
         }
 
+        /// Nil when the file has no artwork.
+        var artwork: @Sendable (URL) throws -> TagPictureRef? = { try TagPictureRef.reading(url: $0) }
+
         /// A FLAC's BEXT and iXML blocks; false when the file can't be read.
         var flacChunks: @Sendable (FlacFileC) -> Bool = { $0.load() }
     }

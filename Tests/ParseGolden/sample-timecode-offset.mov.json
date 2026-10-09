@@ -47,12 +47,13 @@
       }
     }
   },
+  "trackReaderVersion" : 6,
   "videoTrack" : {
     "codec" : "avc1",
     "duration" : 2.0019999999999998,
     "height" : 120,
     "nominalFrameRate" : 29.970030000000001,
-    "parserVersion" : 5,
+    "parserVersion" : 6,
     "preciseFrameRate" : "29.97d",
     "rotationDegrees" : 0,
     "startTimecodeString" : "01:00:00;01",

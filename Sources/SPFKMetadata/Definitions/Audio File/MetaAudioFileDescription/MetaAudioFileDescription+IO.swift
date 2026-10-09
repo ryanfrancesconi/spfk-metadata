@@ -127,7 +127,11 @@ extension MetaAudioFileDescription {
             readStatus.failed.insert(.markers)
         }
 
-        imageDescription.pictureRef = try? TagPictureRef.parsing(url: url)
+        do {
+            imageDescription.pictureRef = try reads.artwork(url)
+        } catch {
+            if canStoreTags { readStatus.failed.insert(.artwork) }
+        }
     }
 }
 

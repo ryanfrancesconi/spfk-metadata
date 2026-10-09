@@ -53,12 +53,13 @@
       }
     }
   },
+  "trackReaderVersion" : 6,
   "videoTrack" : {
     "codec" : "vp09",
     "duration" : 2.0259999999999998,
     "height" : 120,
     "nominalFrameRate" : 30,
-    "parserVersion" : 5,
+    "parserVersion" : 6,
     "width" : 160
   }
 }

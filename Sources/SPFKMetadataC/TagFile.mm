@@ -221,8 +221,8 @@ using namespace TagLib;
         for (const auto &value : values) TagUtil::xiphComment(f, true)->addField(key, value, false);
     }
 
-    if (!TagRatingWriteToFile(f, ratingStars))
-        return false;
+    // Reported after the restores below: a rating the container cannot store fails only itself.
+    const bool ratingWritten = TagRatingWriteToFile(f, ratingStars);
 
     // The clear keeps the stored packet's `PRIV` frame, so it changes only when asked.
     if (mpegFile && _xmpNeedsSave) {
@@ -235,7 +235,7 @@ using namespace TagLib;
         f->setComplexProperties(String("PICTURE"), existingPictures);
     }
 
-    return true;
+    return ratingWritten;
 }
 
 @end
