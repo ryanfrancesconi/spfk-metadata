@@ -41,12 +41,7 @@ extension MetaAudioFileDescription {
         let failed = try writeContainer(writable, storedXMPPacket: storedXMPPacket)
 
         #if os(macOS)
-            let finderTags = urlProperties.finderTags
-            try url.set(finderTags: finderTags)
-            try url.updateModificationDate()
-
-            // Rebuilt, or a stale date reads as an external change on the next scan.
-            urlProperties = URLProperties(url: url)
+            try urlProperties.finishSave(at: url)
         #endif
 
         let writeFailures = MetadataComponent.allCases.filter(failed.contains).map { MetadataError.writeFailed($0, url) }
