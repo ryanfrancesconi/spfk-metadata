@@ -16,7 +16,7 @@ extension MetaAudioFileDescription {
         case .wav:
             let waveFile = WaveFileC(path: url.path)
 
-            guard waveFile.load() else {
+            guard waveFile.loadTags() else {
                 throw NSError(description: "Failed to load wave file at \(url.path)")
             }
 
