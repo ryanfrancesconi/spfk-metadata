@@ -16,33 +16,12 @@ struct SafetyNetKnownIssue: Sendable {
 /// that starts passing records `knownIssueNotRecorded` and turns the suite red until its entry is
 /// removed.
 enum SafetyNetKnownIssues {
-    static let table: [SafetyNetKnownIssue] = wave + flac + matroska + entryPoints + combined
-
-    /// Every WAV and RF64 save that renders iXML: all but the packet-only saves, which rewrite only `_PMX`.
-    private static let wavIXMLKinds: Set<SaveKind> = [.k0, .k1, .k2, .k3, .k4, .k5, .k6, .k7, .k8, .s1, .s2, .k16]
+    static let table: [SafetyNetKnownIssue] = wave + matroska + entryPoints + combined
 
     private static let wave: [SafetyNetKnownIssue] = [
         SafetyNetKnownIssue(
-            rows: ["wav", "rf64"], kinds: wavIXMLKinds, item: .riff(.iXML),
-            text: "A WAV tag save re-serializes iXML, dropping comments and turning CDATA into escaped text: expected the comment and CDATA nodes, found neither (F13)"
-        ),
-        SafetyNetKnownIssue(
             rows: ["wav", "rf64"], kinds: [.k0, .k7, .k8, .s1], item: .riff(.otherAssociatedData),
             text: "A WAV marker save drops other apps' adtl note and ltxt chunks: expected both, found none (F35)"
-        ),
-    ]
-
-    /// Every FLAC save that writes the container: each runs the iXML/BEXT write and the tag save.
-    private static let flacContainerKinds: Set<SaveKind> = [.k0, .k1, .k2, .k3, .k4, .k5, .k6, .k7, .k8, .s1, .s2]
-
-    private static let flac: [SafetyNetKnownIssue] = [
-        SafetyNetKnownIssue(
-            rows: ["flac"], kinds: flacContainerKinds.subtracting([.k4]), item: .flac(.iXML),
-            text: "A FLAC save re-serializes iXML, dropping comments and turning CDATA into escaped text: expected the comment and CDATA nodes, found neither (F13)"
-        ),
-        SafetyNetKnownIssue(
-            rows: ["flac"], kinds: [.k4], item: .flac(.iXML),
-            text: "A FLAC iXML edit re-serializes the rest of the document, dropping comments and turning CDATA into escaped text: expected the edit beside the comment and CDATA nodes, found neither (F13)"
         ),
     ]
 

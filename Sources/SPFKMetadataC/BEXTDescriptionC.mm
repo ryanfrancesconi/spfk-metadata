@@ -65,6 +65,18 @@ static void writeFixedText(uint8_t *bytes, NSUInteger offset, NSString *value, N
     StringUtil::strncpy_pad0((char *)bytes + offset, encodedText(value, size).c_str(), size, false);
 }
 
+/// Nil and empty are the same absent value.
+static bool differs(NSString *value, NSString *stored) {
+    return ![(value ?: @"") isEqualToString:(stored ?: @"")];
+}
+
+/// The field zeroed, then `write`.
+static void rewriteText(uint8_t *bytes, NSUInteger offset, NSString *value, NSUInteger size,
+                        void (*write)(uint8_t *, NSUInteger, NSString *, NSUInteger)) {
+    memset(bytes + offset, 0, size);
+    write(bytes, offset, value, size);
+}
+
 @implementation BEXTDescriptionC
 
 - (double)timeReferenceInSeconds {
@@ -168,6 +180,71 @@ static void writeFixedText(uint8_t *bytes, NSUInteger offset, NSString *value, N
 
     if (codingHistoryLength > 0) {
         memcpy(bytes + kBEXTCodingHistoryOffset, codingHistory.data(), codingHistoryLength);
+    }
+
+    return [buffer copy];
+}
+
+- (nonnull NSData *)serializedDataOver:(nullable NSData *)stored {
+    BEXTDescriptionC *read = stored ? [[BEXTDescriptionC alloc] initWithData:stored] : nil;
+
+    if (!read) {
+        return [self serializedData];
+    }
+
+    NSMutableData *buffer = [[stored subdataWithRange:NSMakeRange(0, kBEXTMinSize)] mutableCopy];
+
+    if (differs(_codingHistory, read.codingHistory)) {
+        std::string codingHistory = encodedText(_codingHistory, NSUIntegerMax);
+        [buffer appendBytes:codingHistory.data() length:codingHistory.size()];
+    } else {
+        [buffer appendData:[stored subdataWithRange:NSMakeRange(kBEXTMinSize, stored.length - kBEXTMinSize)]];
+    }
+
+    // After the append, which can move the buffer.
+    uint8_t *bytes = (uint8_t *)buffer.mutableBytes;
+
+    if (differs(_sequenceDescription, read.sequenceDescription))
+        rewriteText(bytes, kBEXTDescriptionOffset, _sequenceDescription, kBEXTDescriptionSize, writeText);
+    if (differs(_originator, read.originator))
+        rewriteText(bytes, kBEXTOriginatorOffset, _originator, kBEXTOriginatorSize, writeText);
+    if (differs(_originatorReference, read.originatorReference))
+        rewriteText(bytes, kBEXTOriginatorRefOffset, _originatorReference, kBEXTOriginatorRefSize, writeText);
+    if (differs(_originationDate, read.originationDate))
+        rewriteText(bytes, kBEXTOriginDateOffset, _originationDate, kBEXTOriginDateSize, writeFixedText);
+    if (differs(_originationTime, read.originationTime))
+        rewriteText(bytes, kBEXTOriginTimeOffset, _originationTime, kBEXTOriginTimeSize, writeFixedText);
+
+    if (_timeReferenceLow != read.timeReferenceLow)
+        OSWriteLittleInt32(bytes, kBEXTTimeRefLowOffset, _timeReferenceLow);
+    if (_timeReferenceHigh != read.timeReferenceHigh)
+        OSWriteLittleInt32(bytes, kBEXTTimeRefHighOffset, _timeReferenceHigh);
+    if (_version != read.version)
+        OSWriteLittleInt16(bytes, kBEXTVersionOffset, (uint16_t)_version);
+
+    // A field the version does not define keeps its bytes as stored; one it newly defines is written.
+    if (_version >= 1 && (read.version < 1 || differs(_umid, read.umid))) {
+        memset(bytes + kBEXTUMIDOffset, 0, kBEXTUMIDSize);
+        const char *umidHex = _umid.length > 0 ? StringUtil::asciiCString(_umid) : NULL;
+        if (umidHex) {
+            StringUtil::hexToBytes(umidHex, bytes + kBEXTUMIDOffset, kBEXTUMIDSize);
+        }
+    }
+
+    // Rewritten only when changed: a stored value read back as a double does not always convert to
+    // the same integer.
+    if (_version >= 2) {
+        const bool upgraded = read.version < 2;
+        if (upgraded || _loudnessIntegrated != read.loudnessIntegrated)
+            OSWriteLittleInt16(bytes, kBEXTLoudnessValueOffset, (uint16_t)(int16_t)(_loudnessIntegrated * 100));
+        if (upgraded || _loudnessRange != read.loudnessRange)
+            OSWriteLittleInt16(bytes, kBEXTLoudnessRangeOffset, (uint16_t)(int16_t)(_loudnessRange * 100));
+        if (upgraded || _maxTruePeakLevel != read.maxTruePeakLevel)
+            OSWriteLittleInt16(bytes, kBEXTMaxTruePeakOffset, (uint16_t)(int16_t)(_maxTruePeakLevel * 100));
+        if (upgraded || _maxMomentaryLoudness != read.maxMomentaryLoudness)
+            OSWriteLittleInt16(bytes, kBEXTMaxMomentaryOffset, (uint16_t)(int16_t)(_maxMomentaryLoudness * 100));
+        if (upgraded || _maxShortTermLoudness != read.maxShortTermLoudness)
+            OSWriteLittleInt16(bytes, kBEXTMaxShortTermOffset, (uint16_t)(int16_t)(_maxShortTermLoudness * 100));
     }
 
     return [buffer copy];

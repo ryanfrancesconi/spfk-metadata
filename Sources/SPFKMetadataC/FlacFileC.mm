@@ -19,6 +19,7 @@ using namespace TagLib;
     self = [super init];
     _path = path;
     _bextNeedsSave = true;
+    _iXMLNeedsSave = true;
     return self;
 }
 
@@ -29,13 +30,17 @@ using namespace TagLib;
         return false;
     }
 
-    auto *flacFile = dynamic_cast<FLAC::File *>(fileRef.file());
+    return [self readFromFile:fileRef.file()];
+}
+
+- (bool)readFromFile:(void *)opaqueFile {
+    auto *flacFile = dynamic_cast<FLAC::File *>(static_cast<File *>(opaqueFile));
 
     if (!flacFile) {
         return false;
     }
 
-    auto audioProperties = fileRef.audioProperties();
+    auto *audioProperties = flacFile->audioProperties();
 
     if (audioProperties != nullptr) {
         _audioPropertiesC = [[TagAudioPropertiesC alloc] init];
@@ -43,11 +48,7 @@ using namespace TagLib;
         _audioPropertiesC.duration = (double)audioProperties->lengthInMilliseconds() / 1000;
         _audioPropertiesC.bitRate = audioProperties->bitrate();
         _audioPropertiesC.channelCount = audioProperties->channels();
-
-        auto *flacProps = flacFile->audioProperties();
-        if (flacProps) {
-            _audioPropertiesC.bitsPerSample = flacProps->bitsPerSample();
-        }
+        _audioPropertiesC.bitsPerSample = audioProperties->bitsPerSample();
     }
 
     if (flacFile->hasBEXTData() && !flacFile->BEXTData().isEmpty()) {
@@ -90,13 +91,16 @@ using namespace TagLib;
     if (!_bextNeedsSave) {
         // Left as the file has it.
     } else if (_bextDescriptionC) {
-        NSData *bextData = [_bextDescriptionC serializedData];
+        const ByteVector stored = flacFile->BEXTData();
+        NSData *bextData = [_bextDescriptionC serializedDataOver:[NSData dataWithBytes:stored.data() length:stored.size()]];
         flacFile->setBEXTData(ByteVector((const char *)bextData.bytes, (unsigned int)bextData.length));
     } else {
         flacFile->setBEXTData(ByteVector());
     }
 
-    flacFile->setiXMLData(_iXML ? String(_iXML.UTF8String, String::UTF8) : String());
+    if (_iXMLNeedsSave) {
+        flacFile->setiXMLData(_iXML ? String(_iXML.UTF8String, String::UTF8) : String());
+    }
 
     return true;
 }

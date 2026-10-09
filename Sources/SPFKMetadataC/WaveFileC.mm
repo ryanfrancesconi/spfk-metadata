@@ -54,7 +54,7 @@ using namespace TagLib;
     return [self read:false];
 }
 
-/// The tags and audio properties, and with `everything` the other components too.
+/// The tags, BEXT, iXML and audio properties, and with `everything` the other components too.
 - (bool)read:(bool)everything {
     WaveMarkerFile file(_path.UTF8String);
 
@@ -76,6 +76,21 @@ using namespace TagLib;
         _audioPropertiesC.bitRate = audioProperties->bitrate();
         _audioPropertiesC.channelCount = audioProperties->channels();
         _audioPropertiesC.bitsPerSample = audioProperties->bitsPerSample();
+    }
+
+    if (waveFile->hasBEXTData() && !waveFile->BEXTData().isEmpty()) {
+        ByteVector bext = waveFile->BEXTData();
+        NSData *bextData = [NSData dataWithBytes:bext.data() length:bext.size()];
+        _bextDescriptionC = [[BEXTDescriptionC alloc] initWithData:bextData];
+
+        if (_bextDescriptionC && _audioPropertiesC) {
+            _bextDescriptionC.sampleRate = _audioPropertiesC.sampleRate;
+        }
+    }
+
+    if (waveFile->hasiXMLData()) {
+        _iXML = [[NSString alloc] initWithCString:waveFile->iXMLData().data(String::UTF8).data()
+                                         encoding:NSUTF8StringEncoding];
     }
 
     if (everything) {
@@ -102,26 +117,11 @@ using namespace TagLib;
     return true;
 }
 
-/// Markers, BEXT, iXML, the XMP packet and the artwork.
+/// Markers, the XMP packet and the artwork.
 - (void)readComponentsFrom:(WaveMarkerFile &)file {
     WaveMarkerFile *waveFile = &file;
 
     _markers = WaveMarkers::read(*waveFile);
-
-    if (waveFile->hasBEXTData() && !waveFile->BEXTData().isEmpty()) {
-        ByteVector bext = waveFile->BEXTData();
-        NSData *bextData = [NSData dataWithBytes:bext.data() length:bext.size()];
-        _bextDescriptionC = [[BEXTDescriptionC alloc] initWithData:bextData];
-
-        if (_bextDescriptionC && _audioPropertiesC) {
-            _bextDescriptionC.sampleRate = _audioPropertiesC.sampleRate;
-        }
-    }
-
-    if (waveFile->hasiXMLData()) {
-        _iXML = [[NSString alloc] initWithCString:waveFile->iXMLData().data(String::UTF8).data()
-                                         encoding:NSUTF8StringEncoding];
-    }
 
     ByteVector xmp = waveFile->xmpData();
     _xmpPacket = xmp.isEmpty() ? nil : [[NSString alloc] initWithBytes:xmp.data() length:xmp.size() encoding:NSUTF8StringEncoding];
@@ -154,7 +154,8 @@ using namespace TagLib;
     }
 
     if (_bextNeedsSave && _bextDescriptionC) {
-        NSData *bextData = [_bextDescriptionC serializedData];
+        const ByteVector stored = file.BEXTData();
+        NSData *bextData = [_bextDescriptionC serializedDataOver:[NSData dataWithBytes:stored.data() length:stored.size()]];
         file.setBEXTData(ByteVector((const char *)bextData.bytes, (unsigned int)bextData.length));
     } else if (_bextNeedsSave) {
         file.setBEXTData(ByteVector());

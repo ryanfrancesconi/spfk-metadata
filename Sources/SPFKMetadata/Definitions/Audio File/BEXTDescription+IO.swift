@@ -8,7 +8,7 @@ extension BEXTDescription {
     /// Nil when the WAV has no BEXT chunk or can't be opened.
     public init?(url: URL) {
         let waveFile = WaveFileC(path: url.path)
-        guard waveFile.load(), let info = waveFile.bextDescriptionC else {
+        guard waveFile.loadTags(), let info = waveFile.bextDescriptionC else {
             return nil
         }
 
@@ -122,20 +122,8 @@ extension BEXTDescription {
         return info
     }
 
-    /// WAV only; markers and artwork are left as they are.
+    /// WAV only; `ProductionChunks.writeBEXT(_:to:fileType:)`.
     public static func write(bextDescription: BEXTDescription, to url: URL) throws {
-        let waveFile = WaveFileC(path: url.path)
-        guard waveFile.load() else {
-            throw MetadataError.writeFailed(.bext, url)
-        }
-
-        waveFile.bextDescriptionC = bextDescription.bextDescriptionC
-        waveFile.tagsNeedsSave = false
-        waveFile.markersNeedsSave = false
-        waveFile.imageNeedsSave = false
-
-        guard waveFile.save() else {
-            throw MetadataError.writeFailed(.bext, url)
-        }
+        try ProductionChunks.writeBEXT(bextDescription, to: url, fileType: .wav)
     }
 }

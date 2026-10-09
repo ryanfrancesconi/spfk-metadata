@@ -63,6 +63,11 @@ NS_ASSUME_NONNULL_BEGIN
 /// 602 bytes plus the coding history. Non-ASCII text is written as zeros.
 - (nonnull NSData *)serializedData;
 
+/// `stored` with each field that differs from it rewritten: reserved bytes, a field's bytes after
+/// its terminator and an unchanged coding history's padding stay as stored. `serializedData` when
+/// `stored` is not a `bext` payload.
+- (nonnull NSData *)serializedDataOver:(nullable NSData *)stored;
+
 @end
 
 NS_ASSUME_NONNULL_END

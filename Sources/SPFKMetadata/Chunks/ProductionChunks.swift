@@ -7,7 +7,7 @@ internal import SPFKMetadataC
 
 /// The BEXT and iXML chunks of WAV and FLAC files, read and written apart from the tags.
 ///
-/// A WAV write leaves the tags, markers and artwork alone, but renders both chunks from what it read.
+/// A write changes only its own chunk; an edited BEXT keeps the stored bytes of every field it leaves alone.
 public enum ProductionChunks {}
 
 // MARK: - BEXT
@@ -18,7 +18,7 @@ extension ProductionChunks {
         switch fileType {
         case .wav:
             let file = WaveFileC(path: url.path)
-            guard file.load(), let info = file.bextDescriptionC else { return nil }
+            guard file.loadTags(), let info = file.bextDescriptionC else { return nil }
             return BEXTDescription(info: info)
 
         case .flac:
@@ -34,21 +34,16 @@ extension ProductionChunks {
     public static func writeBEXT(_ bext: BEXTDescription, to url: URL, fileType: AudioFileType) throws {
         switch fileType {
         case .wav:
-            let file = WaveFileC(path: url.path)
-            guard file.load() else { throw MetadataError.writeFailed(.bext, url) }
-
+            let file = WaveFileC.chunkWriter(path: url.path)
             file.bextDescriptionC = bext.bextDescriptionC
-            file.tagsNeedsSave = false
-            file.markersNeedsSave = false
-            file.imageNeedsSave = false
+            file.bextNeedsSave = true
 
             guard file.save() else { throw MetadataError.writeFailed(.bext, url) }
 
         case .flac:
             let file = FlacFileC(path: url.path)
-            guard file.load() else { throw MetadataError.writeFailed(.bext, url) }
-
             file.bextDescription = bext
+            file.iXMLNeedsSave = false
 
             guard file.save() else { throw MetadataError.writeFailed(.bext, url) }
 
@@ -66,7 +61,7 @@ extension ProductionChunks {
         switch fileType {
         case .wav:
             let file = WaveFileC(path: url.path)
-            guard file.load() else { return nil }
+            guard file.loadTags() else { return nil }
             return file.iXML
 
         case .flac:
@@ -82,21 +77,16 @@ extension ProductionChunks {
     public static func writeIXML(_ xml: String, to url: URL, fileType: AudioFileType) throws {
         switch fileType {
         case .wav:
-            let file = WaveFileC(path: url.path)
-            guard file.load() else { throw MetadataError.writeFailed(.ixml, url) }
-
+            let file = WaveFileC.chunkWriter(path: url.path)
             file.iXML = xml
-            file.tagsNeedsSave = false
-            file.markersNeedsSave = false
-            file.imageNeedsSave = false
+            file.iXMLNeedsSave = true
 
             guard file.save() else { throw MetadataError.writeFailed(.ixml, url) }
 
         case .flac:
             let file = FlacFileC(path: url.path)
-            guard file.load() else { throw MetadataError.writeFailed(.ixml, url) }
-
             file.iXML = xml
+            file.bextNeedsSave = false
 
             guard file.save() else { throw MetadataError.writeFailed(.ixml, url) }
 
@@ -114,15 +104,13 @@ extension ProductionChunks {
     public static func removeAll(from url: URL, fileType: AudioFileType) throws {
         switch fileType {
         case .wav:
-            let file = WaveFileC(path: url.path)
-            guard file.load() else { throw MetadataError.removeFailed(.bext, url) }
-            guard file.bextDescriptionC != nil || file.iXML != nil else { return }
+            let stored = WaveFileC(path: url.path)
+            guard stored.loadTags() else { throw MetadataError.removeFailed(.bext, url) }
+            guard stored.bextDescriptionC != nil || stored.iXML != nil else { return }
 
-            file.bextDescriptionC = nil
-            file.iXML = nil
-            file.tagsNeedsSave = false
-            file.markersNeedsSave = false
-            file.imageNeedsSave = false
+            let file = WaveFileC.chunkWriter(path: url.path)
+            file.bextNeedsSave = true
+            file.iXMLNeedsSave = true
 
             guard file.save() else { throw MetadataError.removeFailed(.bext, url) }
 
@@ -139,5 +127,18 @@ extension ProductionChunks {
         default:
             throw MetadataError.unsupportedFormat(fileType, .bext)
         }
+    }
+}
+
+private extension WaveFileC {
+    /// A writer that changes nothing until a component's flag is set.
+    static func chunkWriter(path: String) -> WaveFileC {
+        let file = WaveFileC(path: path)
+        file.tagsNeedsSave = false
+        file.bextNeedsSave = false
+        file.iXMLNeedsSave = false
+        file.markersNeedsSave = false
+        file.imageNeedsSave = false
+        return file
     }
 }

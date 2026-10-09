@@ -37,7 +37,7 @@ import SPFKMetadata  // also brings in SPFKMetadataBase
 
 ### The audio description
 
-- **`MetaAudioFileDescription(parsing:)`** — tags, rating, format, BEXT, iXML, markers, artwork and video facts in one read.
+- **`MetaAudioFileDescription(parsing:)`** — tags, rating, format, BEXT, iXML, markers, artwork and video facts in one read. iXML is held as the chunk's text; a save writes BEXT and iXML only when they differ from the file's.
 - **`save(dirtyFlags:storedXMPPacket:)`** — writes what the flags name, then the Finder tags. Throws `FileLockError` for a locked file before writing anything; `MetadataError.writeFailed` for a component that could not be written, and `UnstorableMetadataError` for a flag the container has no writer for, each after writing everything else.
 
   A save that has to move the audio — a tag or metadata block that outgrew its padding ahead of it — writes the whole file to a hidden sibling and swaps it in with `FileManager.replaceItemAt`, so an interrupted save cannot leave it half moved. The file keeps its permissions, creation date, Finder tags and extended attributes but gets a **new file ID**: a bookmark taken before the save still resolves by path, but follows a later move only once re-created. A file with another hard link, in a folder that is not writable or without room for a second copy, or on a file system other than APFS, HFS+, exFAT and FAT is saved in place. A WAV never moves its audio, so it is never swapped.
@@ -70,7 +70,7 @@ Where a container has no field for a region's end time or color, both ride in a 
 
 ### Production chunks
 
-- **`ProductionChunks`** — read, write and remove BEXT and iXML in WAV chunks and FLAC APPLICATION blocks. A WAV write leaves the tags alone.
+- **`ProductionChunks`** — read, write and remove BEXT and iXML in WAV chunks and FLAC APPLICATION blocks. A write changes only its own chunk, and an edited BEXT keeps the stored bytes of every field left alone, reserved bytes included.
 - **`WaveFileProperties(url:)`** — a WAV's format and BEXT from one open, as the parse records them.
 - **`BEXTDescription(url:)`**, **`write(bextDescription:to:)`** — a WAV's BEXT alone.
 

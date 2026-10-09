@@ -5,11 +5,8 @@ import SPFKMetadataBase
 internal import SPFKMetadataC
 
 extension TagProperties {
-    /// A WAV's tags read without its other components; nil when the file can't be opened.
-    init?(waveTagsAt url: URL) {
-        let waveFile = WaveFileC(path: url.path)
-        guard waveFile.loadTags() else { return nil }
-
+    /// The tags of a `WaveFileC` already loaded.
+    init(waveFile: WaveFileC) {
         self.init()
 
         if let value = waveFile.audioPropertiesC {
@@ -56,10 +53,19 @@ extension WaveFileC {
     /// What a save of `tags` writes over the file's tags: every tag when a text tag differs, the
     /// rating alone when only it does, nothing otherwise. Every tag when the file's can't be read.
     func setTagChanges(_ tags: TagProperties) {
-        guard let stored = TagProperties(waveTagsAt: URL(fileURLWithPath: path)) else {
+        let stored = WaveFileC(path: path)
+
+        guard stored.loadTags() else {
             setTags(tags)
             return
         }
+
+        setTagChanges(tags, storedIn: stored)
+    }
+
+    /// `setTagChanges(_:)` against a `loadTags()` of the file.
+    func setTagChanges(_ tags: TagProperties, storedIn file: WaveFileC) {
+        let stored = TagProperties(waveFile: file)
 
         var storedText = stored.data
         var text = tags.data

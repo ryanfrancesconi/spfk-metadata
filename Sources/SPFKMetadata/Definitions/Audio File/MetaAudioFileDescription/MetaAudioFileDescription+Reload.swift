@@ -1,6 +1,5 @@
 // Copyright Ryan Francesconi. All Rights Reserved. Revision History at https://github.com/ryanfrancesconi/spfk-metadata
 
-import AEXML
 import Foundation
 import SPFKBase
 import SPFKMetadataBase
@@ -48,10 +47,10 @@ extension MetaAudioFileDescription {
         }
     }
 
-    /// iXML, BEXT, and the INFO and ID3 tags. Adds to `tagProperties` rather than replacing it.
+    /// iXML as stored, BEXT, and the INFO and ID3 tags. Adds to `tagProperties` rather than replacing it.
     mutating func readEmbeddedMetadata(from waveFile: WaveFileC) {
         if let xml = waveFile.iXML {
-            iXMLMetadata = normalizedIXML(xml)
+            iXMLMetadata = xml
         }
 
         bextDescription = waveFile.bextDescription?.validated()
@@ -59,34 +58,14 @@ extension MetaAudioFileDescription {
         tagProperties.load(waveFile: waveFile)
     }
 
-    /// FLAC's iXML and BEXT APPLICATION blocks. BEXT falls back to iXML's `<BEXT>` element, where
-    /// Sequoia writes it.
+    /// FLAC's iXML and BEXT APPLICATION blocks, iXML as stored.
     mutating func readEmbeddedMetadata(from flacFile: FlacFileC) {
         if let xml = flacFile.iXML {
-            iXMLMetadata = normalizedIXML(xml)
+            iXMLMetadata = xml
         }
 
-        if let bext = flacFile.bextDescription?.validated() {
+        if let bext = flacFile.parsedBEXT {
             bextDescription = bext
-        } else if let xml = flacFile.iXML,
-                  let ixml = try? IXMLMetadata(xml: xml),
-                  let bext = BEXTDescription(ixmlMetadata: ixml)
-        {
-            bextDescription = bext.validated()
-        }
-    }
-
-    /// Re-serialized for consistent formatting, keeping each value's text exactly. A chunk that
-    /// won't parse is kept as read.
-    private func normalizedIXML(_ xml: String) -> String {
-        var options = AEXMLOptions()
-        options.parserSettings.shouldTrimWhitespace = false
-
-        do {
-            return try AEXMLDocument(xml: xml, options: options).xml
-        } catch {
-            Log.error("Unparseable iXML in \(url.lastPathComponent), kept as read: \(error)")
-            return xml
         }
     }
 }

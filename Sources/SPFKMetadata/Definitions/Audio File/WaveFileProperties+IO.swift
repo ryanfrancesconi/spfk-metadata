@@ -10,7 +10,7 @@ extension WaveFileProperties {
     public init?(url: URL) {
         let waveFile = WaveFileC(path: url.path)
 
-        guard waveFile.load(), let audioProperties = waveFile.audioPropertiesC else { return nil }
+        guard waveFile.loadTags(), let audioProperties = waveFile.audioPropertiesC else { return nil }
 
         self.init(
             audioFormat: AudioFormatProperties(cObject: audioProperties),

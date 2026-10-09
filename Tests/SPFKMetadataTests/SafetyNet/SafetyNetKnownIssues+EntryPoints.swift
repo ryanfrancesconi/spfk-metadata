@@ -11,20 +11,12 @@ extension SafetyNetKnownIssues {
 
     private static let waveEntryPoints: [SafetyNetKnownIssue] = [
         SafetyNetKnownIssue(
-            rows: waveRows, kinds: [.e7], item: .riff(.iXML),
-            text: "A WAV iXML write takes our reader's re-serialized document, losing comments and CDATA (F13)"
-        ),
-        SafetyNetKnownIssue(
             rows: waveRows, kinds: [.e5], item: .riff(.otherAssociatedData),
             text: "A WAV marker write drops other apps' adtl note and ltxt chunks: expected both, found none (F35)"
         ),
     ]
 
     private static let otherEntryPoints: [SafetyNetKnownIssue] = [
-        SafetyNetKnownIssue(
-            rows: ["flac"], kinds: [.e9], item: .flac(.iXML),
-            text: "A FLAC iXML write takes our reader's re-serialized document, losing comments and CDATA (F13)"
-        ),
         SafetyNetKnownIssue(
             rows: ["mka", "mkv", "webm"], kinds: tagSave, item: .matroska(.unknownTag),
             text: "A Matroska TagProperties save moves another app's untargeted tag from album to track level (F50)"

@@ -20,4 +20,14 @@ extension FlacFileC {
             bextDescriptionC = newValue.bextDescriptionC
         }
     }
+
+    /// The BEXT block, or iXML's `<BEXT>` element where Sequoia writes it, validated.
+    var parsedBEXT: BEXTDescription? {
+        if let bext = bextDescription?.validated() {
+            return bext
+        }
+
+        guard let iXML, let ixml = try? IXMLMetadata(xml: iXML) else { return nil }
+        return BEXTDescription(ixmlMetadata: ixml)?.validated()
+    }
 }

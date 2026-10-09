@@ -7,10 +7,6 @@ import Foundation
 extension SafetyNetKnownIssues {
     static let combined: [SafetyNetKnownIssue] = [
         SafetyNetKnownIssue(
-            rows: ["flac"], kinds: [.k9, .k10, .k11, .k12, .s3], item: .flac(.iXML),
-            text: "A FLAC save re-serializes iXML, dropping comments and turning CDATA into escaped text: expected the comment and CDATA nodes, found neither (F13)"
-        ),
-        SafetyNetKnownIssue(
             rows: ["mka", "mkv", "webm"], kinds: [.k9], item: .matroska(.unknownTag),
             text: "A Matroska save moves another app's untargeted tag from album to track level: expected no TargetTypeValue, found 30 (F50)"
         ),
@@ -21,10 +17,6 @@ extension SafetyNetKnownIssues {
         SafetyNetKnownIssue(
             rows: ["rf64"], kinds: [.k10, .k11, .k12, .s3], item: .riff(.otherAssociatedData),
             text: "An RF64 marker save drops other apps' adtl note and ltxt chunks: expected both, found none (F35)"
-        ),
-        SafetyNetKnownIssue(
-            rows: ["rf64", "wav"], kinds: [.k9, .k10, .k11, .k12, .s3, .s4], item: .riff(.iXML),
-            text: "A WAV tag save re-serializes iXML, dropping comments and turning CDATA into escaped text: expected the comment and CDATA nodes, found neither (F13)"
         ),
     ]
 }

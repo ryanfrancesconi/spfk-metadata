@@ -53,7 +53,8 @@ typedef NS_OPTIONS(NSUInteger, WaveFileComponents) {
 /// `"RATING"` and sets `infoDictionary`'s fields, an empty value removing its field.
 @property(nonatomic) BOOL ratingNeedsSave;
 
-/// Default YES. With NO, `save` leaves the `bext` chunk as it is.
+/// Default YES. With NO, `save` leaves the `bext` chunk as it is; with YES, each field of
+/// `bextDescriptionC` that differs from the stored chunk is written over it.
 @property(nonatomic) BOOL bextNeedsSave;
 
 /// Default YES. With NO, `save` leaves the iXML chunk as it is.
@@ -78,7 +79,8 @@ typedef NS_OPTIONS(NSUInteger, WaveFileComponents) {
 
 - (bool)load;
 
-/// `load`'s audio properties, INFO, ID3 properties and rating, and nothing else.
+/// `load`'s audio properties, INFO, ID3 properties, rating, BEXT and iXML: everything but the
+/// markers, XMP packet and artwork.
 - (bool)loadTags;
 
 /// Rewrites every chunk whose bytes change, never moving the audio; INFO fields absent from

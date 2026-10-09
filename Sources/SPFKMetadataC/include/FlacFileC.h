@@ -21,8 +21,12 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property(nullable, nonatomic) NSString *iXML;
 
-/// False leaves the file's BEXT block as it is, whatever `bextDescriptionC` holds. Defaults to true.
+/// False leaves the file's BEXT block as it is, whatever `bextDescriptionC` holds; true writes each
+/// field that differs from the stored block over it. Defaults to true.
 @property(nonatomic) bool bextNeedsSave;
+
+/// False leaves the file's iXML block as it is, whatever `iXML` holds. Defaults to true.
+@property(nonatomic) bool iXMLNeedsSave;
 
 @property(nonatomic, strong, nonnull) NSString *path;
 
@@ -30,6 +34,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 /// False when the file can't be opened or isn't FLAC.
 - (bool)load;
+
+/// `load` from an open `TagLib::File *`. False when it is not a FLAC file.
+- (bool)readFromFile:(void *)file;
 
 /// A nil property removes its block.
 - (bool)save;

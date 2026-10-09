@@ -1,6 +1,5 @@
 // Copyright Ryan Francesconi. All Rights Reserved. Revision History at https://github.com/ryanfrancesconi/spfk-metadata
 
-import AEXML
 import AVFoundation
 import Foundation
 import SPFKAudioBase
@@ -159,7 +158,10 @@ extension MetaAudioFileDescription {
                     markersNeedsSave: markersNeedsSave, storedXMPPacket: storedXMPPacket
                 )
             } else {
-                try saveSession(imageNeedsSave: imageNeedsSave, markersNeedsSave: markersNeedsSave, storedXMPPacket: storedXMPPacket)
+                try saveSession(
+                    metadataNeedsSave: writable.contains(.metadata), imageNeedsSave: imageNeedsSave,
+                    markersNeedsSave: markersNeedsSave, storedXMPPacket: storedXMPPacket
+                )
             }
         }
 
@@ -178,8 +180,11 @@ extension MetaAudioFileDescription {
     }
 
     /// Every component written into one TagLib open and saved once. A component that fails throws
-    /// after everything else is saved.
-    private mutating func saveSession(imageNeedsSave: Bool, markersNeedsSave: Bool, storedXMPPacket: StoredXMPPacketWrite) throws {
+    /// after everything else is saved. A FLAC's BEXT and iXML are written only when they differ
+    /// from the file's.
+    private mutating func saveSession(
+        metadataNeedsSave: Bool, imageNeedsSave: Bool, markersNeedsSave: Bool, storedXMPPacket: StoredXMPPacketWrite
+    ) throws {
         guard let session = MetadataSaveSession(path: url.path) else {
             throw MetadataError.writeFailed(.tags, url)
         }
@@ -195,11 +200,16 @@ extension MetaAudioFileDescription {
             failed.insert(.rating)
         }
 
-        if fileType == .flac {
+        if fileType == .flac, metadataNeedsSave {
+            let stored = FlacFileC(path: url.path)
             let flacFile = FlacFileC(path: url.path)
             flacFile.bextDescription = bextDescription
             flacFile.iXML = iXMLMetadata
-            flacFile.bextNeedsSave = bextDescription == nil || bextDescription != bextHeldByIXML
+
+            if stored.read(fromFile: session.file) {
+                flacFile.bextNeedsSave = bextDiffers(from: stored.parsedBEXT)
+                flacFile.iXMLNeedsSave = !IXMLMetadata.isSameDocument(stored.iXML, iXMLMetadata)
+            }
 
             if !flacFile.write(toFile: session.file) {
                 failed.insert(.bext)
@@ -259,9 +269,9 @@ extension MetaAudioFileDescription {
         imageDescription.cgImage = nil
     }
 
-    /// BEXT and iXML are always rendered, markers and artwork only when flagged, and the tags only
-    /// when they differ from the file's; only what changed is written. A failed artwork, marker or
-    /// rating write throws after the rest is saved.
+    /// Markers and artwork are written only when flagged; the tags, BEXT and iXML only when
+    /// `.metadata` is and they differ from the file's. A failed artwork, marker or rating write
+    /// throws after the rest is saved.
     private mutating func saveWave(
         metadataNeedsSave: Bool, imageNeedsSave: Bool, markersNeedsSave: Bool, storedXMPPacket: StoredXMPPacketWrite
     ) throws {
@@ -280,14 +290,30 @@ extension MetaAudioFileDescription {
         }
 
         if metadataNeedsSave {
-            waveFile.setTagChanges(tagProperties)
+            setMetadataChanges(on: waveFile)
         } else {
             waveFile.tagsNeedsSave = false
+            waveFile.bextNeedsSave = false
+            waveFile.iXMLNeedsSave = false
         }
 
         guard waveFile.save() else {
             throw MetadataError.writeFailed(waveFile.failedComponent, url)
         }
+    }
+
+    /// The tags, BEXT and iXML that differ from the file's; all of them when it can't be read.
+    private func setMetadataChanges(on waveFile: WaveFileC) {
+        let stored = WaveFileC(path: url.path)
+
+        guard stored.loadTags() else {
+            waveFile.setTags(tagProperties)
+            return
+        }
+
+        waveFile.setTagChanges(tagProperties, storedIn: stored)
+        waveFile.bextNeedsSave = bextDiffers(from: stored.bextDescription?.validated())
+        waveFile.iXMLNeedsSave = !IXMLMetadata.isSameDocument(stored.iXML, iXMLMetadata)
     }
 
     /// The markers' part of a save, written into `session`: false when they fail, nil when the
@@ -309,12 +335,12 @@ extension MetaAudioFileDescription {
 }
 
 extension MetaAudioFileDescription {
-    /// The BEXT a FLAC's iXML `<BEXT>` holds, which the parser falls back to when the file has no BEXT
-    /// block. A save leaves the block alone while the description still holds exactly this, rather
-    /// than adding a block the file never had.
-    private var bextHeldByIXML: BEXTDescription? {
-        guard let iXMLMetadata, let ixml = try? IXMLMetadata(xml: iXMLMetadata) else { return nil }
-        return BEXTDescription(ixmlMetadata: ixml)?.validated()
+    /// Whether `stored` holds other BEXT fields than the description. The sample rate is the host
+    /// file's, not a field, and a description decoded from a library may lack it.
+    private func bextDiffers(from stored: BEXTDescription?) -> Bool {
+        var stored = stored
+        stored?.sampleRate = bextDescription?.sampleRate
+        return stored != bextDescription
     }
 
     /// Positions convert at the sample rate Core Audio reads, as its own marker write did.
