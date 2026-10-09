@@ -4,7 +4,7 @@ import Foundation
 import Testing
 
 /// A safety-net cell that fails on current code, scoped to exactly the rows and kinds it fails
-/// on. The text states the defect, then expected against actual, then the finding number.
+/// on. The text states the defect, then expected against actual.
 struct SafetyNetKnownIssue: Sendable {
     let rows: Set<String>
     let kinds: Set<SaveKind>
@@ -24,7 +24,7 @@ enum SafetyNetKnownIssues {
     private static let matroska: [SafetyNetKnownIssue] = [
         SafetyNetKnownIssue(
             rows: ["mka", "mkv", "webm"], kinds: matroskaKinds, item: .matroska(.unknownTag),
-            text: "A Matroska save moves another app's untargeted tag from album to track level: expected no TargetTypeValue, found 30 (F50)"
+            text: "A Matroska save moves another app's untargeted tag from album to track level: expected no TargetTypeValue, found 30"
         ),
     ]
 

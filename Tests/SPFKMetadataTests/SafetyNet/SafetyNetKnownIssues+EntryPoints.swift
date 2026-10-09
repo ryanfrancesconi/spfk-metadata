@@ -9,7 +9,7 @@ extension SafetyNetKnownIssues {
     static let entryPoints: [SafetyNetKnownIssue] = [
         SafetyNetKnownIssue(
             rows: ["mka", "mkv", "webm"], kinds: tagSave, item: .matroska(.unknownTag),
-            text: "A Matroska TagProperties save moves another app's untargeted tag from album to track level (F50)"
+            text: "A Matroska TagProperties save moves another app's untargeted tag from album to track level"
         ),
     ]
 }

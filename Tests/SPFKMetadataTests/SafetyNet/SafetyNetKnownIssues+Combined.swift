@@ -2,13 +2,13 @@
 
 import Foundation
 
-/// The combined kinds' known failures. Each repeats a single-flag kind's finding on the same row,
-/// with that finding's text.
+/// The combined kinds' known failures. Each repeats a single-flag kind's entry on the same row,
+/// with that entry's text.
 extension SafetyNetKnownIssues {
     static let combined: [SafetyNetKnownIssue] = [
         SafetyNetKnownIssue(
             rows: ["mka", "mkv", "webm"], kinds: [.k9], item: .matroska(.unknownTag),
-            text: "A Matroska save moves another app's untargeted tag from album to track level: expected no TargetTypeValue, found 30 (F50)"
+            text: "A Matroska save moves another app's untargeted tag from album to track level: expected no TargetTypeValue, found 30"
         ),
     ]
 }

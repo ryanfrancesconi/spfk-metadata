@@ -120,7 +120,7 @@ final class WaveLayoutTests: BinTestCase {
         #expect(TagLibBridge.storedXMPPacket(url.path)?.contains("Reachable") == true)
     }
 
-    /// An artwork the encoder rejects fails the save after everything else is written (F9).
+    /// An artwork the encoder rejects fails the save after everything else is written.
     @Test func artworkEncodeFailureThrows() async throws {
         let url = try recorderFixture(form: .riff)
         var description = try await MetaAudioFileDescription(parsing: url)
