@@ -102,7 +102,7 @@ final class MetadataErrorSiteTests: BinTestCase {
         let url = try readOnlyCopy(TestBundleResources.shared.tabla_wav)
         defer { restoreWritable(url) }
 
-        #expect(throws: MetadataError.writeFailed(.xmpPacket, url)) {
+        #expect(throws: MetadataError.writeFailed(.xmp, url)) {
             try StoredXMPPacketWrite.replace("<x:xmpmeta xmlns:x=\"adobe:ns:meta/\"/>").write(to: url)
         }
     }

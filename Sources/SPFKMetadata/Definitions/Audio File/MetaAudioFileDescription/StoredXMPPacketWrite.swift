@@ -31,7 +31,7 @@ public enum StoredXMPPacketWrite: Sendable, Hashable {
         guard needsWrite else { return }
 
         guard TagLibBridge.setStoredXMPPacket(packet, path: url.path) else {
-            throw MetadataError.writeFailed(.xmpPacket, url)
+            throw MetadataError.writeFailed(.xmp, url)
         }
     }
 
