@@ -48,7 +48,7 @@ extension ProductionChunks {
             guard file.save() else { throw MetadataError.writeFailed(.bext, url) }
 
         default:
-            throw MetadataError.unsupportedFormat(fileType, .bext)
+            throw MetadataError.unsupportedFormat(fileType.utType, .bext)
         }
     }
 }
@@ -91,7 +91,7 @@ extension ProductionChunks {
             guard file.save() else { throw MetadataError.writeFailed(.ixml, url) }
 
         default:
-            throw MetadataError.unsupportedFormat(fileType, .ixml)
+            throw MetadataError.unsupportedFormat(fileType.utType, .ixml)
         }
     }
 }
@@ -125,7 +125,7 @@ extension ProductionChunks {
             guard file.save() else { throw MetadataError.removeFailed(.bext, url) }
 
         default:
-            throw MetadataError.unsupportedFormat(fileType, .bext)
+            throw MetadataError.unsupportedFormat(fileType.utType, .bext)
         }
     }
 }

@@ -82,7 +82,7 @@ final class MetadataErrorSiteTests: BinTestCase {
     }
 
     @Test func markerReadOfTypeWithoutMarkers() async {
-        await #expect(throws: MetadataError.unsupportedFormat(.caf, .markers)) {
+        await #expect(throws: MetadataError.unsupportedFormat(AudioFileType.caf.utType, .markers)) {
             try await AudioMarkerDescriptionCollection(url: TestBundleResources.shared.tabla_caf)
         }
     }

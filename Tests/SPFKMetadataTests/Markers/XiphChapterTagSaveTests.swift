@@ -41,7 +41,7 @@ final class XiphChapterTagSaveTests: BinTestCase {
 
         var description = try await MetaAudioFileDescription(parsing: url)
         description.tagProperties[.title] = "Saved Title"
-        try description.save(dirtyFlags: [.metadata])
+        try description.save(dirtyFlags: [.tags])
 
         #expect(chapterSummary(in: url) == before)
         #expect(try TagProperties(url: url)[.title] == "Saved Title")

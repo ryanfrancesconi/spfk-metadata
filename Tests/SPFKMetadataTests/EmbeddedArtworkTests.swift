@@ -140,7 +140,7 @@ class EmbeddedArtworkTests: BinTestCase {
         }
     }
 
-    // MARK: - ImageDescription
+    // MARK: - ArtworkDescription
 
     @Test(arguments: ["", "Cover"])
     func imageDescriptionMatchesPictureRefSetter(pictureDescription: String) throws {
@@ -148,10 +148,10 @@ class EmbeddedArtworkTests: BinTestCase {
         var artwork = source
         artwork.pictureDescription = pictureDescription
 
-        var viaSetter = ImageDescription()
+        var viaSetter = ArtworkDescription()
         viaSetter.pictureRef = artwork.pictureRef
 
-        let viaInit = ImageDescription(embeddedArtwork: artwork)
+        let viaInit = ArtworkDescription(embeddedArtwork: artwork)
 
         #expect(viaInit.cgImage === viaSetter.cgImage)
         #expect(viaInit.description == viaSetter.description)

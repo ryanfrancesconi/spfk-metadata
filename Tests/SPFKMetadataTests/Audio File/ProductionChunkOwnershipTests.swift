@@ -150,12 +150,12 @@ final class ProductionChunkOwnershipTests: BinTestCase {
         case .titleSave:
             var description = try await MetaAudioFileDescription(parsing: url)
             description.tagProperties[.title] = Self.editedTitle
-            try description.save(dirtyFlags: [.metadata])
+            try description.save(dirtyFlags: [.tags])
 
         case .ratingSave:
             var description = try await MetaAudioFileDescription(parsing: url)
             description.tagProperties[.rating] = "4"
-            try description.save(dirtyFlags: [.metadata])
+            try description.save(dirtyFlags: [.tags])
 
         case .markerSave:
             var description = try await MetaAudioFileDescription(parsing: url)
@@ -172,17 +172,17 @@ final class ProductionChunkOwnershipTests: BinTestCase {
             var bext = try #require(description.bextDescription)
             bext.sequenceDescription = Self.editedDescription
             description.bextDescription = bext
-            try description.save(dirtyFlags: [.metadata])
+            try description.save(dirtyFlags: [.tags])
 
         case .iXMLSave:
             var description = try await MetaAudioFileDescription(parsing: url)
             description.iXMLMetadata = try #require(description.iXMLMetadata).replacingOccurrences(of: "Ownership Project", with: Self.editedProject)
-            try description.save(dirtyFlags: [.metadata])
+            try description.save(dirtyFlags: [.tags])
 
         case .iXMLCommentSave:
             var description = try await MetaAudioFileDescription(parsing: url)
             description.iXMLMetadata = try #require(description.iXMLMetadata).replacingOccurrences(of: Self.comment, with: "")
-            try description.save(dirtyFlags: [.metadata])
+            try description.save(dirtyFlags: [.tags])
 
         case .normalizedIXMLTitleSave:
             // As a library row persisted before the parse kept iXML as stored holds it.
@@ -191,7 +191,7 @@ final class ProductionChunkOwnershipTests: BinTestCase {
             options.parserSettings.shouldTrimWhitespace = false
             description.iXMLMetadata = try AEXMLDocument(xml: Self.iXML, options: options).xml
             description.tagProperties[.title] = Self.editedTitle
-            try description.save(dirtyFlags: [.metadata])
+            try description.save(dirtyFlags: [.tags])
 
         case .productionBEXTWrite:
             var bext = try #require(ProductionChunks.readBEXT(from: url, fileType: fileType))

@@ -130,24 +130,24 @@ enum SaveKind: String, CaseIterable, Hashable, Sendable, CustomTestStringConvert
     func steps(for row: SafetyNetRow) -> [Step] {
         switch self {
         case .k0:
-            let flags: Set<MetadataDirtyFlag> = row.holds(.markers) ? [.metadata, .image, .markers] : [.metadata, .image]
+            let flags: Set<MetadataDirtyFlag> = row.holds(.markers) ? [.tags, .image, .markers] : [.tags, .image]
             return [Step(flags: flags) { _ in }]
 
         case .k1:
             return [Self.editTitle]
 
         case .k2:
-            return [Step(flags: [.metadata]) { $0.tagProperties[.rating] = SafetyNetEdit.rating }]
+            return [Step(flags: [.tags]) { $0.tagProperties[.rating] = SafetyNetEdit.rating }]
 
         case .k3:
-            return [Step(flags: [.metadata]) {
+            return [Step(flags: [.tags]) {
                 var bext = try #require($0.bextDescription)
                 bext.sequenceDescription = SafetyNetEdit.bextSequenceDescription
                 $0.bextDescription = bext
             }]
 
         case .k4:
-            return [Step(flags: [.metadata]) {
+            return [Step(flags: [.tags]) {
                 let iXML = try #require($0.iXMLMetadata)
                 try #require(iXML.contains(SafetyNetSetup.iXMLProject))
                 $0.iXMLMetadata = iXML.replacingOccurrences(of: SafetyNetSetup.iXMLProject, with: SafetyNetEdit.iXMLProject)
@@ -190,16 +190,16 @@ enum SaveKind: String, CaseIterable, Hashable, Sendable, CustomTestStringConvert
             return [Self.replaceMarkers, Self.editTitle]
 
         case .k9:
-            return [Self.combined([.metadata, .image])]
+            return [Self.combined([.tags, .image])]
 
         case .k10:
-            return [Self.combined([.metadata, .markers])]
+            return [Self.combined([.tags, .markers])]
 
         case .k11:
             return [Self.combined([.image, .markers])]
 
         case .k12:
-            return [Self.combined([.metadata, .image, .markers])]
+            return [Self.combined([.tags, .image, .markers])]
 
         case .s3:
             return [Self.editTitle, Self.replaceMarkers]
@@ -228,7 +228,7 @@ enum SaveKind: String, CaseIterable, Hashable, Sendable, CustomTestStringConvert
 
     /// One save carrying several flags, each with the edit its single-flag kind makes.
     private static func combined(_ flags: Set<MetadataDirtyFlag>) -> Step {
-        let steps = [(MetadataDirtyFlag.metadata, editTitle), (.image, replaceArtwork), (.markers, replaceMarkers)]
+        let steps = [(MetadataDirtyFlag.tags, editTitle), (.image, replaceArtwork), (.markers, replaceMarkers)]
             .filter { flags.contains($0.0) }.map(\.1)
 
         return Step(flags: flags) { description in
@@ -239,7 +239,7 @@ enum SaveKind: String, CaseIterable, Hashable, Sendable, CustomTestStringConvert
     }
 
     private static var editTitle: Step {
-        Step(flags: [.metadata]) {
+        Step(flags: [.tags]) {
             $0.tagProperties[.title] = SafetyNetEdit.title
             $0.tagProperties.data.set(customTag: SafetyNetSetup.customTagKey, value: SafetyNetEdit.customTagValue)
         }

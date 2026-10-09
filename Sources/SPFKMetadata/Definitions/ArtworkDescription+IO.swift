@@ -5,7 +5,7 @@ import Foundation
 import SPFKMetadataBase
 internal import SPFKMetadataC
 
-extension ImageDescription {
+extension ArtworkDescription {
     /// `description` is the picture's when it has one, else nil.
     public init(embeddedArtwork: EmbeddedArtwork) {
         self.init()
@@ -18,10 +18,10 @@ extension ImageDescription {
 
     /// The file's artwork as `EmbeddedArtwork.read(from:)` finds it, holding the bytes the file
     /// stores so that writing it back leaves them unchanged. Nil when the file has none.
-    public static func read(from url: URL) throws -> ImageDescription? {
+    public static func read(from url: URL) throws -> ArtworkDescription? {
         guard let pictureRef = try TagPictureRef.reading(url: url) else { return nil }
 
-        var imageDescription = ImageDescription()
+        var imageDescription = ArtworkDescription()
         imageDescription.pictureRef = pictureRef
         return imageDescription
     }

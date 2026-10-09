@@ -28,7 +28,7 @@
             try url.lock()
 
             let error = #expect(throws: FileLockError.self) {
-                try description.save(dirtyFlags: [.metadata])
+                try description.save(dirtyFlags: [.tags])
             }
 
             #expect(error?.state == .locked)
@@ -47,7 +47,7 @@
             try url.lock()
 
             #expect(throws: FileLockError.self) {
-                try description.save(dirtyFlags: [.metadata])
+                try description.save(dirtyFlags: [.tags])
             }
 
             try url.unlock()
@@ -62,11 +62,11 @@
             var description = MetaAudioFileDescription(url: url, fileType: .wav)
 
             try url.lock()
-            #expect(throws: FileLockError.self) { try description.save(dirtyFlags: [.metadata]) }
+            #expect(throws: FileLockError.self) { try description.save(dirtyFlags: [.tags]) }
 
             try url.unlock()
 
-            #expect(throws: Never.self) { try description.save(dirtyFlags: [.metadata]) }
+            #expect(throws: Never.self) { try description.save(dirtyFlags: [.tags]) }
         }
 
         // MARK: - Harness

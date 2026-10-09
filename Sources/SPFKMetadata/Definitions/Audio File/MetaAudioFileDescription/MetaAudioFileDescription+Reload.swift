@@ -18,7 +18,7 @@ extension MetaAudioFileDescription {
             let waveFile = WaveFileC(path: url.path)
 
             guard waveFile.loadTags() else {
-                throw NSError(description: "Failed to load wave file at \(url.path)")
+                throw MetadataError.openFailed(url)
             }
 
             let audioProperties = tagProperties.audioProperties
@@ -40,7 +40,7 @@ extension MetaAudioFileDescription {
                 let flacFile = FlacFileC(path: url.path)
 
                 guard flacFile.load() else {
-                    throw NSError(description: "Failed to load FLAC file at \(url.path)")
+                    throw MetadataError.openFailed(url)
                 }
 
                 iXMLMetadata = nil

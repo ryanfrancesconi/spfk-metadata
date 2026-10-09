@@ -54,7 +54,7 @@ final class MP4ForeignAtomSurvivalTests: BinTestCase {
 
         var description = try await MetaAudioFileDescription(parsing: url)
         description.tagProperties[.title] = "Saved Title"
-        try description.save(dirtyFlags: [.metadata])
+        try description.save(dirtyFlags: [.tags])
 
         let after = try MP4ItemListBuilder.items(in: url)
         for item in planted {

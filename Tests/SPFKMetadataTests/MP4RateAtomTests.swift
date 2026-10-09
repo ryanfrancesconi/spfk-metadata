@@ -46,7 +46,7 @@ struct MP4RateAtomTests {
 
         var description = try await MetaAudioFileDescription(parsing: url)
         description.tagProperties[.title] = "Edited"
-        try description.save(dirtyFlags: [.metadata])
+        try description.save(dirtyFlags: [.tags])
 
         #expect(try await MetaAudioFileDescription(parsing: url).tagProperties[.rating] == "3")
     }

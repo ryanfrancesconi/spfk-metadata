@@ -90,13 +90,13 @@ final class ProductionChunksTests: BinTestCase {
         #expect(ProductionChunks.readBEXT(from: url, fileType: .mp3) == nil)
         #expect(ProductionChunks.readIXML(from: url, fileType: .mp3) == nil)
 
-        #expect(throws: MetadataError.unsupportedFormat(.mp3, .bext)) {
+        #expect(throws: MetadataError.unsupportedFormat(AudioFileType.mp3.utType, .bext)) {
             try ProductionChunks.writeBEXT(bext, to: url, fileType: .mp3)
         }
-        #expect(throws: MetadataError.unsupportedFormat(.mp3, .ixml)) {
+        #expect(throws: MetadataError.unsupportedFormat(AudioFileType.mp3.utType, .ixml)) {
             try ProductionChunks.writeIXML("<BWFXML/>", to: url, fileType: .mp3)
         }
-        #expect(throws: MetadataError.unsupportedFormat(.mp3, .bext)) {
+        #expect(throws: MetadataError.unsupportedFormat(AudioFileType.mp3.utType, .bext)) {
             try ProductionChunks.removeAll(from: url, fileType: .mp3)
         }
     }

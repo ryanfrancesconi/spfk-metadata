@@ -64,12 +64,12 @@ final class FrontCoverSelectionTests: BinTestCase {
         return try #require(try ID3v2Frames.tag(in: data))
     }
 
-    /// Parse, then save `[.metadata, .image]` with no edit, then the tag's pictures.
+    /// Parse, then save `[.tags, .image]` with no edit, then the tag's pictures.
     private func parseAndSave(_ url: URL, tag: (URL) throws -> ID3v2Frames.Tag) async throws -> [(type: UInt8, size: PixelSize?)] {
         var description = try await MetaAudioFileDescription(parsing: url)
         #expect(pixelSize(of: description) == Self.frontSize, "artwork is not the front cover")
 
-        try description.save(dirtyFlags: [.metadata, .image])
+        try description.save(dirtyFlags: [.tags, .image])
         return try pictures(in: tag(url))
     }
 

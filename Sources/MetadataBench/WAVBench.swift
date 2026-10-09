@@ -28,22 +28,22 @@ struct WAVBench {
 
         switch layout {
         case .recorder:
-            await save("\(prefix).save-metadata", master, [.metadata], cases.editTitle, into: &run)
-            await save("\(prefix).save-metadata-markers", master, [.metadata, .markers], { cases.editTitle(&$0); cases.editMarkers(&$0) }, into: &run)
+            await save("\(prefix).save-metadata", master, [.tags], cases.editTitle, into: &run)
+            await save("\(prefix).save-metadata-markers", master, [.tags, .markers], { cases.editTitle(&$0); cases.editMarkers(&$0) }, into: &run)
             await cases.sequentialRewrite("io.sequential-rewrite", of: master, into: &run)
 
         case .trailing:
-            await save("\(prefix).save-metadata", master, [.metadata], cases.editTitle, into: &run)
+            await save("\(prefix).save-metadata", master, [.tags], cases.editTitle, into: &run)
             await save("\(prefix).save-markers", master, [.markers], cases.editMarkers, into: &run)
             await save("\(prefix).save-finder-tags", master, [.finderTags], { _ in }, into: &run)
             await save("\(prefix).save-image", master, [.image], cases.editArtwork, into: &run)
 
         case .trailingArt:
-            await save("\(prefix).save-metadata", master, [.metadata], cases.editTitle, into: &run)
-            await save("\(prefix).save-metadata-image-unchanged", master, [.metadata, .image], cases.editTitle, into: &run)
+            await save("\(prefix).save-metadata", master, [.tags], cases.editTitle, into: &run)
+            await save("\(prefix).save-metadata-image-unchanged", master, [.tags, .image], cases.editTitle, into: &run)
 
         case .rf64:
-            await save("\(prefix).save-metadata", master, [.metadata], cases.editTitle, into: &run)
+            await save("\(prefix).save-metadata", master, [.tags], cases.editTitle, into: &run)
             await save("\(prefix).save-markers", master, [.markers], cases.editMarkers, into: &run)
         }
     }

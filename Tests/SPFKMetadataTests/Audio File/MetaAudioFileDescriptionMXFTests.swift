@@ -42,7 +42,7 @@ struct MetaAudioFileDescriptionMXFTests {
         var description = try await MetaAudioFileDescription(parsing: url)
 
         #expect(throws: (any Error).self) {
-            try description.save(dirtyFlags: [.metadata])
+            try description.save(dirtyFlags: [.tags])
         }
     }
 

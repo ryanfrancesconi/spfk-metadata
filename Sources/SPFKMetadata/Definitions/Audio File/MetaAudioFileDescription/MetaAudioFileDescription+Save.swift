@@ -12,11 +12,12 @@ extension MetaAudioFileDescription {
     /// written elsewhere; `storedXMPPacket` replaces or removes the packet a WAV or MP3 stores,
     /// in the same TagLib save.
     ///
-    /// A part that was not read (``readStatus``), failed to write, or that the container cannot
-    /// store is left as the file has it; ``MetadataError/incompleteSave(written:failures:)`` then
-    /// names each, after everything else is written. Any other error means nothing was written.
+    /// Each component of a flag is refused on its own: one that was not read (``readStatus``),
+    /// failed to write, or that the container cannot store is left as the file has it, and
+    /// ``MetadataError/incompleteSave(written:failures:)`` then names each, after everything else
+    /// is written. Any other error means nothing was written.
     public mutating func save(
-        dirtyFlags: Set<MetadataDirtyFlag> = [.metadata],
+        dirtyFlags: Set<MetadataDirtyFlag> = [.tags],
         storedXMPPacket: StoredXMPPacketWrite = .keep
     ) throws {
         // First, so a locked file fails with one error rather than a partial save; TagLib
@@ -24,24 +25,37 @@ extension MetaAudioFileDescription {
         try url.requireWritable()
 
         if storedXMPPacket != .keep, !(fileType.map(StoredXMPPacketWrite.fileTypes.contains) ?? false) {
-            throw NSError(description: "A .\(url.pathExtension) file stores no XMP packet of its own")
+            throw MetadataError.unsupportedFormat(fileType?.utType, .xmp)
         }
 
         let unstorable = unstorableFlags(in: dirtyFlags)
-        let unread = unreadFlags(in: dirtyFlags.subtracting(unstorable))
-        let writable = dirtyFlags.subtracting(unstorable).subtracting(unread)
-        let unreadFailures = unreadErrors(for: unread)
-        let unstorableFailures: [MetadataError] = unstorable.isEmpty ? [] : [.unstorable(fileType, unstorable)]
+        let requested = Set(dirtyFlags.subtracting(unstorable).flatMap(\.components))
+        let unread = MetadataComponent.allCases.filter { requested.contains($0) && !readStatus.holdsFileValue(of: $0) }
+        var writable = requested.subtracting(unread)
+
+        // The rating is part of the tag map, so it is written only with the tags.
+        if !writable.contains(.tags) { writable.remove(.rating) }
+
+        // Left to the caller's XMP write.
+        if storedXMPPacket == .keep { writable.remove(.xmp) }
+
+        let unreadFailures = unread.map { MetadataError.readFailed($0, url) }
+        let unstorableFailures: [MetadataError] = unstorable.isEmpty ? [] : [.unstorable(fileType?.utType, unstorable)]
 
         // Nothing else to write, so the file is left untouched, modification date included.
-        if writable.isEmpty, unreadFailures.isNotEmpty || unstorableFailures.isNotEmpty {
+        if writable.isDisjoint(with: componentsInFile), unreadFailures.isNotEmpty || unstorableFailures.isNotEmpty {
             throw MetadataError.incompleteSave(written: [], failures: unreadFailures + unstorableFailures)
         }
 
-        let failed = try writeContainer(writable, storedXMPPacket: storedXMPPacket)
+        var failed = try writeContainer(writable, storedXMPPacket: storedXMPPacket)
 
         #if os(macOS)
-            try urlProperties.finishSave(at: url)
+            do {
+                try urlProperties.finishSave(at: url)
+            } catch {
+                Log.error("Failed to write the Finder tags of \(url.lastPathComponent):", error)
+                failed.insert(.finderTags)
+            }
         #endif
 
         let writeFailures = MetadataComponent.allCases.filter(failed.contains).map { MetadataError.writeFailed($0, url) }
@@ -49,26 +63,22 @@ extension MetaAudioFileDescription {
 
         guard failures.isNotEmpty else { return }
 
-        var written = writable.subtracting(failed.map(\.dirtyFlag))
+        throw MetadataError.incompleteSave(written: writable.subtracting(failed), failures: failures)
+    }
 
-        // Left to the caller's XMP write.
-        if storedXMPPacket == .keep {
-            written.remove(.xmp)
-        }
-
-        throw MetadataError.incompleteSave(written: written, failures: failures)
+    /// The components a save can find in this file. BEXT and iXML are a WAV's or FLAC's own
+    /// chunks; elsewhere a save of their flag has none to write, and leaves none behind.
+    private var componentsInFile: Set<MetadataComponent> {
+        let all = Set(MetadataComponent.allCases)
+        return fileType == .wav || fileType == .flac ? all : all.subtracting([.bext, .ixml])
     }
 
     /// The container's part of a save: the components that failed. Throws when nothing was written.
     private mutating func writeContainer(
-        _ writable: Set<MetadataDirtyFlag>, storedXMPPacket: StoredXMPPacketWrite
+        _ writable: Set<MetadataComponent>, storedXMPPacket: StoredXMPPacketWrite
     ) throws -> Set<MetadataComponent> {
-        let metadataNeedsSave = writable.contains(.metadata)
-        let imageNeedsSave = writable.contains(.image)
-        let markersNeedsSave = writable.contains(.markers)
-
         // A container save can rewrite the whole file; a Finder tag change shouldn't pay it.
-        guard metadataNeedsSave || imageNeedsSave || markersNeedsSave else {
+        guard !writable.isDisjoint(with: [.tags, .bext, .ixml, .artwork, .markers]) else {
             do {
                 try storedXMPPacket.write(to: url)
                 return []
@@ -78,15 +88,9 @@ extension MetaAudioFileDescription {
         }
 
         if fileType == .wav {
-            return try saveWave(
-                metadataNeedsSave: metadataNeedsSave, imageNeedsSave: imageNeedsSave,
-                markersNeedsSave: markersNeedsSave, storedXMPPacket: storedXMPPacket
-            )
+            return try saveWave(writable, storedXMPPacket: storedXMPPacket)
         }
 
-        return try saveSession(
-            metadataNeedsSave: metadataNeedsSave, imageNeedsSave: imageNeedsSave,
-            markersNeedsSave: markersNeedsSave, storedXMPPacket: storedXMPPacket
-        )
+        return try saveSession(writable, storedXMPPacket: storedXMPPacket)
     }
 }

@@ -41,7 +41,7 @@ final class AIFFLayoutTests: BinTestCase {
         case .titleSave:
             var description = try await MetaAudioFileDescription(parsing: url)
             description.tagProperties[.title] = Self.longTitle
-            try description.save(dirtyFlags: [.metadata])
+            try description.save(dirtyFlags: [.tags])
         case .artworkSave:
             var description = try await MetaAudioFileDescription(parsing: url)
             description.imageDescription.cgImage = try CGImage.contentsOf(url: TestBundleResources.shared.sharksandwich)
@@ -50,7 +50,7 @@ final class AIFFLayoutTests: BinTestCase {
             var description = try await MetaAudioFileDescription(parsing: url)
             description.tagProperties[.title] = Self.longTitle
             description.imageDescription.cgImage = try CGImage.contentsOf(url: TestBundleResources.shared.sharksandwich)
-            try description.save(dirtyFlags: [.metadata, .image])
+            try description.save(dirtyFlags: [.tags, .image])
         case .tagPropertiesSave:
             var properties = try TagProperties(url: url)
             properties[.title] = Self.longTitle
@@ -64,7 +64,7 @@ final class AIFFLayoutTests: BinTestCase {
             description.tagProperties[.title] = Self.longTitle
             description.imageDescription.cgImage = try CGImage.contentsOf(url: TestBundleResources.shared.sharksandwich)
             description.markerCollection = Self.storableMarkers
-            try description.save(dirtyFlags: [.metadata, .image, .markers])
+            try description.save(dirtyFlags: [.tags, .image, .markers])
         }
 
         let after = try Self.soundChunk(in: url)

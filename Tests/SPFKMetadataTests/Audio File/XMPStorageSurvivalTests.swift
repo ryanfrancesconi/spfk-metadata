@@ -22,7 +22,7 @@ final class XMPStorageSurvivalTests: BinTestCase {
 
         var description = try await MetaAudioFileDescription(parsing: url)
         description.set(tag: .title, value: "Saved Title")
-        try description.save(dirtyFlags: [.metadata])
+        try description.save(dirtyFlags: [.tags])
 
         #expect(try IFFChunks.payload(id: "_PMX", in: url, bigEndian: false) == packet)
     }
@@ -34,7 +34,7 @@ final class XMPStorageSurvivalTests: BinTestCase {
 
         var description = try await MetaAudioFileDescription(parsing: url)
         description.set(tag: .title, value: "Saved Title")
-        try description.save(dirtyFlags: [.metadata])
+        try description.save(dirtyFlags: [.tags])
 
         #expect(try IFFChunks.payload(id: "APPL", in: url, bigEndian: true) == payload)
     }
@@ -45,7 +45,7 @@ final class XMPStorageSurvivalTests: BinTestCase {
 
         var description = try await MetaAudioFileDescription(parsing: url)
         description.set(tag: .title, value: "Saved Title")
-        try description.save(dirtyFlags: [.metadata])
+        try description.save(dirtyFlags: [.tags])
 
         let saved = try ID3v2Frames.xmpPacket(in: url)
         #expect(saved == original)
@@ -84,7 +84,7 @@ final class StoredXMPPacketWriteTests: BinTestCase {
         let url = try copyToBin(url: TestBundleResources.shared.mp3_xmp)
 
         var description = try await MetaAudioFileDescription(parsing: url)
-        try description.save(dirtyFlags: [.metadata], storedXMPPacket: .replace(packet))
+        try description.save(dirtyFlags: [.tags], storedXMPPacket: .replace(packet))
 
         #expect(try ID3v2Frames.xmpPacket(in: url) == Data(packet.utf8))
         #expect(StoredXMPPacketWrite.storedPacket(in: url) == packet)
@@ -120,7 +120,7 @@ final class StoredXMPPacketWriteTests: BinTestCase {
 
         var description = try await MetaAudioFileDescription(parsing: url)
         #expect(throws: (any Error).self) {
-            try description.save(dirtyFlags: [.metadata], storedXMPPacket: .replace(self.packet))
+            try description.save(dirtyFlags: [.tags], storedXMPPacket: .replace(self.packet))
         }
 
         #expect(try Data(contentsOf: url) == before)

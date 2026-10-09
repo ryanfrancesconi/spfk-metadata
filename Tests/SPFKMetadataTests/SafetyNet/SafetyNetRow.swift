@@ -283,7 +283,7 @@ extension SafetyNetRow {
         try convert?(url)
 
         var description = try await MetaAudioFileDescription(parsing: url)
-        var flags: Set<MetadataDirtyFlag> = [.metadata]
+        var flags: Set<MetadataDirtyFlag> = [.tags]
 
         description.tagProperties[.title] = SafetyNetSetup.title
         description.tagProperties.data.set(customTag: SafetyNetSetup.customTagKey, value: SafetyNetSetup.customTagValue)

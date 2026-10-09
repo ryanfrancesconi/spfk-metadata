@@ -27,7 +27,7 @@ final class MalformedIXMLTests: BinTestCase {
         #expect(description.iXMLMetadata == Self.malformed)
 
         description.set(tag: .title, value: "Edited")
-        try description.save(dirtyFlags: [.metadata])
+        try description.save(dirtyFlags: [.tags])
 
         #expect(try RIFFChunks(contentsOf: url).first("iXML")?.payload == Data(Self.malformed.utf8))
     }
@@ -43,7 +43,7 @@ final class MalformedIXMLTests: BinTestCase {
         #expect(description.iXMLMetadata == Self.malformed)
 
         description.set(tag: .title, value: "Edited")
-        try description.save(dirtyFlags: [.metadata])
+        try description.save(dirtyFlags: [.tags])
 
         let stored = try FLACBlocks(contentsOf: url).blocks.compactMap { try $0.riffChunk() }.first { $0.id == "iXML" }?.payload
         #expect(stored == Data(Self.malformed.utf8))

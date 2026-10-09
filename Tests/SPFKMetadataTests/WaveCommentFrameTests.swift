@@ -43,7 +43,7 @@ final class WaveCommentFrameTests: BinTestCase {
         let url = try fixture()
         var description = try await MetaAudioFileDescription(parsing: url)
         description.tagProperties[.title] = "After"
-        try description.save(dirtyFlags: [.metadata])
+        try description.save(dirtyFlags: [.tags])
 
         let saved = try comments(in: url).map { "\($0.language) | \($0.description) | \($0.text)" }
         #expect(saved.sorted() == ["eng |  | Mine", "eng | iTunNORM | \(normalization)"])

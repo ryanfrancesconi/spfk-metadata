@@ -29,7 +29,7 @@ final class ID3SpreadCommentTests: BinTestCase {
 
         var description = try await MetaAudioFileDescription(parsing: url)
         description.tagProperties[.title] = "Edited Title"
-        try description.save(dirtyFlags: [.metadata])
+        try description.save(dirtyFlags: [.tags])
 
         let after = try comments(in: url).filter(\.description.isEmpty).map { "\($0.language) | \($0.text)" }
         #expect(after.sorted() == before.sorted())
@@ -40,7 +40,7 @@ final class ID3SpreadCommentTests: BinTestCase {
 
         var description = try await MetaAudioFileDescription(parsing: url)
         description.tagProperties[.comment] = "Edited"
-        try description.save(dirtyFlags: [.metadata])
+        try description.save(dirtyFlags: [.tags])
 
         let all = try comments(in: url)
         #expect(all.filter(\.description.isEmpty).map(\.text) == ["Edited"])

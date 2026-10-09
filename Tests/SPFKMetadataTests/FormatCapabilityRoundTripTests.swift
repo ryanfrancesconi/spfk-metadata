@@ -39,15 +39,15 @@ final class FormatCapabilityRoundTripTests: BinTestCase {
             var description = MetaAudioFileDescription(url: url, fileType: fileType)
             description.tagProperties[.title] = title
 
-            #expect(throws: MetadataError.incompleteSave(written: [], failures: [.unstorable(fileType, [.metadata])])) {
-                try description.save(dirtyFlags: [.metadata])
+            #expect(throws: MetadataError.incompleteSave(written: [], failures: [.unstorable(fileType.utType, [.tags])])) {
+                try description.save(dirtyFlags: [.tags])
             }
             return
         }
 
         var description = try await MetaAudioFileDescription(parsing: url)
         description.tagProperties[.title] = title
-        try description.save(dirtyFlags: [.metadata])
+        try description.save(dirtyFlags: [.tags])
 
         let reread = try await MetaAudioFileDescription(parsing: url)
         #expect(reread.tagProperties[.title] == title)
@@ -62,7 +62,7 @@ final class FormatCapabilityRoundTripTests: BinTestCase {
 
         var description = try await MetaAudioFileDescription(parsing: url)
         description.tagProperties[.rating] = "4"
-        try description.save(dirtyFlags: [.metadata])
+        try description.save(dirtyFlags: [.tags])
 
         let reread = try await MetaAudioFileDescription(parsing: url)
         #expect(reread.tagProperties[.rating] == "4", "\(fileType.rawValue)")
@@ -78,7 +78,7 @@ final class FormatCapabilityRoundTripTests: BinTestCase {
             var description = MetaAudioFileDescription(url: url, fileType: fileType)
             description.markerCollection = AudioMarkerDescriptionCollection(markerDescriptions: [marker])
 
-            #expect(throws: MetadataError.incompleteSave(written: [], failures: [.unstorable(fileType, [.markers])])) {
+            #expect(throws: MetadataError.incompleteSave(written: [], failures: [.unstorable(fileType.utType, [.markers])])) {
                 try description.save(dirtyFlags: [.markers])
             }
             return
@@ -113,7 +113,7 @@ final class FormatCapabilityRoundTripTests: BinTestCase {
         try description.save(dirtyFlags: [.markers])
 
         description.tagProperties[.title] = "Tags Only"
-        try description.save(dirtyFlags: [.metadata])
+        try description.save(dirtyFlags: [.tags])
 
         let reread = try await MetaAudioFileDescription(parsing: url)
         let markers = reread.markerCollection.markerDescriptions
@@ -131,8 +131,8 @@ final class FormatCapabilityRoundTripTests: BinTestCase {
         description.tagProperties[.title] = "Unstorable"
         description.urlProperties.finderTags = FinderTagGroup(tags: [FinderTagDescription(label: "Unstorable")])
 
-        #expect(throws: MetadataError.incompleteSave(written: [.finderTags], failures: [.unstorable(.caf, [.metadata])])) {
-            try description.save(dirtyFlags: [.metadata, .finderTags])
+        #expect(throws: MetadataError.incompleteSave(written: [.finderTags], failures: [.unstorable(AudioFileType.caf.utType, [.tags])])) {
+            try description.save(dirtyFlags: [.tags, .finderTags])
         }
 
         // A fresh URL: the original's resource values were cached when the description was built.
@@ -147,8 +147,8 @@ final class FormatCapabilityRoundTripTests: BinTestCase {
         var description = MetaAudioFileDescription(url: url, fileType: .caf)
         description.tagProperties[.title] = "Unstorable"
 
-        #expect(throws: MetadataError.incompleteSave(written: [], failures: [.unstorable(.caf, [.metadata])])) {
-            try description.save(dirtyFlags: [.metadata])
+        #expect(throws: MetadataError.incompleteSave(written: [], failures: [.unstorable(AudioFileType.caf.utType, [.tags])])) {
+            try description.save(dirtyFlags: [.tags])
         }
 
         #expect(URLProperties(url: URL(fileURLWithPath: url.path)).modificationDate == before)

@@ -70,7 +70,7 @@ final class WaveID3UnmappedFrameTests: BinTestCase {
         let url = try fixture()
         var description = try await MetaAudioFileDescription(parsing: url)
         description.tagProperties[.title] = "After"
-        try description.save(dirtyFlags: [.metadata])
+        try description.save(dirtyFlags: [.tags])
 
         try expectUnmappedFramesIntact(in: url)
         let reread = try await MetaAudioFileDescription(parsing: url)

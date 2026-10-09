@@ -62,7 +62,7 @@ final class MP3TagSavePreservationTests: BinTestCase {
         try #require(markerCount > 0)
 
         description.tagProperties[.title] = "Saved Title"
-        try description.save(dirtyFlags: [.metadata])
+        try description.save(dirtyFlags: [.tags])
 
         let reread = try await MetaAudioFileDescription(parsing: url)
         #expect(reread.tagProperties[.title] == "Saved Title")
@@ -91,7 +91,7 @@ final class MP3TagSavePreservationTests: BinTestCase {
 
         var description = try await MetaAudioFileDescription(parsing: url)
         description.tagProperties[.title] = "Saved Title"
-        try description.save(dirtyFlags: [.metadata])
+        try description.save(dirtyFlags: [.tags])
 
         let frames = try ID3v2Frames.frames(in: url)
         #expect(frames.contains { $0.id == "PRIV" && $0.body == privateFrameBody })

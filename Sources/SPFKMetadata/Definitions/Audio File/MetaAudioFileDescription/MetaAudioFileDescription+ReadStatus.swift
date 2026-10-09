@@ -18,18 +18,4 @@ extension MetaAudioFileDescription {
         /// A FLAC's BEXT and iXML blocks; false when the file can't be read.
         var flacChunks: @Sendable (FlacFileC) -> Bool = { $0.load() }
     }
-
-    /// The flags in `dirtyFlags` that would write a component ``readStatus`` says was not read.
-    func unreadFlags(in dirtyFlags: Set<MetadataDirtyFlag>) -> Set<MetadataDirtyFlag> {
-        dirtyFlags.filter { flag in
-            flag.components.contains { !readStatus.holdsFileValue(of: $0) }
-        }
-    }
-
-    /// Names each unread component of `flags`, in declaration order.
-    func unreadErrors(for flags: Set<MetadataDirtyFlag>) -> [MetadataError] {
-        MetadataComponent.allCases
-            .filter { flags.contains($0.dirtyFlag) && !readStatus.holdsFileValue(of: $0) }
-            .map { .readFailed($0, url) }
-    }
 }

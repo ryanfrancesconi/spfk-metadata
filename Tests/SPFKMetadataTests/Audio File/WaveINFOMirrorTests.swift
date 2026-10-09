@@ -40,7 +40,7 @@ final class WaveINFOMirrorTests: BinTestCase {
         var description = try await MetaAudioFileDescription(parsing: url)
         description.tagProperties.customTags["IFRM"] = nil
         description.tagProperties.customTags["IZZZ"] = "New"
-        try description.save(dirtyFlags: [.metadata])
+        try description.save(dirtyFlags: [.tags])
 
         let info = Dictionary(uniqueKeysWithValues: try RIFFChunks(contentsOf: url).infoItems().map { ($0.id, $0.value) })
         #expect(info["IFRM"] == nil)

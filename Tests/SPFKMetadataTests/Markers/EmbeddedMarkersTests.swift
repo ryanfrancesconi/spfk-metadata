@@ -95,11 +95,11 @@ final class EmbeddedMarkersTests: BinTestCase {
         let url = try copy(source)
         let fileType = try #require(AudioFileType(url: url))
 
-        #expect(throws: MetadataError.unsupportedFormat(fileType, .markers)) {
+        #expect(throws: MetadataError.unsupportedFormat(fileType.utType, .markers)) {
             try EmbeddedMarkers.write(markers(sampleRate: 44100), to: url, fileType: fileType)
         }
 
-        #expect(throws: MetadataError.unsupportedFormat(fileType, .markers)) {
+        #expect(throws: MetadataError.unsupportedFormat(fileType.utType, .markers)) {
             try EmbeddedMarkers.removeAll(from: url, fileType: fileType)
         }
     }

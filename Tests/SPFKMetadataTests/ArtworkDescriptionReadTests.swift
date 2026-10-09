@@ -9,12 +9,12 @@ import Testing
 @testable import SPFKMetadata
 
 @Suite
-struct ImageDescriptionReadTests {
+struct ArtworkDescriptionReadTests {
     /// The bytes a parse holds, so a write of either puts the file's own picture back.
     @Test(arguments: [TestBundleResources.shared.mp3_id3, TestBundleResources.shared.wav_bext_v2])
     func readHoldsTheBytesAParseHolds(url: URL) async throws {
         let parsed = try await MetaAudioFileDescription(parsing: url).imageDescription
-        let read = try #require(try ImageDescription.read(from: url))
+        let read = try #require(try ArtworkDescription.read(from: url))
 
         let stored = try #require(read.storedPicture)
         #expect(stored == parsed.storedPicture)
@@ -23,6 +23,6 @@ struct ImageDescriptionReadTests {
 
     @Test(arguments: [TestBundleResources.shared.mp3_no_metadata, TestBundleResources.shared.toc_many_children])
     func readIsNilWithoutArtwork(url: URL) throws {
-        #expect(try ImageDescription.read(from: url) == nil)
+        #expect(try ArtworkDescription.read(from: url) == nil)
     }
 }

@@ -84,7 +84,7 @@ final class MultiplePictureSurvivalTests: BinTestCase {
 
         var description = try await MetaAudioFileDescription(parsing: url)
         description.tagProperties[.title] = "Saved Title"
-        try description.save(dirtyFlags: [.metadata])
+        try description.save(dirtyFlags: [.tags])
 
         let pictures = try mp3Pictures(in: url)
         #expect(pictures.contains(Picture(type: Self.frontCover, data: try frontData)))
@@ -186,7 +186,7 @@ final class MultiplePictureSurvivalTests: BinTestCase {
 
         var description = try await MetaAudioFileDescription(parsing: url)
         description.tagProperties[.title] = "Saved Title"
-        try description.save(dirtyFlags: [.metadata])
+        try description.save(dirtyFlags: [.tags])
 
         let pictures = try flacPictures(in: url)
         #expect(pictures.contains(Picture(type: Self.frontCover, data: try frontData)))

@@ -81,7 +81,7 @@ final class WaveLayoutTests: BinTestCase {
         var description = try await MetaAudioFileDescription(parsing: url)
         description.iXMLMetadata = try #require(description.iXMLMetadata).replacingOccurrences(of: "<NOTE>Setup</NOTE>", with: "<NOTE>\(String(repeating: "d", count: 3000))</NOTE>")
         description.tagProperties[.title] = String(repeating: "t", count: 6000)
-        try description.save(dirtyFlags: [.metadata])
+        try description.save(dirtyFlags: [.tags])
         let first = try Layout(url: url)
 
         try ProductionChunks.writeIXML(SafetyNetSetup.iXML.replacingOccurrences(of: "<NOTE>Setup</NOTE>", with: "<NOTE>\(String(repeating: "e", count: 3040))</NOTE>"), to: url, fileType: .wav)
@@ -133,8 +133,8 @@ final class WaveLayoutTests: BinTestCase {
         description.imageDescription.cgImage = context.makeImage()
         description.tagProperties[.title] = Self.editedTitle
 
-        #expect(throws: MetadataError.incompleteSave(written: [.metadata], failures: [.writeFailed(.artwork, url)])) {
-            try description.save(dirtyFlags: [.metadata, .image])
+        #expect(throws: MetadataError.incompleteSave(written: Set(MetadataDirtyFlag.tags.components), failures: [.writeFailed(.artwork, url)])) {
+            try description.save(dirtyFlags: [.tags, .image])
         }
 
         let reread = try await MetaAudioFileDescription(parsing: url)
@@ -148,7 +148,7 @@ final class WaveLayoutTests: BinTestCase {
         case .titleSave:
             var description = try await MetaAudioFileDescription(parsing: url)
             description.tagProperties[.title] = Self.editedTitle
-            try description.save(dirtyFlags: [.metadata])
+            try description.save(dirtyFlags: [.tags])
 
         case .markerSave:
             var description = try await MetaAudioFileDescription(parsing: url)
@@ -165,7 +165,7 @@ final class WaveLayoutTests: BinTestCase {
             var bext = try #require(description.bextDescription)
             bext.sequenceDescription = SafetyNetEdit.bextSequenceDescription
             description.bextDescription = bext
-            try description.save(dirtyFlags: [.metadata])
+            try description.save(dirtyFlags: [.tags])
 
         case .packetReplace:
             var description = try await MetaAudioFileDescription(parsing: url)

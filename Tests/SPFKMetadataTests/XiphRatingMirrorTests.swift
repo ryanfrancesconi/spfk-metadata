@@ -15,7 +15,7 @@ final class XiphRatingMirrorTests: BinTestCase {
         let url = try copyToBin(url: TestBundleResources.shared.tabla_flac)
         var description = try await MetaAudioFileDescription(parsing: url)
         description.tagProperties[.rating] = "4"
-        try description.save(dirtyFlags: [.metadata])
+        try description.save(dirtyFlags: [.tags])
         return url
     }
 

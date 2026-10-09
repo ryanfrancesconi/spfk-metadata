@@ -24,7 +24,7 @@ final class MP3TagVersionTests: BinTestCase {
     private func saveTitle(_ title: String, to url: URL) async throws {
         var description = try await MetaAudioFileDescription(parsing: url)
         description.tagProperties[.title] = title
-        try description.save(dirtyFlags: [.metadata])
+        try description.save(dirtyFlags: [.tags])
     }
 
     @Test func aVersion3TagStaysVersion3WithoutAnID3v1Tag() async throws {

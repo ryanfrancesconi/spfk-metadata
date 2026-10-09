@@ -45,7 +45,7 @@ extension AudioMarkerDescriptionCollection {
             self = AudioMarkerDescriptionCollection(audioMarkers: value)
 
         case nil:
-            throw MetadataError.unsupportedFormat(fileType, .markers)
+            throw MetadataError.unsupportedFormat(fileType.utType, .markers)
         }
     }
 

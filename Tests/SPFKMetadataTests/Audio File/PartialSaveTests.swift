@@ -11,7 +11,7 @@ import Testing
 
 @testable import SPFKMetadata
 
-/// A save that writes some flags and not others says which it wrote, and finishes the file's
+/// A save that writes some components and not others says which it wrote, and finishes the file's
 /// Finder tags and modification date as a complete save does.
 @Suite(.tags(.file))
 final class PartialSaveTests: BinTestCase {
@@ -30,7 +30,7 @@ final class PartialSaveTests: BinTestCase {
     }
 
     @Test(arguments: formats)
-    func aFailedArtworkWriteReportsTheFlagsWritten(source: URL) async throws {
+    func aFailedArtworkWriteReportsTheComponentsWritten(source: URL) async throws {
         let url = try copyToBin(url: source)
         var description = try await MetaAudioFileDescription(parsing: url)
 
@@ -40,7 +40,7 @@ final class PartialSaveTests: BinTestCase {
             AudioMarkerDescription(name: "One", startTime: 0.5, markerID: 0),
         ])
 
-        var dirtyFlags: Set<MetadataDirtyFlag> = [.metadata, .image, .markers]
+        var dirtyFlags: Set<MetadataDirtyFlag> = [.tags, .image, .markers]
 
         #if os(macOS)
             description.urlProperties.finderTags = FinderTagGroup(tags: [FinderTagDescription(label: "Partial")])
@@ -48,7 +48,7 @@ final class PartialSaveTests: BinTestCase {
         #endif
 
         #expect(throws: MetadataError.incompleteSave(
-            written: dirtyFlags.subtracting([.image]),
+            written: Set(dirtyFlags.subtracting([.image]).flatMap(\.components)),
             failures: [.writeFailed(.artwork, url)]
         )) {
             try description.save(dirtyFlags: dirtyFlags)
@@ -74,10 +74,10 @@ final class PartialSaveTests: BinTestCase {
         description.tagProperties[.title] = "Partial"
 
         #expect(throws: MetadataError.incompleteSave(
-            written: [.metadata],
+            written: Set(MetadataDirtyFlag.tags.components),
             failures: [.readFailed(.markers, url), .writeFailed(.artwork, url)]
         )) {
-            try description.save(dirtyFlags: [.metadata, .image, .markers])
+            try description.save(dirtyFlags: [.tags, .image, .markers])
         }
 
         let reread = try await MetaAudioFileDescription(parsing: url)

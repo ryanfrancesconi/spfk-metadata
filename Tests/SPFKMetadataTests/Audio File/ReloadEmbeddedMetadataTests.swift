@@ -25,7 +25,7 @@ final class ReloadEmbeddedMetadataTests: BinTestCase {
         var ixml = IXMLMetadata()
         ixml.scene = "Reloaded Scene"
         writer.iXMLMetadata = ixml.xml
-        try writer.save(dirtyFlags: [.metadata])
+        try writer.save(dirtyFlags: [.tags])
 
         try description.reloadEmbeddedMetadata()
 
@@ -54,7 +54,7 @@ final class ReloadEmbeddedMetadataTests: BinTestCase {
         var ixml = IXMLMetadata()
         ixml.scene = "Reloaded Scene"
         writer.iXMLMetadata = ixml.xml
-        try writer.save(dirtyFlags: [.metadata])
+        try writer.save(dirtyFlags: [.tags])
 
         try description.reloadEmbeddedMetadata()
 
@@ -77,14 +77,14 @@ final class ReloadEmbeddedMetadataTests: BinTestCase {
         var ixml = IXMLMetadata()
         ixml.scene = "To be removed"
         writer.iXMLMetadata = ixml.xml
-        try writer.save(dirtyFlags: [.metadata])
+        try writer.save(dirtyFlags: [.tags])
 
         var description = try await MetaAudioFileDescription(parsing: url)
         try #require(description.bextDescription != nil)
 
         writer.bextDescription = nil
         writer.iXMLMetadata = nil
-        try writer.save(dirtyFlags: [.metadata])
+        try writer.save(dirtyFlags: [.tags])
 
         try description.reloadEmbeddedMetadata()
 
@@ -98,13 +98,13 @@ final class ReloadEmbeddedMetadataTests: BinTestCase {
 
         var writer = try await MetaAudioFileDescription(parsing: url)
         writer.set(tag: .album, value: "To Be Removed")
-        try writer.save(dirtyFlags: [.metadata])
+        try writer.save(dirtyFlags: [.tags])
 
         var description = try await MetaAudioFileDescription(parsing: url)
         try #require(description.tag(for: .album) == "To Be Removed")
 
         writer.tagProperties.set(tag: .album, value: nil)
-        try writer.save(dirtyFlags: [.metadata])
+        try writer.save(dirtyFlags: [.tags])
 
         try description.reloadEmbeddedMetadata()
 

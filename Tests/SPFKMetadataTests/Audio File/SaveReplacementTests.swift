@@ -28,7 +28,7 @@ final class SaveReplacementTests: BinTestCase {
         var description = try await MetaAudioFileDescription(parsing: url)
         description.tagProperties[.title] = "Replaced"
         description.imageDescription.cgImage = try CGImage.contentsOf(url: TestBundleResources.shared.sharksandwich)
-        try description.save(dirtyFlags: [.metadata, .image])
+        try description.save(dirtyFlags: [.tags, .image])
     }
 
     @Test func aSaveThatMovesTheAudioReplacesTheFileAndKeepsItsAttributes() async throws {
@@ -65,7 +65,7 @@ final class SaveReplacementTests: BinTestCase {
 
         var description = try await MetaAudioFileDescription(parsing: url)
         description.tagProperties[.title] = "Fits"
-        try description.save(dirtyFlags: [.metadata])
+        try description.save(dirtyFlags: [.tags])
 
         #expect(inode(url) == before)
         #expect(try await MetaAudioFileDescription(parsing: url).tagProperties[.title] == "Fits")

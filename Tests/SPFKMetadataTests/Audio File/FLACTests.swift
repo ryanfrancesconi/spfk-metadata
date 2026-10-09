@@ -315,14 +315,14 @@ final class ExternalFLACApplicationBlockTests: BinTestCase {
 
         // A save writes the BEXT into iXML's `<BEXT>` too; the plant then removes the block.
         var setup = try await MetaAudioFileDescription(parsing: url)
-        try setup.save(dirtyFlags: [.metadata])
+        try setup.save(dirtyFlags: [.tags])
         try SafetyNetFLACPlant.plantIXMLOnlyBroadcastExtension(in: url)
 
         var description = try await MetaAudioFileDescription(parsing: url)
         var bext = try #require(description.bextDescription)
         bext.originator = "Edited Originator"
         description.bextDescription = bext
-        try description.save(dirtyFlags: [.metadata])
+        try description.save(dirtyFlags: [.tags])
 
         let flac = FlacFileC(path: url.path)
         #expect(flac.load())

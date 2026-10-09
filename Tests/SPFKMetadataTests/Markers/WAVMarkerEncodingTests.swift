@@ -165,7 +165,7 @@ final class WAVMarkerEncodingTests: BinTestCase {
 
         var tagged = try await MetaAudioFileDescription(parsing: url)
         tagged.tagProperties[.title] = "NEW TITLE"
-        try tagged.save(dirtyFlags: [.metadata])
+        try tagged.save(dirtyFlags: [.tags])
 
         let after = try await MetaAudioFileDescription(parsing: url)
         #expect(after.tagProperties[.title] == "NEW TITLE")

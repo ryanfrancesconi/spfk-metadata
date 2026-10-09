@@ -36,7 +36,7 @@ final class RatingOwnershipTests: BinTestCase {
         try #require(description.tagProperties[.rating] == "4")
 
         description.tagProperties.set(tag: .rating, value: nil)
-        try description.save(dirtyFlags: [.metadata])
+        try description.save(dirtyFlags: [.tags])
 
         #expect(try await MetaAudioFileDescription(parsing: url).tagProperties[.rating] == nil)
 
@@ -55,7 +55,7 @@ final class RatingOwnershipTests: BinTestCase {
 
         var description = try await MetaAudioFileDescription(parsing: url)
         description.set(tag: .title, value: "Edited")
-        try description.save(dirtyFlags: [.metadata])
+        try description.save(dirtyFlags: [.tags])
 
         let frames = try popularimeters(inMP3: url)
         #expect(frames.map(\.email) == [Self.otherEmail])
@@ -73,7 +73,7 @@ final class RatingOwnershipTests: BinTestCase {
         try #require(description.tagProperties[.rating] == "4")
 
         description.tagProperties.set(tag: .rating, value: nil)
-        try description.save(dirtyFlags: [.metadata])
+        try description.save(dirtyFlags: [.tags])
 
         #expect(try await MetaAudioFileDescription(parsing: url).tagProperties[.rating] == nil)
 
@@ -91,7 +91,7 @@ final class RatingOwnershipTests: BinTestCase {
 
         var description = try await MetaAudioFileDescription(parsing: url)
         description.tagProperties[.rating] = "2"
-        try description.save(dirtyFlags: [.metadata])
+        try description.save(dirtyFlags: [.tags])
 
         #expect(try await MetaAudioFileDescription(parsing: url).tagProperties[.rating] == "2")
         #expect(Set(try popularimeters(inMP3: url).map(\.email)) == [Self.otherEmail, Self.appEmail])

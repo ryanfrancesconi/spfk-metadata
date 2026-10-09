@@ -61,7 +61,7 @@ extension MetaAudioFileDescription {
         await loadVideoTrack()
 
         // No thumbnail: its decode costs more than the rest of the parse with a large cover, so
-        // whoever displays the artwork makes it (`ImageDescription.createThumbnail()`). Without
+        // whoever displays the artwork makes it (`ArtworkDescription.createThumbnail()`). Without
         // artwork, display supplies the Finder icon, which is per-machine rather than file content.
         if imageDescription.cgImage == nil {
             imageDescription.description = url.path
@@ -73,7 +73,7 @@ extension MetaAudioFileDescription {
         let waveFile = WaveFileC(path: url.path)
 
         guard waveFile.load() else {
-            throw NSError(description: "Failed to load wave file at \(url.path)")
+            throw MetadataError.openFailed(url)
         }
 
         if let audioProperties = waveFile.audioPropertiesC {
@@ -132,15 +132,17 @@ extension MetaAudioFileDescription {
 }
 
 extension MetaAudioFileDescription {
-    /// Every component written into one TagLib open and saved once, returning those that failed;
-    /// throws when nothing could be saved. A FLAC's BEXT and iXML are written only when they differ
-    /// from the file's. Tags the parse could not read are left as the file has them.
+    /// Every component of `writable` written into one TagLib open and saved once, returning those
+    /// that failed; throws when nothing could be saved. A FLAC's BEXT and iXML are written only
+    /// when they differ from the file's. Tags the parse could not read are left as the file has them.
     mutating func saveSession(
-        metadataNeedsSave: Bool, imageNeedsSave: Bool, markersNeedsSave: Bool, storedXMPPacket: StoredXMPPacketWrite
+        _ writable: Set<MetadataComponent>, storedXMPPacket: StoredXMPPacketWrite
     ) throws -> Set<MetadataComponent> {
         guard let session = MetadataSaveSession(path: url.path) else {
-            throw MetadataError.writeFailed(.tags, url)
+            throw MetadataError.saveFailed(url)
         }
+
+        let imageNeedsSave = writable.contains(.artwork)
 
         var failed: Set<MetadataComponent> = []
         let tagsWereRead = readStatus.holdsFileValue(of: .tags)
@@ -157,7 +159,7 @@ extension MetaAudioFileDescription {
             }
         }
 
-        if fileType == .flac, metadataNeedsSave {
+        if fileType == .flac, !writable.isDisjoint(with: [.bext, .ixml]) {
             let stored = FlacFileC(path: url.path)
             let flacFile = FlacFileC(path: url.path)
             flacFile.bextDescription = bextDescription
@@ -168,8 +170,12 @@ extension MetaAudioFileDescription {
                 flacFile.iXMLNeedsSave = !IXMLMetadata.isUnedited(iXMLMetadata, stored: stored.iXML)
             }
 
+            flacFile.bextNeedsSave = flacFile.bextNeedsSave && writable.contains(.bext)
+            flacFile.iXMLNeedsSave = flacFile.iXMLNeedsSave && writable.contains(.ixml)
+
             if !flacFile.write(toFile: session.file) {
-                failed.insert(.bext)
+                if flacFile.bextNeedsSave { failed.insert(.bext) }
+                if flacFile.iXMLNeedsSave { failed.insert(.ixml) }
             }
         }
 
@@ -179,12 +185,12 @@ extension MetaAudioFileDescription {
 
         // A nil result is unreachable: `save(dirtyFlags:)` filters on `markerWriteTypes`, derived
         // from the same storage. Counted as failed, so the dirty flag is kept.
-        if markersNeedsSave, saveMarkers(into: session) != true {
+        if writable.contains(.markers), saveMarkers(into: session) != true {
             failed.insert(.markers)
         }
 
         guard session.save() else {
-            throw MetadataError.writeFailed(.tags, url)
+            throw MetadataError.saveFailed(url)
         }
 
         // The packet rides the tag write, so it goes alone when that was skipped.
@@ -214,17 +220,18 @@ extension MetaAudioFileDescription {
     /// Removes embedded artwork from the file via TagLib and clears it from memory.
     public mutating func removePicture() throws {
         guard TagPicture.write(nil, path: url.path) else {
-            throw NSError(description: "Failed to remove image from \(url.path)")
+            throw MetadataError.removeFailed(.artwork, url)
         }
         imageDescription.cgImage = nil
     }
 
-    /// Markers and artwork are written only when flagged; the tags, BEXT and iXML only when
-    /// `.metadata` is and they differ from the file's. Returns the components that failed; throws
-    /// when nothing could be saved.
+    /// Markers and artwork are written only when in `writable`; the tags, BEXT and iXML only when
+    /// they are and differ from the file's. Returns the components that failed; throws when nothing
+    /// could be saved.
     mutating func saveWave(
-        metadataNeedsSave: Bool, imageNeedsSave: Bool, markersNeedsSave: Bool, storedXMPPacket: StoredXMPPacketWrite
+        _ writable: Set<MetadataComponent>, storedXMPPacket: StoredXMPPacketWrite
     ) throws -> Set<MetadataComponent> {
+        let imageNeedsSave = writable.contains(.artwork)
         let waveFile = WaveFileC(path: url.path)
         storedXMPPacket.apply { waveFile.xmpNeedsSave = true; waveFile.xmpPacket = $0 }
 
@@ -232,24 +239,28 @@ extension MetaAudioFileDescription {
         waveFile.iXML = iXMLMetadata
         waveFile.markers = audioMarkers
 
-        waveFile.markersNeedsSave = markersNeedsSave
+        waveFile.markersNeedsSave = writable.contains(.markers)
         waveFile.imageNeedsSave = imageNeedsSave
 
         if imageNeedsSave, let pictureRef = pictureRefToWrite {
             waveFile.tagPicture = TagPicture(picture: pictureRef)
         }
 
-        if metadataNeedsSave {
+        if !writable.isDisjoint(with: [.tags, .bext, .ixml]) {
             setMetadataChanges(on: waveFile)
-        } else {
-            waveFile.tagsNeedsSave = false
-            waveFile.bextNeedsSave = false
-            waveFile.iXMLNeedsSave = false
         }
+
+        if !writable.contains(.tags) {
+            waveFile.tagsNeedsSave = false
+            waveFile.ratingNeedsSave = false
+        }
+
+        waveFile.bextNeedsSave = waveFile.bextNeedsSave && writable.contains(.bext)
+        waveFile.iXMLNeedsSave = waveFile.iXMLNeedsSave && writable.contains(.ixml)
 
         guard waveFile.save() else {
             guard !waveFile.failedComponents.contains(.container) else {
-                throw MetadataError.writeFailed(.tags, url)
+                throw MetadataError.saveFailed(url)
             }
             return waveFile.failedWrites
         }

@@ -47,7 +47,7 @@ public enum EmbeddedMarkers {
             success = MP4ChapterUtil.write(descriptions.map(\.fileEncodedChapterMarker), to: url.path)
 
         case nil:
-            throw MetadataError.unsupportedFormat(fileType, .markers)
+            throw MetadataError.unsupportedFormat(fileType.utType, .markers)
         }
 
         guard success else {
@@ -75,7 +75,7 @@ public enum EmbeddedMarkers {
             MP4ChapterUtil.remove(url.path)
 
         case nil:
-            throw MetadataError.unsupportedFormat(fileType, .markers)
+            throw MetadataError.unsupportedFormat(fileType.utType, .markers)
         }
     }
 }

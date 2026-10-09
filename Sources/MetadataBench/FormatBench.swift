@@ -28,10 +28,10 @@ struct FormatBench {
     private func measure(_ format: BenchFormat, master: URL, into run: inout RegressionRun) async throws {
         let prefix = "\(format.rawValue).fresh"
         let storesMarkers = try await MetaAudioFileDescription(parsing: master).canStoreMarkers
-        let all: Set<MetadataDirtyFlag> = storesMarkers ? [.metadata, .image, .markers] : [.metadata, .image]
+        let all: Set<MetadataDirtyFlag> = storesMarkers ? [.tags, .image, .markers] : [.tags, .image]
 
         await cases.parse("\(prefix).parse", master, into: &run)
-        await cases.save("\(prefix).save-metadata", master, [.metadata], cases.editTitle, into: &run)
+        await cases.save("\(prefix).save-metadata", master, [.tags], cases.editTitle, into: &run)
         await cases.save("\(prefix).save-image", master, [.image], cases.editArtwork, into: &run)
         if storesMarkers {
             await cases.save("\(prefix).save-markers", master, [.markers], cases.editMarkers, into: &run)

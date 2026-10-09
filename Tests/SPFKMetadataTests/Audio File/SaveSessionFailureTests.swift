@@ -49,12 +49,27 @@ final class SaveSessionFailureTests: BinTestCase {
             AudioMarkerDescription(name: "Second", startTime: 1.5),
         ])
 
-        #expect(throws: MetadataError.incompleteSave(written: [.metadata, .markers], failures: [.writeFailed(.artwork, url)])) {
-            try description.save(dirtyFlags: [.metadata, .image, .markers])
+        #expect(throws: MetadataError.incompleteSave(
+            written: Set(MetadataDirtyFlag.tags.components + [.markers]), failures: [.writeFailed(.artwork, url)]
+        )) {
+            try description.save(dirtyFlags: [.tags, .image, .markers])
         }
 
         let reread = try await MetaAudioFileDescription(parsing: url)
         #expect(reread.tagProperties[.title] == Self.editedTitle)
         #expect(reread.markerCollection.markerDescriptions.map(\.name) == ["First", "Second"])
+    }
+
+    /// A file that cannot be opened for writing names no component: nothing in it was written, a
+    /// markers save included.
+    @Test func aFileThatCannotBeOpenedFailsTheWholeSave() throws {
+        let url = bin.appendingPathComponent("unreadable.m4a")
+        try Data(repeating: 0x5A, count: 4096).write(to: url)
+
+        var description = MetaAudioFileDescription(url: url, fileType: .m4a)
+
+        #expect(throws: MetadataError.saveFailed(url)) {
+            try description.save(dirtyFlags: [.markers])
+        }
     }
 }

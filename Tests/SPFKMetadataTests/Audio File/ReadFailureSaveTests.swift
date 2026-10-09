@@ -33,7 +33,7 @@ final class ReadFailureSaveTests: BinTestCase {
             AudioMarkerDescription(name: "One", startTime: 0.5, markerID: 0),
             AudioMarkerDescription(name: "Two", startTime: 1.0, markerID: 1),
         ])
-        try description.save(dirtyFlags: [.metadata, .markers])
+        try description.save(dirtyFlags: [.tags, .markers])
 
         return url
     }
@@ -55,8 +55,11 @@ final class ReadFailureSaveTests: BinTestCase {
 
         description.set(tag: .title, value: "Edited")
 
-        #expect(throws: MetadataError.incompleteSave(written: [], failures: [.readFailed(.tags, url)])) {
-            try description.save(dirtyFlags: [.metadata])
+        // A FLAC holds its own BEXT and iXML, which were read and so are written.
+        let written: Set<MetadataComponent> = source.pathExtension == "flac" ? [.bext, .ixml] : []
+
+        #expect(throws: MetadataError.incompleteSave(written: written, failures: [.readFailed(.tags, url)])) {
+            try description.save(dirtyFlags: [.tags])
         }
 
         try await expectKept(url)
@@ -102,9 +105,9 @@ final class ReadFailureSaveTests: BinTestCase {
         try await expectKept(url)
     }
 
-    /// The flag that was read is written; the one that was not is named after it.
+    /// The component that was read is written; the one that was not is named after it.
     @Test(arguments: formats)
-    func aSaveWritesTheFlagsThatWereRead(source: URL) async throws {
+    func aSaveWritesTheComponentsThatWereRead(source: URL) async throws {
         let url = try await prepared(source)
 
         var description = try await MetaAudioFileDescription(parsing: url, reads: Self.failingMarkers)
@@ -113,8 +116,10 @@ final class ReadFailureSaveTests: BinTestCase {
             AudioMarkerDescription(name: "New", startTime: 0.25, markerID: 0),
         ])
 
-        #expect(throws: MetadataError.incompleteSave(written: [.metadata], failures: [.readFailed(.markers, url)])) {
-            try description.save(dirtyFlags: [.metadata, .markers])
+        #expect(throws: MetadataError.incompleteSave(
+            written: Set(MetadataDirtyFlag.tags.components), failures: [.readFailed(.markers, url)]
+        )) {
+            try description.save(dirtyFlags: [.tags, .markers])
         }
 
         let onDisk = try await MetaAudioFileDescription(parsing: url)
@@ -122,7 +127,8 @@ final class ReadFailureSaveTests: BinTestCase {
         #expect(onDisk.markerCollection.markerDescriptions.compactMap(\.name) == ["One", "Two"])
     }
 
-    @Test func aFLACWhoseChunksFailedToReadKeepsItsBEXTAndIXML() async throws {
+    /// The chunks are refused on their own: the title edit that shares their flag is written.
+    @Test func aFLACWhoseChunksFailedToReadKeepsItsBEXTAndIXMLAndSavesItsTags() async throws {
         let source = TestBundleResources.shared.flac_bext_ixml_external
         let url = bin.appendingPathComponent(source.lastPathComponent)
         try FileManager.default.copyItem(at: source, to: url)
@@ -138,12 +144,13 @@ final class ReadFailureSaveTests: BinTestCase {
         description.set(tag: .title, value: "Edited")
 
         #expect(throws: MetadataError.incompleteSave(
-            written: [], failures: [.readFailed(.bext, url), .readFailed(.ixml, url)]
+            written: [.tags, .rating], failures: [.readFailed(.bext, url), .readFailed(.ixml, url)]
         )) {
-            try description.save(dirtyFlags: [.metadata])
+            try description.save(dirtyFlags: [.tags])
         }
 
         let onDisk = try await MetaAudioFileDescription(parsing: url)
+        #expect(onDisk.tag(for: .title) == "Edited")
         #expect(onDisk.bextDescription == original.bextDescription)
         #expect(onDisk.iXMLMetadata == original.iXMLMetadata)
     }
@@ -158,7 +165,7 @@ final class ReadFailureSaveTests: BinTestCase {
         #expect(description.tag(for: .title) == "Kept Title")
 
         description.set(tag: .title, value: "Edited")
-        try description.save(dirtyFlags: [.metadata])
+        try description.save(dirtyFlags: [.tags])
 
         let onDisk = try await MetaAudioFileDescription(parsing: url)
         #expect(onDisk.tag(for: .title) == "Edited")
@@ -173,8 +180,8 @@ final class ReadFailureSaveTests: BinTestCase {
         description.readStatus.failed = [.tags]
         description.tagProperties = TagProperties()
 
-        #expect(throws: MetadataError.incompleteSave(written: [], failures: [.readFailed(.tags, url)])) {
-            try description.save(dirtyFlags: [.metadata])
+        #expect(throws: MetadataError.incompleteSave(written: [.bext, .ixml], failures: [.readFailed(.tags, url)])) {
+            try description.save(dirtyFlags: [.tags])
         }
 
         try await expectKept(url)
