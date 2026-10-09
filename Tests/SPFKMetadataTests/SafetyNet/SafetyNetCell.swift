@@ -61,12 +61,15 @@ extension SafetyNetItem {
 extension SafetyNetItem {
     /// Removing artwork clears every picture, the other apps' included, so nothing else is shown in
     /// its place; an MP4 marker save removes the Nero `chpl`, which would disagree with the new
-    /// chapters and be read back when they are empty. Every other unowned item stays as it was.
+    /// chapters and be read back when they are empty; a WAV marker save drops another app's `note`
+    /// and `ltxt` with the cues they annotate, which every marker edit here replaces. Every other
+    /// unowned item stays as it was.
     func unownedWrite(by kind: SaveKind, row: SafetyNetRow) -> SafetyNetWrite {
         switch (self, kind) {
         case (.id3(.otherPictures), _), (.flac(.otherPictures), _), (.ogg(.otherPictures), _), (.mp4(.otherCovers), _):
             kind.removesArtwork ? .value(nil) : .unchanged
-        case (.mp4(.neroChapters), _) where kind.writesMarkers(for: row):
+        case (.mp4(.neroChapters), _) where kind.writesMarkers(for: row),
+             (.riff(.otherAssociatedData), _) where kind.written.contains(.markers):
             .value(nil)
         default:
             .unchanged

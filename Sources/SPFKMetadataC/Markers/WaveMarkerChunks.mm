@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <cmath>
 #include <map>
+#include <set>
+#include <vector>
 
 #import <taglib/wavfile.h>
 
@@ -35,13 +37,20 @@ NSString *decodeLabel(const ByteVector &text) {
     return [[NSString alloc] initWithData:data encoding:NSISOLatin1StringEncoding];
 }
 
-/// `labl` text keyed by cue ID. Other `adtl` sub-chunks (`note`, `ltxt`) are skipped.
-std::map<unsigned int, NSString *> parseLabels(const ByteVector &adtl) {
-    std::map<unsigned int, NSString *> labels;
+/// An `adtl` sub-chunk: `labl`, `note`, `ltxt` or `file`, each opening with the cue ID it annotates.
+struct SubChunk {
+    ByteVector name;
+    unsigned int cueID;
+    /// Starting with the cue ID; no pad byte.
+    ByteVector body;
+};
+
+/// Sub-chunks too short to name a cue ID are skipped.
+std::vector<SubChunk> parseSubChunks(const ByteVector &adtl) {
+    std::vector<SubChunk> chunks;
     unsigned int offset = 0;
 
     while (offset + 8 <= adtl.size()) {
-        const ByteVector name = adtl.mid(offset, 4);
         const unsigned int size = adtl.toUInt(offset + 4, false);
         const unsigned int body = offset + 8;
 
@@ -49,21 +58,87 @@ std::map<unsigned int, NSString *> parseLabels(const ByteVector &adtl) {
             break;
         }
 
-        if (name == "labl" && size >= 4) {
-            const unsigned int cueID = adtl.toUInt(body, false);
-            ByteVector text = adtl.mid(body + 4, size - 4);
-
-            if (const int end = text.find('\0'); end >= 0) {
-                text.resize(end);
-            }
-
-            labels.emplace(cueID, decodeLabel(text));
+        if (size >= 4) {
+            chunks.push_back({ adtl.mid(offset, 4), adtl.toUInt(body, false), adtl.mid(body, size) });
         }
 
         offset = body + size + (size & 1);
     }
 
-    return labels;
+    return chunks;
+}
+
+/// A `labl`'s text up to its terminator.
+ByteVector labelText(const SubChunk &labl) {
+    ByteVector text = labl.body.mid(4);
+
+    if (const int end = text.find('\0'); end >= 0) {
+        text.resize(end);
+    }
+
+    return text;
+}
+
+/// `dwSampleOffset` keyed by cue ID.
+std::map<unsigned int, unsigned int> parseCueFrames(const ByteVector &cue) {
+    std::map<unsigned int, unsigned int> frames;
+
+    if (cue.size() < 4) {
+        return frames;
+    }
+
+    const unsigned int count = std::min(cue.toUInt(0, false), (cue.size() - 4) / cuePointSize);
+
+    for (unsigned int i = 0; i < count; i++) {
+        const unsigned int offset = 4 + i * cuePointSize;
+        frames.emplace(cue.toUInt(offset, false), cue.toUInt(offset + 20, false));
+    }
+
+    return frames;
+}
+
+/// Each marker's own ID, so another app's `note` and `ltxt` stay on their cue; a negative or
+/// repeated ID takes the lowest free one.
+std::vector<unsigned int> assignCueIDs(NSArray *markers) {
+    std::vector<unsigned int> ids(markers.count);
+    std::vector<bool> assigned(markers.count, false);
+    std::set<unsigned int> used;
+
+    for (NSUInteger i = 0; i < markers.count; i++) {
+        const SInt32 markerID = ((AudioMarker *)markers[i]).markerID;
+
+        if (markerID >= 0 && used.insert(static_cast<unsigned int>(markerID)).second) {
+            ids[i] = static_cast<unsigned int>(markerID);
+            assigned[i] = true;
+        }
+    }
+
+    unsigned int next = 0;
+
+    for (NSUInteger i = 0; i < markers.count; i++) {
+        if (assigned[i]) {
+            continue;
+        }
+
+        while (used.count(next) > 0) {
+            next++;
+        }
+
+        ids[i] = next;
+        used.insert(next);
+    }
+
+    return ids;
+}
+
+void appendSubChunk(ByteVector &list, const ByteVector &name, const ByteVector &body) {
+    list.append(name);
+    list.append(le32(body.size()));
+    list.append(body);
+
+    if (body.size() & 1) {
+        list.append('\0');
+    }
 }
 
 unsigned int framePosition(NSTimeInterval time, double sampleRate) {
@@ -131,7 +206,14 @@ NSArray *read(WaveMarkerFile &file) {
         return nil;
     }
 
-    const std::map<unsigned int, NSString *> labels = parseLabels(file.adtlData());
+    std::map<unsigned int, NSString *> labels;
+
+    for (const SubChunk &chunk : parseSubChunks(file.adtlData())) {
+        if (chunk.name == "labl") {
+            labels.emplace(chunk.cueID, decodeLabel(labelText(chunk)));
+        }
+    }
+
     NSMutableArray *markers = [NSMutableArray arrayWithCapacity:count];
 
     for (unsigned int i = 0; i < count; i++) {
@@ -164,8 +246,20 @@ bool render(WaveMarkerFile &file, NSArray *markers, std::vector<IFFChunkPlanner:
         return false;
     }
 
+    const std::vector<unsigned int> cueIDs = assignCueIDs(markers);
+    const std::map<unsigned int, unsigned int> storedFrames = parseCueFrames(file.cueData());
+    const std::vector<SubChunk> stored = parseSubChunks(file.adtlData());
+    std::map<unsigned int, ByteVector> storedLabels;
+
+    for (const SubChunk &chunk : stored) {
+        if (chunk.name == "labl") {
+            storedLabels.emplace(chunk.cueID, labelText(chunk));
+        }
+    }
+
     ByteVector cue;
     ByteVector adtl;
+    std::set<unsigned int> unchangedCueIDs;
 
     if (markers.count > 0) {
         cue.append(le32(static_cast<unsigned int>(markers.count)));
@@ -173,8 +267,9 @@ bool render(WaveMarkerFile &file, NSArray *markers, std::vector<IFFChunkPlanner:
 
     for (NSUInteger i = 0; i < markers.count; i++) {
         AudioMarker *marker = markers[i];
-        const unsigned int cueID = static_cast<unsigned int>(i);
+        const unsigned int cueID = cueIDs[i];
         const unsigned int frame = framePosition(marker.time, sampleRate);
+        const ByteVector label = marker.name ? ByteVector(marker.name.UTF8String) : ByteVector();
 
         cue.append(le32(cueID));
         cue.append(le32(frame));
@@ -183,21 +278,25 @@ bool render(WaveMarkerFile &file, NSArray *markers, std::vector<IFFChunkPlanner:
         cue.append(le32(0));
         cue.append(le32(frame));
 
+        // A cue that kept its position or its label is the point another app annotated.
+        const auto storedFrame = storedFrames.find(cueID);
+        const auto storedLabel = storedLabels.find(cueID);
+
+        if ((storedFrame != storedFrames.end() && storedFrame->second == frame) ||
+            (storedLabel != storedLabels.end() && marker.name && storedLabel->second == label)) {
+            unchangedCueIDs.insert(cueID);
+        }
+
         if (!marker.name) {
             continue;
         }
 
-        const char *utf8 = marker.name.UTF8String;
-        const unsigned int size = 4 + static_cast<unsigned int>(strlen(utf8)) + 1;
+        appendSubChunk(adtl, "labl", le32(cueID) + label + ByteVector(1, '\0'));
+    }
 
-        adtl.append(ByteVector("labl"));
-        adtl.append(le32(size));
-        adtl.append(le32(cueID));
-        adtl.append(ByteVector(utf8));
-        adtl.append('\0');
-
-        if (size & 1) {
-            adtl.append('\0');
+    for (const SubChunk &chunk : stored) {
+        if (chunk.name != "labl" && unchangedCueIDs.count(chunk.cueID) > 0) {
+            appendSubChunk(adtl, chunk.name, chunk.body);
         }
     }
 

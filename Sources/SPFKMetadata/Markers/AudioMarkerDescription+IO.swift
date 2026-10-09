@@ -47,6 +47,8 @@ extension AudioMarkerDescription {
     }
 
     /// Converts to an `AudioMarker` for WAV/AIFF writing, with endTime and color in the name suffix.
+    ///
+    /// - Parameter markerID: a WAV's cue ID; negative lets the writer pick a free one.
     func audioMarker(markerID: Int, fileType: AudioFileType?, fileSampleRate: Double? = nil) -> AudioMarker {
         let isAIFF = fileType == .aiff || fileType == .aifc
 

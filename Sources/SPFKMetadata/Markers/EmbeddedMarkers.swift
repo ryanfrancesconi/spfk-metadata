@@ -26,8 +26,8 @@ public enum EmbeddedMarkers {
         switch fileType.markerStorage {
         case .riffCues, .aiffMarks, .coreAudio:
             // Cue points; endTime and color travel in the name suffix.
-            let audioMarkers = descriptions.enumerated().map { i, desc in
-                desc.audioMarker(markerID: i, fileType: fileType, fileSampleRate: fileSampleRate)
+            let audioMarkers = descriptions.map { desc in
+                desc.audioMarker(markerID: desc.markerID ?? -1, fileType: fileType, fileSampleRate: fileSampleRate)
             }
 
             success = AudioMarkerUtil.write(audioMarkers, to: url)

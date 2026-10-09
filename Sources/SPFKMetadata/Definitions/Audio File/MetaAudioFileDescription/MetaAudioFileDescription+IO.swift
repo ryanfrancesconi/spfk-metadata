@@ -353,8 +353,8 @@ extension MetaAudioFileDescription {
     /// For WAV and AIFF. A region's end time and color ride in a JSON suffix on the name, since
     /// cue points have neither.
     var audioMarkers: [AudioMarker] {
-        markerCollection.markerDescriptions.enumerated().map { i, desc in
-            desc.audioMarker(markerID: i, fileType: fileType, fileSampleRate: audioFormat?.sampleRate)
+        markerCollection.markerDescriptions.map { desc in
+            desc.audioMarker(markerID: desc.markerID ?? -1, fileType: fileType, fileSampleRate: audioFormat?.sampleRate)
         }
     }
 }

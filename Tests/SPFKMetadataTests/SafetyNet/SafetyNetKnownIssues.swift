@@ -16,14 +16,7 @@ struct SafetyNetKnownIssue: Sendable {
 /// that starts passing records `knownIssueNotRecorded` and turns the suite red until its entry is
 /// removed.
 enum SafetyNetKnownIssues {
-    static let table: [SafetyNetKnownIssue] = wave + matroska + entryPoints + combined
-
-    private static let wave: [SafetyNetKnownIssue] = [
-        SafetyNetKnownIssue(
-            rows: ["wav", "rf64"], kinds: [.k0, .k7, .k8, .s1], item: .riff(.otherAssociatedData),
-            text: "A WAV marker save drops other apps' adtl note and ltxt chunks: expected both, found none (F35)"
-        ),
-    ]
+    static let table: [SafetyNetKnownIssue] = matroska + entryPoints + combined
 
     /// Every Matroska save kind in the net: each runs the tag save first.
     private static let matroskaKinds: Set<SaveKind> = [.k0, .k1, .k2, .k5, .k6, .s2]
