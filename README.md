@@ -37,12 +37,12 @@ import SPFKMetadata  // also brings in SPFKMetadataBase
 
 ### The audio description
 
-- **`MetaAudioFileDescription(parsing:)`** — tags, rating, format, BEXT, iXML, markers, artwork and video facts in one read. iXML is held as the chunk's text; a save writes BEXT and iXML only when they differ from the file's, iXML compared as text. A WAV is read in one open, its length from `fmt ` and `data`; only a compressed or malformed one is also opened with `AVAudioFile`, whose reading of it can differ. The parse makes no artwork thumbnail, whose decode can cost more than the rest of the parse; `ArtworkDescription.createThumbnail()` makes one where it is shown. A component whose reader could not open the file (tags, markers, a FLAC's BEXT and iXML) is listed in `readStatus`, which is encoded with the description; one the file does not have is read as absent, not failed.
+- **`MetaAudioFileDescription(parsing:)`** — tags, rating, format, BEXT, iXML, markers, artwork and video facts in one read. iXML is held as the chunk's text; a save writes BEXT and iXML only when they differ from the file's, iXML compared as text. A WAV is read in one open, its length from `fmt ` and `data`; only a compressed or malformed one is also opened with `AVAudioFile`, whose reading of it can differ. The parse makes no artwork thumbnail, whose decode can cost more than the rest of the parse; `ArtworkDescription.createThumbnail()` makes one where it is shown. A component whose reader could not open the file (tags, markers, artwork, a FLAC's BEXT and iXML) is listed in `readStatus`, which is encoded with the description; one the file does not have is read as absent, not failed.
 - **`save(dirtyFlags:storedXMPPacket:)`** — writes what the flags name, then the Finder tags. Throws `FileLockError` for a locked file before writing anything. Each component of a flag is refused on its own: a part it leaves as the file has it — a component `readStatus` lists (so a failed read is never saved as an empty set), one that could not be written (the Finder tags included), or a flag the container has no writer for — is named in `MetadataError.incompleteSave(written:failures:)`, thrown after everything else is written, with the components that were. A file that could not be written at all throws `MetadataError.saveFailed`; any other error also means nothing was written.
 
   A save that has to move the audio — a tag or metadata block that outgrew its padding ahead of it — writes the whole file to a hidden sibling and swaps it in with `FileManager.replaceItemAt`, so an interrupted save cannot leave it half moved. The file keeps its permissions, creation date, Finder tags and extended attributes but gets a **new file ID**: a bookmark taken before the save still resolves by path, but follows a later move only once re-created. A file with another hard link, in a folder that is not writable or without room for a second copy, or on a file system other than APFS, HFS+, exFAT and FAT is saved in place. A WAV never moves its audio, so it is never swapped.
 - **`reloadEmbeddedMetadata()`** — re-reads tags and, for WAV and FLAC, BEXT and iXML, after a write made behind the description's back.
-- **`loadVideoTrack()`** — video-technical fields and the audio track listing, for a description decoded before those fields existed.
+- **`loadVideoTrack()`** — video-technical fields and the audio track listing, stamped with the reader version (`trackReaderVersion`) so a stored description read by an older reader can be found and read again.
 - **`syncUCSToIXML(category:subCategory:catID:)`** — writes UCS fields into the description's iXML USER container.
 
 ### Tags and rating
@@ -59,6 +59,7 @@ A WAV's tags are its ID3 tag, read and written as an MP3's are, and its INFO chu
 
 - **`EmbeddedArtwork.read(from:)`** — the front cover, else the first picture. `nil` when there is none; throws when the file can't be opened or the picture doesn't decode.
 - **`EmbeddedArtwork(contentsOf:)`** — any image `CGImageSource` reads.
+- **`ArtworkDescription.read(from:)`** — the same picture as the description holds it, with the bytes the file stored, so a save that leaves it alone writes them back unchanged.
 - **`write(to:)`** replaces the front cover, keeping any other pictures; **`remove(from:)`** removes them all. A type ImageIO cannot write, such as WebP, is stored as JPEG.
 
 ### Markers
