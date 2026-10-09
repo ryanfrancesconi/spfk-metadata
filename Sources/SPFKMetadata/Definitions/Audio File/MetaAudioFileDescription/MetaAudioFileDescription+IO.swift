@@ -18,9 +18,11 @@ extension MetaAudioFileDescription {
 
         self.init(url: url, fileType: fileType, audioFormat: route.audioFormat)
 
+        var frameCount = route.frameCount
+
         switch route {
         case .wave:
-            try loadWave()
+            frameCount = try loadWave()
 
         case .audioFile:
             try await load()
@@ -40,7 +42,7 @@ extension MetaAudioFileDescription {
         }
 
         // A malformed container (a WAV with a wrong RIFF size) can open and still report 0 frames.
-        isAVPlayable = route.frameCount > 0
+        isAVPlayable = (frameCount ?? 0) > 0
 
         if isAVPlayable == false {
             isDecodable = (try? MatroskaFile(url: url))?.audioTrack?.isDecodable == true
@@ -56,7 +58,8 @@ extension MetaAudioFileDescription {
         await updateImageThumbnail()
     }
 
-    private mutating func loadWave() throws {
+    /// The frames AVFoundation can play: the chunks' count, or `AVAudioFile`'s where they give none.
+    private mutating func loadWave() throws -> AVAudioFramePosition {
         let waveFile = WaveFileC(path: url.path)
 
         guard waveFile.load() else {
@@ -76,6 +79,9 @@ extension MetaAudioFileDescription {
         }
 
         imageDescription.pictureRef = waveFile.tagPicture?.pictureRef
+
+        guard waveFile.frameCount < 0 else { return waveFile.frameCount }
+        return (try? AVAudioFile(forReading: url))?.length ?? 0
     }
 
     /// Adds FLAC's iXML and BEXT APPLICATION blocks to what `load()` read. BEXT falls back to

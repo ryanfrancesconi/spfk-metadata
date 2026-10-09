@@ -46,6 +46,11 @@ public:
 
     /// The `_PMX` chunk's XMP packet. Empty when there is none.
     TagLib::ByteVector xmpData();
+
+    /// `data`'s frames, for a PCM or float file with one `fmt ` and one whole `data`, a form size
+    /// matching the file and a block align matching the sample size. -1 otherwise: Core Audio
+    /// reads malformed files by rules of its own, such as stopping at the form size.
+    long long pcmFrameCount();
 };
 
 namespace WaveMarkers {

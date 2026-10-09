@@ -9,8 +9,8 @@ import SPFKVideo
 extension MetaAudioFileDescription {
     /// Which stack `init(parsing:)` reads a file through, and so where its format and length come from.
     enum ParseRoute {
-        /// Everything through TagLib; `AVAudioFile` only measures the length.
-        case wave(frameCount: AVAudioFramePosition)
+        /// Everything through TagLib, the length included where the chunks give it.
+        case wave
 
         case audioFile(AVAudioFile)
 
@@ -24,7 +24,7 @@ extension MetaAudioFileDescription {
         /// Gated on the format's own `supportsMetadata`, not a list of containers.
         init(url: URL, fileType: AudioFileType?) async throws {
             if fileType == .wav {
-                self = .wave(frameCount: (try? AVAudioFile(forReading: url))?.length ?? 0)
+                self = .wave
                 return
             }
 
@@ -58,10 +58,10 @@ extension MetaAudioFileDescription {
             }
         }
 
-        /// Frames AVFoundation can play; 0 when it cannot.
-        var frameCount: AVAudioFramePosition {
+        /// Frames AVFoundation can play; 0 when it cannot. Nil for a WAV, which its parse measures.
+        var frameCount: AVAudioFramePosition? {
             switch self {
-            case let .wave(frameCount): frameCount
+            case .wave: nil
             case let .audioFile(audioFile): audioFile.length
             case .tagStore: 0
             case let .asset(format): format.frameCount

@@ -27,6 +27,10 @@ typedef NS_OPTIONS(NSUInteger, WaveFileComponents) {
 /// Set by `load`.
 @property(nullable, nonatomic) TagAudioPropertiesC *audioPropertiesC;
 
+/// Set by `load` and `loadTags`: the frames in `data`, or -1 where only Core Audio can say how
+/// many it plays (a compressed or malformed file).
+@property(nonatomic, readonly) int64_t frameCount;
+
 /// Every INFO field, keyed by ID ("INAM"). On save, INFO's new contents, plus each field the file
 /// holds under an ID that is a key of `id3Properties`, which takes that value.
 @property(nonatomic) NSMutableDictionary *infoDictionary;

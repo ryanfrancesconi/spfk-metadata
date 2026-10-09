@@ -30,6 +30,7 @@ using namespace TagLib;
     _id3Properties = [[NSMutableDictionary alloc] init];
     _infoDictionary = [[NSMutableDictionary alloc] init];
     _bextDescriptionC = NULL;
+    _frameCount = -1;
     _tagsNeedsSave = YES;
     _bextNeedsSave = YES;
     _iXMLNeedsSave = YES;
@@ -77,6 +78,8 @@ using namespace TagLib;
         _audioPropertiesC.channelCount = audioProperties->channels();
         _audioPropertiesC.bitsPerSample = audioProperties->bitsPerSample();
     }
+
+    _frameCount = waveFile->pcmFrameCount();
 
     if (waveFile->hasBEXTData() && !waveFile->BEXTData().isEmpty()) {
         ByteVector bext = waveFile->BEXTData();
