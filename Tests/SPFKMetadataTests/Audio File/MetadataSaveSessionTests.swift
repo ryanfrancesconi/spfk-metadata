@@ -28,8 +28,7 @@ final class MetadataSaveSessionTests: BinTestCase {
         #expect(tagFile.write(toFileRef: session.fileRef))
         #expect(session.save())
 
-        withExtendedLifetime(session) {
-            #expect((try? TagProperties(url: url))?[.title] == "Session flushed")
-        }
+        let title = try withExtendedLifetime(session) { try TagProperties(url: url)[.title] }
+        #expect(title == "Session flushed")
     }
 }
