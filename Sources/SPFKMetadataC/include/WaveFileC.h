@@ -27,12 +27,13 @@ typedef NS_OPTIONS(NSUInteger, WaveFileComponents) {
 /// Set by `load`.
 @property(nullable, nonatomic) TagAudioPropertiesC *audioPropertiesC;
 
-/// Keyed by INFO field ID ("INAM").
+/// Every INFO field, keyed by ID ("INAM"). On save, INFO's new contents, plus each field the file
+/// holds under an ID that is a key of `id3Properties`, which takes that value.
 @property(nonatomic) NSMutableDictionary *infoDictionary;
 
-/// Keyed by frame ID ("TIT2"), a TXXX by its description, plus `"RATING"`. Text frames only;
-/// `save` leaves binary frames (`PRIV`, `UFID`, `GEOB`, `CHAP`, …) in the file as they are.
-@property(nonatomic) NSMutableDictionary *id3Dictionary;
+/// The ID3v2 tag's properties, keyed and joined as `TagFile.dictionary` holds them, `"RATING"`
+/// included. Written through `TagFile`, so frames without a property key are kept.
+@property(nonatomic) NSMutableDictionary *id3Properties;
 
 @property(nullable, nonatomic) BEXTDescriptionC *bextDescriptionC;
 
@@ -44,6 +45,19 @@ typedef NS_OPTIONS(NSUInteger, WaveFileComponents) {
 @property(nonatomic, strong, nullable) NSArray *markers;
 
 @property(nonatomic, strong, nonnull) NSString *path;
+
+/// Default YES. With NO, `save` leaves ID3, INFO and the rating as they are.
+@property(nonatomic) BOOL tagsNeedsSave;
+
+/// Default NO; read only when `tagsNeedsSave` is NO. With YES, `save` writes `id3Properties`'
+/// `"RATING"` and sets `infoDictionary`'s fields, an empty value removing its field.
+@property(nonatomic) BOOL ratingNeedsSave;
+
+/// Default YES. With NO, `save` leaves the `bext` chunk as it is.
+@property(nonatomic) BOOL bextNeedsSave;
+
+/// Default YES. With NO, `save` leaves the iXML chunk as it is.
+@property(nonatomic) BOOL iXMLNeedsSave;
 
 /// Default YES.
 @property(nonatomic) BOOL markersNeedsSave;
@@ -63,6 +77,9 @@ typedef NS_OPTIONS(NSUInteger, WaveFileComponents) {
 - (instancetype)initWithPath:(nonnull NSString *)path;
 
 - (bool)load;
+
+/// `load`'s audio properties, INFO, ID3 properties and rating, and nothing else.
+- (bool)loadTags;
 
 /// Rewrites every chunk whose bytes change, never moving the audio; INFO fields absent from
 /// `infoDictionary` are removed. On `false`, `failedComponents` names what was not written; unless

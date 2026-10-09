@@ -125,8 +125,8 @@ class WaveFileTests: BinTestCase {
         file[info: .lightness] = "Lightness"
         file[info: .numColors] = "256"
 
-        file[id3: .title] = "an id3 title"
-        file[id3: .remixer] = "an id3 remixer"
+        file.id3Properties["TITLE"] = "an id3 title"
+        file.id3Properties["REMIXER"] = "an id3 remixer"
 
         file.iXML =
             "<?xml version=\"1.0\" encoding=\"UTF-8\"?><BWFXML><IXML_VERSION>1.4</IXML_VERSION><PROJECT>a new project</PROJECT></BWFXML>"

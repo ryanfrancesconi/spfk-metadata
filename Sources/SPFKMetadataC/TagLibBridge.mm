@@ -161,7 +161,7 @@ namespace {
         return false;
     }
 
-    TagUtil::clearTags(fileRef);
+    TagUtil::clearTags(fileRef.file());
 
     return FileSave::save(fileRef.file());
 }

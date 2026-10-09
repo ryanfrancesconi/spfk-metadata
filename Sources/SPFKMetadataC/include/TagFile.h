@@ -41,6 +41,10 @@ NS_ASSUME_NONNULL_BEGIN
 /// rating cannot be written.
 - (bool)writeToFileRef:(void *)fileRef;
 
+/// `writeToFileRef:` on an open `TagLib::File *`. A WAV's ID3v2 tag alone is written, its
+/// pictures untouched; INFO is left to the caller.
+- (bool)writeToFile:(void *)file;
+
 @end
 
 NS_ASSUME_NONNULL_END

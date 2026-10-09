@@ -155,9 +155,7 @@ static void clearWaveTags(RIFF::WAV::File *file) {
 /// format-specific storage (iTunes freeform atoms) behind. Every MP4 item goes, cleared in memory
 /// as `clearMP4Items` describes. Vorbis, Opus and AIFF have no strip; only their mapped properties
 /// clear.
-static void clearTags(FileRef &fileRef) {
-    File *f = fileRef.file();
-
+static void clearTags(File *f) {
     if (auto *fp = dynamic_cast<RIFF::WAV::File *>(f)) {
         clearWaveTags(fp);
     } else if (auto *fp = dynamic_cast<MP4::File *>(f)) {
@@ -167,43 +165,33 @@ static void clearTags(FileRef &fileRef) {
     } else if (auto *fp = dynamic_cast<FLAC::File *>(f)) {
         fp->strip();
     } else {
-        fileRef.setProperties(PropertyMap());
+        f->setProperties(PropertyMap());
     }
 }
 
-/// Clears the mapped properties ahead of a tag save. An MP3 or AIFF ID3v2 tag is left alone:
-/// `ID3v2::Tag::setProperties` keeps each frame whose properties are unchanged, with its
-/// description case and language, and replaces the rest. An MP3's APE tag keeps only its binary
-/// items. An MP4 keeps every item without a property key; the rating writer replaces `rate`
-/// itself. Any other format is cleared by `clearTags`.
-static void clearTagsForSave(FileRef &fileRef) {
-    if (auto *fp = dynamic_cast<MPEG::File *>(fileRef.file())) {
+/// Clears the mapped properties ahead of a tag save. An MP3, AIFF or WAV ID3v2 tag is left
+/// alone: `ID3v2::Tag::setProperties` keeps each frame whose properties are unchanged, with its
+/// description case and language, and replaces the rest. A WAV's INFO is its writer's to replace.
+/// An MP3's APE tag keeps only its binary items. An MP4 keeps every item without a property key;
+/// the rating writer replaces `rate` itself. Any other format is cleared by `clearTags`.
+static void clearTagsForSave(File *f) {
+    if (auto *fp = dynamic_cast<MPEG::File *>(f)) {
         if (APE::Tag *ape = fp->APETag()) ape->setProperties(PropertyMap());
         return;
     }
 
-    if (dynamic_cast<RIFF::AIFF::File *>(fileRef.file())) return;
+    if (dynamic_cast<RIFF::AIFF::File *>(f) || dynamic_cast<RIFF::WAV::File *>(f)) return;
 
-    if (auto *fp = dynamic_cast<MP4::File *>(fileRef.file())) {
+    if (auto *fp = dynamic_cast<MP4::File *>(f)) {
         clearMP4Items(fp->tag(), true);
         return;
     }
 
-    clearTags(fileRef);
+    clearTags(f);
 }
 
-/// A TXXX, a frame with a property key, or a text frame TagLib keys outside that table. Every
-/// other frame is binary, and `setProperties` keeps it as it is.
-static bool isTextFrame(const ByteVector &frameID) {
-    return frameID == "TXXX" || frameID == "USLT" || frameID == "WXXX" || frameID == "TIPL" ||
-           frameID == "TMCL" || !ID3v2::Frame::frameIDToKey(frameID).isEmpty();
-}
-
-/// Keyed by frame ID, a TXXX by its description, `PRIV` holding its raw data. `textOnly` keeps
-/// only what `isTextFrame` accepts, for a dictionary that goes back through `convertToPropertyMap`,
-/// and keys a `COMM` as its PropertyMap key: an undescribed one as `COMM`, a described one as
-/// `COMMENT:<DESCRIPTION>`. The first frame for a key wins, as `PropertyMap[key].front()` does.
-static NSMutableDictionary *convertToDictionary(ID3v2::FrameList frameList, bool textOnly = false) {
+/// Keyed by frame ID, a TXXX by its description, `PRIV` holding its raw data.
+static NSMutableDictionary *convertToDictionary(ID3v2::FrameList frameList) {
     NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
 
     if (frameList.isEmpty()) {
@@ -214,7 +202,6 @@ static NSMutableDictionary *convertToDictionary(ID3v2::FrameList frameList, bool
         ByteVector frameID = (*it)->frameID();
 
         if (frameID == "POPM") continue; // read by TagRating
-        if (textOnly && !isTextFrame(frameID)) continue;
 
         String value = (*it)->toString();
 
@@ -228,17 +215,6 @@ static NSMutableDictionary *convertToDictionary(ID3v2::FrameList frameList, bool
             // Keyed by description, as TagLib's PropertyMap does. fieldList() is [description, ..., value].
             frameID = txxxFrame->description().data(String::UTF8);
             value = txxxFrame->fieldList().back();
-
-        } else if (textOnly && frameID == "COMM") {
-            auto *commentsFrame = dynamic_cast<ID3v2::CommentsFrame *>(*it);
-
-            if (!commentsFrame) {
-                continue;
-            }
-
-            const String key = commentsFrame->asProperties().begin()->first;
-            frameID = key == "COMMENT" ? ByteVector("COMM") : key.data(String::UTF8);
-            value = commentsFrame->text();
 
         } else if (frameID == "PRIV") {
             auto *privFrame = dynamic_cast<ID3v2::PrivateFrame *>(*it);
@@ -255,44 +231,12 @@ static NSMutableDictionary *convertToDictionary(ID3v2::FrameList frameList, bool
 
         NSString *nsKey = [[NSString alloc] initWithBytes:bytes length:length encoding:NSUTF8StringEncoding];
 
-        if (textOnly && dict[nsKey] != nil && (*it)->frameID() == "COMM") continue;
-
         NSString *nsValue = [[NSString alloc] initWithCString:value.toCString(true) encoding:NSUTF8StringEncoding];
 
         [dict setValue:nsValue ?: @"" forKey:nsKey];
     }
 
     return dict;
-}
-
-static PropertyMap convertToPropertyMap(NSMutableDictionary *dict) {
-    PropertyMap properties = PropertyMap();
-
-    if (dict.count == 0) {
-        return properties;
-    }
-
-    for (NSString *key in [dict allKeys]) {
-        NSString *value = [dict objectForKey:key];
-
-        String tagKey = String(key.UTF8String, String::UTF8);
-
-        // setProperties() takes property keys ("TITLE"), not frame IDs ("TIT2"). A TXXX
-        // description is longer than four characters and passes through as a TXXX frame.
-        if (tagKey.size() == 4) {
-            String translated = ID3v2::Frame::frameIDToKey(tagKey.data(String::Latin1));
-            if (!translated.isEmpty()) {
-                tagKey = translated;
-            }
-        }
-
-        StringList tagValue = StringList(String(value.UTF8String, String::UTF8));
-        properties.insert(tagKey, tagValue);
-    }
-
-    properties.removeEmpty();
-
-    return properties;
 }
 
 static NSMutableDictionary *convertToDictionary(RIFF::Info::FieldListMap infoMap) {

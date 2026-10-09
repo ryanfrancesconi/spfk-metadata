@@ -122,17 +122,25 @@ using namespace TagLib;
     return [self writeToFileRef:&fileRef] && FileSave::save(fileRef.file());
 }
 
-- (bool)writeToFileRef:(void *)opaqueFileRef {
-    FileRef &fileRef = *static_cast<FileRef *>(opaqueFileRef);
+- (bool)writeToFileRef:(void *)fileRef {
+    return [self writeToFile:static_cast<FileRef *>(fileRef)->file()];
+}
+
+- (bool)writeToFile:(void *)file {
+    File *f = static_cast<File *>(file);
 
     // Kept out of the PropertyMap, where it would become a TXXX:RATING frame.
     int ratingStars = TagRatingStarsInDictionary(_dictionary);
 
-    // Clearing removes artwork in most formats, and this method writes text only.
-    auto existingPictures = fileRef.complexProperties(String("PICTURE"));
-
-    File *f = fileRef.file();
     auto *mpegFile = dynamic_cast<MPEG::File *>(f);
+    auto *wavFile = dynamic_cast<RIFF::WAV::File *>(f);
+
+    // A WAV's properties are its ID3v2 tag's; INFO is its writer's mirror.
+    Tag *propertyTag = wavFile ? wavFile->ID3v2Tag() : f->tag();
+
+    // Clearing removes artwork in most formats, and this method writes text only. A WAV's ID3v2
+    // tag is not cleared, so its pictures are never touched.
+    auto existingPictures = wavFile ? List<VariantMap>() : f->complexProperties(String("PICTURE"));
 
     // Chapter fields are the markers' to write, so they stay as they are on disk.
     Ogg::FieldListMap chapterFields;
@@ -155,8 +163,8 @@ using namespace TagLib;
     ID3v2::FrameList keptFrames;
     ID3v2::Tag *id3 = ID3PropertyFrames::tag(f);
 
-    if (fileRef.tag()) {
-        for (const auto &[key, values] : fileRef.tag()->properties()) {
+    if (propertyTag) {
+        for (const auto &[key, values] : propertyTag->properties()) {
             if (values.size() < 2) continue;
 
             if (ID3PropertyFrames::storesListInOneFrame(f, key, values)) {
@@ -175,7 +183,7 @@ using namespace TagLib;
     for (auto *frame : keptFrames) id3->removeFrame(frame, false);
 
     // Cleared before writing, so anything absent from the new dictionary is removed.
-    TagUtil::clearTagsForSave(fileRef);
+    TagUtil::clearTagsForSave(f);
 
     PropertyMap properties = PropertyMap();
 
@@ -192,7 +200,12 @@ using namespace TagLib;
     }
 
     properties.removeEmpty();
-    fileRef.setProperties(properties);
+
+    if (wavFile)
+        wavFile->ID3v2Tag()->setProperties(properties);
+    else
+        f->setProperties(properties);
+
     TagUtil::restoreMP4FreeformNames(mp4File ? mp4File->tag() : nullptr, freeformNames);
 
     for (auto *frame : keptFrames) id3->addFrame(frame);
@@ -219,7 +232,7 @@ using namespace TagLib;
 
     // A caller changing artwork does so through TagPicture after this returns.
     if (!existingPictures.isEmpty()) {
-        fileRef.setComplexProperties(String("PICTURE"), existingPictures);
+        f->setComplexProperties(String("PICTURE"), existingPictures);
     }
 
     return true;

@@ -130,6 +130,7 @@ extension BEXTDescription {
         }
 
         waveFile.bextDescriptionC = bextDescription.bextDescriptionC
+        waveFile.tagsNeedsSave = false
         waveFile.markersNeedsSave = false
         waveFile.imageNeedsSave = false
 

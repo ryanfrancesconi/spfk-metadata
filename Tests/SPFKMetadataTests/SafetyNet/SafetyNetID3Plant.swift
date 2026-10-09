@@ -15,8 +15,9 @@ enum SafetyNetID3Foreign {
     static let artist = ["David St. Hubbins", "Nigel Tufnel"]
     static let involvedPeople = ["PRODUCER", "Ian Faith"]
 
-    /// INFO IDs with no tag key, and the custom-tag name the reader gives each.
-    static let infoOnlyItems = ["IPLT": "NUMCOLORS"]
+    /// INFO IDs with no tag key, and the custom-tag name the reader gives each: its own ID when
+    /// `InfoFrameKey` has no name for it.
+    static let infoOnlyItems = ["IPLT": "NUMCOLORS", SafetyNetRIFFForeign.unknownInfoID: SafetyNetRIFFForeign.unknownInfoID]
 
     static var infoOnlyUserTextDescriptions: Set<String> { Set(infoOnlyItems.values) }
 

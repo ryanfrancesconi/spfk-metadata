@@ -18,48 +18,12 @@ struct SafetyNetKnownIssue: Sendable {
 enum SafetyNetKnownIssues {
     static let table: [SafetyNetKnownIssue] = wave + flac + matroska + entryPoints + combined
 
-    /// Every WAV and RF64 save that writes tags: all but the packet-only saves, which rewrite only `_PMX`.
-    private static let wavTagKinds: Set<SaveKind> = [.k0, .k1, .k2, .k3, .k4, .k5, .k6, .k7, .k8, .s1, .s2, .k16]
+    /// Every WAV and RF64 save that renders iXML: all but the packet-only saves, which rewrite only `_PMX`.
+    private static let wavIXMLKinds: Set<SaveKind> = [.k0, .k1, .k2, .k3, .k4, .k5, .k6, .k7, .k8, .s1, .s2, .k16]
 
     private static let wave: [SafetyNetKnownIssue] = [
         SafetyNetKnownIssue(
-            rows: ["wav", "rf64"], kinds: wavTagKinds, item: .id3(.artist),
-            text: "A WAV tag save flattens a multi-valued TPE1: expected two values, found one joined with a space (F15)"
-        ),
-        SafetyNetKnownIssue(
-            rows: ["wav", "rf64"], kinds: wavTagKinds, item: .id3(.lyrics),
-            text: "A WAV tag save moves another app's USLT into a TXXX: expected the USLT frame, found none (F24)"
-        ),
-        SafetyNetKnownIssue(
-            rows: ["wav", "rf64"], kinds: wavTagKinds, item: .id3(.userURL),
-            text: "A WAV tag save moves another app's WXXX into a TXXX: expected the WXXX frame, found none (F24)"
-        ),
-        SafetyNetKnownIssue(
-            rows: ["wav", "rf64"], kinds: wavTagKinds, item: .id3(.involvedPeople),
-            text: "A WAV tag save moves another app's TIPL into a TXXX: expected the TIPL frame, found none (F24)"
-        ),
-        SafetyNetKnownIssue(
-            rows: ["wav", "rf64"], kinds: wavTagKinds, item: .id3(.frameIDUserText),
-            text: "A WAV tag save writes USLT, WXXX and TIPL as TXXX frames named after them: expected none, found three (F24)"
-        ),
-        SafetyNetKnownIssue(
-            rows: ["wav", "rf64"], kinds: wavTagKinds, item: .id3(.comments),
-            text: "A WAV tag save drops a second undescribed COMM in another language: expected the \"fra\" frame kept beside the file's comment, found it removed (F15)"
-        ),
-        SafetyNetKnownIssue(
-            rows: ["wav", "rf64"], kinds: wavTagKinds, item: .id3(.duplicateUserText),
-            text: "A WAV tag save adds a second TXXX with a description already present: expected each description once, found one twice (F33)"
-        ),
-        SafetyNetKnownIssue(
-            rows: ["wav", "rf64"], kinds: wavTagKinds.subtracting([.k1, .k16, .s1, .s2]), item: .id3(.infoUserText),
-            text: "A WAV save that edits no tag still rewrites the tags, adding an INFO item to ID3: expected no new TXXX, found TXXX NUMCOLORS (F47)"
-        ),
-        SafetyNetKnownIssue(
-            rows: ["wav", "rf64"], kinds: wavTagKinds, item: .riff(.unknownInfo),
-            text: "A WAV tag save drops INFO items it has no key for: expected IFRM, found none (F20)"
-        ),
-        SafetyNetKnownIssue(
-            rows: ["wav", "rf64"], kinds: wavTagKinds, item: .riff(.iXML),
+            rows: ["wav", "rf64"], kinds: wavIXMLKinds, item: .riff(.iXML),
             text: "A WAV tag save re-serializes iXML, dropping comments and turning CDATA into escaped text: expected the comment and CDATA nodes, found neither (F13)"
         ),
         SafetyNetKnownIssue(

@@ -154,7 +154,10 @@ extension MetaAudioFileDescription {
             try storedXMPPacket.write(to: url)
         } else {
             if fileType == .wav {
-                try saveWave(imageNeedsSave: imageNeedsSave, markersNeedsSave: markersNeedsSave, storedXMPPacket: storedXMPPacket)
+                try saveWave(
+                    metadataNeedsSave: writable.contains(.metadata), imageNeedsSave: imageNeedsSave,
+                    markersNeedsSave: markersNeedsSave, storedXMPPacket: storedXMPPacket
+                )
             } else {
                 try saveSession(imageNeedsSave: imageNeedsSave, markersNeedsSave: markersNeedsSave, storedXMPPacket: storedXMPPacket)
             }
@@ -256,9 +259,12 @@ extension MetaAudioFileDescription {
         imageDescription.cgImage = nil
     }
 
-    /// Tags and chunks are always rendered, markers and artwork only when flagged; only what changed
-    /// is written. A failed artwork, marker or rating write throws after the rest is saved.
-    private mutating func saveWave(imageNeedsSave: Bool, markersNeedsSave: Bool, storedXMPPacket: StoredXMPPacketWrite) throws {
+    /// BEXT and iXML are always rendered, markers and artwork only when flagged, and the tags only
+    /// when they differ from the file's; only what changed is written. A failed artwork, marker or
+    /// rating write throws after the rest is saved.
+    private mutating func saveWave(
+        metadataNeedsSave: Bool, imageNeedsSave: Bool, markersNeedsSave: Bool, storedXMPPacket: StoredXMPPacketWrite
+    ) throws {
         let waveFile = WaveFileC(path: url.path)
         storedXMPPacket.apply { waveFile.xmpNeedsSave = true; waveFile.xmpPacket = $0 }
 
@@ -269,35 +275,14 @@ extension MetaAudioFileDescription {
         waveFile.markersNeedsSave = markersNeedsSave
         waveFile.imageNeedsSave = imageNeedsSave
 
-        // Passed even when not flagged, or a tags-only save drops the artwork.
-        if let pictureRef = pictureRefToWrite {
+        if imageNeedsSave, let pictureRef = pictureRefToWrite {
             waveFile.tagPicture = TagPicture(picture: pictureRef)
         }
 
-        for item in tagProperties.tags {
-            if item.key.id3Frame == .userDefined || item.key.id3Frame == .rating {
-                waveFile.id3Dictionary[item.key.taglibKey] = item.value
-            } else {
-                waveFile[id3: item.key.id3Frame] = item.value
-            }
-
-            if let infoFrame = item.key.infoFrame {
-                waveFile[info: infoFrame] = item.value
-            }
-        }
-
-        // A standard tag wins over a custom one spelled the same.
-        let standardKeys = Set(tagProperties.tags.keys.map(\.taglibKey))
-
-        for item in tagProperties.customTags {
-            let uppercaseKey = item.key.uppercased()
-            guard !standardKeys.contains(uppercaseKey) else { continue }
-
-            waveFile.id3Dictionary[uppercaseKey] = item.value
-
-            if let infoFrame = InfoFrameKey(taglibKey: uppercaseKey) {
-                waveFile[info: infoFrame] = item.value
-            }
+        if metadataNeedsSave {
+            waveFile.setTagChanges(tagProperties)
+        } else {
+            waveFile.tagsNeedsSave = false
         }
 
         guard waveFile.save() else {

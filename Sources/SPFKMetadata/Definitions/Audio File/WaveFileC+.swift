@@ -28,13 +28,6 @@ extension WaveFileC {
         }
     }
 
-    subscript(id3 key: ID3FrameKey) -> String? {
-        get { id3Dictionary[key.value] as? String }
-        set {
-            id3Dictionary[key.value] = newValue
-        }
-    }
-
     /// The component a failed `save()` reports; `.tags` when nothing was written.
     var failedComponent: MetadataError.Component {
         if failedComponents.contains(.container) { return .tags }

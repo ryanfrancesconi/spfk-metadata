@@ -67,12 +67,11 @@
     },
     "data" : {
       "customTags" : {
-        "MUSICBRAINZ ALBUM RELEASE COUNTRY" : "UK"
+
       },
       "tags" : {
         "album" : "This Is Spinal Tap",
         "albumArtist" : "Spinal Tap",
-        "arranger" : "SPFKMetadata",
         "artist" : "Spinal Tap",
         "bpm" : "666",
         "comment" : "And oh how they danced. The little children of Stonehenge.Beneath the haunted moon.For fear that daybreak might come too soon.",

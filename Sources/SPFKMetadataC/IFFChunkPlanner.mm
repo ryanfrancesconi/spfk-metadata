@@ -6,6 +6,7 @@
 #import <taglib/id3v2tag.h>
 #import <taglib/infotag.h>
 
+#import "FileSave.h"
 #import "IFFChunkPlanner.h"
 #import "IFFChunkTable.h"
 
@@ -349,19 +350,27 @@ bool write(File &file, const std::vector<Edit> &edits) {
     return Planner(file).apply(edits);
 }
 
-bool save(RIFF::WAV::File &file, std::vector<Edit> edits) {
+bool save(RIFF::WAV::File &file, std::vector<Edit> edits, WaveChunks chunks) {
     if (!file.isValid())
         return false;
 
     auto payload = [](const ByteVector &bytes) { return bytes.isEmpty() ? std::nullopt : std::optional<ByteVector>(bytes); };
 
-    const ID3v2::Tag *id3 = file.ID3v2Tag();
-    const RIFF::Info::Tag *info = file.InfoTag();
+    if (chunks.bext)
+        edits.push_back({ "bext", ByteVector(), payload(file.BEXTData()) });
 
-    edits.push_back({ "bext", ByteVector(), payload(file.BEXTData()) });
-    edits.push_back({ "iXML", ByteVector(), payload(file.iXMLData().data(String::UTF8)) });
-    edits.push_back({ "ID3 ", ByteVector(), payload(id3 && !id3->isEmpty() ? id3->render() : ByteVector()) });
-    edits.push_back({ "LIST", "INFO", payload(info && !info->isEmpty() ? info->render() : ByteVector()) });
+    if (chunks.iXML)
+        edits.push_back({ "iXML", ByteVector(), payload(file.iXMLData().data(String::UTF8)) });
+
+    if (chunks.id3) {
+        ID3v2::Tag *tag = file.ID3v2Tag();
+        edits.push_back({ "ID3 ", ByteVector(), payload(tag && !tag->isEmpty() ? tag->render(FileSave::id3Version(tag)) : ByteVector()) });
+    }
+
+    if (chunks.info) {
+        const RIFF::Info::Tag *tag = file.InfoTag();
+        edits.push_back({ "LIST", "INFO", payload(tag && !tag->isEmpty() ? tag->render() : ByteVector()) });
+    }
 
     return write(file, edits);
 }

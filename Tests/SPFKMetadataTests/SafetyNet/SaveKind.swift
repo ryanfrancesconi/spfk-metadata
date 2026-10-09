@@ -48,13 +48,13 @@ enum SaveKind: String, CaseIterable, Hashable, Sendable, CustomTestStringConvert
     case e4 = "E4"
     /// The marker utility conversion's `writeMarkers` dispatches to.
     case e5 = "E5"
-    /// `WaveFileC` load, `bextDescriptionC`, save, as `MetadataPaster` does.
+    /// `ProductionChunks.writeBEXT` on a WAV (conversion).
     case e6 = "E6"
-    /// `WaveFileC` load, `iXML`, save, as `MetadataPaster` does.
+    /// `ProductionChunks.writeIXML` on a WAV (conversion).
     case e7 = "E7"
-    /// `FlacFileC` load, `bextDescription`, save, as `MetadataPaster` does.
+    /// `ProductionChunks.writeBEXT` on a FLAC (conversion).
     case e8 = "E8"
-    /// `FlacFileC` load, `iXML`, save, as `MetadataPaster` does.
+    /// `ProductionChunks.writeIXML` on a FLAC (conversion).
     case e9 = "E9"
 
     var testDescription: String { rawValue }

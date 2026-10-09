@@ -57,7 +57,7 @@ enum SafetyNetRIFFItem: Hashable, Sendable, CustomStringConvertible {
 
     /// Other applications' ID3 frames and RIFF data, planted by ``SafetyNetRIFFPlant``.
     static let foreignItems: [SafetyNetForeignItem] =
-        SafetyNetID3Item.foreignFrames.map { SafetyNetForeignItem(item: .id3($0)) }
+        (SafetyNetID3Item.foreignFrames + [.majorVersion]).map { SafetyNetForeignItem(item: .id3($0)) }
             + ([.unknownInfo] + SafetyNetRIFFForeign.unknownChunkIDs.map(SafetyNetRIFFItem.chunk) + [.otherAssociatedData, .dataOffset])
             .map { SafetyNetForeignItem(item: .riff($0)) }
 }

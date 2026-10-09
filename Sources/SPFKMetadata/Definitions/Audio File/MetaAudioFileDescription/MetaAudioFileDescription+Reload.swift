@@ -56,33 +56,7 @@ extension MetaAudioFileDescription {
 
         bextDescription = waveFile.bextDescription?.validated()
 
-        if let dict = waveFile.infoDictionary as? [String: String] {
-            for item in dict {
-                guard let key = InfoFrameKey(value: item.key) else { continue }
-
-                tagProperties.data.set(infoFrame: key, value: item.value)
-            }
-        }
-
-        if let dict = waveFile.id3Dictionary as? [String: String] {
-            for item in dict {
-                guard let key = ID3FrameKey(value: item.key) else {
-                    tagProperties.data.set(taglibKey: item.key, value: item.value)
-                    continue
-                }
-
-                switch key {
-                case .picture:
-                    continue
-                case .rating:
-                    continue // raw POPM; the rating arrives as the RATING key WaveFileC injects
-                case .userDefined:
-                    break
-                default:
-                    tagProperties.data.set(id3Frame: key, value: item.value)
-                }
-            }
-        }
+        tagProperties.load(waveFile: waveFile)
     }
 
     /// FLAC's iXML and BEXT APPLICATION blocks. BEXT falls back to iXML's `<BEXT>` element, where

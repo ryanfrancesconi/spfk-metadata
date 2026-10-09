@@ -53,6 +53,8 @@ import SPFKMetadata  // also brings in SPFKMetadataBase
 
 A tag the container stores as several values (two artists, a repeated Vorbis field, two comments in different languages) reads as one value joined with a space. Left unedited, it is written back as the file stored it; edited, it is written as the one value given. A save keeps what it does not change as stored — other applications' frames and items, an ID3v2.3 tag's version (unless the tag gains a frame v2.3 cannot hold), the case of an iTunes freeform name.
 
+A WAV's tags are its ID3 tag, read and written as an MP3's are, and its INFO chunk is their mirror: INFO supplies only what ID3 lacks, every tag with an INFO field is written back to it, and an INFO item no tag key names reads as a custom tag under its own ID, kept, changed or removed with that tag. A WAV save writes the tags only when they differ from the file's.
+
 ### Artwork
 
 - **`EmbeddedArtwork.read(from:)`** — the front cover, else the first picture. `nil` when there is none; throws when the file can't be opened or the picture doesn't decode.
@@ -68,7 +70,7 @@ Where a container has no field for a region's end time or color, both ride in a 
 
 ### Production chunks
 
-- **`ProductionChunks`** — read, write and remove BEXT and iXML in WAV chunks and FLAC APPLICATION blocks. A WAV write also rewrites its ID3 and INFO tags as read.
+- **`ProductionChunks`** — read, write and remove BEXT and iXML in WAV chunks and FLAC APPLICATION blocks. A WAV write leaves the tags alone.
 - **`WaveFileProperties(url:)`** — a WAV's format and BEXT from one open, as the parse records them.
 - **`BEXTDescription(url:)`**, **`write(bextDescription:to:)`** — a WAV's BEXT alone.
 

@@ -46,34 +46,22 @@ extension SaveKind {
         case .e6:
             var bext = try #require(description.bextDescription)
             bext.sequenceDescription = SafetyNetEdit.bextSequenceDescription
-            let file = WaveFileC(path: url.path)
-            guard file.load() else { throw EntryPointFailed(kind: self) }
-            file.bextDescriptionC = bext.bextDescriptionC
-            file.markersNeedsSave = false
-            file.imageNeedsSave = false
-            succeeded = file.save()
+            try ProductionChunks.writeBEXT(bext, to: url, fileType: .wav)
+            succeeded = true
 
         case .e7:
-            let file = WaveFileC(path: url.path)
-            guard file.load() else { throw EntryPointFailed(kind: self) }
-            file.iXML = try Self.editedIXML(description)
-            file.markersNeedsSave = false
-            file.imageNeedsSave = false
-            succeeded = file.save()
+            try ProductionChunks.writeIXML(Self.editedIXML(description), to: url, fileType: .wav)
+            succeeded = true
 
         case .e8:
             var bext = try #require(description.bextDescription)
             bext.sequenceDescription = SafetyNetEdit.bextSequenceDescription
-            let file = FlacFileC(path: url.path)
-            guard file.load() else { throw EntryPointFailed(kind: self) }
-            file.bextDescription = bext
-            succeeded = file.save()
+            try ProductionChunks.writeBEXT(bext, to: url, fileType: .flac)
+            succeeded = true
 
         case .e9:
-            let file = FlacFileC(path: url.path)
-            guard file.load() else { throw EntryPointFailed(kind: self) }
-            file.iXML = try Self.editedIXML(description)
-            succeeded = file.save()
+            try ProductionChunks.writeIXML(Self.editedIXML(description), to: url, fileType: .flac)
+            succeeded = true
 
         default:
             return false

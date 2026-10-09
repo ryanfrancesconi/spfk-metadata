@@ -1,6 +1,7 @@
 // Copyright Ryan Francesconi. All Rights Reserved. Revision History at https://github.com/ryanfrancesconi/spfk-metadata
 
 import Foundation
+import SPFKAudioBase
 import SPFKMetadataBase
 internal import SPFKMetadataC
 import SPFKUtils
@@ -12,8 +13,21 @@ extension TagProperties {
         try load(url: url)
     }
 
-    /// Adds the file's tags over what is already held; nothing is cleared first.
+    /// Adds the file's tags over what is already held; nothing is cleared first. A WAV's are read
+    /// as its parse reads them: INFO, then ID3 over it.
     public mutating func load(url: URL) throws {
+        if AudioFileType(url: url) == .wav {
+            let waveFile = WaveFileC(path: url.path)
+            guard waveFile.loadTags() else { throw MetadataError.readFailed(.tags, url) }
+
+            if let value = waveFile.audioPropertiesC {
+                audioProperties = AudioFormatProperties(cObject: value)
+            }
+
+            load(waveFile: waveFile)
+            return
+        }
+
         let tagFile = TagFile(path: url.path)
 
         guard tagFile.load() else {
@@ -42,8 +56,23 @@ extension TagProperties {
     }
 
     /// Replaces every tag in the file. Artwork and chapters are kept, and so is every other ID3v2 frame
-    /// of an MP3 with no property key; its stored XMP packet changes only as `storedXMPPacket` says.
+    /// of an MP3 or WAV with no property key; the stored XMP packet changes only as
+    /// `storedXMPPacket` says. A WAV's tags are written only when they differ from the file's, its
+    /// INFO as the mirror of its ID3 tag.
     public func save(to url: URL, storedXMPPacket: StoredXMPPacketWrite = .keep) throws {
+        if AudioFileType(url: url) == .wav {
+            let waveFile = WaveFileC(path: url.path)
+            waveFile.setTagChanges(self)
+            storedXMPPacket.apply { waveFile.xmpNeedsSave = true; waveFile.xmpPacket = $0 }
+            waveFile.bextNeedsSave = false
+            waveFile.iXMLNeedsSave = false
+            waveFile.markersNeedsSave = false
+            waveFile.imageNeedsSave = false
+
+            guard waveFile.save() else { throw MetadataError.writeFailed(waveFile.failedComponent, url) }
+            return
+        }
+
         let tagFile = TagFile(path: url.path)
         tagFile.dictionary = tagLibPropertyMap
         storedXMPPacket.apply { tagFile.xmpNeedsSave = true; tagFile.xmpPacket = $0 }

@@ -7,7 +7,7 @@ internal import SPFKMetadataC
 
 /// The BEXT and iXML chunks of WAV and FLAC files, read and written apart from the tags.
 ///
-/// A write is not chunk-only: saving a WAV also rewrites its ID3 and INFO tags and rating as read.
+/// A WAV write leaves the tags, markers and artwork alone, but renders both chunks from what it read.
 public enum ProductionChunks {}
 
 // MARK: - BEXT
@@ -38,6 +38,7 @@ extension ProductionChunks {
             guard file.load() else { throw MetadataError.writeFailed(.bext, url) }
 
             file.bextDescriptionC = bext.bextDescriptionC
+            file.tagsNeedsSave = false
             file.markersNeedsSave = false
             file.imageNeedsSave = false
 
@@ -85,6 +86,7 @@ extension ProductionChunks {
             guard file.load() else { throw MetadataError.writeFailed(.ixml, url) }
 
             file.iXML = xml
+            file.tagsNeedsSave = false
             file.markersNeedsSave = false
             file.imageNeedsSave = false
 
@@ -118,6 +120,7 @@ extension ProductionChunks {
 
             file.bextDescriptionC = nil
             file.iXML = nil
+            file.tagsNeedsSave = false
             file.markersNeedsSave = false
             file.imageNeedsSave = false
 

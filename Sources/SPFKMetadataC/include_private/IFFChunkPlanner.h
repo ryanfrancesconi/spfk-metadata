@@ -36,9 +36,17 @@ struct Edit {
 /// can walk, before anything is written.
 bool write(TagLib::File &file, const std::vector<Edit> &edits);
 
-/// `edits`, then what `RIFF::WAV::File::save()` writes from the file's state: `bext`, iXML, ID3
-/// and INFO.
-bool save(TagLib::RIFF::WAV::File &file, std::vector<Edit> edits = {});
+/// The chunks a WAV `save` renders from the file's state.
+struct WaveChunks {
+    bool bext = true;
+    bool iXML = true;
+    /// In the version it was read as (`FileSave::id3Version`).
+    bool id3 = true;
+    bool info = true;
+};
+
+/// `edits`, then what `RIFF::WAV::File::save()` writes from the file's state, limited to `chunks`.
+bool save(TagLib::RIFF::WAV::File &file, std::vector<Edit> edits = {}, WaveChunks chunks = {});
 
 /// `edits`, then what `RIFF::AIFF::File::save()` writes from the file's state: the ID3v2.4 tag.
 bool save(TagLib::RIFF::AIFF::File &file, std::vector<Edit> edits = {});
