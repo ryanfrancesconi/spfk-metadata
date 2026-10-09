@@ -72,6 +72,7 @@ let package = Package(
                 .targetItem(name: "SPFKMetadata", condition: nil),
                 .targetItem(name: "SPFKMetadataC", condition: nil),
                 .product(name: "SPFKImage", package: "spfk-image"),
+                .product(name: "SPFKBase", package: "spfk-base"),
                 .product(name: "SPFKTesting", package: "spfk-testing"),
                 .product(name: "SPFKVideo", package: "spfk-video"),
             ],
