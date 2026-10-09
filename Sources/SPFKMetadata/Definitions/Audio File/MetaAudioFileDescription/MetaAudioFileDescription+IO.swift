@@ -121,8 +121,9 @@ extension MetaAudioFileDescription {
     /// written elsewhere; `storedXMPPacket` replaces or removes the packet a WAV or MP3 stores,
     /// in the same TagLib save.
     ///
-    /// Throws ``UnstorableMetadataError`` for flags the container has no writer for, after
-    /// writing everything else.
+    /// Throws ``MetadataError/writeFailed(_:_:)`` for a component that could not be written and
+    /// ``UnstorableMetadataError`` for flags the container has no writer for, each after writing
+    /// everything else.
     public mutating func save(
         dirtyFlags: Set<MetadataDirtyFlag> = [.metadata],
         storedXMPPacket: StoredXMPPacketWrite = .keep

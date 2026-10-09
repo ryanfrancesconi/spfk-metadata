@@ -38,7 +38,9 @@ import SPFKMetadata  // also brings in SPFKMetadataBase
 ### The audio description
 
 - **`MetaAudioFileDescription(parsing:)`** — tags, rating, format, BEXT, iXML, markers, artwork and video facts in one read.
-- **`save(dirtyFlags:storedXMPPacket:)`** — writes what the flags name, then the Finder tags. Throws `UnstorableMetadataError` for a flag the container has no writer for, after writing everything else, and `FileLockError` for a locked file before writing anything.
+- **`save(dirtyFlags:storedXMPPacket:)`** — writes what the flags name, then the Finder tags. Throws `FileLockError` for a locked file before writing anything; `MetadataError.writeFailed` for a component that could not be written, and `UnstorableMetadataError` for a flag the container has no writer for, each after writing everything else.
+
+  A save that has to move the audio — a tag or metadata block that outgrew its padding ahead of it — writes the whole file to a hidden sibling and swaps it in with `FileManager.replaceItemAt`, so an interrupted save cannot leave it half moved. The file keeps its permissions, creation date, Finder tags and extended attributes but gets a **new file ID**: a bookmark taken before the save still resolves by path, but follows a later move only once re-created. A file with another hard link, in a folder that is not writable or without room for a second copy, or on a file system other than APFS, HFS+, exFAT and FAT is saved in place. A WAV never moves its audio, so it is never swapped.
 - **`reloadEmbeddedMetadata()`** — re-reads tags and, for WAV and FLAC, BEXT and iXML, after a write made behind the description's back.
 - **`loadVideoTrack()`** — video-technical fields and the audio track listing, for a description decoded before those fields existed.
 - **`syncUCSToIXML(category:subCategory:catID:)`** — writes UCS fields into the description's iXML USER container.
@@ -48,6 +50,8 @@ import SPFKMetadata  // also brings in SPFKMetadataBase
 - **`TagProperties(url:)`**, **`save(to:storedXMPPacket:)`** — every tag the container stores, keyed by `TagKey`. The rating is `TagKey.rating`, as 1–5 stars.
 - **`TagProperties.copyTags(from:to:)`**, **`removeAllTags(in:)`** — whole-file copy and strip.
 - **`difference(fromFileAt:)`** — the tag changes a value carries relative to the file.
+
+A tag the container stores as several values (two artists, a repeated Vorbis field, two comments in different languages) reads as one value joined with a space. Left unedited, it is written back as the file stored it; edited, it is written as the one value given. A save keeps what it does not change as stored — other applications' frames and items, an ID3v2.3 tag's version (unless the tag gains a frame v2.3 cannot hold), the case of an iTunes freeform name.
 
 ### Artwork
 
@@ -74,13 +78,15 @@ Where a container has no field for a region's end time or color, both ride in a 
 
 ### Errors
 
-The container I/O entry points throw `MetadataError`, which names the operation and the component (`tags`, `artwork`, `markers`, `bext`, `ixml`, `xmpPacket`). `MetaAudioFileDescription`'s parse, save and reload still throw untyped errors from some paths.
+The container I/O entry points throw `MetadataError`, which names the operation and the component (`tags`, `artwork`, `markers`, `bext`, `ixml`, `xmpPacket`, `rating`). `MetaAudioFileDescription.save` throws it too, for a component that failed; its parse and reload still throw untyped errors from some paths.
 
 ## Maintainers: the TagLib bridge
 
 `SPFKMetadataC` is an internal Objective-C++ target over TagLib. The library product does not include it and the Swift module imports it `internal`, so no public declaration names a bridge type. SwiftPM still lets a dependent package import the target directly; nothing outside this package should, and a grep for `SPFKMetadataC` outside it is the check.
 
-**Every WAV and AIFF write goes through `IFFChunkPlanner`, never `RIFF::WAV::File::save()` or `RIFF::AIFF::File::save()`** (AIFF markers excepted: Core Audio still writes them). TagLib's save removes each chunk it writes and appends it again, which moves every byte after it — the whole audio, when the metadata precedes `data` as field recorders write it. The planner rewrites a chunk in place when it fits and otherwise appends it, leaving its old slot as zeroed filler (`JUNK`, or `FLLR` in an AIFF) it signs as its own; only signed filler is reused. A new WAV or AIFF writer saves through `FileSave::save` or `IFFChunkPlanner::write`, and must not call TagLib's chunk-removing API (`strip`, `removeChunk`, `setChunkData`).
+**Every WAV and AIFF write goes through `IFFChunkPlanner`, never `RIFF::WAV::File::save()` or `RIFF::AIFF::File::save()`**, AIFF markers included (`AIFFMarkerChunks` renders the `MARK` chunk Core Audio would write). TagLib's save removes each chunk it writes and appends it again, which moves every byte after it — the whole audio, when the metadata precedes `data` as field recorders write it. The planner rewrites a chunk in place when it fits and otherwise appends it, leaving its old slot as zeroed filler (`JUNK`, or `FLLR` in an AIFF) it signs as its own; only signed filler is reused. A new WAV or AIFF writer saves through `FileSave::save` or `IFFChunkPlanner::write`, and must not call TagLib's chunk-removing API (`strip`, `removeChunk`, `setChunkData`).
+
+**Every other save is one `MetadataSaveSession`:** one TagLib open, each component written into it by its writer's `toFile:`/`toFileRef:` form, and one commit. The session's stream is spfk-taglib's `DeferredWriteStream`, which records every write, insertion and removal and commits once, so however many passes TagLib makes over the file — an MP4's tag and each chapter list re-render `moov` — it is written once, and a failed save leaves it untouched. A new writer for these formats takes the session's open file rather than opening its own.
 
 **The rating does not travel through TagLib's PropertyMap.** Every container stores it differently — ID3v2 POPM (MP3, WAV, AIFF), Xiph `RATING` plus `FMPS_RATING`, the MP4 `rate` atom plus a freeform atom, APE `RATING`, ASF `WM/SharedUserRating`, a Matroska `RATING` SimpleTag — so `TagFile` pulls `RATING` out of the map and dispatches per format (`TagRating.mm`). A container with no branch there reads back correctly, because its PropertyMap already carries the value, while saving a non-zero rating fails. Enabling a new container means adding a branch.
 
@@ -90,13 +96,15 @@ The container I/O entry points throw `MetadataError`, which names the operation 
 |---|---|
 | [spfk-metadata-base](https://github.com/ryanfrancesconi/spfk-metadata-base) | The metadata value types (no TagLib dependency) |
 | [spfk-taglib](https://github.com/ryanfrancesconi/spfk-taglib) | TagLib repackaged for SwiftPM |
-| [spfk-audio-base](https://github.com/ryanfrancesconi/spfk-audio-base) | Shared audio type definitions |
+| [spfk-audio-base](https://github.com/ryanfrancesconi/spfk-audio-base) | Shared audio type definitions, including each format's marker storage |
+| [spfk-base](https://github.com/ryanfrancesconi/spfk-base) | Common extensions, type definitions and logging |
 | [spfk-filesystem](https://github.com/ryanfrancesconi/spfk-filesystem) | File properties, Finder tags and lock state on a parsed description |
 | [spfk-matroska](https://github.com/ryanfrancesconi/spfk-matroska) | Container reading for formats AVFoundation cannot open |
 | [spfk-utils](https://github.com/ryanfrancesconi/spfk-utils) | Foundation utilities and extensions |
 | [spfk-video](https://github.com/ryanfrancesconi/spfk-video) | Video track properties on a media description |
 | [spfk-image](https://github.com/ryanfrancesconi/spfk-image) | Image decoding and encoding in the artwork tests (test target only) |
-| [spfk-testing](https://github.com/ryanfrancesconi/spfk-testing) | Test fixtures, and the file-I/O bench harness |
+| [spfk-testing](https://github.com/ryanfrancesconi/spfk-testing) | Test fixtures, and the harness for the `spfk-metadata-bench` file-I/O bench |
+| [AEXML](https://github.com/tadija/AEXML) | XML parsing for iXML |
 
 ## About
 
