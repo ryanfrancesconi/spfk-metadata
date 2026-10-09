@@ -5,10 +5,10 @@ import SPFKMetadataBase
 internal import SPFKMetadataC
 
 extension TagPictureRef {
-    /// Throws when the file has no picture that decodes.
+    /// Throws `MetadataError.readFailed` when the file has no picture that decodes.
     static func parsing(url: URL) throws -> TagPictureRef {
         guard let pictureRef: TagPictureRef = TagPicture(path: url.path)?.pictureRef else {
-            throw NSError(file: #file, function: #function, description: "Failed to find picture in \(url)")
+            throw MetadataError.readFailed(.artwork, url)
         }
 
         return pictureRef

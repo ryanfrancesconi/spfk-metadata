@@ -194,7 +194,7 @@ final class ReadFailureSaveTests: BinTestCase {
         let url = bin.appendingPathComponent(source.lastPathComponent)
         try FileManager.default.copyItem(at: source, to: url)
         let fileType = try #require(AudioFileType(url: url))
-        try EmbeddedMarkers.removeAll(from: url, fileType: fileType)
+        try EmbeddedAudioMarkers.removeAll(from: url, fileType: fileType)
 
         let markers = try await AudioMarkerDescriptionCollection(url: url)
         #expect(markers.count == 0)

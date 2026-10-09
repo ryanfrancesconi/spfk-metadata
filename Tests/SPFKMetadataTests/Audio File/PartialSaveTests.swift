@@ -34,13 +34,13 @@ final class PartialSaveTests: BinTestCase {
         let url = try copyToBin(url: source)
         var description = try await MetaAudioFileDescription(parsing: url)
 
-        description.imageDescription.cgImage = try unencodableImage()
+        description.artwork.cgImage = try unencodableImage()
         description.tagProperties[.title] = "Partial"
         description.markerCollection = AudioMarkerDescriptionCollection(markerDescriptions: [
             AudioMarkerDescription(name: "One", startTime: 0.5, markerID: 0),
         ])
 
-        var dirtyFlags: Set<MetadataDirtyFlag> = [.tags, .image, .markers]
+        var dirtyFlags: Set<MetadataDirtyFlag> = [.tags, .artwork, .markers]
 
         #if os(macOS)
             description.urlProperties.finderTags = FinderTagGroup(tags: [FinderTagDescription(label: "Partial")])
@@ -48,7 +48,7 @@ final class PartialSaveTests: BinTestCase {
         #endif
 
         #expect(throws: MetadataError.incompleteSave(
-            written: Set(dirtyFlags.subtracting([.image]).flatMap(\.components)),
+            written: Set(dirtyFlags.subtracting([.artwork]).flatMap(\.components)),
             failures: [.writeFailed(.artwork, url)]
         )) {
             try description.save(dirtyFlags: dirtyFlags)
@@ -70,14 +70,14 @@ final class PartialSaveTests: BinTestCase {
         let url = try copyToBin(url: TestBundleResources.shared.tabla_mp3)
         var description = try await MetaAudioFileDescription(parsing: url, reads: ReadFailureSaveTests.failingMarkers)
 
-        description.imageDescription.cgImage = try unencodableImage()
+        description.artwork.cgImage = try unencodableImage()
         description.tagProperties[.title] = "Partial"
 
         #expect(throws: MetadataError.incompleteSave(
             written: Set(MetadataDirtyFlag.tags.components),
             failures: [.readFailed(.markers, url), .writeFailed(.artwork, url)]
         )) {
-            try description.save(dirtyFlags: [.tags, .image, .markers])
+            try description.save(dirtyFlags: [.tags, .artwork, .markers])
         }
 
         let reread = try await MetaAudioFileDescription(parsing: url)

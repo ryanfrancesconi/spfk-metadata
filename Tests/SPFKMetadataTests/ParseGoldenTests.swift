@@ -100,7 +100,7 @@ struct ParseGoldenTests {
             object["tagProperties"] = tagProperties
         }
 
-        let image = parsed.imageDescription
+        let image = parsed.artwork
         object["imageDescription"] = [
             "description": image.description == url.path ? "<file path>" : image.description.map { $0 as Any } ?? NSNull(),
             "size": image.cgImage.map { "\($0.width)x\($0.height)" as Any } ?? NSNull(),

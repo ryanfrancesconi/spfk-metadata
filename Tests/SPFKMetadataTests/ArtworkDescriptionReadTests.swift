@@ -13,7 +13,7 @@ struct ArtworkDescriptionReadTests {
     /// The bytes a parse holds, so a write of either puts the file's own picture back.
     @Test(arguments: [TestBundleResources.shared.mp3_id3, TestBundleResources.shared.wav_bext_v2])
     func readHoldsTheBytesAParseHolds(url: URL) async throws {
-        let parsed = try await MetaAudioFileDescription(parsing: url).imageDescription
+        let parsed = try await MetaAudioFileDescription(parsing: url).artwork
         let read = try #require(try ArtworkDescription.read(from: url))
 
         let stored = try #require(read.storedPicture)

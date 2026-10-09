@@ -58,7 +58,8 @@ extension TagProperties {
     /// Replaces every tag in the file. Artwork and chapters are kept, and so is every other ID3v2 frame
     /// of an MP3 or WAV with no property key; the stored XMP packet changes only as
     /// `storedXMPPacket` says. A WAV's tags are written only when they differ from the file's, its
-    /// INFO as the mirror of its ID3 tag.
+    /// INFO as the mirror of its ID3 tag; one that writes them but not its rating throws
+    /// ``MetadataError/incompleteSave(written:failures:)``.
     public func save(to url: URL, storedXMPPacket: StoredXMPPacketWrite = .keep) throws {
         if AudioFileType(url: url) == .wav {
             let waveFile = WaveFileC(path: url.path)
@@ -67,9 +68,15 @@ extension TagProperties {
             waveFile.bextNeedsSave = false
             waveFile.iXMLNeedsSave = false
             waveFile.markersNeedsSave = false
-            waveFile.imageNeedsSave = false
+            waveFile.artworkNeedsSave = false
 
-            guard waveFile.save() else { throw MetadataError.writeFailed(waveFile.failedComponent, url) }
+            guard waveFile.save() else {
+                let failed = waveFile.failedComponents
+                guard !failed.contains(.container) else { throw MetadataError.writeFailed(.tags, url) }
+
+                let attempted: Set<MetadataComponent> = storedXMPPacket == .keep ? [.tags, .rating] : [.tags, .rating, .xmp]
+                throw failed.incompleteSave(attempted: attempted, url: url)
+            }
             return
         }
 

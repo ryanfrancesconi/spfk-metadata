@@ -11,7 +11,7 @@ import Testing
 @testable import SPFKMetadata
 
 @Suite(.tags(.file))
-final class EmbeddedMarkersTests: BinTestCase {
+final class EmbeddedAudioMarkersTests: BinTestCase {
     /// Every type with marker storage: wider than `markerWriteTypes` by Core Audio's `.w64`.
     static let dispatched = Set(AudioFileType.allCases.filter { $0.markerStorage != nil })
 
@@ -52,7 +52,7 @@ final class EmbeddedMarkersTests: BinTestCase {
         let fileType = try #require(AudioFileType(url: url))
         let sampleRate = try #require(try await MetaAudioFileDescription(parsing: url).audioFormat?.sampleRate)
 
-        try EmbeddedMarkers.write(markers(sampleRate: sampleRate), to: url, fileType: fileType)
+        try EmbeddedAudioMarkers.write(markers(sampleRate: sampleRate), to: url, fileType: fileType)
 
         let readBack = try await AudioMarkerDescriptionCollection(url: url).markerDescriptions
         try #require(readBack.count == 2, "\(fileType)")
@@ -72,8 +72,8 @@ final class EmbeddedMarkersTests: BinTestCase {
         let fileType = try #require(AudioFileType(url: url))
         let sampleRate = try #require(try await MetaAudioFileDescription(parsing: url).audioFormat?.sampleRate)
 
-        try EmbeddedMarkers.write(markers(sampleRate: sampleRate), to: url, fileType: fileType)
-        #expect(try EmbeddedMarkers.removeAll(from: url, fileType: fileType))
+        try EmbeddedAudioMarkers.write(markers(sampleRate: sampleRate), to: url, fileType: fileType)
+        #expect(try EmbeddedAudioMarkers.removeAll(from: url, fileType: fileType))
 
         let readBack = try await AudioMarkerDescriptionCollection(url: url).markerDescriptions
         #expect(readBack.isEmpty, "\(fileType)")
@@ -85,7 +85,7 @@ final class EmbeddedMarkersTests: BinTestCase {
         let fileType = try #require(AudioFileType(url: url))
         let before = try TagProperties(url: url)
 
-        try EmbeddedMarkers.write(markers(sampleRate: 44100), to: url, fileType: fileType)
+        try EmbeddedAudioMarkers.write(markers(sampleRate: 44100), to: url, fileType: fileType)
 
         #expect(try TagProperties(url: url).data == before.data, "\(fileType)")
     }
@@ -96,11 +96,11 @@ final class EmbeddedMarkersTests: BinTestCase {
         let fileType = try #require(AudioFileType(url: url))
 
         #expect(throws: MetadataError.unsupportedFormat(fileType.utType, .markers)) {
-            try EmbeddedMarkers.write(markers(sampleRate: 44100), to: url, fileType: fileType)
+            try EmbeddedAudioMarkers.write(markers(sampleRate: 44100), to: url, fileType: fileType)
         }
 
         #expect(throws: MetadataError.unsupportedFormat(fileType.utType, .markers)) {
-            try EmbeddedMarkers.removeAll(from: url, fileType: fileType)
+            try EmbeddedAudioMarkers.removeAll(from: url, fileType: fileType)
         }
     }
 
@@ -108,7 +108,7 @@ final class EmbeddedMarkersTests: BinTestCase {
         let url = bin.appendingPathComponent("missing.mp3")
 
         #expect(throws: MetadataError.writeFailed(.markers, url)) {
-            try EmbeddedMarkers.write(markers(sampleRate: 44100), to: url, fileType: .mp3)
+            try EmbeddedAudioMarkers.write(markers(sampleRate: 44100), to: url, fileType: .mp3)
         }
     }
 }

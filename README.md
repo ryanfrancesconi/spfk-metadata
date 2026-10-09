@@ -8,7 +8,7 @@ Reads and writes the metadata a media file stores in its own container — tags 
 
 It is two layers:
 
-- **Container I/O** — one Swift entry point per kind of metadata, each reading or writing that kind alone: `TagProperties`, `EmbeddedArtwork`, `EmbeddedMarkers`, `ProductionChunks`, `StoredXMPPacketWrite`.
+- **Container I/O** — one Swift entry point per kind of metadata, each reading or writing that kind alone: `TagProperties`, `EmbeddedArtwork`, `EmbeddedAudioMarkers`, `ProductionChunks`, `StoredXMPPacketWrite`.
 - **The audio description** — `MetaAudioFileDescription`, which parses all of it with the file's format into one value and saves what changed.
 
 The value types live in [spfk-metadata-base](https://github.com/ryanfrancesconi/spfk-metadata-base), which has no TagLib dependency and can be used on its own. SPFKMetadata re-exports it and adds the file I/O.
@@ -64,7 +64,7 @@ A WAV's tags are its ID3 tag, read and written as an MP3's are, and its INFO chu
 ### Markers
 
 - **`AudioMarkerDescriptionCollection(url:)`** — reads markers or chapters, by container.
-- **`EmbeddedMarkers.write(_:to:fileType:)`**, **`removeAll(from:fileType:)`** — write or clear them without touching the tags. Writing an empty array leaves the file's markers in place.
+- **`EmbeddedAudioMarkers.write(_:to:fileType:)`**, **`removeAll(from:fileType:)`** — write or clear them without touching the tags. Writing an empty array leaves the file's markers in place.
 
 Where a container has no field for a region's end time or color, both ride in a JSON suffix on the name (`fileEncodedName`, `colorEncodedName`) and are decoded on read.
 

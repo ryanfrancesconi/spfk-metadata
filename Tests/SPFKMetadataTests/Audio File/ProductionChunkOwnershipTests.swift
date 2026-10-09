@@ -164,8 +164,8 @@ final class ProductionChunkOwnershipTests: BinTestCase {
 
         case .artworkSave:
             var description = try await MetaAudioFileDescription(parsing: url)
-            description.imageDescription.pictureRef = try SafetyNetSetup.picture(TestBundleResources.shared.songbird)
-            try description.save(dirtyFlags: [.image])
+            description.artwork.pictureRef = try SafetyNetSetup.picture(TestBundleResources.shared.songbird)
+            try description.save(dirtyFlags: [.artwork])
 
         case .bextSave:
             var description = try await MetaAudioFileDescription(parsing: url)

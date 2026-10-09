@@ -98,7 +98,7 @@ struct SaveCases {
         guard let artwork = EmbeddedArtwork(contentsOf: coverURL) else {
             throw BenchError("could not read \(coverURL.lastPathComponent)")
         }
-        description.imageDescription.cgImage = artwork.cgImage
+        description.artwork.cgImage = artwork.cgImage
     }
 
     func editAll(_ description: inout MetaAudioFileDescription) throws {

@@ -17,9 +17,9 @@ final class MetaAudioFileThumbnailTests: TestCaseModel {
         let url = TestBundleResources.shared.mp3_no_metadata
         let description = try await MetaAudioFileDescription(parsing: url)
 
-        #expect(description.imageDescription.cgImage == nil)
-        #expect(description.imageDescription.thumbnailImage == nil)
-        #expect(description.imageDescription.thumbnailData == nil)
+        #expect(description.artwork.cgImage == nil)
+        #expect(description.artwork.thumbnailImage == nil)
+        #expect(description.artwork.thumbnailData == nil)
     }
 
     /// The thumbnail's decode costs as much as the whole parse of a file with a large cover, so
@@ -27,16 +27,16 @@ final class MetaAudioFileThumbnailTests: TestCaseModel {
     @Test func aParseLeavesTheThumbnailUnmade() async throws {
         let description = try await MetaAudioFileDescription(parsing: TestBundleResources.shared.mp3_id3)
 
-        #expect(description.imageDescription.cgImage != nil)
-        #expect(description.imageDescription.thumbnailImage == nil)
-        #expect(description.imageDescription.thumbnailData == nil)
+        #expect(description.artwork.cgImage != nil)
+        #expect(description.artwork.thumbnailImage == nil)
+        #expect(description.artwork.thumbnailData == nil)
     }
 
     @Test func aThumbnailIsMadeOnDemand() async throws {
         var description = try await MetaAudioFileDescription(parsing: TestBundleResources.shared.mp3_id3)
-        await description.imageDescription.createThumbnail()
+        await description.artwork.createThumbnail()
 
-        let thumbnail = try #require(description.imageDescription.thumbnailImage)
+        let thumbnail = try #require(description.artwork.thumbnailImage)
         #expect(thumbnail.width <= 64)
         #expect(thumbnail.height <= 64)
     }

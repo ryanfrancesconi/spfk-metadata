@@ -68,7 +68,7 @@ typedef NS_OPTIONS(NSUInteger, WaveFileComponents) {
 @property(nonatomic) BOOL markersNeedsSave;
 
 /// Default YES. With YES, a nil `tagPicture` removes the artwork.
-@property(nonatomic) BOOL imageNeedsSave;
+@property(nonatomic) BOOL artworkNeedsSave;
 
 /// The `_PMX` chunk's XMP packet. Set by `load`.
 @property(nullable, nonatomic) NSString *xmpPacket;

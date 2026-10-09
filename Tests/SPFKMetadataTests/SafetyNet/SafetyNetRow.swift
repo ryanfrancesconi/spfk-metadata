@@ -290,8 +290,8 @@ extension SafetyNetRow {
         description.tagProperties[.rating] = SafetyNetSetup.rating
 
         if holds(.artwork) {
-            description.imageDescription.pictureRef = try SafetyNetSetup.picture(TestBundleResources.shared.sharksandwich)
-            flags.insert(.image)
+            description.artwork.pictureRef = try SafetyNetSetup.picture(TestBundleResources.shared.sharksandwich)
+            flags.insert(.artwork)
         }
 
         if holds(.markers) {
@@ -341,7 +341,7 @@ extension SafetyNetRow {
         try #require(reread.tagProperties[.rating] == SafetyNetSetup.rating, context)
 
         if holds(.artwork) {
-            try #require(reread.imageDescription.cgImage != nil, context)
+            try #require(reread.artwork.cgImage != nil, context)
         }
 
         if holds(.markers) {

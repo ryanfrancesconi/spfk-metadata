@@ -63,8 +63,8 @@ extension MetaAudioFileDescription {
         // No thumbnail: its decode costs more than the rest of the parse with a large cover, so
         // whoever displays the artwork makes it (`ArtworkDescription.createThumbnail()`). Without
         // artwork, display supplies the Finder icon, which is per-machine rather than file content.
-        if imageDescription.cgImage == nil {
-            imageDescription.description = url.path
+        if artwork.cgImage == nil {
+            artwork.description = url.path
         }
     }
 
@@ -88,7 +88,7 @@ extension MetaAudioFileDescription {
             markerCollection = AudioMarkerDescriptionCollection(audioMarkers: audioMarkers)
         }
 
-        imageDescription.pictureRef = waveFile.tagPicture?.pictureRef
+        artwork.pictureRef = waveFile.tagPicture?.pictureRef
 
         guard waveFile.frameCount < 0 else { return waveFile.frameCount }
         return (try? AVAudioFile(forReading: url))?.length ?? 0
@@ -128,7 +128,7 @@ extension MetaAudioFileDescription {
         }
 
         do {
-            imageDescription.pictureRef = try reads.artwork(url)
+            artwork.pictureRef = try reads.artwork(url)
         } catch {
             if canStoreTags { readStatus.failed.insert(.artwork) }
         }
@@ -146,7 +146,7 @@ extension MetaAudioFileDescription {
             throw MetadataError.saveFailed(url)
         }
 
-        let imageNeedsSave = writable.contains(.artwork)
+        let artworkNeedsSave = writable.contains(.artwork)
 
         var failed: Set<MetadataComponent> = []
         let tagsWereRead = readStatus.holdsFileValue(of: .tags)
@@ -183,7 +183,7 @@ extension MetaAudioFileDescription {
             }
         }
 
-        if imageNeedsSave, !TagPicture.write(pictureRefToWrite, toFileRef: session.fileRef) {
+        if artworkNeedsSave, !TagPicture.write(pictureRefToWrite, toFileRef: session.fileRef) {
             failed.insert(.artwork)
         }
 
@@ -202,17 +202,17 @@ extension MetaAudioFileDescription {
             do { try storedXMPPacket.write(to: url) } catch { failed.insert(.xmp) }
         }
 
-        if imageNeedsSave, pictureRefToWrite == nil {
-            imageDescription.cgImage = nil
+        if artworkNeedsSave, pictureRefToWrite == nil {
+            artwork.cgImage = nil
         }
 
         return failed
     }
 
-    /// `imageDescription.pictureRef`, minus the file's own path: a parse without artwork leaves it
+    /// `artwork.pictureRef`, minus the file's own path: a parse without artwork leaves it
     /// in `description` for display, and it must not be written into the file.
     private var pictureRefToWrite: TagPictureRef? {
-        guard let pictureRef = imageDescription.pictureRef else { return nil }
+        guard let pictureRef = artwork.pictureRef else { return nil }
 
         if pictureRef.pictureDescription == url.path {
             pictureRef.pictureDescription = ""
@@ -221,21 +221,13 @@ extension MetaAudioFileDescription {
         return pictureRef
     }
 
-    /// Removes embedded artwork from the file via TagLib and clears it from memory.
-    public mutating func removePicture() throws {
-        guard TagPicture.write(nil, path: url.path) else {
-            throw MetadataError.removeFailed(.artwork, url)
-        }
-        imageDescription.cgImage = nil
-    }
-
     /// Markers and artwork are written only when in `writable`; the tags, BEXT and iXML only when
     /// they are and differ from the file's. Returns the components that failed; throws when nothing
     /// could be saved.
     mutating func saveWave(
         _ writable: Set<MetadataComponent>, storedXMPPacket: StoredXMPPacketWrite
     ) throws -> Set<MetadataComponent> {
-        let imageNeedsSave = writable.contains(.artwork)
+        let artworkNeedsSave = writable.contains(.artwork)
         let waveFile = WaveFileC(path: url.path)
         storedXMPPacket.apply { waveFile.xmpNeedsSave = true; waveFile.xmpPacket = $0 }
 
@@ -244,9 +236,9 @@ extension MetaAudioFileDescription {
         waveFile.markers = audioMarkers
 
         waveFile.markersNeedsSave = writable.contains(.markers)
-        waveFile.imageNeedsSave = imageNeedsSave
+        waveFile.artworkNeedsSave = artworkNeedsSave
 
-        if imageNeedsSave, let pictureRef = pictureRefToWrite {
+        if artworkNeedsSave, let pictureRef = pictureRefToWrite {
             waveFile.tagPicture = TagPicture(picture: pictureRef)
         }
 
@@ -266,7 +258,7 @@ extension MetaAudioFileDescription {
             guard !waveFile.failedComponents.contains(.container) else {
                 throw MetadataError.saveFailed(url)
             }
-            return waveFile.failedWrites
+            return waveFile.failedComponents.failedWrites
         }
 
         return []
@@ -313,7 +305,7 @@ extension MetaAudioFileDescription {
         return stored != bextDescription
     }
 
-    /// Positions convert at the sample rate Core Audio reads, as its own marker write did.
+    /// Positions convert at the sample rate Core Audio reads.
     private func setAIFFMarkers(in session: MetadataSaveSession) -> Bool {
         guard let sampleRate = audioFormat?.sampleRate, sampleRate > 0 else { return false }
         session.setAIFFMarkers(audioMarkers, sampleRate: sampleRate)

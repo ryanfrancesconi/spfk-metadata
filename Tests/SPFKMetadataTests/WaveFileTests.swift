@@ -42,7 +42,7 @@ class WaveFileTests: BinTestCase {
         // Save with empty dictionaries (no load — dicts start empty)
         let file = WaveFileC(path: tmpfile.path)
         file.markersNeedsSave = false
-        file.imageNeedsSave = false
+        file.artworkNeedsSave = false
         #expect(file.save())
 
         // All INFO fields must be gone
@@ -67,7 +67,7 @@ class WaveFileTests: BinTestCase {
         let file = WaveFileC(path: tmpfile.path)
         file[info: .bpm] = "777"
         file.markersNeedsSave = false
-        file.imageNeedsSave = false
+        file.artworkNeedsSave = false
         #expect(file.save())
 
         let reloaded = WaveFileC(path: tmpfile.path)
@@ -105,7 +105,7 @@ class WaveFileTests: BinTestCase {
         file[info: .title] = "テスト曲 Ölé 🎵"
         file[info: .artist] = "Ärτιst"
         file.markersNeedsSave = false
-        file.imageNeedsSave = false
+        file.artworkNeedsSave = false
         #expect(file.save())
 
         let reloaded = WaveFileC(path: tmpfile.path)

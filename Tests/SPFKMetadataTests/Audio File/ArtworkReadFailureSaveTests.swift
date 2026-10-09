@@ -38,10 +38,10 @@ final class ArtworkReadFailureSaveTests: BinTestCase {
 
         var description = try await MetaAudioFileDescription(parsing: url, reads: Self.failingArtwork)
         #expect(description.readStatus.failed == [.artwork])
-        #expect(description.imageDescription.pictureRef == nil)
+        #expect(description.artwork.pictureRef == nil)
 
         #expect(throws: MetadataError.incompleteSave(written: [], failures: [.readFailed(.artwork, url)])) {
-            try description.save(dirtyFlags: [.image])
+            try description.save(dirtyFlags: [.artwork])
         }
 
         #expect(try TagPictureRef.reading(url: url)?.storedData == stored)
@@ -59,7 +59,7 @@ final class ArtworkReadFailureSaveTests: BinTestCase {
             written: Set(MetadataDirtyFlag.tags.components),
             failures: [.readFailed(.artwork, url)]
         )) {
-            try description.save(dirtyFlags: [.tags, .image])
+            try description.save(dirtyFlags: [.tags, .artwork])
         }
 
         let onDisk = try await MetaAudioFileDescription(parsing: url)
@@ -70,6 +70,6 @@ final class ArtworkReadFailureSaveTests: BinTestCase {
     @Test func aFileWithoutArtworkReadsAsAbsent() async throws {
         let description = try await MetaAudioFileDescription(parsing: TestBundleResources.shared.mp3_no_metadata)
         #expect(description.readStatus.failed.isEmpty)
-        #expect(description.imageDescription.pictureRef == nil)
+        #expect(description.artwork.pictureRef == nil)
     }
 }

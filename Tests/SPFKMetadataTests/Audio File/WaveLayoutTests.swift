@@ -130,11 +130,11 @@ final class WaveLayoutTests: BinTestCase {
             data: nil, width: 70000, height: 1, bitsPerComponent: 8, bytesPerRow: 0,
             space: CGColorSpaceCreateDeviceGray(), bitmapInfo: CGImageAlphaInfo.none.rawValue
         ))
-        description.imageDescription.cgImage = context.makeImage()
+        description.artwork.cgImage = context.makeImage()
         description.tagProperties[.title] = Self.editedTitle
 
         #expect(throws: MetadataError.incompleteSave(written: Set(MetadataDirtyFlag.tags.components), failures: [.writeFailed(.artwork, url)])) {
-            try description.save(dirtyFlags: [.tags, .image])
+            try description.save(dirtyFlags: [.tags, .artwork])
         }
 
         let reread = try await MetaAudioFileDescription(parsing: url)
@@ -157,8 +157,8 @@ final class WaveLayoutTests: BinTestCase {
 
         case .artworkSave:
             var description = try await MetaAudioFileDescription(parsing: url)
-            description.imageDescription.pictureRef = try SafetyNetSetup.picture(TestBundleResources.shared.songbird)
-            try description.save(dirtyFlags: [.image])
+            description.artwork.pictureRef = try SafetyNetSetup.picture(TestBundleResources.shared.songbird)
+            try description.save(dirtyFlags: [.artwork])
 
         case .bextSave:
             var description = try await MetaAudioFileDescription(parsing: url)
@@ -188,10 +188,10 @@ final class WaveLayoutTests: BinTestCase {
             try EmbeddedArtwork.remove(from: url)
 
         case .markersWrite:
-            try EmbeddedMarkers.write(SafetyNetEdit.markers, to: url, fileType: .wav)
+            try EmbeddedAudioMarkers.write(SafetyNetEdit.markers, to: url, fileType: .wav)
 
         case .markersRemove:
-            try EmbeddedMarkers.removeAll(from: url, fileType: .wav)
+            try EmbeddedAudioMarkers.removeAll(from: url, fileType: .wav)
 
         case .productionBEXTWrite:
             var bext = try #require(ProductionChunks.readBEXT(from: url, fileType: .wav))

@@ -27,7 +27,7 @@ class TagPictureTests: BinTestCase {
     @Test func parsingThrowsForFileWithoutArtwork() async throws {
         let url = TestBundleResources.shared.mp3_no_metadata
 
-        #expect(throws: (any Error).self) {
+        #expect(throws: MetadataError.readFailed(.artwork, url)) {
             try TagPictureRef.parsing(url: url)
         }
     }
@@ -256,7 +256,7 @@ class TagPictureTests: BinTestCase {
         let file = WaveFileC(path: tmpfile.path)
         #expect(file.load())
         file.tagPicture = TagPicture(picture: pictureRef)
-        file.imageNeedsSave = true
+        file.artworkNeedsSave = true
         file.markersNeedsSave = false
         #expect(file.save())
 
@@ -285,7 +285,7 @@ class TagPictureTests: BinTestCase {
         let file1 = WaveFileC(path: tmpfile.path)
         #expect(file1.load())
         file1.tagPicture = TagPicture(picture: pictureRef)
-        file1.imageNeedsSave = true
+        file1.artworkNeedsSave = true
         file1.markersNeedsSave = false
         #expect(file1.save())
 
@@ -294,7 +294,7 @@ class TagPictureTests: BinTestCase {
         #expect(file2.tagPicture?.pictureRef != nil)
 
         file2.tagPicture = nil
-        file2.imageNeedsSave = true
+        file2.artworkNeedsSave = true
         file2.markersNeedsSave = false
         #expect(file2.save())
 

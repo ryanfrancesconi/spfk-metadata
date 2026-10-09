@@ -35,7 +35,7 @@ using namespace TagLib;
     _bextNeedsSave = YES;
     _iXMLNeedsSave = YES;
     _markersNeedsSave = YES;
-    _imageNeedsSave = YES;
+    _artworkNeedsSave = YES;
 
     return self;
 }
@@ -176,12 +176,12 @@ using namespace TagLib;
         _failedComponents |= WaveFileComponentsRating;
     }
 
-    if (_imageNeedsSave && ![TagPicture write:_tagPicture.pictureRef toTag:file.tag()]) {
+    if (_artworkNeedsSave && ![TagPicture write:_tagPicture.pictureRef toTag:file.tag()]) {
         _failedComponents |= WaveFileComponentsArtwork;
     }
 
     const bool tags = _tagsNeedsSave || _ratingNeedsSave;
-    const IFFChunkPlanner::WaveChunks chunks = { _bextNeedsSave, _iXMLNeedsSave, tags || _imageNeedsSave, tags };
+    const IFFChunkPlanner::WaveChunks chunks = { _bextNeedsSave, _iXMLNeedsSave, tags || _artworkNeedsSave, tags };
 
     if (!IFFChunkPlanner::save(file, edits, chunks)) {
         _failedComponents = WaveFileComponentsContainer;

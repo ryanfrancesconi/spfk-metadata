@@ -44,13 +44,13 @@ final class AIFFLayoutTests: BinTestCase {
             try description.save(dirtyFlags: [.tags])
         case .artworkSave:
             var description = try await MetaAudioFileDescription(parsing: url)
-            description.imageDescription.cgImage = try CGImage.contentsOf(url: TestBundleResources.shared.sharksandwich)
-            try description.save(dirtyFlags: [.image])
+            description.artwork.cgImage = try CGImage.contentsOf(url: TestBundleResources.shared.sharksandwich)
+            try description.save(dirtyFlags: [.artwork])
         case .titleAndArtworkSave:
             var description = try await MetaAudioFileDescription(parsing: url)
             description.tagProperties[.title] = Self.longTitle
-            description.imageDescription.cgImage = try CGImage.contentsOf(url: TestBundleResources.shared.sharksandwich)
-            try description.save(dirtyFlags: [.tags, .image])
+            description.artwork.cgImage = try CGImage.contentsOf(url: TestBundleResources.shared.sharksandwich)
+            try description.save(dirtyFlags: [.tags, .artwork])
         case .tagPropertiesSave:
             var properties = try TagProperties(url: url)
             properties[.title] = Self.longTitle
@@ -62,9 +62,9 @@ final class AIFFLayoutTests: BinTestCase {
         case .everythingSave:
             var description = try await MetaAudioFileDescription(parsing: url)
             description.tagProperties[.title] = Self.longTitle
-            description.imageDescription.cgImage = try CGImage.contentsOf(url: TestBundleResources.shared.sharksandwich)
+            description.artwork.cgImage = try CGImage.contentsOf(url: TestBundleResources.shared.sharksandwich)
             description.markerCollection = Self.storableMarkers
-            try description.save(dirtyFlags: [.tags, .image, .markers])
+            try description.save(dirtyFlags: [.tags, .artwork, .markers])
         }
 
         let after = try Self.soundChunk(in: url)
@@ -76,7 +76,7 @@ final class AIFFLayoutTests: BinTestCase {
             #expect(reread.tagProperties[.title] == Self.longTitle)
         }
         if [.artworkSave, .titleAndArtworkSave, .everythingSave].contains(writer) {
-            #expect(reread.imageDescription.cgImage != nil)
+            #expect(reread.artwork.cgImage != nil)
         }
         if writesMarkers {
             #expect(reread.markerCollection.markerDescriptions.map(\.name) == Self.storableMarkers.markerDescriptions.map(\.name))
@@ -141,7 +141,7 @@ final class AIFFLayoutTests: BinTestCase {
         let before = try Self.soundChunk(in: url)
 
         let format = try #require(try await MetaAudioFileDescription(parsing: url).audioFormat)
-        try EmbeddedMarkers.write(Self.storableMarkers.markerDescriptions, to: url, fileType: .aiff, fileSampleRate: format.sampleRate)
+        try EmbeddedAudioMarkers.write(Self.storableMarkers.markerDescriptions, to: url, fileType: .aiff, fileSampleRate: format.sampleRate)
 
         let after = try AIFFChunks(contentsOf: url)
         #expect(after.first("ID3 ")?.payload == tag.payload)

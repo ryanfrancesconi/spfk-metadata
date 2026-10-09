@@ -42,8 +42,8 @@ final class MatroskaLayoutTests: BinTestCase {
         case .descriptionSaveWithArtwork:
             var description = try await MetaAudioFileDescription(parsing: url)
             description.tagProperties[.title] = Self.longTitle
-            description.imageDescription.cgImage = try CGImage.contentsOf(url: TestBundleResources.shared.sharksandwich)
-            try description.save(dirtyFlags: [.tags, .image])
+            description.artwork.cgImage = try CGImage.contentsOf(url: TestBundleResources.shared.sharksandwich)
+            try description.save(dirtyFlags: [.tags, .artwork])
         case .tagPropertiesSave:
             var properties = try TagProperties(url: url)
             properties[.title] = Self.longTitle
@@ -63,7 +63,7 @@ final class MatroskaLayoutTests: BinTestCase {
 
         if writer == .descriptionSaveWithArtwork {
             #expect(after.elements(MatroskaElements.ID.attachments).count == 1)
-            #expect(try await MetaAudioFileDescription(parsing: url).imageDescription.cgImage != nil)
+            #expect(try await MetaAudioFileDescription(parsing: url).artwork.cgImage != nil)
         }
     }
 }

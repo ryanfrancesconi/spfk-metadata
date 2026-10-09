@@ -69,8 +69,8 @@ final class MultiplePictureSurvivalTests: BinTestCase {
         let url = try mp3WithTwoPictures()
 
         var description = try await MetaAudioFileDescription(parsing: url)
-        description.imageDescription.pictureRef = try newFrontCover()
-        try description.save(dirtyFlags: [.image])
+        description.artwork.pictureRef = try newFrontCover()
+        try description.save(dirtyFlags: [.artwork])
 
         let pictures = try mp3Pictures(in: url)
         let back = Picture(type: Self.backCover, data: try backData)
@@ -171,8 +171,8 @@ final class MultiplePictureSurvivalTests: BinTestCase {
         let url = try flacWithTwoPictures()
 
         var description = try await MetaAudioFileDescription(parsing: url)
-        description.imageDescription.pictureRef = try newFrontCover()
-        try description.save(dirtyFlags: [.image])
+        description.artwork.pictureRef = try newFrontCover()
+        try description.save(dirtyFlags: [.artwork])
 
         let pictures = try flacPictures(in: url)
         let back = Picture(type: Self.backCover, data: try backData)

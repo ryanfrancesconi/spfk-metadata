@@ -21,9 +21,9 @@ extension ArtworkDescription {
     public static func read(from url: URL) throws -> ArtworkDescription? {
         guard let pictureRef = try TagPictureRef.reading(url: url) else { return nil }
 
-        var imageDescription = ArtworkDescription()
-        imageDescription.pictureRef = pictureRef
-        return imageDescription
+        var artwork = ArtworkDescription()
+        artwork.pictureRef = pictureRef
+        return artwork
     }
 
     /// TagLib's name for picture type 3.

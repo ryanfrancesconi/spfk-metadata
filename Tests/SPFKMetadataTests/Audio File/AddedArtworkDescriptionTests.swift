@@ -10,18 +10,18 @@ import SPFKTesting
 import Testing
 
 /// Artwork added to a file that had none is written without a picture description. A parse
-/// without artwork holds the file's path in `imageDescription.description`, which must not reach
+/// without artwork holds the file's path in `artwork.description`, which must not reach
 /// the file.
 @Suite(.tags(.file))
 final class AddedArtworkDescriptionTests: BinTestCase {
     private func addArtwork(to fixture: URL) async throws -> URL {
         let url = try copyToBin(url: fixture)
         var description = try await MetaAudioFileDescription(parsing: url)
-        try #require(description.imageDescription.cgImage == nil)
+        try #require(description.artwork.cgImage == nil)
 
         let cgImage = try CGImage.contentsOf(url: TestBundleResources.shared.sharksandwich)
-        await description.imageDescription.update(cgImage: cgImage)
-        try description.save(dirtyFlags: [.image])
+        await description.artwork.update(cgImage: cgImage)
+        try description.save(dirtyFlags: [.artwork])
         return url
     }
 

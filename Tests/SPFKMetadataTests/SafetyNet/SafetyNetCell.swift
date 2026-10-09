@@ -135,7 +135,7 @@ enum SafetyNetCell {
         }
 
         if written.contains(.artwork) {
-            let size = reread.imageDescription.cgImage.map { "\($0.width)x\($0.height)" }
+            let size = reread.artwork.cgImage.map { "\($0.width)x\($0.height)" }
             #expect(size == (kind.removesArtwork ? nil : try SafetyNetEdit.artworkPixelSize()), "\(context) artwork")
         }
 

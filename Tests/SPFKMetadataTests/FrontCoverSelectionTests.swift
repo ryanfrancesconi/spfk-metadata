@@ -45,7 +45,7 @@ final class FrontCoverSelectionTests: BinTestCase {
     }
 
     private func pixelSize(of description: MetaAudioFileDescription) -> PixelSize? {
-        guard let image = description.imageDescription.pictureRef?.cgImage else { return nil }
+        guard let image = description.artwork.pictureRef?.cgImage else { return nil }
         return PixelSize(width: image.width, height: image.height)
     }
 
@@ -64,12 +64,12 @@ final class FrontCoverSelectionTests: BinTestCase {
         return try #require(try ID3v2Frames.tag(in: data))
     }
 
-    /// Parse, then save `[.tags, .image]` with no edit, then the tag's pictures.
+    /// Parse, then save `[.tags, .artwork]` with no edit, then the tag's pictures.
     private func parseAndSave(_ url: URL, tag: (URL) throws -> ID3v2Frames.Tag) async throws -> [(type: UInt8, size: PixelSize?)] {
         var description = try await MetaAudioFileDescription(parsing: url)
         #expect(pixelSize(of: description) == Self.frontSize, "artwork is not the front cover")
 
-        try description.save(dirtyFlags: [.tags, .image])
+        try description.save(dirtyFlags: [.tags, .artwork])
         return try pictures(in: tag(url))
     }
 

@@ -42,7 +42,7 @@ final class SaveSessionFailureTests: BinTestCase {
             data: nil, width: 70000, height: 1, bitsPerComponent: 8, bytesPerRow: 0,
             space: CGColorSpaceCreateDeviceGray(), bitmapInfo: CGImageAlphaInfo.none.rawValue
         ))
-        description.imageDescription.cgImage = context.makeImage()
+        description.artwork.cgImage = context.makeImage()
         description.tagProperties[.title] = Self.editedTitle
         description.markerCollection = AudioMarkerDescriptionCollection(markerDescriptions: [
             AudioMarkerDescription(name: "First", startTime: 0.5),
@@ -52,7 +52,7 @@ final class SaveSessionFailureTests: BinTestCase {
         #expect(throws: MetadataError.incompleteSave(
             written: Set(MetadataDirtyFlag.tags.components + [.markers]), failures: [.writeFailed(.artwork, url)]
         )) {
-            try description.save(dirtyFlags: [.tags, .image, .markers])
+            try description.save(dirtyFlags: [.tags, .artwork, .markers])
         }
 
         let reread = try await MetaAudioFileDescription(parsing: url)

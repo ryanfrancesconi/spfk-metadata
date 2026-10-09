@@ -36,11 +36,11 @@ struct WAVBench {
             await save("\(prefix).save-metadata", master, [.tags], cases.editTitle, into: &run)
             await save("\(prefix).save-markers", master, [.markers], cases.editMarkers, into: &run)
             await save("\(prefix).save-finder-tags", master, [.finderTags], { _ in }, into: &run)
-            await save("\(prefix).save-image", master, [.image], cases.editArtwork, into: &run)
+            await save("\(prefix).save-image", master, [.artwork], cases.editArtwork, into: &run)
 
         case .trailingArt:
             await save("\(prefix).save-metadata", master, [.tags], cases.editTitle, into: &run)
-            await save("\(prefix).save-metadata-image-unchanged", master, [.tags, .image], cases.editTitle, into: &run)
+            await save("\(prefix).save-metadata-image-unchanged", master, [.tags, .artwork], cases.editTitle, into: &run)
 
         case .rf64:
             await save("\(prefix).save-metadata", master, [.tags], cases.editTitle, into: &run)

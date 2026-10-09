@@ -152,7 +152,7 @@ final class BEXTTagLibEndToEndTests: BinTestCase {
         // Modify description
         bext.sequenceDescription = "Modified via TagLib"
         file.markersNeedsSave = false
-        file.imageNeedsSave = false
+        file.artworkNeedsSave = false
 
         // Save
         #expect(file.save())
@@ -183,7 +183,7 @@ final class BEXTTagLibEndToEndTests: BinTestCase {
         let origShortTerm = original.maxShortTermLoudness
 
         file.markersNeedsSave = false
-        file.imageNeedsSave = false
+        file.artworkNeedsSave = false
         #expect(file.save())
 
         let reloaded = WaveFileC(path: tmpfile.path)
@@ -211,7 +211,7 @@ final class BEXTTagLibEndToEndTests: BinTestCase {
         // Modify BEXT only
         file.bextDescriptionC?.sequenceDescription = "New description"
         file.markersNeedsSave = false
-        file.imageNeedsSave = false
+        file.artworkNeedsSave = false
         #expect(file.save())
 
         // Verify other chunks preserved
@@ -321,10 +321,10 @@ final class WAVFormatEquivalenceTests: BinTestCase {
 
 // MARK: - Dirty flags
 
-/// Tests that markersNeedsSave and imageNeedsSave flags control conditional writes.
+/// Tests that markersNeedsSave and artworkNeedsSave flags control conditional writes.
 @Suite(.tags(.file))
 final class DirtyFlagTests: BinTestCase {
-    /// Verify that imageNeedsSave=false skips artwork writing even when tagPicture is set.
+    /// Verify that artworkNeedsSave=false skips artwork writing even when tagPicture is set.
     @Test func imageNotSavedWhenFlagIsFalse() async throws {
         let tmpfile = try copyToBin(url: TestBundleResources.shared.tabla_wav)
 
@@ -333,7 +333,7 @@ final class DirtyFlagTests: BinTestCase {
         #expect(initial.load())
         #expect(initial.tagPicture?.pictureRef == nil)
 
-        // Set artwork but mark imageNeedsSave = false
+        // Set artwork but mark artworkNeedsSave = false
         let pictureRef = try #require(
             TagPictureRef(
                 url: TestBundleResources.shared.sharksandwich,
@@ -345,7 +345,7 @@ final class DirtyFlagTests: BinTestCase {
         let file = WaveFileC(path: tmpfile.path)
         #expect(file.load())
         file.tagPicture = TagPicture(picture: pictureRef)
-        file.imageNeedsSave = false
+        file.artworkNeedsSave = false
         file.markersNeedsSave = false
         file[info: .title] = "Dirty Flag Test"
         #expect(file.save())
@@ -358,7 +358,7 @@ final class DirtyFlagTests: BinTestCase {
         #expect(reloaded[info: .title] == "Dirty Flag Test")
     }
 
-    /// Verify that imageNeedsSave=true does write artwork.
+    /// Verify that artworkNeedsSave=true does write artwork.
     @Test func imageSavedWhenFlagIsTrue() async throws {
         let tmpfile = try copyToBin(url: TestBundleResources.shared.tabla_wav)
 
@@ -373,7 +373,7 @@ final class DirtyFlagTests: BinTestCase {
         let file = WaveFileC(path: tmpfile.path)
         #expect(file.load())
         file.tagPicture = TagPicture(picture: pictureRef)
-        file.imageNeedsSave = true
+        file.artworkNeedsSave = true
         file.markersNeedsSave = false
         #expect(file.save())
 

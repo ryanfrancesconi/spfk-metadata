@@ -98,7 +98,7 @@ final class WAVMarkerAssociatedDataTests: BinTestCase {
     @Test func removingEveryMarkerDropsTheAssociatedData() async throws {
         let url = try plantedFile()
 
-        try EmbeddedMarkers.removeAll(from: url, fileType: .wav)
+        try EmbeddedAudioMarkers.removeAll(from: url, fileType: .wav)
 
         #expect(try RIFFChunks(contentsOf: url).list("adtl") == nil)
     }

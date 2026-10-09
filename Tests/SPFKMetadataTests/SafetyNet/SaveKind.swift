@@ -130,7 +130,7 @@ enum SaveKind: String, CaseIterable, Hashable, Sendable, CustomTestStringConvert
     func steps(for row: SafetyNetRow) -> [Step] {
         switch self {
         case .k0:
-            let flags: Set<MetadataDirtyFlag> = row.holds(.markers) ? [.tags, .image, .markers] : [.tags, .image]
+            let flags: Set<MetadataDirtyFlag> = row.holds(.markers) ? [.tags, .artwork, .markers] : [.tags, .artwork]
             return [Step(flags: flags) { _ in }]
 
         case .k1:
@@ -157,7 +157,7 @@ enum SaveKind: String, CaseIterable, Hashable, Sendable, CustomTestStringConvert
             return [Self.replaceArtwork]
 
         case .k6:
-            return [Step(flags: [.image]) { $0.imageDescription.cgImage = nil }]
+            return [Step(flags: [.artwork]) { $0.artwork.cgImage = nil }]
 
         case .k7:
             return [Self.replaceMarkers]
@@ -190,16 +190,16 @@ enum SaveKind: String, CaseIterable, Hashable, Sendable, CustomTestStringConvert
             return [Self.replaceMarkers, Self.editTitle]
 
         case .k9:
-            return [Self.combined([.tags, .image])]
+            return [Self.combined([.tags, .artwork])]
 
         case .k10:
             return [Self.combined([.tags, .markers])]
 
         case .k11:
-            return [Self.combined([.image, .markers])]
+            return [Self.combined([.artwork, .markers])]
 
         case .k12:
-            return [Self.combined([.tags, .image, .markers])]
+            return [Self.combined([.tags, .artwork, .markers])]
 
         case .s3:
             return [Self.editTitle, Self.replaceMarkers]
@@ -228,7 +228,7 @@ enum SaveKind: String, CaseIterable, Hashable, Sendable, CustomTestStringConvert
 
     /// One save carrying several flags, each with the edit its single-flag kind makes.
     private static func combined(_ flags: Set<MetadataDirtyFlag>) -> Step {
-        let steps = [(MetadataDirtyFlag.tags, editTitle), (.image, replaceArtwork), (.markers, replaceMarkers)]
+        let steps = [(MetadataDirtyFlag.tags, editTitle), (.artwork, replaceArtwork), (.markers, replaceMarkers)]
             .filter { flags.contains($0.0) }.map(\.1)
 
         return Step(flags: flags) { description in
@@ -246,8 +246,8 @@ enum SaveKind: String, CaseIterable, Hashable, Sendable, CustomTestStringConvert
     }
 
     private static var replaceArtwork: Step {
-        Step(flags: [.image]) {
-            $0.imageDescription.pictureRef = try SafetyNetSetup.picture(TestBundleResources.shared.songbird)
+        Step(flags: [.artwork]) {
+            $0.artwork.pictureRef = try SafetyNetSetup.picture(TestBundleResources.shared.songbird)
         }
     }
 

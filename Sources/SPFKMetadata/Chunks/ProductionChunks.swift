@@ -138,7 +138,7 @@ private extension WaveFileC {
         file.bextNeedsSave = false
         file.iXMLNeedsSave = false
         file.markersNeedsSave = false
-        file.imageNeedsSave = false
+        file.artworkNeedsSave = false
         return file
     }
 }

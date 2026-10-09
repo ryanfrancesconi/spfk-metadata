@@ -27,21 +27,24 @@ extension WaveFileC {
             infoDictionary[key.value] = newValue
         }
     }
+}
 
+extension WaveFileComponents {
     /// The components a failed `save()` could not write, short of the whole file.
     var failedWrites: Set<MetadataComponent> {
         var result = Set<MetadataComponent>()
-        if failedComponents.contains(.artwork) { result.insert(.artwork) }
-        if failedComponents.contains(.markers) { result.insert(.markers) }
-        if failedComponents.contains(.rating) { result.insert(.rating) }
+        if contains(.artwork) { result.insert(.artwork) }
+        if contains(.markers) { result.insert(.markers) }
+        if contains(.rating) { result.insert(.rating) }
         return result
     }
 
-    /// The component a failed `save()` reports; `.tags` when nothing was written.
-    var failedComponent: MetadataComponent {
-        if failedComponents.contains(.container) { return .tags }
-        if failedComponents.contains(.artwork) { return .artwork }
-        if failedComponents.contains(.markers) { return .markers }
-        return .rating
+    /// What a save of `attempted` throws when it wrote the file but not these components.
+    func incompleteSave(attempted: Set<MetadataComponent>, url: URL) -> MetadataError {
+        let failed = failedWrites
+        return .incompleteSave(
+            written: attempted.subtracting(failed),
+            failures: MetadataComponent.allCases.filter(failed.contains).map { .writeFailed($0, url) }
+        )
     }
 }

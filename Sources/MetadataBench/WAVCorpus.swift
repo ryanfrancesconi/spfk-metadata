@@ -7,7 +7,7 @@ import Foundation
 enum WAVLayout: String, CaseIterable {
     /// `bext`, `iXML`, `fmt `, `data` — metadata ahead of the audio, as a field recorder writes it.
     case recorder
-    /// `fmt `, `data`, `bext`, `iXML`, `ID3 `, `LIST/INFO` — where a save leaves everything today.
+    /// `fmt `, `data`, `bext`, `iXML`, `ID3 `, `LIST/INFO` — where a save leaves everything.
     case trailing
     /// `trailing` with a 4.8 MB front cover in the ID3 tag.
     case trailingArt = "trailing-art"

@@ -9,7 +9,7 @@ internal import SPFKMetadataC
 ///
 /// On any file but a WAV, `MetaAudioFileDescription.save(dirtyFlags: [.markers])` also rewrites
 /// the tags it read, so a caller holding only markers would strip them going that way.
-public enum EmbeddedMarkers {
+public enum EmbeddedAudioMarkers {
     /// Writes `descriptions` in the order given, replacing the file's markers. An empty array
     /// leaves the file's markers in place; use ``removeAll(from:fileType:)`` to clear them.
     ///
