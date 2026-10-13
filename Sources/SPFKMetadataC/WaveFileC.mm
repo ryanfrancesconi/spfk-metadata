@@ -31,11 +31,11 @@ using namespace TagLib;
     _infoDictionary = [[NSMutableDictionary alloc] init];
     _bextDescriptionC = NULL;
     _frameCount = -1;
-    _tagsNeedsSave = YES;
-    _bextNeedsSave = YES;
-    _iXMLNeedsSave = YES;
-    _markersNeedsSave = YES;
-    _artworkNeedsSave = YES;
+    _tagsNeedsSave = true;
+    _bextNeedsSave = true;
+    _iXMLNeedsSave = true;
+    _markersNeedsSave = true;
+    _artworkNeedsSave = true;
 
     return self;
 }

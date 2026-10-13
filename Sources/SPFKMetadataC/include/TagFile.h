@@ -23,9 +23,9 @@ NS_ASSUME_NONNULL_BEGIN
 /// An MP3's XMP packet, from the ID3v2 `PRIV` frame owned by `XMP`. Set by `load`.
 @property(nullable, nonatomic) NSString *xmpPacket;
 
-/// Default NO, which keeps an MP3's stored packet. With YES, `save` replaces it with `xmpPacket`,
+/// Default false, which keeps an MP3's stored packet. With true, `save` replaces it with `xmpPacket`,
 /// removing it when nil. Other formats ignore both.
-@property(nonatomic) BOOL xmpNeedsSave;
+@property(nonatomic) bool xmpNeedsSave;
 
 - (instancetype)initWithPath:(nonnull NSString *)path;
 

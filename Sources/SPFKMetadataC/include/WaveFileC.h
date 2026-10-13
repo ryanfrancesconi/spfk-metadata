@@ -50,32 +50,32 @@ typedef NS_OPTIONS(NSUInteger, WaveFileComponents) {
 
 @property(nonatomic, strong, nonnull) NSString *path;
 
-/// Default YES. With NO, `save` leaves ID3, INFO and the rating as they are.
-@property(nonatomic) BOOL tagsNeedsSave;
+/// Default true. With false, `save` leaves ID3, INFO and the rating as they are.
+@property(nonatomic) bool tagsNeedsSave;
 
-/// Default NO; read only when `tagsNeedsSave` is NO. With YES, `save` writes `id3Properties`'
+/// Default false; read only when `tagsNeedsSave` is false. With true, `save` writes `id3Properties`'
 /// `"RATING"` and sets `infoDictionary`'s fields, an empty value removing its field.
-@property(nonatomic) BOOL ratingNeedsSave;
+@property(nonatomic) bool ratingNeedsSave;
 
-/// Default YES. With NO, `save` leaves the `bext` chunk as it is; with YES, each field of
+/// Default true. With false, `save` leaves the `bext` chunk as it is; with true, each field of
 /// `bextDescriptionC` that differs from the stored chunk is written over it.
-@property(nonatomic) BOOL bextNeedsSave;
+@property(nonatomic) bool bextNeedsSave;
 
-/// Default YES. With NO, `save` leaves the iXML chunk as it is.
-@property(nonatomic) BOOL iXMLNeedsSave;
+/// Default true. With false, `save` leaves the iXML chunk as it is.
+@property(nonatomic) bool iXMLNeedsSave;
 
-/// Default YES.
-@property(nonatomic) BOOL markersNeedsSave;
+/// Default true.
+@property(nonatomic) bool markersNeedsSave;
 
-/// Default YES. With YES, a nil `tagPicture` removes the artwork.
-@property(nonatomic) BOOL artworkNeedsSave;
+/// Default true. With true, a nil `tagPicture` removes the artwork.
+@property(nonatomic) bool artworkNeedsSave;
 
 /// The `_PMX` chunk's XMP packet. Set by `load`.
 @property(nullable, nonatomic) NSString *xmpPacket;
 
-/// Default NO, which keeps the stored packet. With YES, `save` replaces it with `xmpPacket`,
+/// Default false, which keeps the stored packet. With true, `save` replaces it with `xmpPacket`,
 /// removing the chunk when nil.
-@property(nonatomic) BOOL xmpNeedsSave;
+@property(nonatomic) bool xmpNeedsSave;
 
 - (instancetype)init;
 
