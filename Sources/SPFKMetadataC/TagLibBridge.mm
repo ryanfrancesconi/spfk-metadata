@@ -193,8 +193,23 @@ namespace {
     if (dynamic_cast<MP4::File *>(input.file()))
         tags.erase("RATING");
 
+    // iTunSMPB is the source encoding's priming and padding, wrong for any other encode. Written
+    // back through the PropertyMap it is also uppercased, a key Core Audio does not read.
+    tags.erase("ITUNSMPB");
+    tags.erase("COMMENT:ITUNSMPB");
+
     if (tags.isEmpty() && ratingStars <= 0) {
         return true;
+    }
+
+    // The output's own iTunSMPB is its encoder's priming and padding, which the strip below drops.
+    const String gaplessKey = "----:com.apple.iTunes:iTunSMPB";
+    MP4::Item gapless;
+
+    {
+        FileRef existing(toPath.UTF8String, false);
+        if (auto *mp4 = dynamic_cast<MP4::File *>(existing.file()); mp4 && mp4->hasMP4Tag())
+            gapless = mp4->tag()->item(gaplessKey);
     }
 
     if (![self removeAllTags:toPath]) {
@@ -210,6 +225,9 @@ namespace {
     }
 
     output.file()->setProperties(tags);
+
+    if (auto *mp4 = dynamic_cast<MP4::File *>(output.file()); mp4 && gapless.isValid())
+        mp4->tag()->setItem(gaplessKey, gapless);
 
     // The destination is already stripped, so its tags are saved even when the rating can't be.
     bool ratingWritten = ratingStars <= 0 || TagRatingWriteToFile(output.file(), ratingStars);
