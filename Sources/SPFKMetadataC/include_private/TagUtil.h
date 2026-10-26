@@ -7,6 +7,7 @@
 #import <iostream>
 
 #import <taglib/aifffile.h>
+#import <taglib/apefile.h>
 #import <taglib/apetag.h>
 #import <taglib/fileref.h>
 #import <taglib/flacfile.h>
@@ -17,6 +18,7 @@
 #import <taglib/rifffile.h>
 #import <taglib/vorbisfile.h>
 #import <taglib/wavfile.h>
+#import <taglib/wavpackfile.h>
 #import <taglib/xiphcomment.h>
 
 #import <taglib/commentsframe.h>
@@ -78,6 +80,12 @@ static Ogg::XiphComment *xiphComment(File *file, bool create = false) {
 /// written by `XiphChapterUtil`; the tag path neither reads, writes nor copies them.
 static bool isChapterField(const String &key) {
     return key.upper().startsWith("CHAPTER");
+}
+
+/// A file whose key may be in a `KEY` field, as MusicBrainz Picard writes Xiph comments and APE tags.
+/// `INITIALKEY` is the key; `KEY` is read as it when that is absent, and kept as its mirror.
+static bool storesKeyMirror(File *file) {
+    return xiphComment(file) != nullptr || dynamic_cast<WavPack::File *>(file) || dynamic_cast<APE::File *>(file);
 }
 
 /// A Xiph comment's `FMPS_RATING`: the rating writer's own mirror of `RATING`, never a tag.

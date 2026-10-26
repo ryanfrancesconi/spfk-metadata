@@ -69,6 +69,12 @@ using namespace TagLib;
     if (dynamic_cast<MP4::File *>(fileRef.file()))
         properties.erase("RATING");
 
+    // A `KEY` field is the key's mirror, not a tag of its own; INITIALKEY wins where both exist.
+    if (TagUtil::storesKeyMirror(fileRef.file()) && properties.contains("KEY")) {
+        if (!properties.contains("INITIALKEY")) properties.replace("INITIALKEY", properties.value("KEY"));
+        properties.erase("KEY");
+    }
+
     for (const auto &property : properties) {
         // Read as markers, by XiphChapterUtil, and as the rating, below.
         if (hasXiphComment && (TagUtil::isChapterField(property.first) || TagUtil::isRatingMirrorField(property.first))) continue;
@@ -182,6 +188,9 @@ using namespace TagLib;
 
     for (auto *frame : keptFrames) id3->removeFrame(frame, false);
 
+    // Read before the clear: a file keeps a `KEY` mirror only if it already had one.
+    const bool mirrorsKey = TagUtil::storesKeyMirror(f) && propertyTag && propertyTag->properties().contains("KEY");
+
     // Cleared before writing, so anything absent from the new dictionary is removed.
     TagUtil::clearTagsForSave(f);
 
@@ -200,6 +209,9 @@ using namespace TagLib;
     }
 
     properties.removeEmpty();
+
+    if (TagUtil::storesKeyMirror(f) && (mirrorsKey || properties.contains("KEY")) && properties.contains("INITIALKEY"))
+        properties.replace("KEY", properties.value("INITIALKEY"));
 
     if (wavFile)
         wavFile->ID3v2Tag()->setProperties(properties);

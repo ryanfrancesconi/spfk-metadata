@@ -29,10 +29,10 @@
     },
     "data" : {
       "customTags" : {
-        "KEY" : "Am"
+
       },
       "tags" : {
-
+        "initialKey" : "Am"
       }
     }
   }

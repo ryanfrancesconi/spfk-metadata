@@ -55,6 +55,8 @@ A tag the container stores as several values (two artists, a repeated Vorbis fie
 
 A WAV's tags are its ID3 tag, read and written as an MP3's are, and its INFO chunk is their mirror: INFO supplies only what ID3 lacks, every tag with an INFO field is written back to it, and an INFO item no tag key names reads as a custom tag under its own ID, kept, changed or removed with that tag. A WAV save writes the tags only when they differ from the file's.
 
+A Xiph or APE `KEY` field, as MusicBrainz Picard writes the key, is the key tag's mirror. It reads as `TagKey.initialKey` when `INITIALKEY` is absent, and never as a custom tag. A save writes `INITIALKEY`, and keeps `KEY` in step only on a file that already had one. A copy into another format carries the key, not the mirror.
+
 ### Artwork
 
 - **`EmbeddedArtwork.read(from:)`** — the front cover, else the first picture. `nil` when there is none; throws when the file can't be opened or the picture doesn't decode.

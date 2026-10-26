@@ -176,6 +176,13 @@ namespace {
 
     PropertyMap tags = input.file()->properties();
 
+    // A key held only in a `KEY` mirror becomes the key, and the mirror goes only where one is kept.
+    const bool sourceMirrorsKey = TagUtil::storesKeyMirror(input.file()) && tags.contains("KEY");
+    if (sourceMirrorsKey) {
+        if (!tags.contains("INITIALKEY")) tags.replace("INITIALKEY", tags.value("KEY"));
+        tags.erase("KEY");
+    }
+
     // Chapter fields are markers, which the caller's marker step carries; FMPS_RATING mirrors the
     // rating, carried below.
     if (TagUtil::xiphComment(input.file())) {
@@ -223,6 +230,9 @@ namespace {
         cout << "Unable to read path: " << toPath.UTF8String << endl;
         return false;
     }
+
+    if (sourceMirrorsKey && TagUtil::storesKeyMirror(output.file()) && tags.contains("INITIALKEY"))
+        tags.replace("KEY", tags.value("INITIALKEY"));
 
     output.file()->setProperties(tags);
 

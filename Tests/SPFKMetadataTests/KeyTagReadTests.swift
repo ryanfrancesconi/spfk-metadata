@@ -35,12 +35,4 @@ final class KeyTagReadTests: BinTestCase {
             #expect(try TagProperties(url: url)[.initialKey] == expected, "\(url.lastPathComponent)")
         }
     }
-
-    /// MusicBrainz Picard writes Vorbis `KEY`. Nothing maps it to the key tag, so the app sees
-    /// no key for such a file and keeps the text as a custom tag.
-    @Test func aVorbisKEYCommentIsNotTheKeyTag() throws {
-        let properties = try TagProperties(url: TestBundleResources.shared.keyTagVorbisKEY)
-        #expect(properties[.initialKey] == nil)
-        #expect(properties.data.customTags["KEY"] == "Am")
-    }
 }
