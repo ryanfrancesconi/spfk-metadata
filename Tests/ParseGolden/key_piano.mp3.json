@@ -1,0 +1,38 @@
+{
+  "audioFormat" : {
+    "bitRate" : 37,
+    "channelCount" : 1,
+    "duration" : 0.28734693877551021,
+    "sampleRate" : 44100
+  },
+  "fileType" : "mp3",
+  "imageDescription" : {
+    "description" : "<file path>",
+    "hasThumbnail" : false,
+    "size" : null
+  },
+  "isAVPlayable" : true,
+  "isDecodable" : false,
+  "isProtected" : false,
+  "markerCollection" : {
+    "markerDescriptions" : [
+
+    ]
+  },
+  "tagProperties" : {
+    "audioProperties" : {
+      "bitRate" : 37,
+      "channelCount" : 1,
+      "duration" : 0.28699999999999998,
+      "sampleRate" : 44100
+    },
+    "data" : {
+      "customTags" : {
+
+      },
+      "tags" : {
+        "initialKey" : "Piano"
+      }
+    }
+  }
+}
