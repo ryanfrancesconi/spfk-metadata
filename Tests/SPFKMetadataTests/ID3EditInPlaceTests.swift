@@ -41,6 +41,20 @@ final class ID3EditInPlaceTests: BinTestCase {
         #expect(try await MetaAudioFileDescription(parsing: url).tagProperties[.comment] == "Łódź ✓")
     }
 
+    @Test func anEditedCommentFromAnotherTaggerKeepsItsLanguage() async throws {
+        let url = try copyToBin(url: TestBundleResources.shared.foreign_comment_deu_mp3)
+
+        var description = try await MetaAudioFileDescription(parsing: url)
+        try #require(description.tagProperties[.comment] == "Grüße aus Köln")
+        description.tagProperties[.comment] = "Łódź ✓"
+        try description.save(dirtyFlags: [.tags])
+
+        let comments = try frames("COMM", in: url).map { try ID3v2Frames.Comment($0.body) }
+        #expect(comments.map { "\($0.language) | \($0.description) | \($0.text)" } == ["deu |  | Łódź ✓"])
+        let userTexts = try frames("TXXX", in: url).map { try ID3v2Frames.UserText($0.body) }
+        #expect(userTexts.map(\.description).contains("MusicBrainz Album Id"))
+    }
+
     @Test func anEditedCustomTagKeepsItsDescription() async throws {
         let url = try plantedMP3()
 
