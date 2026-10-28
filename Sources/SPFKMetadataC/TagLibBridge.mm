@@ -15,6 +15,7 @@
 #import <taglib/tdebuglistener.h>
 #import <taglib/flacfile.h>
 #import <taglib/id3v2tag.h>
+#import <taglib/infotag.h>
 #import <taglib/mp4file.h>
 #import <taglib/mpegfile.h>
 #import <taglib/oggfile.h>
@@ -23,6 +24,7 @@
 #import <taglib/privateframe.h>
 #import <taglib/rifffile.h>
 #import <taglib/tag.h>
+#import <taglib/tcharset.h>
 #import <taglib/tfilestream.h>
 #import <taglib/tpropertymap.h>
 #import <taglib/vorbisfile.h>
@@ -57,6 +59,9 @@ namespace {
 
 + (void)load {
     setDebugListener(&silentListener);
+
+    // INFO without a CSET chunk is UTF-8 when we wrote it, and taglib would otherwise read Latin-1.
+    RIFF::Info::Tag::setAssumedCodePage(Charset::codePageForType(Charset::Type::UTF8));
 }
 
 + (nullable NSDictionary *)getProperties:(NSString *)path {

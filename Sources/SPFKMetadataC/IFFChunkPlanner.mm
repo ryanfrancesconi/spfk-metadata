@@ -5,6 +5,7 @@
 #import <taglib/aifffile.h>
 #import <taglib/id3v2tag.h>
 #import <taglib/infotag.h>
+#import <taglib/tcharset.h>
 
 #import "FileSave.h"
 #import "IFFChunkPlanner.h"
@@ -369,7 +370,16 @@ bool save(RIFF::WAV::File &file, std::vector<Edit> edits, WaveChunks chunks) {
 
     if (chunks.info) {
         const RIFF::Info::Tag *tag = file.InfoTag();
-        edits.push_back({ "LIST", "INFO", payload(tag && !tag->isEmpty() ? tag->render() : ByteVector()) });
+        const ByteVector info = tag && !tag->isEmpty() ? tag->render() : ByteVector();
+        edits.push_back({ "LIST", "INFO", payload(info) });
+
+        // render() writes UTF-8, which a CSET chunk must declare: wCodePage, then three zero fields.
+        ByteVector cset;
+        if (!info.isEmpty()) {
+            cset = ByteVector::fromShort(static_cast<short>(Charset::codePageForType(Charset::Type::UTF8)), false);
+            cset.resize(8, 0);
+        }
+        edits.push_back({ "CSET", ByteVector(), payload(cset) });
     }
 
     return write(file, edits);
