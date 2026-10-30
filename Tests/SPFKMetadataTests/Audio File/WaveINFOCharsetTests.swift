@@ -80,6 +80,37 @@ final class WaveINFOCharsetTests: BinTestCase {
         #expect(riff.chunks.filter { $0.id == "CSET" } == [cset(Self.utf8CodePage)])
     }
 
+    /// Undeclared INFO text that isn't valid UTF-8, as Soundminer writes a Latin-1 `©`, is read as
+    /// Latin-1 and survives a save of another field, rewritten as UTF-8.
+    @Test func undeclaredLatin1SurvivesTitleSave() async throws {
+        let copyright = "© 2019 BOOM Library"
+        let latin1 = Data([0xA9]) + Data(" 2019 BOOM Library".utf8) + Data([0])
+        let url = try copyToBin(url: TestBundleResources.shared.tabla_wav)
+
+        try RIFFChunkBuilder.rewrite(url) { chunks in
+            chunks.removeAll { $0.listType == "INFO" || $0.id == "CSET" }
+            chunks.append(RIFFChunkBuilder.list("INFO", [
+                RIFFChunks.Chunk(id: "INAM", payload: Data("Title\0".utf8)),
+                RIFFChunks.Chunk(id: "IARL", payload: latin1),
+                RIFFChunks.Chunk(id: "BCPR", payload: latin1),
+            ]))
+        }
+
+        var description = try await MetaAudioFileDescription(parsing: url)
+        #expect(description.tagProperties.customTags["ARCHIVALLOCATION"] == copyright)
+        #expect(description.tagProperties.customTags["BCPR"] == copyright)
+
+        description.tagProperties[.title] = "New Title"
+        try description.save(dirtyFlags: [.tags])
+
+        let riff = try RIFFChunks(contentsOf: url)
+        let items = try #require(riff.list("INFO")).subchunks()
+        let utf8 = Data(copyright.utf8) + Data([0])
+        #expect(items.first { $0.id == "IARL" }?.payload.prefix(utf8.count) == utf8)
+        #expect(items.first { $0.id == "BCPR" }?.payload.prefix(utf8.count) == utf8)
+        #expect(riff.chunks.filter { $0.id == "CSET" } == [cset(Self.utf8CodePage)])
+    }
+
     @Test func removingINFORemovesCSET() async throws {
         let url = try wave(title: Data("Title".utf8), codePage: Self.utf8CodePage)
 
