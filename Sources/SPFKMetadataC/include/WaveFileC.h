@@ -88,7 +88,7 @@ typedef NS_OPTIONS(NSUInteger, WaveFileComponents) {
 - (bool)loadTags;
 
 /// Rewrites every chunk whose bytes change, never moving the audio; INFO fields absent from
-/// `infoDictionary` are removed. On `false`, `failedComponents` names what was not written; unless
+/// `infoDictionary` are removed, except one whose ID has a lowercase letter, which is kept. On `false`, `failedComponents` names what was not written; unless
 /// it holds `WaveFileComponentsContainer`, everything else was.
 - (bool)save;
 

@@ -1,5 +1,6 @@
 // Copyright Ryan Francesconi. All Rights Reserved. Revision History at https://github.com/ryanfrancesconi/spfk-metadata
 
+#include <algorithm>
 #include <fstream>
 #include <map>
 #include <iostream>
@@ -219,6 +220,10 @@ using namespace TagLib;
     const RIFF::Info::FieldListMap fields = info->fieldListMap();
 
     for (const auto &[id, _] : fields) {
+        // Never read as a tag, so nothing in the save speaks for it.
+        if (std::any_of(id.begin(), id.end(), [](char c) { return c >= 'a' && c <= 'z'; }))
+            continue;
+
         NSString *key = [[NSString alloc] initWithBytes:id.data() length:id.size() encoding:NSUTF8StringEncoding];
         NSString *kept = key && !_infoDictionary[key] ? _id3Properties[key] : nil;
 

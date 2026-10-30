@@ -17,9 +17,13 @@ extension TagProperties {
     }
 
     /// INFO, then the ID3 tag over it, so ID3 wins where both hold a key. An INFO ID no key names
-    /// is read as a custom tag under that ID, which a save writes back to it.
+    /// is read as a custom tag under that ID, which a save writes back to it. An ID with a
+    /// lowercase letter is skipped: custom tags are uppercased into ID3, where it would collide
+    /// with its uppercase twin, and a save leaves it on disk as it is.
     mutating func load(waveFile: WaveFileC) {
         for (id, value) in waveFile.infoDictionary as? [String: String] ?? [:] {
+            guard !id.contains(where: { $0.isASCII && $0.isLowercase }) else { continue }
+
             if let key = InfoFrameKey(value: id) {
                 data.set(infoFrame: key, value: value)
             } else {

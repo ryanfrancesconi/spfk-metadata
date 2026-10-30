@@ -52,4 +52,28 @@ final class WaveINFOMirrorTests: BinTestCase {
         #expect(reparsed.tagProperties.customTags["IXYZ"] == "Kept")
         #expect(reparsed.tagProperties.customTags["IZZZ"] == "New")
     }
+
+    /// An ID with a lowercase letter is not read as a tag, so it can't collide with its uppercase
+    /// twin in ID3, and every save leaves it as it was.
+    @Test func lowercaseItemIsKeptThroughSaves() async throws {
+        let url = try wave(withInfo: ["itrk": "Track", "icom": "Lower", "ICOM": "Upper", "BWF1": "Digit"])
+
+        for title in ["First", "Second"] {
+            var description = try await MetaAudioFileDescription(parsing: url)
+            #expect(description.tagProperties.customTags["itrk"] == nil)
+            #expect(description.tagProperties.customTags["ITRK"] == nil)
+            #expect(description.tagProperties.customTags["icom"] == nil)
+            #expect(description.tagProperties.customTags["ICOM"] == "Upper")
+            #expect(description.tagProperties.customTags["BWF1"] == "Digit")
+
+            description.tagProperties[.title] = title
+            try description.save(dirtyFlags: [.tags])
+        }
+
+        let info = Dictionary(uniqueKeysWithValues: try RIFFChunks(contentsOf: url).infoItems().map { ($0.id, $0.value) })
+        #expect(info["itrk"] == "Track")
+        #expect(info["icom"] == "Lower")
+        #expect(info["ICOM"] == "Upper")
+        #expect(info["BWF1"] == "Digit")
+    }
 }
