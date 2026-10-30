@@ -111,5 +111,6 @@
         "bpm" : "60"
       }
     }
-  }
+  },
+  "tagReaderVersion" : 1
 }

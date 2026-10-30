@@ -56,5 +56,6 @@
         "title" : "BEXT iXML External Test"
       }
     }
-  }
+  },
+  "tagReaderVersion" : 1
 }

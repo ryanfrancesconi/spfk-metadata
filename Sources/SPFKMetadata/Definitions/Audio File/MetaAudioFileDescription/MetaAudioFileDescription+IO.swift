@@ -57,6 +57,8 @@ extension MetaAudioFileDescription {
             audioFormat?.update(bitRate: bitRate)
         }
 
+        tagReaderVersion = Self.currentTagReaderVersion
+
         // Each read gates on its own formats; a WAV reaches neither.
         await loadVideoTrack()
 

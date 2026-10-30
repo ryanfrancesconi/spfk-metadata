@@ -35,5 +35,6 @@
         "initialKey" : "F"
       }
     }
-  }
+  },
+  "tagReaderVersion" : 1
 }

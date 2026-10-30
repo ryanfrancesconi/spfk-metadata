@@ -35,5 +35,6 @@
         "initialKey" : "Am"
       }
     }
-  }
+  },
+  "tagReaderVersion" : 1
 }

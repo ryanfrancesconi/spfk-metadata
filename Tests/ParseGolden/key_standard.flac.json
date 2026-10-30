@@ -35,5 +35,6 @@
         "initialKey" : "C# Minor"
       }
     }
-  }
+  },
+  "tagReaderVersion" : 1
 }

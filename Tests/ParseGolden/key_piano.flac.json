@@ -35,5 +35,6 @@
         "initialKey" : "Piano"
       }
     }
-  }
+  },
+  "tagReaderVersion" : 1
 }

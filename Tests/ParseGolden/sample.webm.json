@@ -53,6 +53,7 @@
       }
     }
   },
+  "tagReaderVersion" : 1,
   "trackReaderVersion" : 6,
   "videoTrack" : {
     "codec" : "vp09",

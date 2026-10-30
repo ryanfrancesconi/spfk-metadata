@@ -34,5 +34,6 @@
         "initialKey" : "Abmin"
       }
     }
-  }
+  },
+  "tagReaderVersion" : 1
 }

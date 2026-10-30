@@ -35,5 +35,6 @@
         "initialKey" : "1m"
       }
     }
-  }
+  },
+  "tagReaderVersion" : 1
 }

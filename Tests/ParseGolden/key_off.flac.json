@@ -35,5 +35,6 @@
         "initialKey" : "o"
       }
     }
-  }
+  },
+  "tagReaderVersion" : 1
 }

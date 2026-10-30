@@ -52,6 +52,7 @@
       }
     }
   },
+  "tagReaderVersion" : 1,
   "trackReaderVersion" : 6,
   "videoTrack" : {
     "codec" : "avc1",
