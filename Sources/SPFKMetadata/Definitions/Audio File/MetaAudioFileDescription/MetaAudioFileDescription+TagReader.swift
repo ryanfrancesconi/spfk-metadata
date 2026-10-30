@@ -35,4 +35,15 @@ extension MetaAudioFileDescription {
         tagReaderVersion = Self.currentTagReaderVersion
         return true
     }
+
+    /// Whether ``refreshStaleTagRead()`` would fill a value held empty, for a description whose
+    /// pending edit it must not touch; nil when there is nothing stale or the file can't be read.
+    /// Reads the file; changes nothing.
+    public func staleTagReadRecoversText() -> Bool? {
+        guard hasStaleTagRead else { return nil }
+
+        var refreshed = self
+        guard refreshed.refreshStaleTagRead() else { return nil }
+        return refreshed.tagProperties.data != tagProperties.data
+    }
 }

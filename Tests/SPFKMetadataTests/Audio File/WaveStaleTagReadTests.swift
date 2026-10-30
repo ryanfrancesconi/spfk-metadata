@@ -84,6 +84,34 @@ final class WaveStaleTagReadTests: BinTestCase {
         #expect(description.tagReaderVersion == nil)
     }
 
+    @Test func recoverableTextIsReportedWithoutChangingTheDescription() async throws {
+        let url = try latin1Wave()
+        let stale = try await staleDescription(of: url)
+
+        #expect(stale.staleTagReadRecoversText() == true)
+        #expect(stale.tagProperties.customTags["ARCHIVALLOCATION"] == "")
+    }
+
+    /// Empty in the file too: nothing to recover, so nothing to warn about.
+    @Test func nothingToRecoverIsNotReported() async throws {
+        let url = try latin1Wave()
+        var stale = try await staleDescription(of: url)
+        stale.tagProperties.customTags["ARCHIVALLOCATION"] = copyright
+        stale.tagProperties.customTags["IZZZ"] = ""
+
+        #expect(stale.hasStaleTagRead)
+        #expect(stale.staleTagReadRecoversText() == false)
+    }
+
+    /// An unreachable file answers nothing, so the row is not recorded as checked.
+    @Test func unreachableFileReportsNoAnswer() async throws {
+        let url = try latin1Wave()
+        let stale = try await staleDescription(of: url)
+        try FileManager.default.removeItem(at: url)
+
+        #expect(stale.staleTagReadRecoversText() == nil)
+    }
+
     /// Only WAV INFO was ever read as empty.
     @Test func otherFormatsAreNeverStale() async throws {
         var description = try await MetaAudioFileDescription(parsing: copyToBin(url: TestBundleResources.shared.mp3_id3))
