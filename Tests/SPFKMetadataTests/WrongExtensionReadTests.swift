@@ -41,6 +41,18 @@ final class WrongExtensionReadTests: BinTestCase {
         #expect(misnamed.markerCollection.count == asNamed.markerCollection.count)
     }
 
+    /// An ID3v2 tag followed by an MPEG frame proves MP3, so its chapters are read as its markers.
+    @Test func anMP3NamedAsAIFFShowsItsChapters() async throws {
+        let source = TestBundleResources.shared.toc_many_children
+        let asNamed = try await MetaAudioFileDescription(parsing: try copyToBin(url: source))
+        try #require(asNamed.markerCollection.count > 0)
+
+        let misnamed = try await MetaAudioFileDescription(parsing: try renamed(source, to: "aiff"))
+
+        #expect(misnamed.fileType == .mp3)
+        #expect(misnamed.markerCollection.count == asNamed.markerCollection.count)
+    }
+
     /// AVFoundation types a file by its extension, and under `.mp3` refuses other containers.
     @Test(arguments: [
         (TestBundleResources.shared.tabla_wav, "mp3", false),
@@ -69,6 +81,17 @@ final class WrongExtensionReadTests: BinTestCase {
         header += Data([0x1E, 0x00, 0x00, 0x00, 0x55, 0x00, 0x02, 0x00]) + Data(count: 32)
 
         #expect(AudioFileType(url: try write(header, as: named)) == expected)
+    }
+
+    /// Content that is no audio type is left to the extension; an image in ISO base media is never MP4.
+    @Test(arguments: [
+        (TestBundleResources.shared.sine_opus, "mp3", AudioFileType.opus),
+        (TestBundleResources.shared.tabla_mka, "m4a", AudioFileType.mka),
+        (TestBundleResources.shared.sharksandwich_heic, "m4a", AudioFileType.m4a),
+        (TestBundleResources.shared.sharksandwich, "mp3", AudioFileType.mp3),
+    ])
+    func theContentsTypeWhenItIsAudio(source: URL, named: String, expected: AudioFileType) throws {
+        #expect(AudioFileType(url: try renamed(source, to: named)) == expected)
     }
 
     @Test func aFileThatCannotBeReadIsTypedByItsExtension() {

@@ -2,6 +2,7 @@
 
 import Foundation
 import SPFKAudioBase
+import SPFKFileSystem
 import SPFKMetadataBase
 internal import SPFKMetadataC
 
@@ -29,13 +30,17 @@ extension AudioFileType {
         }
     }
 
-    /// By extension, unless the file's first bytes prove another container; a file without one is
-    /// sniffed. A file that cannot be read is typed by its extension, and its reader reports the error.
+    /// By extension, unless the file's first bytes prove another audio or video container; a file
+    /// without one is sniffed. A file that cannot be read is typed by its extension, and its reader
+    /// reports the error.
     public init?(url: URL) {
         let ext = url.pathExtension.lowercased()
 
-        if !ext.isEmpty, let content = try? ContainerSignature.mismatchedContent(of: url) {
-            self.init(pathExtension: content.pathExtension)
+        if !ext.isEmpty,
+           let content = try? ContainerSignature.mismatchedContent(of: url),
+           let value = AudioFileType(pathExtension: content.pathExtension)
+        {
+            self = value
             return
         }
 
