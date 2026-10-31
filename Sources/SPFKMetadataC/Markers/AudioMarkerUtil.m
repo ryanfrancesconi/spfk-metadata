@@ -176,9 +176,13 @@ static BOOL RemoveMarkers(AudioFileID fileID) {
     }
 
     NSArray *markers = ReadMarkers(fileID, url);
+
+    AudioFileTypeID format = 0;
+    UInt32 formatSize = sizeof(format);
+    AudioFileGetProperty(fileID, kAudioFilePropertyFileFormat, &formatSize, &format);
     AudioFileClose(fileID);
 
-    if (markers && [AIFFMarkerChunks isAIFF:url]) {
+    if (markers && (format == kAudioFileAIFFType || format == kAudioFileAIFCType)) {
         return [AIFFMarkerChunks adoptFileIDs:markers];
     }
 
