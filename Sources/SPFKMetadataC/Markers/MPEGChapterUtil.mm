@@ -169,6 +169,7 @@ static NSString *elementIDName(const ByteVector &elementID) {
     }
 
     mpegFile->ID3v2Tag()->removeFrames("CHAP");
+    mpegFile->ID3v2Tag()->removeFrames("CTOC");
 
     return FileSave::save(mpegFile);
 }
