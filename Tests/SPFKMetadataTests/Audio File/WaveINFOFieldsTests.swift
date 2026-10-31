@@ -284,6 +284,28 @@ final class WaveINFOFieldsTests: BinTestCase {
         #expect(!description.hasStaleTagRead)
     }
 
+    /// The read a selection makes of a row stored before the fields existed.
+    @Test func aDescriptionLackingFieldsReadsThemOnce() async throws {
+        let url = try wave(withInfo: ["INAM": "Title", "BETM": "02:00"])
+        try RIFFChunkBuilder.rewrite(url) { chunks in
+            chunks.append(RIFFChunks.Chunk(id: "DISP", payload: RIFFChunkBuilder.le32(1) + Data("Shown\0".utf8)))
+        }
+
+        var description = try await MetaAudioFileDescription(parsing: url)
+        description.riffInfoFields = nil
+        description.tagProperties.customTags = ["BETM": "02:00"]
+        #expect(description.lacksINFOFields)
+
+        let read = description.readINFOFields()
+        #expect(read)
+        #expect(description.riffInfoFields?.fields == ["BETM": "02:00"])
+        #expect(description.riffInfoFields?.displayText == "Shown")
+        #expect(description.tagProperties.customTags.isEmpty)
+
+        let again = description.readINFOFields()
+        #expect(!again)
+    }
+
     // MARK: - DISP
 
     private func addDISP(_ payload: Data, to url: URL) throws {

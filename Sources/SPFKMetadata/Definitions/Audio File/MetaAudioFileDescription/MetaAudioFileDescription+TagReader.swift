@@ -38,13 +38,37 @@ extension MetaAudioFileDescription {
         recoverStaleText(from: read)
 
         if riffInfoFields == nil {
-            let storedID3 = waveFile.id3Properties as? [String: String] ?? [:]
-            tagProperties = tagProperties.removingCustomTags(namingFieldsIn: fields, storedID3: storedID3)
-            riffInfoFields = fields
+            moveINFOFields(fields, from: waveFile)
         }
 
         tagReaderVersion = Self.currentTagReaderVersion
         return true
+    }
+
+    /// Whether this is a WAV whose INFO fields were never read: a description stored before they
+    /// existed.
+    public var lacksINFOFields: Bool {
+        fileType == .wav && riffInfoFields == nil
+    }
+
+    /// Reads the INFO fields of a WAV that ``lacksINFOFields``, dropping each custom tag the file
+    /// holds as one of them rather than in ID3. False, changing nothing, when there is nothing to
+    /// read or the file can't be read. For a description holding no unsaved edit.
+    public mutating func readINFOFields() -> Bool {
+        guard lacksINFOFields else { return false }
+
+        let waveFile = WaveFileC(path: url.path)
+        guard url.exists, waveFile.loadTags() else { return false }
+
+        var read = TagProperties()
+        moveINFOFields(read.load(waveFile: waveFile), from: waveFile)
+        return true
+    }
+
+    private mutating func moveINFOFields(_ fields: RIFFInfoFields, from waveFile: WaveFileC) {
+        let storedID3 = waveFile.id3Properties as? [String: String] ?? [:]
+        tagProperties = tagProperties.removingCustomTags(namingFieldsIn: fields, storedID3: storedID3)
+        riffInfoFields = fields
     }
 
     private mutating func recoverStaleText(from read: TagProperties) {
