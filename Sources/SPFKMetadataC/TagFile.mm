@@ -63,8 +63,8 @@ using namespace TagLib;
     PropertyMap properties = tag->properties();
     const bool hasXiphComment = TagUtil::xiphComment(fileRef.file()) != nullptr;
 
-    // TagLib maps the `rate` atom to RATING unconverted; the rating read below is on the star scale.
-    if (dynamic_cast<MP4::File *>(fileRef.file()))
+    // The rating read below is on the star scale.
+    if (TagUtil::holdsRawRating(fileRef.file()))
         properties.erase("RATING");
 
     // A `KEY` field is the key's mirror, not a tag of its own; INITIALKEY wins where both exist.

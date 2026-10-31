@@ -325,6 +325,42 @@ final class TagRatingTests: BinTestCase {
         #expect(tagFile.save())
     }
 
+    // MARK: - ASF POPULARIMETER
+
+    /// A WMA rated only by `POPULARIMETER` reads as stars, not as TagLib's raw 0–255 value.
+    @Test func wmaPopularimeterRatingReadsAsStars() throws {
+        let tmp = try copyToBin(url: TestBundleResources.shared.sine_popularimeter_wma)
+
+        #expect(TagRating.read(tmp.path) == 4)
+
+        var loaded = TagProperties()
+        try loaded.load(url: tmp)
+        #expect(loaded.data.tags[.rating] == "4")
+    }
+
+    @Test func wmaPopularimeterRatingSurvivesASave() throws {
+        let tmp = try copyToBin(url: TestBundleResources.shared.sine_popularimeter_wma)
+
+        var loaded = TagProperties()
+        try loaded.load(url: tmp)
+        try loaded.save(to: tmp)
+
+        #expect(TagRating.read(tmp.path) == 4)
+    }
+
+    /// The rating travels as the destination's own rating, not as the raw value in a text field.
+    @Test func wmaPopularimeterRatingCopiesAsStars() throws {
+        let source = try copyToBin(url: TestBundleResources.shared.sine_popularimeter_wma)
+        let destination = try copyToBin(url: TestBundleResources.shared.tabla_mp3)
+
+        try TagProperties.copyTags(from: source, to: destination)
+
+        var loaded = TagProperties()
+        try loaded.load(url: destination)
+        #expect(TagRating.read(destination.path) == 4)
+        #expect(loaded.data.tags[.rating] == "4")
+    }
+
     /// The copy reports the lost rating but still writes every other tag.
     @Test func tagCopyToAContainerWithNoBranchKeepsTheOtherTags() throws {
         let source = try copyToBin(url: TestBundleResources.shared.tabla_mp3)

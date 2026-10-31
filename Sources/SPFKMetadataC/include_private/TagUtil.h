@@ -9,6 +9,7 @@
 #import <taglib/aifffile.h>
 #import <taglib/apefile.h>
 #import <taglib/apetag.h>
+#import <taglib/asffile.h>
 #import <taglib/fileref.h>
 #import <taglib/flacfile.h>
 #import <taglib/mp4file.h>
@@ -86,6 +87,12 @@ static bool isChapterField(const String &key) {
 /// `INITIALKEY` is the key; `KEY` is read as it when that is absent, and kept as its mirror.
 static bool storesKeyMirror(File *file) {
     return xiphComment(file) != nullptr || dynamic_cast<WavPack::File *>(file) || dynamic_cast<APE::File *>(file);
+}
+
+/// A container whose PropertyMap `RATING` is TagLib's unconverted value (MP4 `rate`, ASF 0–99 or POPM
+/// 0–255) rather than stars; the rating is read and written separately (`TagRatingFile.h`).
+static bool holdsRawRating(File *file) {
+    return dynamic_cast<MP4::File *>(file) || dynamic_cast<ASF::File *>(file);
 }
 
 /// A Xiph comment's `FMPS_RATING`: the rating writer's own mirror of `RATING`, never a tag.

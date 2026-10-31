@@ -199,10 +199,10 @@ namespace {
     }
 
     // Each container stores the rating differently (ID3 POPM, the MP4 `rate` atom, Xiph RATING), so it
-    // is carried separately. MP4's PropertyMap holds the raw `rate` value, which must not travel as text.
+    // is carried separately. A raw PropertyMap value must not travel as text.
     int ratingStars = TagRatingReadFromFile(input.file());
 
-    if (dynamic_cast<MP4::File *>(input.file()))
+    if (TagUtil::holdsRawRating(input.file()))
         tags.erase("RATING");
 
     // iTunSMPB is the source encoding's priming and padding, wrong for any other encode. Written
