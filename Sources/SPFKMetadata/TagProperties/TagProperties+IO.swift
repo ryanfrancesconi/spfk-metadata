@@ -57,8 +57,9 @@ extension TagProperties {
 
     /// Replaces every tag in the file. Artwork and chapters are kept, and so is every other ID3v2 frame
     /// of an MP3 or WAV with no property key; the stored XMP packet changes only as
-    /// `storedXMPPacket` says. A WAV's tags are written only when they differ from the file's, its
-    /// INFO as the mirror of its ID3 tag; one that writes them but not its rating throws
+    /// `storedXMPPacket` says. A WAV's tags are written only when they differ from the file's: a
+    /// mapped INFO field only when its own tag changed, an INFO field no tag maps never. One that
+    /// writes them but not its rating throws
     /// ``MetadataError/incompleteSave(written:failures:)``.
     public func save(to url: URL, storedXMPPacket: StoredXMPPacketWrite = .keep) throws {
         if AudioFileType(url: url) == .wav {
