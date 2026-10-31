@@ -1,5 +1,6 @@
 // Copyright Ryan Francesconi. All Rights Reserved. Revision History at https://github.com/ryanfrancesconi/spfk-metadata
 
+#import <algorithm>
 #import <cmath>
 #import <iostream>
 #import <regex>
@@ -64,20 +65,27 @@ static NSTimeInterval timestampField(const Ogg::FieldListMap &fields, const Stri
     return parseTimestamp(it->second.front().to8Bit());
 }
 
-/// Sorted indices of the CHAPTERnnn start-time keys.
-static vector<int> chapterIndices(const Ogg::FieldListMap &fields) {
-    vector<int> indices;
+/// The CHAPTERnnn start-time keys, sorted by index: the index and the digits as written. Other tools
+/// write more than three digits; nine at most fit an int.
+static vector<pair<int, string>> chapterIndices(const Ogg::FieldListMap &fields) {
+    vector<pair<int, string>> indices;
 
     for (auto it = fields.begin(); it != fields.end(); ++it) {
         string key = it->first.to8Bit();
 
-        if (key.length() == 10 && key.find("CHAPTER") == 0 && isdigit(key[7]) && isdigit(key[8]) &&
-            isdigit(key[9])) {
-            indices.push_back(stoi(key.substr(7, 3)));
-        }
+        if (key.find("CHAPTER") != 0)
+            continue;
+
+        string digits = key.substr(7);
+
+        if (digits.length() < 3 || digits.length() > 9 ||
+            !all_of(digits.begin(), digits.end(), [](unsigned char c) { return isdigit(c); }))
+            continue;
+
+        indices.emplace_back(stoi(digits), digits);
     }
 
-    sort(indices.begin(), indices.end());
+    stable_sort(indices.begin(), indices.end(), [](const auto &a, const auto &b) { return a.first < b.first; });
     return indices;
 }
 
@@ -116,19 +124,18 @@ static void removeAllChapterFields(Ogg::XiphComment *comment) {
     }
 
     const auto &fields = comment->fieldListMap();
-    vector<int> indices = chapterIndices(fields);
     NSMutableArray *array = [[NSMutableArray alloc] init];
 
-    for (size_t i = 0; i < indices.size(); i++) {
-        int idx = indices[i];
-        NSTimeInterval startTime = timestampField(fields, chapterKey(idx));
+    for (const auto &[idx, digits] : chapterIndices(fields)) {
+        const String key("CHAPTER" + digits);
+        NSTimeInterval startTime = timestampField(fields, key);
 
         if (startTime < 0) {
             continue;
         }
 
         NSString *name = @"";
-        auto nameIt = fields.find(chapterKey(idx, "NAME"));
+        auto nameIt = fields.find(key + "NAME");
 
         if (nameIt != fields.end() && !nameIt->second.isEmpty()) {
             name = @(nameIt->second.front().toCString(true));
@@ -136,7 +143,7 @@ static void removeAllChapterFields(Ogg::XiphComment *comment) {
 
         // END is written only for regions, so a chapter without one reads back as a point: giving
         // it the next chapter's start would have the next save write it as a region.
-        NSTimeInterval endTime = max(timestampField(fields, chapterKey(idx, "END")), startTime);
+        NSTimeInterval endTime = max(timestampField(fields, key + "END"), startTime);
 
         ChapterMarker *marker = [[ChapterMarker alloc] initWithName:name startTime:startTime endTime:endTime];
         [array addObject:marker];
@@ -156,6 +163,11 @@ static void removeAllChapterFields(Ogg::XiphComment *comment) {
 }
 
 + (bool)write:(NSArray *)chapters toFile:(void *)opaqueFile {
+    // CHAPTER000 to CHAPTER999: readers take three digits, so a fourth would rename an earlier chapter.
+    if (chapters.count > 1000) {
+        return false;
+    }
+
     Ogg::XiphComment *comment = TagUtil::xiphComment(static_cast<File *>(opaqueFile), /* create */ true);
 
     if (!comment) {
