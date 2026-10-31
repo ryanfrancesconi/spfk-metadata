@@ -8,15 +8,16 @@ import SPFKUtils
 
 extension TagProperties {
     /// Throws `MetadataError.readFailed` when the file can't be opened or TagLib doesn't parse the format.
-    public init(url: URL) throws {
+    /// Pass a `fileType` already resolved for `url` to skip reading its header again.
+    public init(url: URL, fileType: AudioFileType? = nil) throws {
         self.init()
-        try load(url: url)
+        try load(url: url, fileType: fileType)
     }
 
     /// Adds the file's tags over what is already held; nothing is cleared first. A WAV's are read
     /// as its parse reads them: INFO, then ID3 over it.
-    public mutating func load(url: URL) throws {
-        if AudioFileType(url: url) == .wav {
+    public mutating func load(url: URL, fileType: AudioFileType? = nil) throws {
+        if (fileType ?? AudioFileType(url: url)) == .wav {
             let waveFile = WaveFileC(path: url.path)
             guard waveFile.loadTags() else { throw MetadataError.readFailed(.tags, url) }
 

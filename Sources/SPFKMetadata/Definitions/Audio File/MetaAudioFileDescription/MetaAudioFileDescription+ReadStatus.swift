@@ -9,7 +9,7 @@ extension MetaAudioFileDescription {
     /// The reads `init(parsing:)` makes for each component that can fail apart from the rest. A
     /// WAV's are one open, which the parse needs whole, so none of them is here.
     struct ParseReads: Sendable {
-        var tags: @Sendable (URL) throws -> TagProperties = { try TagProperties(url: $0) }
+        var tags: @Sendable (URL, AudioFileType?) throws -> TagProperties = { try TagProperties(url: $0, fileType: $1) }
 
         var markers: @Sendable (URL, AudioFileType?) async throws -> AudioMarkerDescriptionCollection = {
             try await AudioMarkerDescriptionCollection(url: $0, fileType: $1)

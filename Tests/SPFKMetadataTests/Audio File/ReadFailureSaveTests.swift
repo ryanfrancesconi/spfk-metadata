@@ -17,7 +17,7 @@ final class ReadFailureSaveTests: BinTestCase {
         return [resources.tabla_mp3, resources.tabla_flac, resources.tabla_m4a, resources.tabla_aif, resources.tabla_ogg]
     }()
 
-    static let failingTags = MetaAudioFileDescription.ParseReads(tags: { throw MetadataError.readFailed(.tags, $0) })
+    static let failingTags = MetaAudioFileDescription.ParseReads(tags: { url, _ in throw MetadataError.readFailed(.tags, url) })
     static let failingMarkers = MetaAudioFileDescription.ParseReads(markers: { url, _ in throw MetadataError.readFailed(.markers, url) })
     static let failingFLACChunks = MetaAudioFileDescription.ParseReads(flacChunks: { _ in false })
 

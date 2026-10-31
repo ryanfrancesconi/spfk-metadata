@@ -119,7 +119,7 @@ extension MetaAudioFileDescription {
 
     private mutating func load(_ reads: ParseReads) async {
         do {
-            tagProperties = try reads.tags(url)
+            tagProperties = try reads.tags(url, fileType)
         } catch {
             // TagLib reads no tags from a container nothing can write them to (.caf).
             if canStoreTags { readStatus.failed.insert(.tags) }
