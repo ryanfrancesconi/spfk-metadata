@@ -16,10 +16,11 @@ extension TagProperties {
         load(waveFile: waveFile)
     }
 
-    /// INFO, then the ID3 tag over it, so ID3 wins where both hold a key. An INFO ID no key names
-    /// is read as a custom tag under that ID, which a save writes back to it. An ID with a
-    /// lowercase letter is skipped: custom tags are uppercased into ID3, where it would collide
-    /// with its uppercase twin, and a save leaves it on disk as it is.
+    /// INFO, then the ID3 tag over it, so ID3 wins where both hold a key, except that an INFO date
+    /// extending the ID3 one (`2026-01-22` over `2026`) is kept. An INFO ID no key names is read
+    /// as a custom tag under that ID, which a save writes back to it. An ID with a lowercase letter
+    /// is skipped: custom tags are uppercased into ID3, where it would collide with its uppercase
+    /// twin, and a save leaves it on disk as it is.
     mutating func load(waveFile: WaveFileC) {
         for (id, value) in waveFile.infoDictionary as? [String: String] ?? [:] {
             guard !id.contains(where: { $0.isASCII && $0.isLowercase }) else { continue }
@@ -31,8 +32,14 @@ extension TagProperties {
             }
         }
 
+        let infoDate = data.tags[.date]
+
         for (key, value) in waveFile.id3Properties as? [String: String] ?? [:] {
             data.set(taglibKey: key, value: value)
+        }
+
+        if let infoDate, let date = data.tags[.date], infoDate.count > date.count, infoDate.hasPrefix(date) {
+            data.tags[.date] = infoDate
         }
     }
 
