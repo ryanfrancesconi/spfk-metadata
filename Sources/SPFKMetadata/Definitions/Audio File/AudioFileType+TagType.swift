@@ -29,9 +29,15 @@ extension AudioFileType {
         }
     }
 
-    /// By extension; a file without one is sniffed.
+    /// By extension, unless the file's first bytes prove another container; a file without one is
+    /// sniffed. A file that cannot be read is typed by its extension, and its reader reports the error.
     public init?(url: URL) {
         let ext = url.pathExtension.lowercased()
+
+        if !ext.isEmpty, let content = try? ContainerSignature.mismatchedContent(of: url) {
+            self.init(pathExtension: content.pathExtension)
+            return
+        }
 
         guard let value = ext.isEmpty ? AudioFileType(parsing: url) : AudioFileType(pathExtension: ext) else {
             return nil

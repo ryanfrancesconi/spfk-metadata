@@ -92,8 +92,12 @@ extension MetaAudioFileDescription {
 
         artwork.pictureRef = waveFile.tagPicture?.pictureRef
 
-        guard waveFile.frameCount < 0 else { return waveFile.frameCount }
-        return (try? AVAudioFile(forReading: url))?.length ?? 0
+        // AVFoundation types a file by its extension, so a WAVE named as another format may not open.
+        let namedWave = url.pathExtension.isEmpty || AudioFileType(pathExtension: url.pathExtension) == .wav
+        if namedWave, waveFile.frameCount >= 0 { return waveFile.frameCount }
+
+        guard let audioFile = try? AVAudioFile(forReading: url) else { return 0 }
+        return waveFile.frameCount >= 0 ? waveFile.frameCount : audioFile.length
     }
 
     /// Adds FLAC's iXML and BEXT APPLICATION blocks to what `load()` read. BEXT falls back to

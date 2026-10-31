@@ -36,15 +36,44 @@ enum ContainerSignature: Equatable {
     static func mismatchedContent(of url: URL) throws -> Content? {
         guard let named = ContainerSignature(pathExtension: url.pathExtension) else { return nil }
 
-        let handle = try FileHandle(forReadingFrom: url)
-        let header = try handle.read(upToCount: 12) ?? Data()
-        try handle.close()
+        let header = try header(of: url)
 
         guard let content = content(of: header), content.container != named else { return nil }
+
+        // TagLib reads a WAVE holding MPEG audio as MPEG when it is named so.
+        if named == .mpeg, content.container == .wave, holdsMPEGAudio(header) { return nil }
+
         return content
     }
 
-    /// `header` is the first 12 bytes of a file. The extension is chosen here rather than taken from
+    /// The first 24 bytes after any ID3v2 tag, where TagLib's content detection looks.
+    static func header(of url: URL) throws -> Data {
+        let handle = try FileHandle(forReadingFrom: url)
+        var header = try handle.read(upToCount: 24) ?? Data()
+
+        if header.count >= 10, header.starts(with: Data("ID3".utf8)) {
+            let bytes = [UInt8](header)
+            let size = bytes[6 ... 9].reduce(0) { $0 << 7 | Int($1 & 0x7F) }
+            let footer = bytes[5] & 0x10 != 0 ? 10 : 0
+            try handle.seek(toOffset: UInt64(10 + size + footer))
+            header = try handle.read(upToCount: 24) ?? Data()
+        }
+
+        try handle.close()
+        return header
+    }
+
+    /// Whether `header` is a WAVE whose format tag is MPEG (0x0050) or MPEG Layer 3 (0x0055).
+    static func holdsMPEGAudio(_ header: Data) -> Bool {
+        guard header.count >= 22 else { return false }
+        let bytes = [UInt8](header)
+        guard String(decoding: bytes[12 ..< 16], as: UTF8.self) == "fmt " else { return false }
+
+        let format = UInt16(bytes[20]) | UInt16(bytes[21]) << 8
+        return format == 0x0050 || format == 0x0055
+    }
+
+    /// `header` is the first bytes of a file after any ID3v2 tag. The extension is chosen here rather than taken from
     /// the type, whose preferred extension for MPEG-4 audio is `mp4`, not `m4a`.
     static func content(of header: Data) -> Content? {
         guard header.count >= 12 else { return nil }
