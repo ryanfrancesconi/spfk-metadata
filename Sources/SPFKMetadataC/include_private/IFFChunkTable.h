@@ -24,6 +24,8 @@ struct Chunk {
     TagLib::offset_t padding;
     /// A signed filler: free space the planner may reuse.
     bool isFiller;
+    /// The audio chunk, declared larger than the file holds and read to its end instead.
+    bool clamped = false;
 
     TagLib::offset_t end() const { return offset + 8 + size + padding; }
 };

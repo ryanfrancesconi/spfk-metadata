@@ -63,6 +63,7 @@ private:
     bool placeInRun(size_t start, size_t end, const IFFChunkPlanner::Edit &edit, const ByteVector &bytes);
     void place(const IFFChunkPlanner::Edit &edit, const ByteVector &bytes);
     void append(const IFFChunkPlanner::Edit &edit, const ByteVector &bytes);
+    void writeClampedSizes();
     void writeFormSize();
 };
 
@@ -266,6 +267,21 @@ void Planner::append(const IFFChunkPlanner::Edit &edit, const ByteVector &bytes)
     table.end = end;
 }
 
+/// A clamped chunk's size, once something follows it, or the next read takes that for audio. A
+/// long-form `data` chunk's size is the sentinel and stays.
+void Planner::writeClampedSizes() {
+    if (table.longForm)
+        return;
+
+    for (size_t i = 0; i + 1 < chunks.size(); i++) {
+        if (chunks[i].clamped) {
+            file.seek(chunks[i].offset + 4);
+            file.writeBlock(ByteVector::fromUInt(static_cast<unsigned int>(chunks[i].size), table.bigEndian));
+            chunks[i].clamped = false;
+        }
+    }
+}
+
 /// As `RIFF::File::updateGlobalSize`: the size runs to the end of the last chunk; a long-form file
 /// keeps the sentinel and stores it in `ds64`.
 void Planner::writeFormSize() {
@@ -339,6 +355,7 @@ bool Planner::apply(const std::vector<IFFChunkPlanner::Edit> &edits) {
         place(*edit, bytes);
 
     zeroStale();
+    writeClampedSizes();
     writeFormSize();
     return true;
 }

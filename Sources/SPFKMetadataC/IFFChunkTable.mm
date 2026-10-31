@@ -70,10 +70,18 @@ bool read(File &file, Table &table) {
         if (table.longForm && id == "data" && declared == 0xFFFFFFFFu && dataSize64 > 0)
             size = dataSize64 > static_cast<unsigned long long>(available) ? available : static_cast<long long>(dataSize64);
 
-        if (size > available)
-            size = available;
+        // Only the audio chunk is read to the end of the file, as an encoder that wrote the wrong
+        // size leaves it. Anything else running past the end is trailing data, such as an APE tag.
+        bool clamped = false;
+        if (size > available) {
+            if (id != (table.bigEndian ? "SSND" : "data"))
+                break;
 
-        Chunk chunk { id, ByteVector(), offset, static_cast<offset_t>(size), 0, false };
+            size = available;
+            clamped = true;
+        }
+
+        Chunk chunk { id, ByteVector(), offset, static_cast<offset_t>(size), 0, false, clamped };
 
         file.seek(offset + 8);
         if (id == "LIST" && size >= 4)
