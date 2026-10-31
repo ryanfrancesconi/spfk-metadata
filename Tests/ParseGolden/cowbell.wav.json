@@ -20,6 +20,11 @@
 
     ]
   },
+  "riffInfoFields" : {
+    "fields" : {
+
+    }
+  },
   "tagProperties" : {
     "audioProperties" : {
       "bitRate" : 2117,

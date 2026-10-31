@@ -98,7 +98,7 @@ final class WaveINFOCharsetTests: BinTestCase {
 
         var description = try await MetaAudioFileDescription(parsing: url)
         #expect(description.tagProperties.tags[.archivalLocation] == copyright)
-        #expect(description.tagProperties.customTags["BCPR"] == copyright)
+        #expect(description.riffInfoFields?.fields["BCPR"] == copyright)
 
         description.tagProperties[.title] = "New Title"
         try description.save(dirtyFlags: [.tags])
@@ -116,7 +116,7 @@ final class WaveINFOCharsetTests: BinTestCase {
 
         let file = WaveFileC(path: url.path)
         #expect(file.load())
-        file.infoDictionary.removeAllObjects()
+        for key in file.infoDictionary.allKeys { file.infoDictionary[key] = "" }
         file.id3Properties.removeAllObjects()
         save(file)
 

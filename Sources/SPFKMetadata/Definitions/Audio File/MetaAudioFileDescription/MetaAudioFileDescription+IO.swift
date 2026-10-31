@@ -271,11 +271,11 @@ extension MetaAudioFileDescription {
         let stored = WaveFileC(path: url.path)
 
         guard stored.loadTags() else {
-            waveFile.setTags(tagProperties)
+            waveFile.setTags(tagProperties, infoFields: riffInfoFields)
             return
         }
 
-        waveFile.setTagChanges(tagProperties, storedIn: stored)
+        waveFile.setTagChanges(tagProperties, infoFields: riffInfoFields, storedIn: stored)
         waveFile.bextNeedsSave = bextDiffers(from: stored.bextDescription?.validated())
         waveFile.iXMLNeedsSave = !IXMLMetadata.isUnedited(iXMLMetadata, stored: stored.iXML)
     }

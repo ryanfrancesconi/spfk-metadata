@@ -28,7 +28,7 @@ class WaveFileTests: BinTestCase {
         #expect(file[info: .bpm] == "666")
     }
 
-    /// Saving with empty dictionaries must clear all existing INFO and ID3 fields.
+    /// An INFO field set empty is removed.
     @Test func clearAllInfoAndID3Tags() async throws {
         let tmpfile = try copyToBin(url: TestBundleResources.shared.wav_bext_v2)
 
@@ -39,8 +39,8 @@ class WaveFileTests: BinTestCase {
         #expect(initial[info: .artist] == "Spinal Tap")
         #expect(initial[info: .bpm] == "666")
 
-        // Save with empty dictionaries (no load — dicts start empty)
         let file = WaveFileC(path: tmpfile.path)
+        for key in initial.infoDictionary.allKeys { file.infoDictionary[key] = "" }
         file.markersNeedsSave = false
         file.artworkNeedsSave = false
         #expect(file.save())
@@ -53,8 +53,8 @@ class WaveFileTests: BinTestCase {
         #expect(reloaded[info: .bpm] == nil)
     }
 
-    /// Saving with only some INFO keys must remove existing keys absent from the new set.
-    @Test func partialInfoUpdateClearsStaleKeys() async throws {
+    /// A save writes the INFO fields it names and leaves every other one.
+    @Test func partialInfoUpdateKeepsOtherKeys() async throws {
         let tmpfile = try copyToBin(url: TestBundleResources.shared.wav_bext_v2)
 
         // Confirm multiple fields exist
@@ -63,7 +63,6 @@ class WaveFileTests: BinTestCase {
         #expect(initial[info: .title] == "Stonehenge")
         #expect(initial[info: .bpm] == "666")
 
-        // Save with only bpm set — title must be cleared
         let file = WaveFileC(path: tmpfile.path)
         file[info: .bpm] = "777"
         file.markersNeedsSave = false
@@ -73,8 +72,8 @@ class WaveFileTests: BinTestCase {
         let reloaded = WaveFileC(path: tmpfile.path)
         #expect(reloaded.load())
         #expect(reloaded[info: .bpm] == "777")
-        #expect(reloaded[info: .title] == nil)
-        #expect(reloaded[info: .artist] == nil)
+        #expect(reloaded[info: .title] == "Stonehenge")
+        #expect(reloaded[info: .artist] == "Spinal Tap")
     }
 
     @Test func writeInfo() async throws {

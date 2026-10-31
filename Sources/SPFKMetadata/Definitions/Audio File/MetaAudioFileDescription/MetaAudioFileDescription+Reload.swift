@@ -26,6 +26,7 @@ extension MetaAudioFileDescription {
             tagProperties.audioProperties = audioProperties
             iXMLMetadata = nil
             bextDescription = nil
+            riffInfoFields = nil
 
             readEmbeddedMetadata(from: waveFile)
             readStatus.failed.subtract([.tags, .bext, .ixml])
@@ -51,7 +52,8 @@ extension MetaAudioFileDescription {
         }
     }
 
-    /// iXML as stored, BEXT, and the INFO and ID3 tags. Adds to `tagProperties` rather than replacing it.
+    /// iXML as stored, BEXT, the INFO and ID3 tags and the INFO fields no tag maps. Adds to
+    /// `tagProperties` rather than replacing it.
     mutating func readEmbeddedMetadata(from waveFile: WaveFileC) {
         if let xml = waveFile.iXML {
             iXMLMetadata = xml
@@ -59,7 +61,7 @@ extension MetaAudioFileDescription {
 
         bextDescription = waveFile.bextDescription?.validated()
 
-        tagProperties.load(waveFile: waveFile)
+        riffInfoFields = tagProperties.load(waveFile: waveFile)
     }
 
     /// FLAC's iXML and BEXT APPLICATION blocks, iXML as stored.

@@ -31,8 +31,8 @@ typedef NS_OPTIONS(NSUInteger, WaveFileComponents) {
 /// many it plays (a compressed or malformed file).
 @property(nonatomic, readonly) int64_t frameCount;
 
-/// Every INFO field, keyed by ID ("INAM"). On save, INFO's new contents, plus each field the file
-/// holds under an ID that is a key of `id3Properties`, which takes that value.
+/// Every INFO field, keyed by ID ("INAM"). On save, the fields set, an empty value removing its
+/// field; every field it does not name is left as it is.
 @property(nonatomic) NSMutableDictionary *infoDictionary;
 
 /// The ID3v2 tag's properties, keyed and joined as `TagFile.dictionary` holds them, `"RATING"`
@@ -42,6 +42,10 @@ typedef NS_OPTIONS(NSUInteger, WaveFileComponents) {
 @property(nullable, nonatomic) BEXTDescriptionC *bextDescriptionC;
 
 @property(nullable, nonatomic) NSString *iXML;
+
+/// Set by `load` and `loadTags`: each DISP chunk's payload in file order, its 32-bit clipboard
+/// format ID first. Never written; `save` leaves DISP as it is.
+@property(nonatomic, readonly) NSArray<NSData *> *dispPayloads;
 
 @property(nullable, nonatomic) TagPicture *tagPicture;
 
@@ -87,8 +91,7 @@ typedef NS_OPTIONS(NSUInteger, WaveFileComponents) {
 /// markers, XMP packet and artwork.
 - (bool)loadTags;
 
-/// Rewrites every chunk whose bytes change, never moving the audio; INFO fields absent from
-/// `infoDictionary` are removed, except one whose ID has a lowercase letter, which is kept. On `false`, `failedComponents` names what was not written; unless
+/// Rewrites every chunk whose bytes change, never moving the audio. On `false`, `failedComponents` names what was not written; unless
 /// it holds `WaveFileComponentsContainer`, everything else was.
 - (bool)save;
 

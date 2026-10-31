@@ -2,6 +2,7 @@
 
 import CryptoKit
 import Foundation
+import SPFKMetadataBase
 import SPFKTesting
 
 /// One thing in a leading ID3v2 tag. The owned items are what the app writes; the rest are other
@@ -272,10 +273,12 @@ extension SafetyNetID3Item {
             return .value(kind == .k17 ? nil : .bytes(Data(SafetyNetEdit.packet.utf8)))
 
         case .infoUserText:
-            // An INFO item with no ID3 frame is saved into a `TXXX`.
+            // An INFO item a tag maps is saved into its `TXXX`; one no tag maps stays in INFO alone.
             guard let info = try after.riff?.infoItems() else { return .unchanged }
 
-            let copies = SafetyNetID3Foreign.infoOnlyItems.flatMap { id, name in
+            let copies = SafetyNetID3Foreign.infoOnlyItems.filter { id, _ in
+                InfoFrameKey(value: id).flatMap { TagKey(infoFrame: $0) } != nil
+            }.flatMap { id, name in
                 info.filter { $0.id == id }.map { "\(name): \($0.value)" }
             }
             return .value(.text(copies.isEmpty ? ["none"] : copies.sorted()))

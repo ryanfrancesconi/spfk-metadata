@@ -17,22 +17,23 @@ extension TagProperties {
     }
 
     /// INFO, then the ID3 tag over it, so ID3 wins where both hold a key, except that an INFO date
-    /// extending the ID3 one (`2026-01-22` over `2026`) is kept. An INFO ID no key names is read
-    /// as a custom tag under that ID, which a save writes back to it. An ID with a lowercase letter
-    /// is skipped: custom tags are uppercased into ID3, where it would collide with its uppercase
-    /// twin, and a save leaves it on disk as it is.
-    mutating func load(waveFile: WaveFileC) {
-        for (id, value) in waveFile.infoDictionary as? [String: String] ?? [:] {
-            guard !id.contains(where: { $0.isASCII && $0.isLowercase }) else { continue }
+    /// extending the ID3 one (`2026-01-22` over `2026`) is kept. An INFO ID no ``TagKey`` maps is
+    /// returned among the fields rather than read as a tag, with the DISP chunk's text.
+    @discardableResult
+    mutating func load(waveFile: WaveFileC) -> RIFFInfoFields {
+        var fields = RIFFInfoFields()
+        fields.displayText = DISPChunk.displayText(in: waveFile.dispPayloads.compactMap(DISPChunk.init(payload:)))
 
-            if let key = InfoFrameKey(value: id) {
+        for (id, value) in waveFile.infoDictionary as? [String: String] ?? [:] {
+            if let key = InfoFrameKey(value: id), TagKey(infoFrame: key) != nil {
                 data.set(infoFrame: key, value: value)
             } else {
-                data.set(taglibKey: id, value: value)
+                fields.set(field: id, value: value)
             }
         }
 
         let infoDate = data.tags[.date]
+        let infoTitle = data.tags[.title]
 
         for (key, value) in waveFile.id3Properties as? [String: String] ?? [:] {
             data.set(taglibKey: key, value: value)
@@ -41,9 +42,15 @@ extension TagProperties {
         if let infoDate, let date = data.tags[.date], infoDate.extends(date) {
             data.tags[.date] = infoDate
         }
+
+        if let infoTitle, infoTitle.isNotEmpty, infoTitle != data.tags[.title] {
+            fields.infoTitle = infoTitle
+        }
+
+        return fields
     }
 
-    /// The tags with an INFO field, keyed by its ID. A standard tag wins over a custom one.
+    /// The tags with an INFO field, keyed by its ID.
     var infoMirror: [String: String] {
         var mirror: [String: String] = [:]
 
@@ -51,40 +58,97 @@ extension TagProperties {
             if let frame = key.infoFrame { mirror[frame.value] = value }
         }
 
-        for (key, value) in customTags {
-            guard let frame = InfoFrameKey(taglibKey: key.uppercased()), mirror[frame.value] == nil else { continue }
-            mirror[frame.value] = value
+        return mirror
+    }
+
+    /// The INFO writes that take the file's mapped fields from `stored` to these tags: each tag
+    /// that differs writes its primary field and removes its alternates, and an absent tag
+    /// removes its field. Every other mapped field is left as the file has it.
+    func infoChanges(from stored: TagProperties) -> [String: String] {
+        var info: [String: String] = [:]
+
+        for key in TagKey.allCases {
+            guard let frame = key.infoFrame, tags[key] != stored.tags[key] else { continue }
+
+            for alternate in key.infoAlternates {
+                info[alternate.value] = ""
+            }
+
+            info[frame.value] = tags[key] ?? ""
         }
 
-        return mirror
+        return info
+    }
+
+    /// Without each custom tag that an older read made of an INFO field in `fields`, unless the
+    /// file also holds it in ID3 (`storedID3`, keyed as `WaveFileC.id3Properties` is).
+    func removingCustomTags(namingFieldsIn fields: RIFFInfoFields, storedID3: [String: String]) -> TagProperties {
+        var properties = self
+
+        for key in customTags.keys where storedID3[key.uppercased()] == nil {
+            if fields.fields.keys.contains(where: { RIFFInfoFields.customTag(key, names: $0) }) {
+                properties.customTags[key] = nil
+            }
+        }
+
+        return properties
+    }
+}
+
+extension RIFFInfoFields {
+    /// The INFO writes that take the file's `stored` fields to these: a changed or added field set,
+    /// a missing one removed.
+    func infoChanges(from stored: RIFFInfoFields) -> [String: String] {
+        var info: [String: String] = [:]
+
+        for (id, value) in fields where stored.fields[id] != value {
+            info[id] = value
+        }
+
+        for id in stored.fields.keys where fields[id] == nil {
+            info[id] = ""
+        }
+
+        return info
     }
 }
 
 extension WaveFileC {
-    /// What a save of `tags` writes over the file's tags: every tag when a text tag differs, the
-    /// rating alone when only it does, nothing otherwise. Every tag when the file's can't be read.
-    func setTagChanges(_ tags: TagProperties) {
+    /// What a save of `tags` and `infoFields` writes over the file's: each tag and INFO field
+    /// that differs when any text does, the rating alone when only it does, nothing otherwise.
+    /// Every tag and field when the file's can't be read.
+    func setTagChanges(_ tags: TagProperties, infoFields: RIFFInfoFields? = nil) {
         let stored = WaveFileC(path: path)
 
         guard stored.loadTags() else {
-            setTags(tags)
+            setTags(tags, infoFields: infoFields)
             return
         }
 
-        setTagChanges(tags, storedIn: stored)
+        setTagChanges(tags, infoFields: infoFields, storedIn: stored)
     }
 
-    /// `setTagChanges(_:)` against a `loadTags()` of the file.
-    func setTagChanges(_ tags: TagProperties, storedIn file: WaveFileC) {
-        let stored = TagProperties(waveFile: file)
+    /// `setTagChanges(_:infoFields:)` against a `loadTags()` of the file.
+    ///
+    /// With nil `infoFields`, every unmapped INFO field is left as the file has it, and a custom
+    /// tag an older read made of one is not written to ID3.
+    func setTagChanges(_ tags: TagProperties, infoFields: RIFFInfoFields?, storedIn file: WaveFileC) {
+        var stored = TagProperties()
+        let storedFields = stored.load(waveFile: file)
+        let storedID3 = file.id3Properties as? [String: String] ?? [:]
+
+        let tags = infoFields == nil ? tags.removingCustomTags(namingFieldsIn: storedFields, storedID3: storedID3) : tags
+        let fieldChanges = infoFields?.infoChanges(from: storedFields) ?? [:]
 
         var storedText = stored.data
         var text = tags.data
         storedText.tags[.rating] = nil
         text.tags[.rating] = nil
 
-        if storedText != text {
-            setTags(tags)
+        if storedText != text || fieldChanges.isNotEmpty {
+            tagsNeedsSave = true
+            id3Properties = NSMutableDictionary(dictionary: tags.tagLibPropertyMap)
+            infoDictionary = NSMutableDictionary(dictionary: tags.infoChanges(from: stored).merging(fieldChanges) { $1 })
         } else if stored[.rating] != tags[.rating] {
             setRating(tags)
         } else {
@@ -92,21 +156,12 @@ extension WaveFileC {
         }
     }
 
-    /// `tags` as the ID3 properties and the INFO mirror a full tag save writes.
-    ///
-    /// A named INFO ID missing from the mirror is written empty, which removes it, so the save
-    /// never keeps it from an ID3 key spelled the same: `ISRC` is INFO Source and ``TagKey/isrc``.
-    func setTags(_ tags: TagProperties) {
-        let id3 = tags.tagLibPropertyMap
-        var info = tags.infoMirror
-
-        for frame in InfoFrameKey.allCases where info[frame.value] == nil && id3[frame.value] != nil {
-            info[frame.value] = ""
-        }
-
+    /// `tags` as the ID3 properties, and the INFO mirror plus `infoFields` as the fields set over
+    /// the file's, for a save with no stored file to compare against.
+    func setTags(_ tags: TagProperties, infoFields: RIFFInfoFields? = nil) {
         tagsNeedsSave = true
-        id3Properties = NSMutableDictionary(dictionary: id3)
-        infoDictionary = NSMutableDictionary(dictionary: info)
+        id3Properties = NSMutableDictionary(dictionary: tags.tagLibPropertyMap)
+        infoDictionary = NSMutableDictionary(dictionary: tags.infoMirror.merging(infoFields?.fields ?? [:]) { $1 })
     }
 
     /// `tags`' rating alone.

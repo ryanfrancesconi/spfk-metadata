@@ -49,6 +49,11 @@
       }
     ]
   },
+  "riffInfoFields" : {
+    "fields" : {
+      "IPLT" : "256"
+    }
+  },
   "tagProperties" : {
     "audioProperties" : {
       "bitRate" : 2304,
@@ -59,7 +64,7 @@
     },
     "data" : {
       "customTags" : {
-        "NUMCOLORS" : "256"
+
       },
       "tags" : {
         "album" : "This Is Spinal Tap",

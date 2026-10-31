@@ -51,7 +51,8 @@ final class WaveINFOTagKeyTests: BinTestCase {
         #expect(description.tagProperties[.archivalLocation] == "BOOM Library")
         #expect(description.tagProperties[.subject] == "The SFX Kit")
         #expect(description.tagProperties[.commissioned] == "Articulated Sounds")
-        #expect(description.tagProperties.customTags["SOURCEFORM"] == "1100")
+        #expect(description.riffInfoFields?.fields["ISRF"] == "1100")
+        #expect(description.tagProperties.customTags["SOURCEFORM"] == nil)
         for key in ["ARCHIVALLOCATION", "SUBJECT", "COMMISSIONED"] {
             #expect(description.tagProperties.customTags[key] == nil, "\(key)")
         }
@@ -63,7 +64,7 @@ final class WaveINFOTagKeyTests: BinTestCase {
         #expect(reloaded.tagProperties[.archivalLocation] == "BOOM Library")
         #expect(reloaded.tagProperties[.subject] == "The SFX Kit")
         #expect(reloaded.tagProperties[.commissioned] == "Articulated Sounds")
-        #expect(reloaded.tagProperties.customTags["SOURCEFORM"] == "1100")
+        #expect(reloaded.riffInfoFields?.fields["ISRF"] == "1100")
 
         reloaded.tagProperties[.title] = "Newer Title"
         try reloaded.save(dirtyFlags: [.tags])

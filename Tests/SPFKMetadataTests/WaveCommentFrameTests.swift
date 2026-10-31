@@ -39,8 +39,12 @@ final class WaveCommentFrameTests: BinTestCase {
         #expect(description.tagProperties[.comment] == "Mine")
     }
 
+    /// The INFO comment is the file's own and differs from ID3's, and a title save leaves it.
     @Test func titleSaveKeepsTheCommentAndTheDescribedFrame() async throws {
         let url = try fixture()
+        let infoComment = try RIFFChunks(contentsOf: url).infoItems().filter { $0.id == "ICMT" }.map(\.value)
+        #expect(infoComment.isNotEmpty && infoComment != ["Mine"])
+
         var description = try await MetaAudioFileDescription(parsing: url)
         description.tagProperties[.title] = "After"
         try description.save(dirtyFlags: [.tags])
@@ -49,6 +53,6 @@ final class WaveCommentFrameTests: BinTestCase {
         #expect(saved.sorted() == ["eng |  | Mine", "eng | iTunNORM | \(normalization)"])
 
         let info = try RIFFChunks(contentsOf: url).infoItems()
-        #expect(info.filter { $0.id == "ICMT" }.map(\.value) == ["Mine"])
+        #expect(info.filter { $0.id == "ICMT" }.map(\.value) == infoComment)
     }
 }
