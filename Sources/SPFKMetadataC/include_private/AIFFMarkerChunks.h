@@ -16,6 +16,10 @@ NS_ASSUME_NONNULL_BEGIN
 /// Whether the file is an AIFF or AIFF-C.
 + (BOOL)isAIFF:(NSURL *)url;
 
+/// Core Audio's markers from an AIFF, with each file ID (1 to 32767) made the marker's own ID
+/// minus one; any other file ID becomes -1, none.
++ (NSArray *)adoptFileIDs:(NSArray *)markers;
+
 /// Replaces every marker, positions converted at `sampleRate`. An empty array removes the `MARK`
 /// chunk.
 + (BOOL)write:(NSArray *)markers to:(NSURL *)url sampleRate:(double)sampleRate;

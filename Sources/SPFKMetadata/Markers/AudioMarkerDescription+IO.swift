@@ -7,7 +7,8 @@ import SPFKMetadataBase
 internal import SPFKMetadataC
 
 extension AudioMarkerDescription {
-    /// From a WAV or AIFF marker, recovering end time and color from the name's JSON suffix.
+    /// From a WAV or AIFF marker, recovering end time and color from the name's JSON suffix. A
+    /// negative ID is none.
     init(riffMarker marker: AudioMarker) {
         let (name, duration, hexColor) = Self.decodeFileName(marker.name ?? "")
 
@@ -16,7 +17,7 @@ extension AudioMarkerDescription {
             startTime: marker.time,
             endTime: duration.map { marker.time + $0 },
             sampleRate: marker.sampleRate,
-            markerID: Int(marker.markerID),
+            markerID: marker.markerID >= 0 ? Int(marker.markerID) : nil,
             hexColor: hexColor,
             markerType: duration != nil ? .region : .cue
         )

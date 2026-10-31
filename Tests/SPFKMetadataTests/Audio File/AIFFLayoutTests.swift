@@ -174,7 +174,7 @@ final class AIFFLayoutTests: BinTestCase {
             var entry = AudioFileMarker()
             entry.mFramePosition = marker.time * format.mSampleRate
             entry.mName = Unmanaged.passUnretained(names[index])
-            entry.mMarkerID = Int32(index)
+            entry.mMarkerID = marker.markerID + 1
             entries[index] = entry
         }
 

@@ -2,6 +2,8 @@
 
 #include <cmath>
 #include <cstdint>
+#include <set>
+#include <vector>
 
 #import <taglib/aifffile.h>
 
@@ -52,6 +54,38 @@ uint32_t framePosition(NSTimeInterval time, double sampleRate) {
     return frames >= 4294967295.0 ? UINT32_MAX : static_cast<uint32_t>(std::floor(frames + 0.5));
 }
 
+/// File IDs are positive (1 to 32767): each marker's own ID plus one when that is free, otherwise the
+/// lowest free one. Past 32767 markers the rest take 16-bit IDs Core Audio still reads.
+std::vector<unsigned short> assignMarkerIDs(NSArray *markers) {
+    std::vector<unsigned short> ids(markers.count);
+    std::vector<bool> assigned(markers.count, false);
+    std::set<unsigned int> used;
+
+    for (NSUInteger i = 0; i < markers.count; i++) {
+        const SInt32 markerID = ((AudioMarker *)markers[i]).markerID;
+
+        if (markerID >= 0 && markerID < 32767 && used.insert(static_cast<unsigned int>(markerID) + 1).second) {
+            ids[i] = static_cast<unsigned short>(markerID + 1);
+            assigned[i] = true;
+        }
+    }
+
+    unsigned int next = 1;
+
+    for (NSUInteger i = 0; i < markers.count; i++) {
+        if (assigned[i])
+            continue;
+
+        while (used.count(next) > 0)
+            next++;
+
+        used.insert(next);
+        ids[i] = static_cast<unsigned short>(next);
+    }
+
+    return ids;
+}
+
 } // namespace
 
 namespace AIFFMarkers {
@@ -60,11 +94,12 @@ IFFChunkPlanner::Edit edit(NSArray *markers, double sampleRate) {
     if (markers.count == 0)
         return { "MARK", ByteVector(), std::nullopt };
 
-    ByteVector payload = ByteVector::fromShort(static_cast<short>(markers.count), true);
+    const std::vector<unsigned short> ids = assignMarkerIDs(markers);
+    ByteVector payload = ByteVector::fromUShort(static_cast<unsigned short>(markers.count), true);
 
     for (NSUInteger index = 0; index < markers.count; index++) {
         AudioMarker *marker = markers[index];
-        payload.append(ByteVector::fromShort(static_cast<short>(index), true));
+        payload.append(ByteVector::fromUShort(ids[index], true));
         payload.append(ByteVector::fromUInt(framePosition(marker.time, sampleRate), true));
         payload.append(pascalString(marker.name));
     }
@@ -75,6 +110,14 @@ IFFChunkPlanner::Edit edit(NSArray *markers, double sampleRate) {
 } // namespace AIFFMarkers
 
 @implementation AIFFMarkerChunks
+
++ (NSArray *)adoptFileIDs:(NSArray *)markers {
+    for (AudioMarker *marker in markers) {
+        marker.markerID = marker.markerID > 0 ? marker.markerID - 1 : -1;
+    }
+
+    return markers;
+}
 
 + (BOOL)isAIFF:(NSURL *)url {
     NSFileHandle *handle = [NSFileHandle fileHandleForReadingFromURL:url error:nil];
