@@ -82,6 +82,8 @@ class TagPropertiesTests: BinTestCase {
         // These fixtures carry `mp3_id3`'s tags with the comment's line breaks already dropped.
         var expected = source.tags
         expected[.comment] = expected[.comment]?.replacingOccurrences(of: "\n", with: "")
+        // The WAV fixture's INFO `ISRC`, which is Source, holds the ISRC code.
+        if url.pathExtension == "wav" { expected[.source] = expected[.isrc] }
         #expect(props.tags == expected)
     }
 

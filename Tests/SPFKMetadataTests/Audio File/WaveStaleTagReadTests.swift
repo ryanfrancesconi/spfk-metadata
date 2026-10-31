@@ -32,7 +32,7 @@ final class WaveStaleTagReadTests: BinTestCase {
     /// The description as an older reader left it: the Latin-1 field empty, no version.
     private func staleDescription(of url: URL) async throws -> MetaAudioFileDescription {
         var description = try await MetaAudioFileDescription(parsing: url)
-        description.tagProperties.customTags["ARCHIVALLOCATION"] = ""
+        description.tagProperties.tags[.archivalLocation] = ""
         description.tagReaderVersion = nil
         return description
     }
@@ -53,7 +53,7 @@ final class WaveStaleTagReadTests: BinTestCase {
         let refreshed = description.refreshStaleTagRead()
         #expect(refreshed)
 
-        #expect(description.tagProperties.customTags["ARCHIVALLOCATION"] == copyright)
+        #expect(description.tagProperties.tags[.archivalLocation] == copyright)
         #expect(description.tagProperties[.title] == "Edited Title")
         #expect(description.tagReaderVersion == MetaAudioFileDescription.currentTagReaderVersion)
         #expect(!description.hasStaleTagRead)
@@ -80,7 +80,7 @@ final class WaveStaleTagReadTests: BinTestCase {
         let refreshed = description.refreshStaleTagRead()
         #expect(!refreshed)
 
-        #expect(description.tagProperties.customTags["ARCHIVALLOCATION"] == "")
+        #expect(description.tagProperties.tags[.archivalLocation] == "")
         #expect(description.tagReaderVersion == nil)
     }
 
@@ -89,14 +89,14 @@ final class WaveStaleTagReadTests: BinTestCase {
         let stale = try await staleDescription(of: url)
 
         #expect(stale.staleTagReadRecoversText() == true)
-        #expect(stale.tagProperties.customTags["ARCHIVALLOCATION"] == "")
+        #expect(stale.tagProperties.tags[.archivalLocation] == "")
     }
 
     /// Empty in the file too: nothing to recover, so nothing to warn about.
     @Test func nothingToRecoverIsNotReported() async throws {
         let url = try latin1Wave()
         var stale = try await staleDescription(of: url)
-        stale.tagProperties.customTags["ARCHIVALLOCATION"] = copyright
+        stale.tagProperties.tags[.archivalLocation] = copyright
         stale.tagProperties.customTags["IZZZ"] = ""
 
         #expect(stale.hasStaleTagRead)

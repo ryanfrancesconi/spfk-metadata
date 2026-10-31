@@ -86,10 +86,20 @@ extension WaveFileC {
     }
 
     /// `tags` as the ID3 properties and the INFO mirror a full tag save writes.
+    ///
+    /// A named INFO ID missing from the mirror is written empty, which removes it, so the save
+    /// never keeps it from an ID3 key spelled the same: `ISRC` is INFO Source and ``TagKey/isrc``.
     func setTags(_ tags: TagProperties) {
+        let id3 = tags.tagLibPropertyMap
+        var info = tags.infoMirror
+
+        for frame in InfoFrameKey.allCases where info[frame.value] == nil && id3[frame.value] != nil {
+            info[frame.value] = ""
+        }
+
         tagsNeedsSave = true
-        id3Properties = NSMutableDictionary(dictionary: tags.tagLibPropertyMap)
-        infoDictionary = NSMutableDictionary(dictionary: tags.infoMirror)
+        id3Properties = NSMutableDictionary(dictionary: id3)
+        infoDictionary = NSMutableDictionary(dictionary: info)
     }
 
     /// `tags`' rating alone.

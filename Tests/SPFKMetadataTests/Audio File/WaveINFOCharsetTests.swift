@@ -97,7 +97,7 @@ final class WaveINFOCharsetTests: BinTestCase {
         }
 
         var description = try await MetaAudioFileDescription(parsing: url)
-        #expect(description.tagProperties.customTags["ARCHIVALLOCATION"] == copyright)
+        #expect(description.tagProperties.tags[.archivalLocation] == copyright)
         #expect(description.tagProperties.customTags["BCPR"] == copyright)
 
         description.tagProperties[.title] = "New Title"

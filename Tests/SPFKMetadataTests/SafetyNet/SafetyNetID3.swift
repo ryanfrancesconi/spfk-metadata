@@ -272,7 +272,7 @@ extension SafetyNetID3Item {
             return .value(kind == .k17 ? nil : .bytes(Data(SafetyNetEdit.packet.utf8)))
 
         case .infoUserText:
-            // An INFO item with no tag key is read as a custom tag and saved like one, into ID3.
+            // An INFO item with no ID3 frame is saved into a `TXXX`.
             guard let info = try after.riff?.infoItems() else { return .unchanged }
 
             let copies = SafetyNetID3Foreign.infoOnlyItems.flatMap { id, name in
