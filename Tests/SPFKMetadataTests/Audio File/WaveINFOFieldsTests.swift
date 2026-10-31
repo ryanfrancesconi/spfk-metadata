@@ -101,6 +101,19 @@ final class WaveINFOFieldsTests: BinTestCase {
         #expect(reparsed.riffInfoFields?.fields == ["BCPR": "New", "ICOM": "Kept"])
     }
 
+    @Test func aLowercaseFieldCanBeRemoved() async throws {
+        let url = try wave(withInfo: ["INAM": "Title", "itrk": "14/14", "ITRK": "14/14", "icom": "Lower"])
+
+        var description = try await MetaAudioFileDescription(parsing: url)
+        description.riffInfoFields?.fields["itrk"] = nil
+        try description.save(dirtyFlags: [.tags])
+
+        let info = try infoText(url)
+        #expect(info["itrk"] == nil)
+        #expect(info["ITRK"] == "14/14")
+        #expect(info["icom"] == "Lower")
+    }
+
     // MARK: - Unread fields
 
     /// A description stored before the fields existed holds them as custom tags.
