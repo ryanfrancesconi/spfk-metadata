@@ -24,11 +24,6 @@ extension MetaAudioFileDescription {
         // reports the lock only as `false`.
         try url.requireWritable()
 
-        // Another format's metadata written into the file can leave it unplayable.
-        if let content = try ContainerSignature.mismatchedContent(of: url) {
-            throw MetadataError.contentMismatch(url, actual: content.type, pathExtension: content.pathExtension)
-        }
-
         if storedXMPPacket != .keep, !(fileType.map(StoredXMPPacketWrite.fileTypes.contains) ?? false) {
             throw MetadataError.unsupportedFormat(fileType?.utType, .xmp)
         }

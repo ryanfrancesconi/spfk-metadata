@@ -1,16 +1,16 @@
 // Copyright Ryan Francesconi. All Rights Reserved. Revision History at https://github.com/ryanfrancesconi/spfk-metadata
 
 import Foundation
+import SPFKAudioBase
 import SPFKBase
 import SPFKMetadataBase
 import SPFKTesting
 import Testing
-import UniformTypeIdentifiers
 
 @testable import SPFKMetadata
 
-/// A file whose content is another format than its extension names is not saved: the wrong format's
-/// metadata at its start leaves an `.m4a` or AIFF unplayable.
+/// A file whose content is another format than its extension names saves as what it is, keeping
+/// the container intact and every tag it had.
 @Suite(.tags(.file))
 final class WrongExtensionSaveTests: BinTestCase {
     private func renamed(_ url: URL, to pathExtension: String) throws -> URL {
@@ -20,32 +20,39 @@ final class WrongExtensionSaveTests: BinTestCase {
     }
 
     @Test(arguments: [
-        (TestBundleResources.shared.tabla_m4a, "mp3", UTType.mpeg4Audio, "m4a"),
-        (TestBundleResources.shared.tabla_aif, "mp3", UTType.aiff, "aif"),
-        (TestBundleResources.shared.tabla_m4a, "wav", UTType.mpeg4Audio, "m4a"),
+        (TestBundleResources.shared.tabla_m4a, "mp3", "ftyp", 4),
+        (TestBundleResources.shared.tabla_wav, "mp3", "RIFF", 0),
+        (TestBundleResources.shared.tabla_flac, "mp3", "fLaC", 0),
+        (TestBundleResources.shared.tabla_aif, "wav", "FORM", 0),
     ])
-    func aSaveIsRefusedAndLeavesTheFileAsItWas(
-        source: URL, named: String, actual: UTType, expectedExtension: String
-    ) async throws {
+    func aSaveKeepsTheContainerAndItsTags(source: URL, named: String, signature: String, offset: Int) async throws {
         let url = try renamed(source, to: named)
-        let original = try Data(contentsOf: url)
 
         var description = try await MetaAudioFileDescription(parsing: url)
-        description.tagProperties[.title] = "After"
+        let tags = description.tagProperties.tags
+        try #require(tags.isNotEmpty)
 
-        #expect(throws: MetadataError.contentMismatch(url, actual: actual, pathExtension: expectedExtension)) {
-            try description.save(dirtyFlags: [.tags])
-        }
-        #expect(try Data(contentsOf: url) == original)
-    }
-
-    @Test func aFileNamedForItsContentStillSaves() async throws {
-        let url = try copyToBin(url: TestBundleResources.shared.tabla_m4a)
-
-        var description = try await MetaAudioFileDescription(parsing: url)
         description.tagProperties[.title] = "After"
         try description.save(dirtyFlags: [.tags])
 
-        #expect(try await MetaAudioFileDescription(parsing: url).tagProperties[.title] == "After")
+        var expected = tags
+        expected[.title] = "After"
+
+        #expect(try Data(contentsOf: url).dropFirst(offset).prefix(4) == Data(signature.utf8))
+        #expect(try await MetaAudioFileDescription(parsing: url).tagProperties.tags == expected)
+    }
+
+    @Test func markersSavedToAnMP4NamedAsMP3AreItsChapters() async throws {
+        let url = try renamed(TestBundleResources.shared.tabla_m4a, to: "mp3")
+
+        var description = try await MetaAudioFileDescription(parsing: url)
+        let markers = description.markerCollection.markerDescriptions
+        try #require(markers.count > 1)
+
+        description.markerCollection = AudioMarkerDescriptionCollection(markerDescriptions: Array(markers.dropLast()))
+        try description.save(dirtyFlags: [.markers])
+
+        let asMP4 = try renamed(url, to: "m4a")
+        #expect(try await AudioMarkerDescriptionCollection(url: asMP4).count == markers.count - 1)
     }
 }

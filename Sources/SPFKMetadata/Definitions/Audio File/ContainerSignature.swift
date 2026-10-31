@@ -1,7 +1,6 @@
 // Copyright Ryan Francesconi. All Rights Reserved. Revision History at https://github.com/ryanfrancesconi/spfk-metadata
 
 import Foundation
-import UniformTypeIdentifiers
 
 /// The container a file's first bytes prove it to be, for formats with an unambiguous signature.
 ///
@@ -24,10 +23,9 @@ enum ContainerSignature: Equatable {
         }
     }
 
-    /// What a file's content is, as a type and the extension to give it.
+    /// What a file's content is, and the extension to give it.
     struct Content: Equatable {
         let container: ContainerSignature
-        let type: UTType
         let pathExtension: String
     }
 
@@ -73,8 +71,7 @@ enum ContainerSignature: Equatable {
         return format == 0x0050 || format == 0x0055
     }
 
-    /// `header` is the first bytes of a file after any ID3v2 tag. The extension is chosen here rather than taken from
-    /// the type, whose preferred extension for MPEG-4 audio is `mp4`, not `m4a`.
+    /// `header` is the first bytes of a file after any ID3v2 tag.
     static func content(of header: Data) -> Content? {
         guard header.count >= 12 else { return nil }
         let bytes = [UInt8](header)
@@ -82,32 +79,32 @@ enum ContainerSignature: Equatable {
 
         switch (text(0), text(8)) {
         case ("RIFF", "WAVE"), ("RF64", "WAVE"), ("BW64", "WAVE"):
-            return Content(container: .wave, type: .wav, pathExtension: "wav")
+            return Content(container: .wave, pathExtension: "wav")
         case ("FORM", "AIFF"), ("FORM", "AIFC"):
-            return Content(container: .aiff, type: .aiff, pathExtension: "aif")
+            return Content(container: .aiff, pathExtension: "aif")
         default:
             break
         }
 
         if text(4) == "ftyp" {
             return switch text(8) {
-            case "M4A ": Content(container: .mp4, type: .mpeg4Audio, pathExtension: "m4a")
-            case "M4B ": Content(container: .mp4, type: .mpeg4Audio, pathExtension: "m4b")
-            default: Content(container: .mp4, type: .mpeg4Movie, pathExtension: "mp4")
+            case "M4A ": Content(container: .mp4, pathExtension: "m4a")
+            case "M4B ": Content(container: .mp4, pathExtension: "m4b")
+            default: Content(container: .mp4, pathExtension: "mp4")
             }
         }
 
         switch text(0) {
         case "fLaC":
-            return Content(container: .flac, type: UTType(filenameExtension: "flac") ?? .audio, pathExtension: "flac")
+            return Content(container: .flac, pathExtension: "flac")
         case "OggS":
-            return Content(container: .ogg, type: UTType(filenameExtension: "ogg") ?? .audio, pathExtension: "ogg")
+            return Content(container: .ogg, pathExtension: "ogg")
         default:
             break
         }
 
         if bytes.starts(with: [0x1A, 0x45, 0xDF, 0xA3]) {
-            return Content(container: .matroska, type: UTType(filenameExtension: "mkv") ?? .movie, pathExtension: "mkv")
+            return Content(container: .matroska, pathExtension: "mkv")
         }
 
         return nil
