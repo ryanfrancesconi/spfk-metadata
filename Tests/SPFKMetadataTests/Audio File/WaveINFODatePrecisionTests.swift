@@ -69,4 +69,54 @@ final class WaveINFODatePrecisionTests: BinTestCase {
         let reloaded = try await MetaAudioFileDescription(parsing: url)
         #expect(reloaded.tagProperties[.date] == "2026-01-22")
     }
+
+    // MARK: - Rows read before the version stamp
+
+    /// The description as an unstamped reader left it, holding `date`.
+    private func unstampedDescription(of url: URL, date: String?) async throws -> MetaAudioFileDescription {
+        var description = try await MetaAudioFileDescription(parsing: url)
+        description.tagProperties.tags[.date] = date
+        description.tagReaderVersion = nil
+        return description
+    }
+
+    @Test func unstampedYearIsRefreshedToTheFullDate() async throws {
+        let url = try wave(infoDate: "2026-01-22", year: "2026")
+        var description = try await unstampedDescription(of: url, date: "2026")
+        #expect(description.hasStaleTagRead)
+
+        let refreshed = description.refreshStaleTagRead()
+        #expect(refreshed)
+
+        #expect(description.tagProperties[.date] == "2026-01-22")
+        #expect(description.tagReaderVersion == MetaAudioFileDescription.currentTagReaderVersion)
+        #expect(!description.hasStaleTagRead)
+    }
+
+    /// A held date the file's doesn't extend is the row's own, and stays.
+    @Test func unstampedDateTheFileDoesNotExtendIsKept() async throws {
+        let url = try wave(infoDate: "2026-01-22", year: "2026")
+        var description = try await unstampedDescription(of: url, date: "2019")
+
+        let refreshed = description.refreshStaleTagRead()
+        #expect(refreshed)
+
+        #expect(description.tagProperties[.date] == "2019")
+    }
+
+    @Test func editedUnstampedRowReportsTheFullDate() async throws {
+        let url = try wave(infoDate: "2026-01-22", year: "2026")
+        var description = try await unstampedDescription(of: url, date: "2026")
+        description.tagProperties[.title] = "Edited Title"
+
+        #expect(description.staleTagReadRecoversText() == true)
+        #expect(description.tagProperties[.date] == "2026")
+    }
+
+    @Test func unstampedRowWithoutADateOrEmptyValueIsNotStale() async throws {
+        let url = try wave(infoDate: "2026-01-22", year: "2026")
+        let description = try await unstampedDescription(of: url, date: nil)
+
+        #expect(!description.hasStaleTagRead)
+    }
 }

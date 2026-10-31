@@ -38,7 +38,7 @@ extension TagProperties {
             data.set(taglibKey: key, value: value)
         }
 
-        if let infoDate, let date = data.tags[.date], infoDate.count > date.count, infoDate.hasPrefix(date) {
+        if let infoDate, let date = data.tags[.date], infoDate.extends(date) {
             data.tags[.date] = infoDate
         }
     }
@@ -120,5 +120,12 @@ extension WaveFileC {
         if let frame = TagKey.rating.infoFrame {
             infoDictionary = NSMutableDictionary(dictionary: [frame.value: rating ?? ""])
         }
+    }
+}
+
+extension String {
+    /// Longer than `other` and starting with it: `2026-01-22` extends `2026`.
+    func extends(_ other: String) -> Bool {
+        count > other.count && hasPrefix(other)
     }
 }
