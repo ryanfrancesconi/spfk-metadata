@@ -1,0 +1,40 @@
+{
+  "audioFormat" : {
+    "bitRate" : 127,
+    "channelCount" : 6,
+    "duration" : 1.984,
+    "sampleRate" : 48000
+  },
+  "fileType" : "ogg",
+  "imageDescription" : {
+    "description" : "<file path>",
+    "hasThumbnail" : false,
+    "size" : null
+  },
+  "isAVPlayable" : true,
+  "isDecodable" : false,
+  "isProtected" : false,
+  "markerCollection" : {
+    "markerDescriptions" : [
+
+    ]
+  },
+  "tagProperties" : {
+    "audioProperties" : {
+      "bitRate" : 127,
+      "channelCount" : 6,
+      "duration" : 1.984,
+      "sampleRate" : 48000
+    },
+    "data" : {
+      "customTags" : {
+        "ENCODER" : "Lavc63.1.100 libvorbis"
+      },
+      "tags" : {
+        "artist" : "Spongefork",
+        "title" : "SPFK Surround Vorbis"
+      }
+    }
+  },
+  "tagReaderVersion" : 1
+}

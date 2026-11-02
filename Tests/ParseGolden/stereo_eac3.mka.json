@@ -1,0 +1,51 @@
+{
+  "audioFormat" : {
+    "bitRate" : 197,
+    "channelCount" : 2,
+    "duration" : 2.0049999999999999,
+    "sampleRate" : 48000
+  },
+  "audioTracks" : [
+    {
+      "channelCount" : 2,
+      "codec" : "A_EAC3",
+      "id" : 1553894927097643995,
+      "language" : "und",
+      "sampleRate" : 48000
+    }
+  ],
+  "fileType" : "mka",
+  "imageDescription" : {
+    "description" : "<file path>",
+    "hasThumbnail" : false,
+    "size" : null
+  },
+  "isAVPlayable" : false,
+  "isDecodable" : true,
+  "isProtected" : false,
+  "markerCollection" : {
+    "markerDescriptions" : [
+
+    ]
+  },
+  "tagProperties" : {
+    "audioProperties" : {
+      "bitRate" : 197,
+      "channelCount" : 2,
+      "duration" : 2.0049999999999999,
+      "sampleRate" : 48000
+    },
+    "data" : {
+      "customTags" : {
+
+      },
+      "tags" : {
+        "artist" : "Spongefork",
+        "encodedBy" : "Lavf63.1.100",
+        "title" : "SPFK Stereo E-AC-3"
+      }
+    }
+  },
+  "tagReaderVersion" : 1,
+  "trackReaderVersion" : 6
+}

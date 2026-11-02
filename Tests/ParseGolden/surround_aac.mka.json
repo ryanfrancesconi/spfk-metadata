@@ -1,0 +1,51 @@
+{
+  "audioFormat" : {
+    "bitRate" : 388,
+    "channelCount" : 6,
+    "duration" : 2.0049999999999999,
+    "sampleRate" : 48000
+  },
+  "audioTracks" : [
+    {
+      "channelCount" : 6,
+      "codec" : "A_AAC",
+      "id" : 18180899940573677885,
+      "language" : "und",
+      "sampleRate" : 48000
+    }
+  ],
+  "fileType" : "mka",
+  "imageDescription" : {
+    "description" : "<file path>",
+    "hasThumbnail" : false,
+    "size" : null
+  },
+  "isAVPlayable" : false,
+  "isDecodable" : true,
+  "isProtected" : false,
+  "markerCollection" : {
+    "markerDescriptions" : [
+
+    ]
+  },
+  "tagProperties" : {
+    "audioProperties" : {
+      "bitRate" : 388,
+      "channelCount" : 6,
+      "duration" : 2.0049999999999999,
+      "sampleRate" : 48000
+    },
+    "data" : {
+      "customTags" : {
+
+      },
+      "tags" : {
+        "artist" : "Spongefork",
+        "encodedBy" : "Lavf63.1.100",
+        "title" : "SPFK Surround AAC"
+      }
+    }
+  },
+  "tagReaderVersion" : 1,
+  "trackReaderVersion" : 6
+}

@@ -1,0 +1,51 @@
+{
+  "audioFormat" : {
+    "bitRate" : 388,
+    "channelCount" : 6,
+    "duration" : 1.984,
+    "sampleRate" : 48000
+  },
+  "audioTracks" : [
+    {
+      "channelCount" : 6,
+      "codec" : "A_AC3",
+      "id" : 7644944130446058277,
+      "language" : "und",
+      "sampleRate" : 48000
+    }
+  ],
+  "fileType" : "mka",
+  "imageDescription" : {
+    "description" : "<file path>",
+    "hasThumbnail" : false,
+    "size" : null
+  },
+  "isAVPlayable" : false,
+  "isDecodable" : true,
+  "isProtected" : false,
+  "markerCollection" : {
+    "markerDescriptions" : [
+
+    ]
+  },
+  "tagProperties" : {
+    "audioProperties" : {
+      "bitRate" : 388,
+      "channelCount" : 6,
+      "duration" : 1.984,
+      "sampleRate" : 48000
+    },
+    "data" : {
+      "customTags" : {
+
+      },
+      "tags" : {
+        "artist" : "Spongefork",
+        "encodedBy" : "Lavf63.1.100",
+        "title" : "SPFK Surround AC-3"
+      }
+    }
+  },
+  "tagReaderVersion" : 1,
+  "trackReaderVersion" : 6
+}
