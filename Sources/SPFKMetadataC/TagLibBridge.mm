@@ -200,7 +200,7 @@ namespace {
 
     // Each container stores the rating differently (ID3 POPM, the MP4 `rate` atom, Xiph RATING), so it
     // is carried separately. A raw PropertyMap value must not travel as text.
-    int ratingStars = TagRatingReadFromFile(input.file());
+    int ratingStars = TagRatingFile::readFromFile(input.file());
 
     if (TagUtil::holdsRawRating(input.file()))
         tags.erase("RATING");
@@ -245,7 +245,7 @@ namespace {
         mp4->tag()->setItem(gaplessKey, gapless);
 
     // The destination is already stripped, so its tags are saved even when the rating can't be.
-    bool ratingWritten = ratingStars <= 0 || TagRatingWriteToFile(output.file(), ratingStars);
+    bool ratingWritten = ratingStars <= 0 || TagRatingFile::writeToFile(output.file(), ratingStars);
 
     return FileSave::save(output.file()) && ratingWritten;
 }

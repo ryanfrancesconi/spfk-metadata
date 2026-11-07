@@ -52,7 +52,7 @@ static std::string encodedText(NSString *value, NSUInteger maxBytes) {
 
 /// Null-terminated when it fits.
 static void writeText(uint8_t *bytes, NSUInteger offset, NSString *value, NSUInteger size) {
-    StringUtil::strncpy_validate((char *)bytes + offset, encodedText(value, size).c_str(), size);
+    StringUtil::strncpyValidate((char *)bytes + offset, encodedText(value, size).c_str(), size);
 }
 
 /// Date and time: a short value is padded with the character '0', never terminated. Nil or empty
@@ -62,7 +62,7 @@ static void writeFixedText(uint8_t *bytes, NSUInteger offset, NSString *value, N
         return;
     }
 
-    StringUtil::strncpy_pad0((char *)bytes + offset, encodedText(value, size).c_str(), size, false);
+    StringUtil::strncpyPad0((char *)bytes + offset, encodedText(value, size).c_str(), size, false);
 }
 
 /// Nil and empty are the same absent value.

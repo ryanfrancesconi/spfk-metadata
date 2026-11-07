@@ -73,7 +73,9 @@ static RatingStore ratingStore(TagLib::File *f, bool create) {
     return monostate();
 }
 
-int TagRatingReadFromFile(TagLib::File *f) {
+namespace TagRatingFile {
+
+int readFromFile(TagLib::File *f) {
     return visit(Overloaded {
                      [](monostate) { return -1; },
                      [](ID3v2::Tag *tag) { return readID3(tag); },
@@ -86,7 +88,7 @@ int TagRatingReadFromFile(TagLib::File *f) {
                  ratingStore(f, false));
 }
 
-bool TagRatingWriteToFile(TagLib::File *f, int stars) {
+bool writeToFile(TagLib::File *f, int stars) {
     return visit(Overloaded {
                      [&](monostate) { return stars <= 0; },
                      [&](ID3v2::Tag *tag) { writeID3(tag, stars); return true; },
@@ -99,7 +101,7 @@ bool TagRatingWriteToFile(TagLib::File *f, int stars) {
                  ratingStore(f, true));
 }
 
-int TagRatingStarsInDictionary(NSDictionary *dictionary) {
+int starsInDictionary(NSDictionary *dictionary) {
     NSString *value = [dictionary objectForKey:@"RATING"];
 
     if (value == nil)
@@ -108,6 +110,8 @@ int TagRatingStarsInDictionary(NSDictionary *dictionary) {
     int v = [value intValue];
     return (v >= TagRatingMinStars && v <= TagRatingMaxStars) ? v : 0;
 }
+
+} // namespace TagRatingFile
 
 // MARK: - Public path-based interface
 
@@ -118,7 +122,7 @@ int TagRatingStarsInDictionary(NSDictionary *dictionary) {
     FileRef fileRef(path.UTF8String, false);
     if (fileRef.isNull())
         return -1;
-    return TagRatingReadFromFile(fileRef.file());
+    return TagRatingFile::readFromFile(fileRef.file());
 }
 
 + (BOOL)write:(int)stars toPath:(NSString *)path {
@@ -132,7 +136,7 @@ int TagRatingStarsInDictionary(NSDictionary *dictionary) {
     if (fileRef.isNull())
         return NO;
 
-    if (!TagRatingWriteToFile(fileRef.file(), stars))
+    if (!TagRatingFile::writeToFile(fileRef.file(), stars))
         return NO;
     return FileSave::save(fileRef.file());
 }

@@ -106,7 +106,7 @@ using namespace TagLib;
     }
 
     // Outside the PropertyMap; see TagRatingFile.h.
-    int ratingStars = TagRatingReadFromFile(fileRef.file());
+    int ratingStars = TagRatingFile::readFromFile(fileRef.file());
     if (ratingStars >= 1) {
         [_dictionary setValue:[NSString stringWithFormat:@"%d", ratingStars] forKey:@"RATING"];
     }
@@ -134,7 +134,7 @@ using namespace TagLib;
     File *f = static_cast<File *>(file);
 
     // Kept out of the PropertyMap, where it would become a TXXX:RATING frame.
-    int ratingStars = TagRatingStarsInDictionary(_dictionary);
+    int ratingStars = TagRatingFile::starsInDictionary(_dictionary);
 
     auto *mpegFile = dynamic_cast<MPEG::File *>(f);
     auto *wavFile = dynamic_cast<RIFF::WAV::File *>(f);
@@ -206,7 +206,7 @@ using namespace TagLib;
     }
 
     // Reported after the restores below: a rating the container cannot store fails only itself.
-    const bool ratingWritten = TagRatingWriteToFile(f, ratingStars);
+    const bool ratingWritten = TagRatingFile::writeToFile(f, ratingStars);
 
     // The clear keeps the stored packet's `PRIV` frame, so it changes only when asked.
     if (mpegFile && _xmpNeedsSave) {

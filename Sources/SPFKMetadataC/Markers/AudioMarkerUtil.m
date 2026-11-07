@@ -9,7 +9,7 @@
 #import "WaveMarkerChunks.h"
 
 /// Logs a failure. The caller closes a file this opens.
-static BOOL OpenAudioFile(NSURL *url, AudioFilePermissions permission, AudioFileID *fileID) {
+static BOOL openAudioFile(NSURL *url, AudioFilePermissions permission, AudioFileID *fileID) {
     if (noErr != AudioFileOpenURL((__bridge CFURLRef)url, permission, 0, fileID)) {
         NSLog(@"AudioMarkerUtil: Failed to open url %@", url);
         return false;
@@ -19,7 +19,7 @@ static BOOL OpenAudioFile(NSURL *url, AudioFilePermissions permission, AudioFile
 }
 
 /// Takes ownership of each marker's name. Nil when the list can't be read.
-static NSArray *MarkersFromList(AudioFileID fileID, AudioFileMarkerList *markerList, UInt32 propertySize, NSURL *url) {
+static NSArray *markersFromList(AudioFileID fileID, AudioFileMarkerList *markerList, UInt32 propertySize, NSURL *url) {
     if (noErr != AudioFileGetProperty(fileID, kAudioFilePropertyMarkerList, &propertySize, markerList)) {
         NSLog(@"AudioMarkerUtil: Failed to get kAudioFilePropertyMarkerList for %@", url);
         return NULL;
@@ -63,7 +63,7 @@ static NSArray *MarkersFromList(AudioFileID fileID, AudioFileMarkerList *markerL
     return [array copy];
 }
 
-static NSArray *ReadMarkers(AudioFileID fileID, NSURL *url) {
+static NSArray *readMarkers(AudioFileID fileID, NSURL *url) {
     UInt32 propertySize;
     UInt32 writable;
 
@@ -77,13 +77,13 @@ static NSArray *ReadMarkers(AudioFileID fileID, NSURL *url) {
     }
 
     AudioFileMarkerList *markerList = malloc(propertySize);
-    NSArray *markers = MarkersFromList(fileID, markerList, propertySize, url);
+    NSArray *markers = markersFromList(fileID, markerList, propertySize, url);
     free(markerList);
 
     return markers;
 }
 
-static BOOL WriteMarkers(AudioFileID fileID, NSArray *markers, NSURL *url) {
+static BOOL writeMarkers(AudioFileID fileID, NSArray *markers, NSURL *url) {
     // Positions are in the file's frames, so the marker's own sampleRate is not used.
     AudioStreamBasicDescription format;
     UInt32 dataFormatSize = sizeof(format);
@@ -131,10 +131,10 @@ static BOOL WriteMarkers(AudioFileID fileID, NSArray *markers, NSURL *url) {
 }
 
 /// The file's sample rate as Core Audio reads it; 0 when it cannot be read.
-static Float64 FileSampleRate(NSURL *url) {
+static Float64 fileSampleRate(NSURL *url) {
     AudioFileID fileID;
 
-    if (!OpenAudioFile(url, kAudioFileReadPermission, &fileID)) {
+    if (!openAudioFile(url, kAudioFileReadPermission, &fileID)) {
         return 0;
     }
 
@@ -146,7 +146,7 @@ static Float64 FileSampleRate(NSURL *url) {
     return status == noErr ? format.mSampleRate : 0;
 }
 
-static BOOL RemoveMarkers(AudioFileID fileID) {
+static BOOL removeMarkers(AudioFileID fileID) {
     UInt32 propertySize = (UInt32)NumAudioFileMarkersToNumBytes(0);
     AudioFileMarkerList *markerList = malloc(propertySize);
     markerList->mNumberMarkers = 0;
@@ -171,11 +171,11 @@ static BOOL RemoveMarkers(AudioFileID fileID) {
 
     AudioFileID fileID;
 
-    if (!OpenAudioFile(url, kAudioFileReadPermission, &fileID)) {
+    if (!openAudioFile(url, kAudioFileReadPermission, &fileID)) {
         return NULL;
     }
 
-    NSArray *markers = ReadMarkers(fileID, url);
+    NSArray *markers = readMarkers(fileID, url);
 
     AudioFileTypeID format = 0;
     UInt32 formatSize = sizeof(format);
@@ -196,16 +196,16 @@ static BOOL RemoveMarkers(AudioFileID fileID) {
 
     // Core Audio rewrites the whole file to make room for `MARK` ahead of the sound data.
     if ([AIFFMarkerChunks isAIFF:url]) {
-        return [AIFFMarkerChunks write:markers to:url sampleRate:FileSampleRate(url)];
+        return [AIFFMarkerChunks write:markers to:url sampleRate:fileSampleRate(url)];
     }
 
     AudioFileID fileID;
 
-    if (!OpenAudioFile(url, kAudioFileReadWritePermission, &fileID)) {
+    if (!openAudioFile(url, kAudioFileReadWritePermission, &fileID)) {
         return false;
     }
 
-    BOOL success = WriteMarkers(fileID, markers, url);
+    BOOL success = writeMarkers(fileID, markers, url);
     AudioFileClose(fileID);
 
     return success;
@@ -222,11 +222,11 @@ static BOOL RemoveMarkers(AudioFileID fileID) {
 
     AudioFileID fileID;
 
-    if (!OpenAudioFile(url, kAudioFileReadWritePermission, &fileID)) {
+    if (!openAudioFile(url, kAudioFileReadWritePermission, &fileID)) {
         return false;
     }
 
-    BOOL success = RemoveMarkers(fileID);
+    BOOL success = removeMarkers(fileID);
     AudioFileClose(fileID);
 
     return success;

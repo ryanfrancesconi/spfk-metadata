@@ -8,7 +8,7 @@
 
 namespace StringUtil {
 /// Copies at most `n` bytes, null-terminated only when shorter than the field. Returns the count.
-static size_t strncpy_validate(char *dest, const char *src, size_t n) {
+static size_t strncpyValidate(char *dest, const char *src, size_t n) {
     size_t length = strlen(src) + 1;
 
     if (length >= n) {
@@ -22,7 +22,7 @@ static size_t strncpy_validate(char *dest, const char *src, size_t n) {
 }
 
 /// Pads a short value to `n` with the character '0' (not a null), as BEXT's date and time fields expect.
-static void strncpy_pad0(char *dest, const char *src, size_t n, bool terminate) {
+static void strncpyPad0(char *dest, const char *src, size_t n, bool terminate) {
     size_t length = strlen(src);
 
     if (length < n) {

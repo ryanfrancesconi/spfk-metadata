@@ -120,7 +120,7 @@ using namespace TagLib;
     }
 
     // Outside the PropertyMap; see TagRatingFile.h.
-    int ratingStars = TagRatingReadFromFile(waveFile);
+    int ratingStars = TagRatingFile::readFromFile(waveFile);
     if (ratingStars >= 1) {
         [_id3Properties setValue:[NSString stringWithFormat:@"%d", ratingStars] forKey:@"RATING"];
     }
@@ -205,7 +205,7 @@ using namespace TagLib;
         file.InfoTag()->setFieldText(String(key.UTF8String, String::UTF8).data(String::UTF8), String(value.UTF8String, String::UTF8));
     }
 
-    return TagRatingWriteToFile(&file, TagRatingStarsInDictionary(_id3Properties));
+    return TagRatingFile::writeToFile(&file, TagRatingFile::starsInDictionary(_id3Properties));
 }
 
 /// The ID3 tag, then `infoDictionary`'s fields set, an empty value removing its field. False only

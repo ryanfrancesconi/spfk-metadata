@@ -104,7 +104,7 @@ struct MatroskaTests {
     }
 
     /// Rating is the one tag that does **not** travel in the PropertyMap: `TagFile.save` pulls
-    /// `RATING` out and routes it through `TagRatingWriteToFile`, which had no Matroska branch — so
+    /// `RATING` out and routes it through `TagRatingFile::writeToFile`, which had no Matroska branch — so
     /// a rating was read correctly, accepted by the editor, and then silently dropped on save.
     ///
     /// The write is read-modify-write on the property map, so this also has to prove the tags
