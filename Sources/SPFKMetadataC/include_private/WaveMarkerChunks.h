@@ -1,7 +1,6 @@
 // Copyright Ryan Francesconi. All Rights Reserved. Revision History at https://github.com/ryanfrancesconi/spfk-metadata
 
-#ifndef WaveMarkerChunks_H
-#define WaveMarkerChunks_H
+#pragma once
 
 #import <Foundation/Foundation.h>
 
@@ -66,5 +65,3 @@ bool write(WaveMarkerFile &file, NSArray *_Nonnull markers);
 } // namespace WaveMarkers
 
 #endif
-
-#endif /* WaveMarkerChunks_H */

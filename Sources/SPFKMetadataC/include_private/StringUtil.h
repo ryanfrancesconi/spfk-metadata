@@ -1,7 +1,6 @@
 // Copyright Ryan Francesconi. All Rights Reserved. Revision History at https://github.com/ryanfrancesconi/spfk-metadata
 
-#ifndef StringUtil_H
-#define StringUtil_H
+#pragma once
 
 #import <Foundation/Foundation.h>
 #import <iostream>
@@ -105,5 +104,3 @@ static const char *asciiCString(NSString *string) { return [string cStringUsingE
 
 static const char *utf8CString(NSString *string) { return [string cStringUsingEncoding:NSUTF8StringEncoding]; }
 } // namespace StringUtil
-
-#endif // !StringUtil_H

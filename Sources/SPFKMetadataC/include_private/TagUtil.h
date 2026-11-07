@@ -1,7 +1,6 @@
 // Copyright Ryan Francesconi. All Rights Reserved. Revision History at https://github.com/ryanfrancesconi/spfk-metadata
 
-#ifndef TagUtil_H
-#define TagUtil_H
+#pragma once
 
 #import <Foundation/Foundation.h>
 #import <iostream>
@@ -304,5 +303,3 @@ static NSMutableDictionary *parseID3ToDictionary(NSString *path) {
     return convertToDictionary(tag->frameList());
 }
 } // namespace TagUtil
-
-#endif // !TagUtil_H

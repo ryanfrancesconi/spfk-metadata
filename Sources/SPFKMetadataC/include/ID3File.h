@@ -2,8 +2,7 @@
 
 #import <Foundation/Foundation.h>
 
-#ifndef ID3FILE_H
-#define ID3FILE_H
+#pragma once
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -24,5 +23,3 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 NS_ASSUME_NONNULL_END
-
-#endif /* ID3FILE_H */

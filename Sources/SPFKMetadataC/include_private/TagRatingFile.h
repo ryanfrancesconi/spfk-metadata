@@ -1,7 +1,6 @@
 // Copyright Ryan Francesconi. All Rights Reserved. Revision History at https://github.com/ryanfrancesconi/spfk-metadata
 
-#ifndef TagRatingFile_H
-#define TagRatingFile_H
+#pragma once
 
 #import <Foundation/Foundation.h>
 
@@ -18,5 +17,3 @@ bool TagRatingWriteToFile(TagLib::File *f, int stars);
 
 /// The dictionary's `RATING` as stars; 0 when absent or out of range, so a save clears it.
 int TagRatingStarsInDictionary(NSDictionary *dictionary);
-
-#endif

@@ -1,7 +1,6 @@
 // Copyright Ryan Francesconi. All Rights Reserved. Revision History at https://github.com/ryanfrancesconi/spfk-metadata
 
-#ifndef AIFFMarkerChunks_H
-#define AIFFMarkerChunks_H
+#pragma once
 
 #import <Foundation/Foundation.h>
 
@@ -36,7 +35,5 @@ namespace AIFFMarkers {
 /// The edit that replaces the file's `MARK` chunk; an empty array removes it.
 IFFChunkPlanner::Edit edit(NSArray *_Nonnull markers, double sampleRate);
 }
-
-#endif
 
 #endif

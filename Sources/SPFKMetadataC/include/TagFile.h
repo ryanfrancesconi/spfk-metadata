@@ -1,7 +1,6 @@
 // Copyright Ryan Francesconi. All Rights Reserved. Revision History at https://github.com/ryanfrancesconi/spfk-metadata
 
-#ifndef TAGFILE_H
-#define TAGFILE_H
+#pragma once
 
 #import "TagAudioPropertiesC.h"
 #import <Foundation/Foundation.h>
@@ -48,5 +47,3 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 NS_ASSUME_NONNULL_END
-
-#endif /* TAGFILE_H */

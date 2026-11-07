@@ -1,7 +1,6 @@
 // Copyright Ryan Francesconi. All Rights Reserved. Revision History at https://github.com/ryanfrancesconi/spfk-metadata
 
-#ifndef TagRatingStores_H
-#define TagRatingStores_H
+#pragma once
 
 #import <taglib/apetag.h>
 #import <taglib/asftag.h>
@@ -31,5 +30,3 @@ void writeMatroska(TagLib::Matroska::Tag *tag, int stars);
 int readASF(TagLib::ASF::Tag *tag);
 void writeASF(TagLib::ASF::Tag *tag, int stars);
 } // namespace TagRatingStores
-
-#endif

@@ -1,7 +1,6 @@
 // Copyright Ryan Francesconi. All Rights Reserved. Revision History at https://github.com/ryanfrancesconi/spfk-metadata
 
-#ifndef IFFCHUNKTABLE_H
-#define IFFCHUNKTABLE_H
+#pragma once
 
 #include <vector>
 
@@ -49,5 +48,3 @@ struct Table {
 bool read(TagLib::File &file, Table &table);
 
 } // namespace IFFChunkTable
-
-#endif

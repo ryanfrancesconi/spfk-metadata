@@ -1,7 +1,6 @@
 // Copyright Ryan Francesconi. All Rights Reserved. Revision History at https://github.com/ryanfrancesconi/spfk-metadata
 
-#ifndef TagImageDecoding_H
-#define TagImageDecoding_H
+#pragma once
 
 #import <CoreGraphics/CoreGraphics.h>
 #import <Foundation/Foundation.h>
@@ -16,6 +15,4 @@ CGImageRef _Nullable TagCreateImage(NSData *_Nonnull data);
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif

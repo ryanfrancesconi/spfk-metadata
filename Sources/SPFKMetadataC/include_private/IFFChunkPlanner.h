@@ -1,7 +1,6 @@
 // Copyright Ryan Francesconi. All Rights Reserved. Revision History at https://github.com/ryanfrancesconi/spfk-metadata
 
-#ifndef IFFCHUNKPLANNER_H
-#define IFFCHUNKPLANNER_H
+#pragma once
 
 #include <optional>
 #include <vector>
@@ -52,5 +51,3 @@ bool save(TagLib::RIFF::WAV::File &file, std::vector<Edit> edits = {}, WaveChunk
 bool save(TagLib::RIFF::AIFF::File &file, std::vector<Edit> edits = {});
 
 } // namespace IFFChunkPlanner
-
-#endif

@@ -1,7 +1,6 @@
 // Copyright Ryan Francesconi. All Rights Reserved. Revision History at https://github.com/ryanfrancesconi/spfk-metadata
 
-#ifndef FILESAVE_H
-#define FILESAVE_H
+#pragma once
 
 #include <taglib/id3v2.h>
 #include <taglib/id3v2tag.h>
@@ -19,5 +18,3 @@ bool save(TagLib::File *file);
 TagLib::ID3v2::Version id3Version(TagLib::ID3v2::Tag *tag);
 
 } // namespace FileSave
-
-#endif /* FILESAVE_H */
