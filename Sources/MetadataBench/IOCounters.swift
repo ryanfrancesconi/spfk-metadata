@@ -13,8 +13,8 @@ enum IOCounters {
         dlsym(UnsafeMutableRawPointer(bitPattern: -2), name).map { unsafeBitCast($0, to: Counter.self) }
     }
 
-    private static let openCount = counter("spfk_bench_open_count")
-    private static let bytesWritten = counter("spfk_bench_bytes_written")
+    private static let openCount = counter("benchOpenCount")
+    private static let bytesWritten = counter("benchBytesWritten")
 
     static var isCounting: Bool {
         openCount != nil && bytesWritten != nil
