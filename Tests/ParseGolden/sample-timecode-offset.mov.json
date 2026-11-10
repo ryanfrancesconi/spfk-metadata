@@ -48,13 +48,14 @@
     }
   },
   "tagReaderVersion" : 1,
-  "trackReaderVersion" : 6,
+  "trackReaderVersion" : 7,
   "videoTrack" : {
     "codec" : "avc1",
     "duration" : 2.0019999999999998,
     "height" : 120,
+    "isMirrored" : false,
     "nominalFrameRate" : 29.970030000000001,
-    "parserVersion" : 6,
+    "parserVersion" : 7,
     "preciseFrameRate" : "29.97d",
     "rotationDegrees" : 0,
     "startTimecodeString" : "01:00:00;01",
