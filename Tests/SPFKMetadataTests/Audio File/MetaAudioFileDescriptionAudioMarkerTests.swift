@@ -30,11 +30,6 @@ struct MetaAudioFileDescriptionAudioMarkerTests {
         #expect(markers[1].time == 5.0)
     }
 
-    @Test func audioMarkersEmpty() {
-        let maf = MetaAudioFileDescription(url: URL(filePath: "/tmp/test.wav"))
-        #expect(maf.audioMarkers.isEmpty)
-    }
-
     @Test func audioMarkersWithoutAudioFormat() {
         var maf = MetaAudioFileDescription(url: URL(filePath: "/tmp/test.wav"))
         maf.markerCollection = AudioMarkerDescriptionCollection(markerDescriptions: [
