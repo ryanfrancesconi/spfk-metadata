@@ -141,10 +141,10 @@ class TagPictureTests: BinTestCase {
         )
         let tmpFile = try copyToBin(url: source)
 
-        // Write via path-based API — routes through FileRef::setComplexProperties
+        // Write via path-based API - routes through FileRef::setComplexProperties
         #expect(TagPicture.write(pictureRef, path: tmpFile.path))
 
-        // Read back via path-based API — should find the native PICTURE block
+        // Read back via path-based API - should find the native PICTURE block
         let readBack = try #require(TagPicture(path: tmpFile.path)?.pictureRef)
         #expect(readBack.cgImage.width == pictureRef.cgImage.width)
         #expect(readBack.cgImage.height == pictureRef.cgImage.height)
@@ -173,13 +173,13 @@ class TagPictureTests: BinTestCase {
 
         let tmpFile = try copyToBin(url: source)
 
-        // Write a picture — triggers migration: native block written, XiphComment stripped
+        // Write a picture - triggers migration: native block written, XiphComment stripped
         let newPicture = try #require(
             TagPictureRef(url: imageURL, pictureDescription: "Test", pictureType: "Front Cover")
         )
         #expect(TagPicture.write(newPicture, path: tmpFile.path))
 
-        // Re-read — artwork must still be present (now via native PICTURE block)
+        // Re-read - artwork must still be present (now via native PICTURE block)
         let readBack = try #require(TagPicture(path: tmpFile.path)?.pictureRef)
         #expect(readBack.cgImage.width > 0)
         #expect(readBack.cgImage.height > 0)
@@ -201,7 +201,7 @@ class TagPictureTests: BinTestCase {
         // Confirm artwork is present before removal
         #expect(TagPicture(path: tmpFile.path)?.pictureRef != nil)
 
-        // Remove without a prior write — exercises clearLegacyFlacXiphCommentPictures directly
+        // Remove without a prior write - exercises clearLegacyFlacXiphCommentPictures directly
         #expect(TagPicture.write(nil, path: tmpFile.path))
 
         // Artwork gone
@@ -223,14 +223,14 @@ class TagPictureTests: BinTestCase {
         // Verifies the CGImageSource path handles formats beyond JPEG and PNG.
         deleteBinOnExit = true
 
-        // Load image via TagPictureRef — exercises CGImageSource decode path in initWithURL:
+        // Load image via TagPictureRef - exercises CGImageSource decode path in initWithURL:
         let imageRef = try #require(
             TagPictureRef(url: imageURL, pictureDescription: "cover", pictureType: "Front Cover")
         )
         #expect(imageRef.cgImage.width > 0)
         #expect(imageRef.cgImage.height > 0)
 
-        // Embed in a FLAC copy and read back — exercises CGImageSource decode in buildPictureRef
+        // Embed in a FLAC copy and read back - exercises CGImageSource decode in buildPictureRef
         let tmpFile = try copyToBin(url: TestBundleResources.shared.tabla_flac)
         #expect(TagPicture.write(imageRef, path: tmpFile.path))
 

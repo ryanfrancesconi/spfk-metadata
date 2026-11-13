@@ -5,9 +5,9 @@ import SPFKBase
 import SPFKTesting
 import Testing
 
-/// Every save the app makes to a FLAC writes what it edits and leaves the rest — the app's other
+/// Every save the app makes to a FLAC writes what it edits and leaves the rest - the app's other
 /// components, other applications' Vorbis fields, pictures and blocks, and the order of the
-/// `riff` chunks a WAV is rebuilt from — as it was.
+/// `riff` chunks a WAV is rebuilt from - as it was.
 @Suite(.tags(.file, .metadataSafetyNet))
 final class SafetyNetFLACTests: BinTestCase {
     static let cases = SafetyNetCase.cases(

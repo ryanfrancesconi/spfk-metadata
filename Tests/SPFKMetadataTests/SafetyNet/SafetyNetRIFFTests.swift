@@ -5,8 +5,8 @@ import SPFKBase
 import SPFKTesting
 import Testing
 
-/// Every save the app makes to a WAV writes what it edits and leaves the rest — the app's other
-/// components, other applications' ID3 frames, INFO items, chunks and marker text — as it was.
+/// Every save the app makes to a WAV writes what it edits and leaves the rest - the app's other
+/// components, other applications' ID3 frames, INFO items, chunks and marker text - as it was.
 @Suite(.tags(.file, .metadataSafetyNet))
 final class SafetyNetRIFFTests: BinTestCase {
     static let cases = SafetyNetCase.cases(

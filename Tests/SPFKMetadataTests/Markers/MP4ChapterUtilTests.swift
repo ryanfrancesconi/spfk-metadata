@@ -109,7 +109,7 @@ class MP4ChapterUtilTests: BinTestCase {
         #expect(readBack[1].name == "Precise")
         // QT chapter tracks use ms timescale; verify millisecond precision round-trip
         #expect(abs(readBack[1].startTime - 1.5) < 0.002)
-        // Last chapter has no successor — endTime is 0
+        // Last chapter has no successor - endTime is 0
         #expect(readBack[1].endTime == 0)
     }
 
@@ -134,7 +134,7 @@ class MP4ChapterUtilTests: BinTestCase {
         #expect(abs(readBack[1].startTime - 1.0) < 0.001)
         #expect(abs(readBack[1].endTime - 2.5) < 0.001)
         #expect(abs(readBack[2].startTime - 2.5) < 0.001)
-        // Last chapter has no successor — endTime is 0
+        // Last chapter has no successor - endTime is 0
         #expect(readBack[2].endTime == 0)
     }
 
@@ -223,7 +223,7 @@ class MP4ChapterUtilTests: BinTestCase {
     }
 
     @Test func chaptersInNilForNonMP4File() async throws {
-        // WAV file is not an MP4 container — should return empty gracefully
+        // WAV file is not an MP4 container - should return empty gracefully
         let chapters = MP4ChapterUtil.read(TestBundleResources.shared.tabla_wav.path)
             as? [ChapterMarker] ?? []
         #expect(chapters.isEmpty, "Should return nil/empty for non-MP4 file")
@@ -266,7 +266,7 @@ class MP4ChapterUtilTests: BinTestCase {
         // Establish a clean baseline with no chapters
         #expect(MP4ChapterUtil.remove(tmpfile.path))
 
-        // Three write/remove cycles — file size after each remove must be stable
+        // Three write/remove cycles - file size after each remove must be stable
         var lastRemoveSize: Int = 0
 
         for cycle in 0 ..< 3 {
@@ -288,7 +288,7 @@ class MP4ChapterUtilTests: BinTestCase {
     // MARK: - Video
 
     /// **Writing chapters must not cost the file its other tracks.** A video file reaches this
-    /// writer through the same path an m4a does — ShadowTag clamps region markers into a trimmed
+    /// writer through the same path an m4a does - ShadowTag clamps region markers into a trimmed
     /// video, and the result replaces the user's original. A track dropped here is silent data
     /// loss: the write reports success and the caller has no reason to look.
     @Test func writingChaptersToAVideoKeepsItsAudioTrack() async throws {
@@ -404,7 +404,7 @@ class MP4ChapterUtilTests: BinTestCase {
     /// The reference types inside each `tref` of the file's first audio `trak`, in file order.
     ///
     /// Grouped per `tref` rather than flattened, so a track carrying two of them is distinguishable
-    /// from one carrying a single merged atom — which is the whole distinction under test.
+    /// from one carrying a single merged atom - which is the whole distinction under test.
     private func audioTrackTrefs(in url: URL) throws -> [[String]] {
         let data = try Data(contentsOf: url)
 

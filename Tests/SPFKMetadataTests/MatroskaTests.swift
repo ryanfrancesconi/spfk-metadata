@@ -12,7 +12,7 @@ import Testing
 /// Matroska (`.mkv` / `.webm`) support.
 ///
 /// TagLib 2.x ships a complete Matroska implementation and `FileRef` dispatches the extension, so
-/// the container needed no format-specific read or write path — only the Swift-side vocabulary that
+/// the container needed no format-specific read or write path - only the Swift-side vocabulary that
 /// was gating it. These tests pin that the gate is really open, because the failure mode if it
 /// closes again is silent: `AudioFileType(pathExtension:)` returns nil, `fileType` goes nil, and
 /// every capability check downstream fails closed while the file still imports and displays.
@@ -30,7 +30,7 @@ struct MatroskaTests {
     }
 
     /// `isVideo` derives from UTType conformance rather than a hand-written list, so this asserts
-    /// macOS really does declare the type — it is `org.matroska.mkv`, conforming to `.movie`.
+    /// macOS really does declare the type - it is `org.matroska.mkv`, conforming to `.movie`.
     @Test func matroskaIsRecognizedAsVideo() {
         #expect(AudioFileType.mkv.isVideo)
         #expect(AudioFileType.webm.isVideo)
@@ -104,7 +104,7 @@ struct MatroskaTests {
     }
 
     /// Rating is the one tag that does **not** travel in the PropertyMap: `TagFile.save` pulls
-    /// `RATING` out and routes it through `TagRatingFile::writeToFile`, which had no Matroska branch — so
+    /// `RATING` out and routes it through `TagRatingFile::writeToFile`, which had no Matroska branch - so
     /// a rating was read correctly, accepted by the editor, and then silently dropped on save.
     ///
     /// The write is read-modify-write on the property map, so this also has to prove the tags
@@ -162,7 +162,7 @@ struct MatroskaTests {
     /// every non-WAV file with `AVAudioFile` and threw when it could not, so a `.mkv` was accepted
     /// by the import filter and then failed to parse.
     ///
-    /// AVFoundation genuinely cannot open this container — asserted here rather than assumed,
+    /// AVFoundation genuinely cannot open this container - asserted here rather than assumed,
     /// because the fallback below is only meaningful if this is still true.
     @Test func avFoundationCannotOpenMatroska() {
         #expect(throws: (any Error).self) {
@@ -204,7 +204,7 @@ struct MatroskaTests {
         }
     }
 
-    /// The file must still be a valid Matroska container after a write — a rewrite that corrupts
+    /// The file must still be a valid Matroska container after a write - a rewrite that corrupts
     /// the container would still read back through TagLib's own parser, so assert the type is
     /// detectable from the bytes rather than from the extension.
     @Test func theContainerSurvivesAWrite() throws {

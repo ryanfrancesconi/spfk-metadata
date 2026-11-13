@@ -15,7 +15,7 @@ import Testing
 /// APPLICATION blocks in FLAC files.
 @Suite(.tags(.file))
 final class FlacFileCTests: BinTestCase {
-    // MARK: Load — clean file
+    // MARK: Load - clean file
 
     /// A plain FLAC file with no APPLICATION blocks should report no iXML or BEXT.
     @Test func loadCleanFLACHasNoApplicationBlocks() async throws {

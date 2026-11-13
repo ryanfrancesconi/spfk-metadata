@@ -13,7 +13,7 @@ import Testing
 /// indistinguishable from a file with one track.
 @Suite(.tags(.file))
 struct AudioTrackListingTests {
-    /// `org.matroska.mka` conforms to `.audio`, not `.movie` — the reason a videoless Matroska file
+    /// `org.matroska.mka` conforms to `.audio`, not `.movie` - the reason a videoless Matroska file
     /// listed nothing while every other Matroska container listed fine.
     @Test func parsingAMatroskaAudioFilePopulatesItsAudioTracks() async throws {
         let description = try await MetaAudioFileDescription(
@@ -36,7 +36,7 @@ struct AudioTrackListingTests {
     }
 
     /// A single track is still listed, because the menu is disabled by counting rows rather than by
-    /// an absent list — and because an empty list is what marks an element for re-reading.
+    /// an absent list - and because an empty list is what marks an element for re-reading.
     @Test func listsASingleTrackFileToo() async throws {
         let description = try await MetaAudioFileDescription(parsing: TestBundleResources.shared.tabla_m4a)
 

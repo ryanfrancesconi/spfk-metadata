@@ -49,7 +49,7 @@ struct FormatCorpus {
         return url
     }
 
-    /// Silent MPEG-1 Layer III frames: 128 kbps, 48 kHz, stereo, no CRC — 384 bytes and 1,152
+    /// Silent MPEG-1 Layer III frames: 128 kbps, 48 kHz, stereo, no CRC - 384 bytes and 1,152
     /// samples each.
     private func writeMP3(to url: URL) throws {
         let frame = Data([0xFF, 0xFB, 0x94, 0x00]) + Data(count: 380)

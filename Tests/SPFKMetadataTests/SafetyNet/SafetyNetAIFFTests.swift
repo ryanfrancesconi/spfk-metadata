@@ -5,8 +5,8 @@ import SPFKBase
 import SPFKTesting
 import Testing
 
-/// Every save the app makes to an AIFF writes what it edits and leaves the rest — the app's other
-/// components, other applications' ID3 frames, text, comments and application chunks — as it was.
+/// Every save the app makes to an AIFF writes what it edits and leaves the rest - the app's other
+/// components, other applications' ID3 frames, text, comments and application chunks - as it was.
 @Suite(.tags(.file, .metadataSafetyNet))
 final class SafetyNetAIFFTests: BinTestCase {
     static let cases = SafetyNetCase.cases(

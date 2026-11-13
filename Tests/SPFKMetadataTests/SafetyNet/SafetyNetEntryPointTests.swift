@@ -5,8 +5,8 @@ import SPFKBase
 import SPFKTesting
 import Testing
 
-/// The lower writers other callers use — TorchTag's tag save, conversion's artwork and marker
-/// writes, and `MetadataPaster`'s BEXT and iXML — leave everything they do not write as it was.
+/// The lower writers other callers use - TorchTag's tag save, conversion's artwork and marker
+/// writes, and `MetadataPaster`'s BEXT and iXML - leave everything they do not write as it was.
 @Suite(.tags(.file, .metadataSafetyNet))
 final class SafetyNetEntryPointTests: BinTestCase {
     static let rows: [SafetyNetRow] = [

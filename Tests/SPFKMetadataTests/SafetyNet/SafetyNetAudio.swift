@@ -7,7 +7,7 @@ import SPFKTesting
 extension SafetyNetSnapshot {
     /// The audio, found without `spfk-metadata`: a WAV's `data` payload, an AIFF's `SSND`, an Ogg file's audio pages, a Matroska file's clusters, a FLAC's frames after the
     /// metadata blocks, an MP3's frames between its ID3v2 and ID3v1 tags, and an MP4's audio decoded
-    /// to PCM — its `mdat` also holds the chapter track's text, which a marker save rewrites. Nil for
+    /// to PCM - its `mdat` also holds the chapter track's text, which a marker save rewrites. Nil for
     /// a container none of these recognize.
     func audioPayload(of data: Data) -> Data? {
         if let riff {

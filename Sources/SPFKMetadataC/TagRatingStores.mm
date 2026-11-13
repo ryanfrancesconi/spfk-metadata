@@ -284,7 +284,7 @@ int readASF(ASF::Tag *tag) {
             return starsFromAsf((int)l.front().toUInt());
     }
 
-    // POPM-style "email|rating|counter", rating 0–255; the precedence TagLib's `properties()` uses.
+    // POPM-style "email|rating|counter", rating 0-255; the precedence TagLib's `properties()` uses.
     if (tag->contains("POPULARIMETER")) {
         ASF::AttributeList l = tag->attribute("POPULARIMETER");
         if (!l.isEmpty()) {

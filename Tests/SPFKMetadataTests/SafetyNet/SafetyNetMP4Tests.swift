@@ -5,9 +5,9 @@ import SPFKBase
 import SPFKTesting
 import Testing
 
-/// Every save the app makes to an MP4-family file writes what it edits and leaves the rest — the app's
+/// Every save the app makes to an MP4-family file writes what it edits and leaves the rest - the app's
 /// other components, other applications' `ilst` items, images and atoms, and the Nero chapters
-/// beside the QuickTime chapter track — as it was.
+/// beside the QuickTime chapter track - as it was.
 @Suite(.tags(.file, .metadataSafetyNet))
 final class SafetyNetMP4Tests: BinTestCase {
     static let cases = SafetyNetCase.cases(

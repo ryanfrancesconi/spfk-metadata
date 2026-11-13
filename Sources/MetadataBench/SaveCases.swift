@@ -7,7 +7,7 @@ import SPFKMetadataBase
 
 /// The parse and save measurements every format's cases share. A parse counts the opens it made;
 /// a save counts the KiB it wrote. Every save runs on a fresh APFS clone of its master, so a "first
-/// save" is always one — and the master's pages are cached, so these are warm-cache numbers.
+/// save" is always one - and the master's pages are cached, so these are warm-cache numbers.
 struct SaveCases {
     let directory: URL
     let coverURL: URL

@@ -226,7 +226,7 @@ extension SafetyNetID3Item {
     }
 
     static func chapterLine(start: UInt32, end: UInt32, title: String?) -> String {
-        "\(start)–\(end) ms \(title ?? "untitled")"
+        "\(start)-\(end) ms \(title ?? "untitled")"
     }
 }
 

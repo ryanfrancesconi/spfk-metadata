@@ -12,7 +12,7 @@ import Testing
 /// and are dropped with it.
 @Suite(.tags(.file))
 final class WAVMarkerAssociatedDataTests: BinTestCase {
-    /// `tabla.wav`'s cue points are IDs 0–4, one second apart.
+    /// `tabla.wav`'s cue points are IDs 0-4, one second apart.
     static let note = RIFFChunks.Chunk(id: "note", payload: RIFFChunkBuilder.le32(1) + Data("On cue one".utf8) + Data([0]))
     static let ltxt = RIFFChunks.Chunk(
         id: "ltxt",

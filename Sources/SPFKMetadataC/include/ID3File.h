@@ -6,7 +6,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-/// Every ID3v2 frame, not just the ones `TagFile`'s property map covers — PRIV (where XMP lives) and
+/// Every ID3v2 frame, not just the ones `TagFile`'s property map covers - PRIV (where XMP lives) and
 /// TXXX included.
 @interface ID3File : NSObject
 

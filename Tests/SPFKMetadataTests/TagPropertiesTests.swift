@@ -182,7 +182,7 @@ class TagPropertiesTests: BinTestCase {
         #expect(after["TITLE"] == "Test")
     }
 
-    /// AIFF uses ID3v2 in a chunk — custom tags must be cleared on save.
+    /// AIFF uses ID3v2 in a chunk - custom tags must be cleared on save.
     @Test func aiffCustomTagsClearedOnSave() async throws {
         let tmpfile = try copyToBin(url: TestBundleResources.shared.tabla_aif)
 
@@ -194,7 +194,7 @@ class TagPropertiesTests: BinTestCase {
         let before = TagLibBridge.getProperties(tmpfile.path) as? [String: String] ?? [:]
         #expect(before["SPFK_CUSTOM_AIFF"] == "aiff_value")
 
-        // Save with only a title — custom key must be gone
+        // Save with only a title - custom key must be gone
         var cleared = TagProperties()
         cleared[.title] = "Test"
         try cleared.save(to: tmpfile)
@@ -204,7 +204,7 @@ class TagPropertiesTests: BinTestCase {
         #expect(after["TITLE"] == "Test")
     }
 
-    /// OGG Vorbis uses flat key-value comments — custom tags must be cleared on save.
+    /// OGG Vorbis uses flat key-value comments - custom tags must be cleared on save.
     @Test func oggCustomTagsClearedOnSave() async throws {
         let tmpfile = try copyToBin(url: TestBundleResources.shared.tabla_ogg)
 
@@ -216,7 +216,7 @@ class TagPropertiesTests: BinTestCase {
         let before = TagLibBridge.getProperties(tmpfile.path) as? [String: String] ?? [:]
         #expect(before["SPFK_CUSTOM_OGG"] == "ogg_value")
 
-        // Save with only a title — custom key must be gone
+        // Save with only a title - custom key must be gone
         var cleared = TagProperties()
         cleared[.title] = "Test"
         try cleared.save(to: tmpfile)

@@ -172,7 +172,7 @@ extension SafetyNetFLACItem {
         return nil
     }
 
-    /// `CHAPTERnnn` fields as `start "name"` lines, plus `–end` where an `END` field is stored, in
+    /// `CHAPTERnnn` fields as `start "name"` lines, plus `-end` where an `END` field is stored, in
     /// chapter-number order.
     static func chapterLines(_ fields: [VorbisComment.Field]) throws -> [String] {
         var byNumber: [Int: [String: String]] = [:]
@@ -191,7 +191,7 @@ extension SafetyNetFLACItem {
     }
 
     static func chapterLine(start: String, end: String?, name: String?) -> String {
-        "\(start)\(end.map { "–\($0)" } ?? "") \(name.map { "\"\($0)\"" } ?? "unnamed")"
+        "\(start)\(end.map { "-\($0)" } ?? "") \(name.map { "\"\($0)\"" } ?? "unnamed")"
     }
 
     /// `HH:MM:SS.mmm`, the form Xiph chapter fields store.

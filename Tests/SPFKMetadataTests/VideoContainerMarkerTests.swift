@@ -13,7 +13,7 @@ import Testing
 /// format, and read back through the same path.
 ///
 /// These go through `MetaAudioFileDescription.save` and `AudioMarkerDescriptionCollection(url:)`
-/// rather than the underlying utility, because the utility was never the broken part — the
+/// rather than the underlying utility, because the utility was never the broken part - the
 /// format dispatch around it was.
 @Suite
 final class VideoContainerMarkerTests {
@@ -40,7 +40,7 @@ final class VideoContainerMarkerTests {
         }
     }
 
-    /// A region marker carries its duration and color through the chapter title encoding —
+    /// A region marker carries its duration and color through the chapter title encoding -
     /// worth asserting separately, since that payload is what distinguishes a segment marker
     /// from a plain cue on read-back.
     @Test func preservesRegionMarkersThroughAQuickTimeContainer() async throws {
@@ -62,7 +62,7 @@ final class VideoContainerMarkerTests {
         #expect(abs((marker.endTime ?? 0) - 2.0) < 0.05)
     }
 
-    /// A format that genuinely can't hold markers must say so rather than report a clean save —
+    /// A format that genuinely can't hold markers must say so rather than report a clean save -
     /// the silent return is what let the original bug go unnoticed.
     @Test func throwsRatherThanDiscardingMarkersForAnUnsupportedFormat() async throws {
         let source = TestBundleResources.shared.tabla_wav

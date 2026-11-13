@@ -95,7 +95,7 @@ class WaveFileTests: BinTestCase {
     }
 
     /// Unicode characters in WAV INFO tags must survive a complete save/load round-trip.
-    /// TagLib uses UTF-8 for INFO tags in modern versions — this confirms non-ASCII content
+    /// TagLib uses UTF-8 for INFO tags in modern versions - this confirms non-ASCII content
     /// (CJK, accented Latin, emoji) is not corrupted or lost.
     @Test func unicodeINFOTagRoundTrip() async throws {
         let tmpfile = try copyToBin(url: TestBundleResources.shared.tabla_wav)

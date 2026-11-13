@@ -3,7 +3,7 @@
 import Foundation
 import SPFKTesting
 
-/// ID3v2.3 frames and tags: plain big-endian frame sizes, and no UTF-8 — text is Latin-1 where it
+/// ID3v2.3 frames and tags: plain big-endian frame sizes, and no UTF-8 - text is Latin-1 where it
 /// fits, else UTF-16 with a byte-order mark.
 extension ID3v24TagBuilder {
     /// 4-byte ID, big-endian size, two zero flag bytes, then `body`.

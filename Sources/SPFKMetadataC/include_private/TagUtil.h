@@ -88,8 +88,8 @@ static bool storesKeyMirror(File *file) {
     return xiphComment(file) != nullptr || dynamic_cast<WavPack::File *>(file) || dynamic_cast<APE::File *>(file);
 }
 
-/// A container whose PropertyMap `RATING` is TagLib's unconverted value (MP4 `rate`, ASF 0–99 or POPM
-/// 0–255) rather than stars; the rating is read and written separately (`TagRatingFile.h`).
+/// A container whose PropertyMap `RATING` is TagLib's unconverted value (MP4 `rate`, ASF 0-99 or POPM
+/// 0-255) rather than stars; the rating is read and written separately (`TagRatingFile.h`).
 static bool holdsRawRating(File *file) {
     return dynamic_cast<MP4::File *>(file) || dynamic_cast<ASF::File *>(file);
 }

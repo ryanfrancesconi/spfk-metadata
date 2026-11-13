@@ -6,8 +6,8 @@ import SPFKTesting
 import Testing
 
 /// Every save the app makes to an Ogg Vorbis or Opus file writes what it edits and leaves the rest
-/// — the app's other components, other applications' comment fields and pictures, the vendor
-/// string and the audio pages — as it was.
+/// - the app's other components, other applications' comment fields and pictures, the vendor
+/// string and the audio pages - as it was.
 @Suite(.tags(.file, .metadataSafetyNet))
 final class SafetyNetOggTests: BinTestCase {
     static let cases = SafetyNetCase.cases(

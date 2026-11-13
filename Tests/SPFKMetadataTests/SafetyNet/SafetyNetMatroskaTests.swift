@@ -5,9 +5,9 @@ import SPFKBase
 import SPFKTesting
 import Testing
 
-/// Every save the app makes to a Matroska or WebM file writes what it edits and leaves the rest —
+/// Every save the app makes to a Matroska or WebM file writes what it edits and leaves the rest -
 /// the app's other components, other applications' tags at every level, chapters and attachments,
-/// and the clusters — as it was.
+/// and the clusters - as it was.
 @Suite(.tags(.file, .metadataSafetyNet))
 final class SafetyNetMatroskaTests: BinTestCase {
     static let cases = SafetyNetCase.cases(

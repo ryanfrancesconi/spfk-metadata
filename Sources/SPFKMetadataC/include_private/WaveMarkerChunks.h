@@ -8,7 +8,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 /// Reads and writes RIFF, RF64 and BW64 WAVE markers as `cue ` and `LIST`/`adtl` chunks through TagLib.
 ///
-/// Names are written as UTF-8, and read as UTF-8 when valid, otherwise as Windows-1252 —
+/// Names are written as UTF-8, and read as UTF-8 when valid, otherwise as Windows-1252 -
 /// the encoding Core Audio uses, which cannot store most scripts.
 @interface WaveMarkerChunks : NSObject
 

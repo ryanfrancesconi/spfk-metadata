@@ -14,7 +14,7 @@ import Testing
 ///
 /// Ratings are stored in format-specific frames (not the generic PropertyMap),
 /// accessed exclusively via TagRating's path-based interface.
-/// The public API works in star counts (0 = unrated, 1–5 = rated).
+/// The public API works in star counts (0 = unrated, 1-5 = rated).
 ///
 /// Format storage:
 ///   - WAV/MP3/AIFF: POPM (ID3v2 Popularimeter), WMP canonical byte values
@@ -71,7 +71,7 @@ final class TagRatingTests: BinTestCase {
         #expect(TagRating.read(tmp.path) == 2)
     }
 
-    // MARK: - OGG Vorbis (Xiph RATING + FMPS_RATING) — macOS only
+    // MARK: - OGG Vorbis (Xiph RATING + FMPS_RATING) - macOS only
 
     #if os(macOS)
         @Test func oggRatingRoundTrip() async throws {
@@ -327,7 +327,7 @@ final class TagRatingTests: BinTestCase {
 
     // MARK: - ASF POPULARIMETER
 
-    /// A WMA rated only by `POPULARIMETER` reads as stars, not as TagLib's raw 0–255 value.
+    /// A WMA rated only by `POPULARIMETER` reads as stars, not as TagLib's raw 0-255 value.
     @Test func wmaPopularimeterRatingReadsAsStars() throws {
         let tmp = try copyToBin(url: TestBundleResources.shared.sine_popularimeter_wma)
 

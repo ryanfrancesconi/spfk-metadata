@@ -6,7 +6,7 @@ import SPFKMetadataBase
 import SPFKTesting
 import Testing
 
-/// An MP4 `rate` atom may hold its 0–100 rating as text or as an integer, and TagLib also exposes
+/// An MP4 `rate` atom may hold its 0-100 rating as text or as an integer, and TagLib also exposes
 /// it in the PropertyMap as `RATING`. The rating read is the app's own, on the star scale, whichever
 /// form the file uses.
 @Suite(.tags(.file))

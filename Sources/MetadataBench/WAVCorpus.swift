@@ -5,9 +5,9 @@ import Foundation
 /// The WAV files the bench saves, written byte by byte rather than through the code under test, so
 /// a change to the save path cannot change the corpus it is measured on.
 enum WAVLayout: String, CaseIterable {
-    /// `bext`, `iXML`, `fmt `, `data` — metadata ahead of the audio, as a field recorder writes it.
+    /// `bext`, `iXML`, `fmt `, `data` - metadata ahead of the audio, as a field recorder writes it.
     case recorder
-    /// `fmt `, `data`, `bext`, `iXML`, `ID3 `, `LIST/INFO` — where a save leaves everything.
+    /// `fmt `, `data`, `bext`, `iXML`, `ID3 `, `LIST/INFO` - where a save leaves everything.
     case trailing
     /// `trailing` with a 4.8 MB front cover in the ID3 tag.
     case trailingArt = "trailing-art"

@@ -5,7 +5,7 @@ import SPFKBase
 import SPFKTesting
 import Testing
 
-/// Saves that route no container write — a Finder tag change and an `.xmp`-only save — must leave
+/// Saves that route no container write - a Finder tag change and an `.xmp`-only save - must leave
 /// every byte of the file as it was, and the file itself in place.
 @Suite(.tags(.file, .metadataSafetyNet))
 final class SafetyNetUntouchedContainerTests: BinTestCase {

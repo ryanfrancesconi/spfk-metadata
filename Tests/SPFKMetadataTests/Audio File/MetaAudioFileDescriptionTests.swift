@@ -116,7 +116,7 @@ class MetaAudioFileDescriptionWAVChunkTests: BinTestCase {
         let initial = try await MetaAudioFileDescription(parsing: tmpfile)
         #expect(initial.markerCollection.markerDescriptions.count == expectedCount)
 
-        // Metadata-only save — markers must survive on disk (TagLib must preserve smpl/cue chunks)
+        // Metadata-only save - markers must survive on disk (TagLib must preserve smpl/cue chunks)
         var updated = initial
         updated.tagProperties[.title] = "Marker Preservation Test"
         try updated.save(dirtyFlags: [.tags])
@@ -148,7 +148,7 @@ class MetaAudioFileDescriptionArtworkTests: BinTestCase {
         let withArtwork = try await MetaAudioFileDescription(parsing: tmpfile)
         #expect(withArtwork.artwork.cgImage != nil)
 
-        // Save metadata only — artwork must survive
+        // Save metadata only - artwork must survive
         var updated = withArtwork
         updated.tagProperties[.title] = "Updated"
         try updated.save(dirtyFlags: [.tags])
@@ -179,7 +179,7 @@ class MetaAudioFileDescriptionArtworkTests: BinTestCase {
         loaded.artwork.cgImage = nil
         try loaded.save(dirtyFlags: [.tags, .artwork])
 
-        // Embedded artwork must be gone (TagLib level — asserts on the file itself)
+        // Embedded artwork must be gone (TagLib level - asserts on the file itself)
         #expect(throws: (any Error).self) { try TagPictureRef.parsing(url: tmpfile) }
     }
 
@@ -198,7 +198,7 @@ class MetaAudioFileDescriptionArtworkTests: BinTestCase {
         let withArtwork = try await MetaAudioFileDescription(parsing: tmpfile)
         #expect(withArtwork.artwork.cgImage != nil)
 
-        // Save metadata only — artwork must survive
+        // Save metadata only - artwork must survive
         var updated = withArtwork
         updated.tagProperties[.title] = "Updated"
         try updated.save(dirtyFlags: [.tags])
@@ -225,7 +225,7 @@ class MetaAudioFileDescriptionArtworkTests: BinTestCase {
         let withArtwork = try await MetaAudioFileDescription(parsing: tmpfile)
         #expect(withArtwork.artwork.cgImage != nil)
 
-        // Save metadata only — artwork must survive
+        // Save metadata only - artwork must survive
         var updated = withArtwork
         updated.tagProperties[.title] = "Updated"
         try updated.save(dirtyFlags: [.tags])
@@ -253,7 +253,7 @@ class MetaAudioFileDescriptionArtworkTests: BinTestCase {
         // Confirm artwork is present at the TagLib level
         #expect(throws: Never.self) { try TagPictureRef.parsing(url: tmpfile) }
 
-        // Add a marker and save with both .tags and .markers — artwork must survive
+        // Add a marker and save with both .tags and .markers - artwork must survive
         var updated = try await MetaAudioFileDescription(parsing: tmpfile)
         updated.tagProperties[.title] = "Updated"
         updated.markerCollection.update(markerDescriptions: [
@@ -272,7 +272,7 @@ class MetaAudioFileDescriptionArtworkTests: BinTestCase {
 
     /// Parsing a file that already has embedded artwork must populate cgImage, and a subsequent
     /// metadata-only save must not strip that artwork. This is distinct from metadataOnlySavePreservesArtwork,
-    /// which embeds artwork programmatically first — here the artwork comes from the file itself.
+    /// which embeds artwork programmatically first - here the artwork comes from the file itself.
     @Test func metadataOnlySavePreservesPreExistingArtwork() async throws {
         let tmpfile = try copyToBin(url: TestBundleResources.shared.mp3_id3)
 
@@ -283,7 +283,7 @@ class MetaAudioFileDescriptionArtworkTests: BinTestCase {
         let initial = try await MetaAudioFileDescription(parsing: tmpfile)
         #expect(initial.artwork.cgImage != nil)
 
-        // Metadata-only save — no .artwork flag, artwork must survive
+        // Metadata-only save - no .artwork flag, artwork must survive
         var updated = initial
         updated.tagProperties[.title] = "Pre-Existing Artwork Test"
         try updated.save(dirtyFlags: [.tags])
@@ -317,7 +317,7 @@ class MetaAudioFileDescriptionArtworkTests: BinTestCase {
         loaded.artwork.cgImage = nil
         try loaded.save(dirtyFlags: [.tags, .artwork])
 
-        // Embedded artwork must be gone (TagLib level — asserts on the file itself)
+        // Embedded artwork must be gone (TagLib level - asserts on the file itself)
         #expect(throws: (any Error).self) { try TagPictureRef.parsing(url: tmpfile) }
     }
 }

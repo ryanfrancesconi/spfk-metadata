@@ -15,7 +15,7 @@
     /// nothing had been attempted.
     ///
     /// TagLib is where it surfaced and not what was wrong. `FileStream` opens `"rb+"` first and falls
-    /// back to `"rb"` when that returns `EPERM`, so the file parses and only `save()` refuses — and it
+    /// back to `"rb"` when that returns `EPERM`, so the file parses and only `save()` refuses - and it
     /// refuses by returning `false`, with the `debug()` beside the fallback compiled out under
     /// `NDEBUG`. The guard at the entry point is what makes that path unreachable.
     @Suite(.tags(.file))
@@ -81,7 +81,7 @@
             return destination
         }
 
-        /// The flag has to come off first — a locked file cannot be deleted, and one left behind in
+        /// The flag has to come off first - a locked file cannot be deleted, and one left behind in
         /// the temporary directory stays undeletable.
         private static func discard(_ url: URL) {
             try? url.unlock()

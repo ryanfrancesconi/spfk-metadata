@@ -17,7 +17,7 @@ final class RatingReadFallbackTests: BinTestCase {
         ID3v24TagBuilder.frame(id: "TXXX", body: Data([3]) + Data(description.utf8) + Data([0]) + Data(value.utf8))
     }
 
-    /// Stored as stars, or as the 0–100 scale the Xiph and MP4 writers use.
+    /// Stored as stars, or as the 0-100 scale the Xiph and MP4 writers use.
     static let storedValues: [(stored: String, stars: String)] = [("4", "4"), ("60", "3")]
 
     @Test(arguments: storedValues.map(\.stored))
@@ -42,7 +42,7 @@ final class RatingReadFallbackTests: BinTestCase {
         #expect(description.tagProperties[.rating] == expected)
     }
 
-    /// FMPS stores 0.0–1.0; 0.6 is three stars.
+    /// FMPS stores 0.0-1.0; 0.6 is three stars.
     @Test func aFLACRatingInFMPSRatingAloneIsRead() async throws {
         let url = try copyToBin(url: TestBundleResources.shared.tabla_flac)
 

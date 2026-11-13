@@ -86,7 +86,7 @@ struct BEXTConversionTests {
     }
 
     @Test func bextDescriptionCNilFieldsSkipped() {
-        // default init — everything nil except version=0
+        // default init - everything nil except version=0
         let desc = BEXTDescription()
         let cObj = desc.bextDescriptionC
         #expect(cObj.version == 0)
