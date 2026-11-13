@@ -1,0 +1,55 @@
+{
+  "audioFormat" : {
+    "bitRate" : 0,
+    "channelCount" : 0,
+    "duration" : 0,
+    "sampleRate" : 0
+  },
+  "fileType" : "mov",
+  "imageDescription" : {
+    "description" : "<file path>",
+    "hasThumbnail" : false,
+    "size" : null
+  },
+  "isAVPlayable" : false,
+  "isDecodable" : false,
+  "isProtected" : false,
+  "markerCollection" : {
+    "markerDescriptions" : [
+
+    ]
+  },
+  "quickTimeUserData" : {
+    "deviceSoftware" : "Lavf63.1.100"
+  },
+  "tagProperties" : {
+    "audioProperties" : {
+      "bitRate" : 0,
+      "channelCount" : 0,
+      "duration" : 0,
+      "sampleRate" : 0
+    },
+    "data" : {
+      "customTags" : {
+
+      },
+      "tags" : {
+
+      }
+    }
+  },
+  "tagReaderVersion" : 1,
+  "trackReaderVersion" : 7,
+  "videoTrack" : {
+    "codec" : "apcn",
+    "duration" : 0.25,
+    "height" : 120,
+    "isMirrored" : false,
+    "nominalFrameRate" : 24,
+    "parserVersion" : 7,
+    "pixelAspectRatio" : 1,
+    "preciseFrameRate" : "24",
+    "rotationDegrees" : 0,
+    "width" : 160
+  }
+}
