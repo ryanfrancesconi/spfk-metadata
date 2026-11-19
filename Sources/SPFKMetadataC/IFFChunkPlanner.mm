@@ -307,6 +307,14 @@ bool Planner::apply(const std::vector<IFFChunkPlanner::Edit> &edits) {
     if (file.readOnly() || !IFFChunkTable::read(file, table))
         return false;
 
+    // A LIST too short to name its type holds nothing, and ffmpeg refuses the file over it.
+    const bool writesList = std::any_of(edits.begin(), edits.end(), [](const auto &edit) { return edit.id == "LIST" && edit.payload; });
+
+    for (size_t i = 0; writesList && i < chunks.size(); i++) {
+        if (chunks[i].id == "LIST" && chunks[i].size < 4)
+            vacate(i);
+    }
+
     std::vector<std::pair<const IFFChunkPlanner::Edit *, ByteVector>> unplaced;
 
     for (const auto &edit : edits) {
