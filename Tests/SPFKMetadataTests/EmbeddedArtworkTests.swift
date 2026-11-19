@@ -67,6 +67,7 @@ class EmbeddedArtworkTests: BinTestCase {
             (TestBundleResources.shared.sharksandwich, .jpeg),
             (pngURL, .png),
             (TestBundleResources.shared.sharksandwich_webp, .jpeg),
+            (TestBundleResources.shared.sharksandwich_heic, .jpeg),
         ]
 
         for (imageURL, storedType) in sources {
@@ -86,6 +87,24 @@ class EmbeddedArtworkTests: BinTestCase {
                 #expect(readBack.pictureType == "Front Cover")
             }
         }
+    }
+
+    /// Only JPEG and PNG are embedded: any other source type becomes PNG with alpha and JPEG without.
+    @Test func aNewPictureIsEmbeddedAsJPEGOrPNG() throws {
+        let opaque = try #require(EmbeddedArtwork(contentsOf: TestBundleResources.shared.sharksandwich_heic)).cgImage
+        let space = try #require(CGColorSpace(name: CGColorSpace.sRGB))
+        let context = try #require(CGContext(
+            data: nil, width: 8, height: 8, bitsPerComponent: 8, bytesPerRow: 0,
+            space: space, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ))
+        let withAlpha = try #require(context.makeImage())
+
+        #expect(EmbeddedArtwork.embeddedType(of: opaque) == .jpeg)
+        #expect(EmbeddedArtwork.embeddedType(of: opaque, declaredType: .tiff) == .jpeg)
+        #expect(EmbeddedArtwork.embeddedType(of: opaque, declaredType: .png) == .png)
+        #expect(EmbeddedArtwork.embeddedType(of: withAlpha) == .png)
+        #expect(EmbeddedArtwork.embeddedType(of: withAlpha, declaredType: .heic) == .png)
+        #expect(EmbeddedArtwork.embeddedType(of: withAlpha, declaredType: .jpeg) == .jpeg)
     }
 
     @Test func readThenWriteCarriesEveryField() throws {

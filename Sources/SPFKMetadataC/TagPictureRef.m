@@ -89,4 +89,19 @@ CGImageRef TagCreateImage(NSData *data) {
     return self;
 }
 
++ (UTType *)embeddedTypeForImage:(CGImageRef)cgImage declaredType:(nullable UTType *)declaredType {
+    if ([declaredType isEqual:UTTypeJPEG] || [declaredType isEqual:UTTypePNG]) {
+        return declaredType;
+    }
+
+    switch (CGImageGetAlphaInfo(cgImage)) {
+    case kCGImageAlphaNone:
+    case kCGImageAlphaNoneSkipLast:
+    case kCGImageAlphaNoneSkipFirst:
+        return UTTypeJPEG;
+    default:
+        return UTTypePNG;
+    }
+}
+
 @end

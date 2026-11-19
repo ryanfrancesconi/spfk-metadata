@@ -17,6 +17,8 @@ NS_ASSUME_NONNULL_BEGIN
 /// TagLib does not know as type 0, "Other".
 @property(nonatomic, strong, nullable) NSString *pictureType;
 
+/// The type `cgImage` came from. A new picture is embedded as ``embeddedTypeForImage:declaredType:``
+/// gives, not necessarily as this.
 @property(nonatomic, strong, nonnull) UTType *utType;
 
 /// The picture's bytes as a file stores them, with their MIME type; written as they are instead of
@@ -34,6 +36,10 @@ NS_ASSUME_NONNULL_BEGIN
 - (nullable instancetype)initWithURL:(NSURL *)url
                   pictureDescription:(NSString *)pictureDescription
                          pictureType:(NSString *)pictureType;
+
+/// The type a new picture is embedded in, only ever JPEG or PNG: `declaredType` when it is one of
+/// those, else PNG for an image with alpha and JPEG for one without.
++ (UTType *)embeddedTypeForImage:(CGImageRef)cgImage declaredType:(nullable UTType *)declaredType;
 
 @end
 

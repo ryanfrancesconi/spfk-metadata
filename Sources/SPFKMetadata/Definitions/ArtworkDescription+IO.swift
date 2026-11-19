@@ -29,28 +29,17 @@ extension ArtworkDescription {
     /// TagLib's name for picture type 3.
     private static let frontCoverPictureType = "Front Cover"
 
-    /// The getter keeps the image's own file type, else PNG when it has alpha and JPEG when not, and
-    /// always describes the front cover: the setter keeps no picture type.
+    /// The getter's type is the one the image is embedded in, and it always describes the front
+    /// cover: the setter keeps no picture type.
     var pictureRef: TagPictureRef? {
         get {
             guard let cgImage else {
                 return nil
             }
 
-            var utType: UTType = .jpeg
-
-            if let value = cgImage.utType as? String, let utValue = UTType(value) {
-                utType = utValue
-
-            } else if cgImage.alphaInfo != .none, cgImage.alphaInfo != .noneSkipLast,
-                      cgImage.alphaInfo != .noneSkipFirst
-            {
-                utType = .png
-            }
-
             let pictureRef = TagPictureRef(
                 image: cgImage,
-                utType: utType,
+                utType: EmbeddedArtwork.embeddedType(of: cgImage),
                 pictureDescription: description ?? "",
                 pictureType: Self.frontCoverPictureType
             )

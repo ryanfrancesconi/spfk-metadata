@@ -115,7 +115,7 @@ static List<VariantMap> replacingArtwork(const List<VariantMap> &pictures, const
     return result;
 }
 
-/// Nil when ImageIO cannot write the type.
+/// Nil when the encode fails.
 static NSData *tryEncodeImage(CGImageRef image, NSString *typeIdentifier) {
     CFMutableDataRef buf = CFDataCreateMutable(NULL, 0);
     CGImageDestinationRef dst = CGImageDestinationCreateWithData(buf, (__bridge CFStringRef)typeIdentifier, 1, NULL);
@@ -133,7 +133,7 @@ static NSData *tryEncodeImage(CGImageRef image, NSString *typeIdentifier) {
     return (__bridge_transfer NSData *)buf;
 }
 
-/// Encodes in the picture's own type, or JPEG where ImageIO cannot write that (WebP).
+/// Encodes a new picture as JPEG or PNG, whatever type its image came from.
 static bool encodePicture(TagPictureRef *picture, VariantMap &outMap) {
     if (picture.pictureDescription) {
         const char *value = StringUtil::utf8CString(picture.pictureDescription);
@@ -150,13 +150,8 @@ static bool encodePicture(TagPictureRef *picture, VariantMap &outMap) {
     NSString *mimeType = picture.storedMimeType;
 
     if (!encoded || !mimeType) {
-        UTType *encodeType = picture.utType;
+        UTType *encodeType = [TagPictureRef embeddedTypeForImage:picture.cgImage declaredType:picture.utType];
         encoded = tryEncodeImage(picture.cgImage, encodeType.identifier);
-
-        if (!encoded) {
-            encodeType = [UTType typeWithIdentifier:@"public.jpeg"];
-            encoded = tryEncodeImage(picture.cgImage, encodeType.identifier);
-        }
 
         if (!encoded)
             return false;
